@@ -12,34 +12,31 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search } from "lucide-react";
-import { formatCurrency, formatDate, opportunityStageLabels } from "@/lib/format";
-import { Tables } from "@/integrations/supabase/types";
-
-type Opportunity = Tables<"opportunities">;
-
-const stageColors: Record<string, string> = {
-  prospeccao: "bg-tailor-blue/10 text-tailor-blue",
-  qualificacao: "bg-tailor-copper/10 text-tailor-copper",
-  proposta: "bg-tailor-warning/10 text-tailor-warning",
-  negociacao: "bg-accent/10 text-accent",
-  fechado_ganho: "bg-tailor-success/20 text-tailor-success",
-  fechado_perdido: "bg-destructive/10 text-destructive",
-};
+import { formatCurrency, formatDate, opportunityStageLabels, opportunityStageColors } from "@/lib/format";
 
 export default function Oportunidades() {
-  const [opps, setOpps] = useState<Opportunity[]>([]);
+  const [opps, setOpps] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    title: "", value: "", probability: "50", expected_close_date: "", notes: "",
+    titulo: "", origem: "LEAD", lead_id: "", client_id: "",
+    valor_estimado: "", probabilidade: "50", close_date: "", observacoes: "",
   });
 
   async function load() {
-    const { data } = await supabase.from("opportunities").select("*").order("created_at", { ascending: false });
-    setOpps(data || []);
+    const [oppsRes, leadsRes, clientsRes] = await Promise.all([
+      supabase.from("opportunities").select("*").order("created_at", { ascending: false }),
+      supabase.from("leads").select("id, nome_razao"),
+      supabase.from("clients").select("id, nome_razao"),
+    ]);
+    setOpps(oppsRes.data || []);
+    setLeads(leadsRes.data || []);
+    setClients(clientsRes.data || []);
   }
 
   useEffect(() => { load(); }, []);
@@ -48,29 +45,32 @@ export default function Oportunidades() {
     e.preventDefault();
     if (!user) return;
     const { error } = await supabase.from("opportunities").insert({
-      title: form.title,
-      value: form.value ? parseFloat(form.value) : 0,
-      probability: parseInt(form.probability) || 50,
-      expected_close_date: form.expected_close_date || null,
-      notes: form.notes || null,
-      created_by: user.id,
+      titulo: form.titulo,
+      origem: form.origem,
+      lead_id: form.origem === "LEAD" && form.lead_id ? form.lead_id : null,
+      client_id: form.origem === "CLIENT" && form.client_id ? form.client_id : null,
+      valor_estimado: form.valor_estimado ? parseFloat(form.valor_estimado) : 0,
+      probabilidade: parseInt(form.probabilidade) || 50,
+      close_date: form.close_date || null,
+      observacoes: form.observacoes || null,
+      owner_id: user.id,
     });
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Oportunidade criada!" });
-      setForm({ title: "", value: "", probability: "50", expected_close_date: "", notes: "" });
+      setForm({ titulo: "", origem: "LEAD", lead_id: "", client_id: "", valor_estimado: "", probabilidade: "50", close_date: "", observacoes: "" });
       setOpen(false);
       load();
     }
   }
 
   async function updateStage(id: string, stage: string) {
-    await supabase.from("opportunities").update({ stage: stage as Opportunity["stage"] }).eq("id", id);
+    await supabase.from("opportunities").update({ stage: stage as any }).eq("id", id);
     load();
   }
 
-  const filtered = opps.filter((o) => o.title.toLowerCase().includes(search.toLowerCase()));
+  const filtered = opps.filter((o) => o.titulo.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <AppLayout>
@@ -86,18 +86,54 @@ export default function Oportunidades() {
               <DialogTrigger asChild>
                 <Button><Plus className="h-4 w-4 mr-2" />Nova Oportunidade</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="font-display">Nova Oportunidade</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-3">
-                  <div><Label>Título *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Valor (R$)</Label><Input type="number" step="0.01" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} /></div>
-                    <div><Label>Probabilidade (%)</Label><Input type="number" min="0" max="100" value={form.probability} onChange={(e) => setForm({ ...form, probability: e.target.value })} /></div>
+                  <div><Label>Título *</Label><Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} required /></div>
+                  <div>
+                    <Label>Origem</Label>
+                    <Select value={form.origem} onValueChange={(v) => setForm({ ...form, origem: v, lead_id: "", client_id: "" })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="LEAD">Lead</SelectItem>
+                        <SelectItem value="CLIENT">Cliente</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div><Label>Previsão de fechamento</Label><Input type="date" value={form.expected_close_date} onChange={(e) => setForm({ ...form, expected_close_date: e.target.value })} /></div>
-                  <div><Label>Observações</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+                  {form.origem === "LEAD" && (
+                    <div>
+                      <Label>Lead</Label>
+                      <Select value={form.lead_id} onValueChange={(v) => setForm({ ...form, lead_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione um lead" /></SelectTrigger>
+                        <SelectContent>
+                          {leads.map((l) => (
+                            <SelectItem key={l.id} value={l.id}>{l.nome_razao}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {form.origem === "CLIENT" && (
+                    <div>
+                      <Label>Cliente</Label>
+                      <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione um cliente" /></SelectTrigger>
+                        <SelectContent>
+                          {clients.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.nome_razao}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Valor Estimado (R$)</Label><Input type="number" step="0.01" value={form.valor_estimado} onChange={(e) => setForm({ ...form, valor_estimado: e.target.value })} /></div>
+                    <div><Label>Probabilidade (%)</Label><Input type="number" min="0" max="100" value={form.probabilidade} onChange={(e) => setForm({ ...form, probabilidade: e.target.value })} /></div>
+                  </div>
+                  <div><Label>Previsão de fechamento</Label><Input type="date" value={form.close_date} onChange={(e) => setForm({ ...form, close_date: e.target.value })} /></div>
+                  <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} rows={2} /></div>
                   <Button type="submit" className="w-full">Criar Oportunidade</Button>
                 </form>
               </DialogContent>
@@ -114,13 +150,13 @@ export default function Oportunidades() {
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{opp.title}</h3>
+                    <h3 className="font-semibold text-foreground truncate">{opp.titulo}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {formatCurrency(opp.value)} · {opp.probability}% · Prev: {formatDate(opp.expected_close_date)}
+                      {formatCurrency(opp.valor_estimado)} · {opp.probabilidade}% · Prev: {formatDate(opp.close_date)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant="secondary" className={stageColors[opp.stage]}>
+                    <Badge variant="secondary" className={opportunityStageColors[opp.stage]}>
                       {opportunityStageLabels[opp.stage]}
                     </Badge>
                     <Select value={opp.stage} onValueChange={(v) => updateStage(opp.id, v)}>

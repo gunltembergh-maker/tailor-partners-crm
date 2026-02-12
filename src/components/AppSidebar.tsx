@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { roleLabels } from "@/lib/format";
 import {
   LayoutDashboard,
   Users,
@@ -33,15 +34,12 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { profile, role, signOut } = useAuth();
 
   return (
     <Sidebar>
       <SidebarHeader className="px-6 py-5">
-        <div
-          className="cursor-pointer"
-          onClick={() => navigate("/")}
-        >
+        <div className="cursor-pointer" onClick={() => navigate("/")}>
           <h1 className="text-2xl font-display font-bold text-sidebar-primary tracking-tight">
             Tailor
           </h1>
@@ -83,7 +81,7 @@ export function AppSidebar() {
               {profile?.full_name || "Usuário"}
             </p>
             <p className="text-xs text-sidebar-foreground/50 truncate">
-              {profile?.email}
+              {role ? roleLabels[role] || role : ""} · {profile?.email}
             </p>
           </div>
         </div>

@@ -27,44 +27,89 @@ export function formatDateTime(date: string | null | undefined): string {
 }
 
 export const leadStatusLabels: Record<string, string> = {
-  novo: "Novo",
-  contatado: "Contatado",
-  qualificado: "Qualificado",
-  proposta: "Proposta",
-  negociacao: "Negociação",
-  ganho: "Ganho",
-  perdido: "Perdido",
+  NOVO: "Novo",
+  CONTATO_INICIADO: "Contato Iniciado",
+  QUALIFICADO: "Qualificado",
+  REUNIAO: "Reunião",
+  PROPOSTA: "Proposta",
+  CONVERTIDO: "Convertido",
+  PERDIDO: "Perdido",
 };
 
 export const leadStatusColors: Record<string, string> = {
-  novo: "bg-tailor-blue/10 text-tailor-blue",
-  contatado: "bg-tailor-copper/10 text-tailor-copper",
-  qualificado: "bg-tailor-success/10 text-tailor-success",
-  proposta: "bg-tailor-warning/10 text-tailor-warning",
-  negociacao: "bg-accent/10 text-accent",
-  ganho: "bg-tailor-success/20 text-tailor-success",
-  perdido: "bg-destructive/10 text-destructive",
+  NOVO: "bg-tailor-blue/10 text-tailor-blue",
+  CONTATO_INICIADO: "bg-tailor-copper/10 text-tailor-copper",
+  QUALIFICADO: "bg-tailor-success/10 text-tailor-success",
+  REUNIAO: "bg-accent/10 text-accent",
+  PROPOSTA: "bg-tailor-warning/10 text-tailor-warning",
+  CONVERTIDO: "bg-tailor-success/20 text-tailor-success",
+  PERDIDO: "bg-destructive/10 text-destructive",
+};
+
+export const clientStatusLabels: Record<string, string> = {
+  ATIVO_NET: "Ativo (Net)",
+  INATIVO_PLD: "Inativo (PLD)",
+  CRITICO: "Crítico",
+};
+
+export const clientStatusColors: Record<string, string> = {
+  ATIVO_NET: "bg-tailor-success/10 text-tailor-success",
+  INATIVO_PLD: "bg-tailor-warning/10 text-tailor-warning",
+  CRITICO: "bg-destructive/10 text-destructive",
 };
 
 export const opportunityStageLabels: Record<string, string> = {
-  prospeccao: "Prospecção",
-  qualificacao: "Qualificação",
-  proposta: "Proposta",
-  negociacao: "Negociação",
-  fechado_ganho: "Fechado (Ganho)",
-  fechado_perdido: "Fechado (Perdido)",
+  INICIAL: "Inicial",
+  EM_ANDAMENTO: "Em Andamento",
+  NEGOCIACAO: "Negociação",
+  GANHA: "Ganha",
+  PERDIDA: "Perdida",
 };
 
-export const taskPriorityLabels: Record<string, string> = {
-  baixa: "Baixa",
-  media: "Média",
-  alta: "Alta",
-  urgente: "Urgente",
+export const opportunityStageColors: Record<string, string> = {
+  INICIAL: "bg-tailor-blue/10 text-tailor-blue",
+  EM_ANDAMENTO: "bg-tailor-copper/10 text-tailor-copper",
+  NEGOCIACAO: "bg-tailor-warning/10 text-tailor-warning",
+  GANHA: "bg-tailor-success/20 text-tailor-success",
+  PERDIDA: "bg-destructive/10 text-destructive",
+};
+
+export const taskTipoLabels: Record<string, string> = {
+  LIGACAO: "Ligação",
+  WHATSAPP: "WhatsApp",
+  EMAIL: "E-mail",
+  REUNIAO: "Reunião",
+  POS_VENDA: "Pós-venda",
+  OUTRO: "Outro",
 };
 
 export const taskStatusLabels: Record<string, string> = {
-  pendente: "Pendente",
-  em_andamento: "Em Andamento",
-  concluida: "Concluída",
-  cancelada: "Cancelada",
+  ABERTA: "Aberta",
+  CONCLUIDA: "Concluída",
+  ATRASADA: "Atrasada",
+};
+
+export const taskStatusColors: Record<string, string> = {
+  ABERTA: "bg-tailor-blue/10 text-tailor-blue",
+  CONCLUIDA: "bg-tailor-success/10 text-tailor-success",
+  ATRASADA: "bg-destructive/10 text-destructive",
+};
+
+export const canalOrigemLabels: Record<string, string> = {
+  Site: "Site",
+  WhatsApp: "WhatsApp",
+  Indicacao: "Indicação",
+  Evento: "Evento",
+  Outro: "Outro",
+};
+
+export const tipoPessoaLabels: Record<string, string> = {
+  PF: "Pessoa Física",
+  PJ: "Pessoa Jurídica",
+};
+
+export const roleLabels: Record<string, string> = {
+  ASSESSOR: "Assessor",
+  BANKER: "Banker",
+  LIDER: "Líder",
 };
