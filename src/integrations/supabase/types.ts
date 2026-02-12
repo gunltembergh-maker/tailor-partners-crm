@@ -16,11 +16,15 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          advisor_name: string | null
           assessor_id: string | null
           banker_id: string | null
+          banker_name: string | null
+          canal: string | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
+          finder_name: string | null
           id: string
           last_contact_at: string | null
           next_action_at: string | null
@@ -35,11 +39,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          advisor_name?: string | null
           assessor_id?: string | null
           banker_id?: string | null
+          banker_name?: string | null
+          canal?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          finder_name?: string | null
           id?: string
           last_contact_at?: string | null
           next_action_at?: string | null
@@ -54,11 +62,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          advisor_name?: string | null
           assessor_id?: string | null
           banker_id?: string | null
+          banker_name?: string | null
+          canal?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          finder_name?: string | null
           id?: string
           last_contact_at?: string | null
           next_action_at?: string | null
@@ -314,6 +326,36 @@ export type Database = {
           status?: Database["public"]["Enums"]["task_status"]
           tipo?: Database["public"]["Enums"]["task_tipo"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      team_reference: {
+        Row: {
+          codigo_xp: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          short_name: string
+          unit: string
+        }
+        Insert: {
+          codigo_xp?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          short_name: string
+          unit: string
+        }
+        Update: {
+          codigo_xp?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          short_name?: string
+          unit?: string
         }
         Relationships: []
       }
