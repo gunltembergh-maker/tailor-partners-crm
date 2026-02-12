@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -13,13 +13,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Loader2, ArrowUpDown } from "lucide-react";
-import { formatCurrency, formatDate, leadStatusLabels, leadStatusColors, canalOrigemLabels, tipoPessoaLabels, porteLabels } from "@/lib/format";
+import { formatCurrency, formatDate, isDaysAgo, leadStatusLabels, leadStatusColors, canalOrigemLabels, tipoPessoaLabels, porteLabels } from "@/lib/format";
 
 export default function Leads() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [leads, setLeads] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("__all__");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "__all__");
+  const [customFilter, setCustomFilter] = useState(searchParams.get("filter") || "");
   const [sortBy, setSortBy] = useState("recent");
   const [open, setOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -108,6 +110,12 @@ export default function Leads() {
       (l.email || "").toLowerCase().includes(search.toLowerCase())
     )
     .filter((l) => statusFilter === "__all__" || l.status === statusFilter)
+    .filter((l) => {
+      if (customFilter === "sem_contato") {
+        return !l.last_contact_at || isDaysAgo(l.last_contact_at, 30);
+      }
+      return true;
+    })
     .sort((a, b) => {
       if (sortBy === "recent") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();

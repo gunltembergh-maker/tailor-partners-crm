@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -13,13 +13,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, ArrowUpDown } from "lucide-react";
-import { formatCurrency, formatDate, opportunityStageLabels, opportunityStageColors } from "@/lib/format";
+import { formatCurrency, formatDate, isDaysAgo, opportunityStageLabels, opportunityStageColors } from "@/lib/format";
 
 export default function Oportunidades() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [opps, setOpps] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState("__all__");
+  const [stageFilter, setStageFilter] = useState(searchParams.get("stage") || "__all__");
+  const [customFilter] = useState(searchParams.get("filter") || "");
   const [sortBy, setSortBy] = useState("recent");
   const [open, setOpen] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
@@ -74,9 +76,19 @@ export default function Oportunidades() {
     load();
   }
 
+  const todayStr = new Date().toISOString().slice(0, 10);
   const filtered = opps
     .filter((o) => o.titulo.toLowerCase().includes(search.toLowerCase()))
     .filter((o) => stageFilter === "__all__" || o.stage === stageFilter)
+    .filter((o) => {
+      if (customFilter === "atrasadas") {
+        return o.close_date && o.close_date < todayStr && !["GANHA", "PERDIDA"].includes(o.stage);
+      }
+      if (customFilter === "sem_atualizacao") {
+        return isDaysAgo(o.last_update_at, 30) && !["GANHA", "PERDIDA"].includes(o.stage);
+      }
+      return true;
+    })
     .sort((a, b) => {
       if (sortBy === "recent") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();

@@ -119,3 +119,18 @@ export const roleLabels: Record<string, string> = {
   BANKER: "Banker",
   LIDER: "Líder",
 };
+
+export function isToday(date: string | null | undefined): boolean {
+  if (!date) return false;
+  const d = new Date(date);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+export function isDaysAgo(date: string | null | undefined, days: number): boolean {
+  if (!date) return false;
+  const d = new Date(date);
+  const threshold = new Date();
+  threshold.setDate(threshold.getDate() - days);
+  return d < threshold;
+}
