@@ -1,135 +1,111 @@
 
 
-# Novo Layout do Tailor CRM com identidade visual da marca
+# Tela Inicio com Secoes Expansiveis
 
 ## Resumo
 
-Reestruturar completamente o layout do CRM com topbar, sidebar expandida com 9 itens de menu, paginas de detalhe com abas, e ajustar a tipografia conforme o manual da marca (Roslindale para titulos, Source Sans Pro para corpo de texto). As cores ja estao alinhadas com o manual.
+Reescrever `src/pages/Dashboard.tsx` para exibir 3 secoes expansiveis (Leads, Clientes, Oportunidades), cada uma com cards clicaveis contendo contadores e somatorios em R$. Cada card filtra e navega para a lista correspondente, e cada secao pode ser expandida para mostrar uma mini-tabela com os top 10 itens.
 
 ---
 
 ## O que muda para o usuario
 
-1. **Topbar** fixa no topo com logo "Tailor CRM" (tipografia serif da marca), saudacao "Ola, {nome}" e seletor "Ver como" para usuarios com role LIDER
-2. **Sidebar** expandida com 9 itens: Inicio, Prioridades, Leads, Contas, Tarefas, Calendario, Oportunidades, Paineis, Relatorios
-3. **Tipografia** atualizada conforme manual da marca: Roslindale (via Google Fonts, substituido por Playfair Display que ja esta em uso - mantido) para titulos e Source Sans Pro para corpo de texto (substituindo Inter)
-4. **Paginas de lista** padronizadas com filtros por status, ordenacao e cards clicaveis para detalhe
-5. **Paginas de detalhe** com 4 abas: Resumo, Atividades/Tarefas, Historico (Timeline), Anexos (placeholder)
-6. **Paginas placeholder** para: Prioridades, Calendario, Paineis, Relatorios
+1. Tela Inicio dividida em 3 secoes colapsaveis: Leads, Clientes, Oportunidades
+2. Cada secao tem 5 cards com metricas especificas (contadores e valores em R$)
+3. Clicar num card navega para a lista correspondente ja filtrada (via query params)
+4. Cada secao tem botao "Expandir painel" que mostra mini-tabela com top 10 itens daquele filtro
+5. Topo exibe "Ultima atualizacao: {hora}" e botao "Atualizar" para recarregar
 
 ---
 
 ## Detalhes Tecnicos
 
-### 1. Atualizar tipografia em `src/index.css`
+### 1. Reescrever `src/pages/Dashboard.tsx`
 
-Substituir a importacao da fonte Inter por Source Sans 3 (versao mais recente da Source Sans Pro no Google Fonts). Manter Playfair Display para titulos (substituto acessivel da Roslindale conforme o manual). Atualizar a classe `.font-sans` para usar Source Sans 3.
+**Dados carregados (uma funcao `loadData`):**
+- `leads`: todos os leads (id, nome_razao, status, last_contact_at, conversion_at, created_at, valor_potencial)
+- `clients`: todos os clientes (id, nome_razao, status, patrimonio_ou_receita)
+- `tasks`: todas as tarefas (id, status, due_at, related_type, related_id)
+- `opportunities`: todas as oportunidades (id, titulo, stage, close_date, last_update_at, valor_estimado, created_at)
 
-### 2. Atualizar `src/components/AppLayout.tsx`
+**Estado:**
+- `lastUpdated`: Date - timestamp da ultima carga
+- `loading`: boolean
+- `expandedSection`: string | null - qual secao esta com mini-tabela aberta
+- `expandedCard`: string | null - qual card esta com painel expandido
 
-Reestruturar o layout para incluir uma topbar fixa acima do conteudo:
-- Topbar com: logo "Tailor" (font-display) + "CRM" (font-sans), saudacao "Ola, {nome}" usando dados do `useAuth`, seletor "Ver como" (dropdown) visivel apenas quando `role === "LIDER"`
-- SidebarTrigger na topbar
-- Criar um contexto `ViewAsContext` para compartilhar o `viewAsUserId` entre paginas (quando Lider seleciona outro usuario)
+**Secao LEADS (5 cards):**
 
-### 3. Atualizar `src/components/AppSidebar.tsx`
+| Card | Calculo | Navegacao |
+|------|---------|-----------|
+| Leads Novos | leads com status="NOVO", contar | /leads?status=NOVO |
+| Atividades Hoje | tasks com due_at=hoje e related_type="LEAD", contar leads unicos | /tarefas?related_type=LEAD&due=today |
+| Sem Contato (30d) | leads com last_contact_at null OU > 30 dias, contar | /leads?filter=sem_contato |
+| Convertidos Hoje | leads com conversion_at=hoje, contar | /leads?status=CONVERTIDO |
+| Taxa de Conversao (90d) | leads com conversion_at nos ultimos 90d / leads criados nos ultimos 90d, exibir como % | Nao navega |
 
-Expandir o array `menuItems` de 5 para 9 itens:
-- Inicio (/) - Home
-- Prioridades (/prioridades) - Star
-- Leads (/leads) - Target
-- Contas (/clientes) - Users (label muda de "Clientes" para "Contas")
-- Tarefas (/tarefas) - CheckSquare
-- Calendario (/calendario) - Calendar
-- Oportunidades (/oportunidades) - Briefcase
-- Paineis (/paineis) - BarChart3
-- Relatorios (/relatorios) - FileText
+**Secao CLIENTES (5 cards):**
 
-Manter as informacoes do usuario e botao "Sair" no footer da sidebar.
+| Card | Calculo | Navegacao |
+|------|---------|-----------|
+| Ativos (NET) | status="ATIVO_NET", contar + somar patrimonio_ou_receita | /clientes?status=ATIVO_NET |
+| Inativos (PLD) | status="INATIVO_PLD", contar + somar patrimonio_ou_receita | /clientes?status=INATIVO_PLD |
+| Tarefas Atrasadas | tasks ATRASADA e related_type="CLIENT", contar clientes unicos | /tarefas?related_type=CLIENT&status=ATRASADA |
+| Tarefas Hoje | tasks com due_at=hoje e related_type="CLIENT", contar clientes unicos | /tarefas?related_type=CLIENT&due=today |
+| Criticos | status="CRITICO", contar + somar patrimonio_ou_receita | /clientes?status=CRITICO |
 
-### 4. Atualizar `src/App.tsx`
+**Secao OPORTUNIDADES (5 cards):**
 
-Adicionar 4 novas rotas protegidas:
-- `/prioridades` -> Prioridades
-- `/calendario` -> Calendario
-- `/paineis` -> Paineis
-- `/relatorios` -> Relatorios
+| Card | Calculo | Navegacao |
+|------|---------|-----------|
+| Iniciais | stage="INICIAL", contar + somar valor_estimado | /oportunidades?stage=INICIAL |
+| Atrasadas | close_date < hoje e stage nao GANHA/PERDIDA, contar + somar valor_estimado | /oportunidades?filter=atrasadas |
+| Sem Atualizacao (30d) | last_update_at < hoje-30d e stage nao GANHA/PERDIDA, contar | /oportunidades?filter=sem_atualizacao |
+| Convertidas Hoje | stage="GANHA" e last_update_at=hoje, contar + somar valor_estimado | /oportunidades?stage=GANHA |
+| Taxa de Conversao (90d) | ganhas nos 90d / (ganhas + perdidas nos 90d), exibir como % | Nao navega |
 
-Adicionar 3 rotas de detalhe:
-- `/leads/:id` -> LeadDetalhe
-- `/clientes/:id` -> ClienteDetalhe
-- `/oportunidades/:id` -> OportunidadeDetalhe
+**Componente visual:**
+- Usar Collapsible do shadcn para cada secao (Leads, Clientes, Oportunidades)
+- Cada secao tem icone, titulo e contador total
+- Dentro, grid 2x3 ou 3x2 de cards
+- Cada card: titulo, valor principal (contador), subtitulo (valor em R$ quando aplicavel)
+- Cards clicaveis com `useNavigate`
+- Botao "Expandir painel" em cada card que mostra mini-tabela com top 10 registros (nome, status/stage, valor)
+- Topo: titulo "Inicio", "Ultima atualizacao: HH:MM" e botao "Atualizar" com icone RefreshCw
 
-### 5. Criar `src/components/DetailLayout.tsx`
+**Mini-tabela (painel expandido):**
+- Usa componente Table do shadcn
+- Top 10 itens correspondentes ao filtro do card
+- Colunas: Nome, Status/Stage, Valor, Data
+- Linhas clicaveis navegando para detalhe (/leads/:id, /clientes/:id, /oportunidades/:id)
 
-Componente reutilizavel de detalhe com abas (usando shadcn Tabs):
-- Props: titulo, subtitulo, onBack, e children para cada aba
-- 4 abas: Resumo, Atividades/Tarefas, Historico (Timeline), Anexos
-- Aba Historico: timeline vertical com notas da tabela `notes` (filtradas por `related_type` e `related_id`), com formulario para adicionar nova nota
-- Aba Atividades: lista de tarefas filtradas por `related_type` e `related_id`
-- Aba Anexos: placeholder "Em breve"
+### 2. Atualizar paginas de lista para ler query params
 
-### 6. Criar paginas de detalhe
+Atualizar `Leads.tsx`, `Clientes.tsx`, `Oportunidades.tsx` para ler `searchParams` da URL e aplicar filtros iniciais:
+- `?status=NOVO` -> seta statusFilter
+- `?stage=INICIAL` -> seta stageFilter
+- `?filter=sem_contato` -> filtra leads sem contato > 30 dias (filtro customizado)
+- `?filter=atrasadas` -> filtra oportunidades com close_date < hoje
 
-**`src/pages/LeadDetalhe.tsx`** (rota `/leads/:id`):
-- Busca lead por ID
-- Aba Resumo: campos editaveis (nome, email, telefone, segmento, porte, status, etc.)
-- Aba Atividades: tarefas com `related_type = "LEAD"` e `related_id = id`
-- Aba Historico: notas com `related_type = "LEAD"` e `related_id = id`
+Usar `useSearchParams` do react-router-dom para ler os parametros na montagem.
 
-**`src/pages/ClienteDetalhe.tsx`** (rota `/clientes/:id`):
-- Mesmo padrao, adaptado para campos de clientes
+### 3. Funcoes auxiliares de data
 
-**`src/pages/OportunidadeDetalhe.tsx`** (rota `/oportunidades/:id`):
-- Mesmo padrao, adaptado para campos de oportunidades
-
-### 7. Criar 4 paginas placeholder
-
-`src/pages/Prioridades.tsx`, `src/pages/Calendario.tsx`, `src/pages/Paineis.tsx`, `src/pages/Relatorios.tsx`:
-- Cada uma com AppLayout + Card informando "Em breve"
-
-### 8. Atualizar paginas de lista
-
-**`src/pages/Leads.tsx`**, **`src/pages/Clientes.tsx`**, **`src/pages/Oportunidades.tsx`**:
-- Adicionar filtro por status (dropdown ao lado da busca)
-- Adicionar ordenacao (dropdown: mais recentes, mais antigos, nome A-Z)
-- Tornar cards clicaveis com `useNavigate` para `/leads/:id`, `/clientes/:id`, `/oportunidades/:id`
-- Cursor pointer no hover dos cards
-
-### 9. Seletor "Ver como" (contexto de role)
-
-Criar `src/contexts/ViewAsContext.tsx`:
-- Estado `viewAsUserId` (null = visao propria)
-- Funcao `setViewAs`
-- Provido apenas quando role = LIDER
-- Na topbar: dropdown que lista profiles + user_roles (consulta `profiles` e `user_roles`)
-- Quando ativo, as paginas de lista filtram por `owner_id = viewAsUserId`
+Adicionar em `src/lib/format.ts`:
+- `isToday(date: string)`: verifica se uma data e hoje
+- `isDaysAgo(date: string, days: number)`: verifica se uma data e anterior a N dias atras
 
 ---
 
-## Arquivos que serao criados (8)
+## Arquivos modificados
 
-- `src/pages/Prioridades.tsx`
-- `src/pages/Calendario.tsx`
-- `src/pages/Paineis.tsx`
-- `src/pages/Relatorios.tsx`
-- `src/pages/LeadDetalhe.tsx`
-- `src/pages/ClienteDetalhe.tsx`
-- `src/pages/OportunidadeDetalhe.tsx`
-- `src/components/DetailLayout.tsx`
-- `src/contexts/ViewAsContext.tsx`
+- `src/pages/Dashboard.tsx` - reescrita completa
+- `src/pages/Leads.tsx` - ler query params para filtros iniciais
+- `src/pages/Clientes.tsx` - ler query params para filtros iniciais
+- `src/pages/Oportunidades.tsx` - ler query params para filtros iniciais
+- `src/lib/format.ts` - adicionar helpers isToday e isDaysAgo
 
-## Arquivos que serao modificados (7)
-
-- `src/index.css` - atualizar fonte sans para Source Sans 3
-- `src/components/AppLayout.tsx` - adicionar topbar com saudacao e seletor "Ver como"
-- `src/components/AppSidebar.tsx` - expandir menu para 9 itens
-- `src/App.tsx` - adicionar 7 novas rotas + ViewAsProvider
-- `src/pages/Leads.tsx` - filtros, ordenacao, cards clicaveis
-- `src/pages/Clientes.tsx` - filtros, ordenacao, cards clicaveis
-- `src/pages/Oportunidades.tsx` - filtros, ordenacao, cards clicaveis
+## Nenhum arquivo novo necessario
 
 ## Nenhuma migracao de banco necessaria
-
-Todas as tabelas necessarias (leads, clients, opportunities, tasks, notes, profiles, user_roles) ja existem com os campos corretos.
 
