@@ -60,7 +60,7 @@ function AppRoutes() {
       <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
       <Route path="/paineis" element={<ProtectedRoute><Paineis /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
-      <Route path="/import-clients" element={<ImportClients />} />
+      <Route path="/import-clients" element={<ProtectedRoute><ImportClients /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

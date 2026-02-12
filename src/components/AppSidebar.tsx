@@ -38,6 +38,9 @@ const menuItems = [
   { title: "Oportunidades", icon: Briefcase, path: "/oportunidades" },
   { title: "Painéis", icon: BarChart3, path: "/paineis" },
   { title: "Relatórios", icon: FileText, path: "/relatorios" },
+];
+
+const adminMenuItems = [
   { title: "Importar Base", icon: Upload, path: "/import-clients" },
 ];
 
@@ -66,7 +69,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {[...menuItems, ...(role === "ADMIN" ? adminMenuItems : [])].map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     isActive={location.pathname === item.path}
