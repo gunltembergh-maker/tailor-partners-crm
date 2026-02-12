@@ -68,6 +68,10 @@ export default function Clientes() {
     return client.advisor_name || "-";
   };
 
+  const finderDisplay = (client: any) => {
+    return client.finder_name || "-";
+  };
+
   const segmentos = [...new Set(clients.map((c) => c.segmento).filter(Boolean))];
   const bankers = [...new Map(clients.filter((c) => c.banker_id).map((c) => [c.banker_id, profileName(c.banker_id)])).entries()].filter(([, name]) => name !== "-");
   const assessors = [...new Map(clients.filter((c) => c.assessor_id).map((c) => [c.assessor_id, profileName(c.assessor_id)])).entries()].filter(([, name]) => name !== "-");
@@ -267,7 +271,7 @@ export default function Clientes() {
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">Banker</TableHead>
                   <TableHead className="hidden md:table-cell">Assessor</TableHead>
-                  <TableHead className="hidden lg:table-cell">Patrimônio</TableHead>
+                  <TableHead className="hidden md:table-cell">Finder</TableHead>
                   <TableHead className="hidden lg:table-cell">Últ. Contato</TableHead>
                   <TableHead className="hidden lg:table-cell">Próx. Ação</TableHead>
                   <TableHead className="w-10" />
@@ -288,7 +292,7 @@ export default function Clientes() {
                     </TableCell>
                     <TableCell className="hidden md:table-cell">{bankerDisplay(client)}</TableCell>
                     <TableCell className="hidden md:table-cell">{assessorDisplay(client)}</TableCell>
-                    <TableCell className="hidden lg:table-cell">{formatCurrency(client.patrimonio_ou_receita)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{finderDisplay(client)}</TableCell>
                     <TableCell className="hidden lg:table-cell">{formatDate(client.last_contact_at)}</TableCell>
                     <TableCell className="hidden lg:table-cell">{formatDate(client.next_action_at)}</TableCell>
                     <TableCell>
