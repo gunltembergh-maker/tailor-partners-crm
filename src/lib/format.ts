@@ -114,6 +114,24 @@ export const porteLabels: Record<string, string> = {
   GRANDE: "Grande",
 };
 
+export const canalRelacionamentoLabels: Record<string, string> = {
+  REUNIAO_PRESENCIAL: "Reunião Presencial",
+  VIDEO_CHAMADA: "Vídeo Chamada",
+  WHATSAPP: "WhatsApp",
+  LIGACAO: "Ligação",
+  EMAIL: "E-mail",
+};
+
+export const estadosBR: Record<string, string> = {
+  AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia",
+  CE: "Ceará", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás",
+  MA: "Maranhão", MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais",
+  PA: "Pará", PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí",
+  RJ: "Rio de Janeiro", RN: "Rio Grande do Norte", RS: "Rio Grande do Sul",
+  RO: "Rondônia", RR: "Roraima", SC: "Santa Catarina", SP: "São Paulo",
+  SE: "Sergipe", TO: "Tocantins",
+};
+
 export const roleLabels: Record<string, string> = {
   ASSESSOR: "Assessor",
   BANKER: "Banker",

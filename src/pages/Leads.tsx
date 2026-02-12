@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Loader2, ArrowUpDown } from "lucide-react";
-import { formatCurrency, formatDate, isDaysAgo, leadStatusLabels, leadStatusColors, canalOrigemLabels, tipoPessoaLabels, porteLabels } from "@/lib/format";
+import { formatCurrency, formatDate, isDaysAgo, leadStatusLabels, leadStatusColors, canalOrigemLabels, tipoPessoaLabels, porteLabels, canalRelacionamentoLabels, estadosBR } from "@/lib/format";
 
 export default function Leads() {
   const navigate = useNavigate();
@@ -31,7 +31,8 @@ export default function Leads() {
   const [form, setForm] = useState({
     tipo_pessoa: "PF", nome_razao: "", cpf_cnpj: "", email: "", telefone: "",
     canal_origem: "Outro", valor_potencial: "", segmento: "", score: "", observacoes: "",
-    porte: "",
+    porte: "", canal_relacionamento: "",
+    logradouro: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "",
   });
 
   async function loadLeads() {
@@ -61,6 +62,13 @@ export default function Leads() {
           telefone: data.telefone || prev.telefone,
           segmento: data.atividade_principal || prev.segmento,
           porte: data.porte || prev.porte,
+          logradouro: data.logradouro || prev.logradouro,
+          numero: data.numero || prev.numero,
+          complemento: data.complemento || prev.complemento,
+          bairro: data.bairro || prev.bairro,
+          cep: data.cep || prev.cep,
+          cidade: data.municipio || prev.cidade,
+          estado: data.uf || prev.estado,
         }));
         toast({ title: "CNPJ encontrado!", description: "Dados preenchidos automaticamente." });
       }
@@ -87,12 +95,20 @@ export default function Leads() {
       observacoes: form.observacoes || null,
       owner_id: user.id,
       porte: form.tipo_pessoa === "PJ" && form.porte ? form.porte : null,
+      canal_relacionamento: form.canal_relacionamento || null,
+      logradouro: form.logradouro || null,
+      numero: form.numero || null,
+      complemento: form.complemento || null,
+      bairro: form.bairro || null,
+      cep: form.cep || null,
+      cidade: form.cidade || null,
+      estado: form.estado || null,
     } as any);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Lead criado!" });
-      setForm({ tipo_pessoa: "PF", nome_razao: "", cpf_cnpj: "", email: "", telefone: "", canal_origem: "Outro", valor_potencial: "", segmento: "", score: "", observacoes: "", porte: "" });
+      setForm({ tipo_pessoa: "PF", nome_razao: "", cpf_cnpj: "", email: "", telefone: "", canal_origem: "Outro", valor_potencial: "", segmento: "", score: "", observacoes: "", porte: "", canal_relacionamento: "", logradouro: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "" });
       setOpen(false);
       loadLeads();
     }
@@ -224,6 +240,41 @@ export default function Leads() {
                     </div>
                   )}
 
+                  <div>
+                    <Label>Canal de Relacionamento</Label>
+                    <Select value={form.canal_relacionamento} onValueChange={(v) => setForm({ ...form, canal_relacionamento: v })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o canal" /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(canalRelacionamentoLabels).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Endereço</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2"><Input placeholder="Logradouro (Rua/Av)" value={form.logradouro} onChange={(e) => setForm({ ...form, logradouro: e.target.value })} /></div>
+                      <div><Input placeholder="Número" value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} /></div>
+                    </div>
+                    <Input placeholder="Complemento" value={form.complemento} onChange={(e) => setForm({ ...form, complemento: e.target.value })} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input placeholder="Bairro" value={form.bairro} onChange={(e) => setForm({ ...form, bairro: e.target.value })} />
+                      <Input placeholder="CEP" value={form.cep} onChange={(e) => setForm({ ...form, cep: e.target.value })} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input placeholder="Cidade" value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} />
+                      <Select value={form.estado} onValueChange={(v) => setForm({ ...form, estado: v })}>
+                        <SelectTrigger><SelectValue placeholder="Estado" /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(estadosBR).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                   <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} rows={2} /></div>
                   <Button type="submit" className="w-full">Criar Lead</Button>
                 </form>

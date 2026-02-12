@@ -89,16 +89,24 @@ export type Database = {
       leads: {
         Row: {
           assessor_id: string | null
+          bairro: string | null
           banker_id: string | null
           canal_origem: string | null
+          canal_relacionamento: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
           conversion_at: string | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
+          estado: string | null
           id: string
           last_contact_at: string | null
+          logradouro: string | null
           next_action_at: string | null
           nome_razao: string
+          numero: string | null
           observacoes: string | null
           owner_id: string
           porte: string | null
@@ -112,16 +120,24 @@ export type Database = {
         }
         Insert: {
           assessor_id?: string | null
+          bairro?: string | null
           banker_id?: string | null
           canal_origem?: string | null
+          canal_relacionamento?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           conversion_at?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          estado?: string | null
           id?: string
           last_contact_at?: string | null
+          logradouro?: string | null
           next_action_at?: string | null
           nome_razao: string
+          numero?: string | null
           observacoes?: string | null
           owner_id: string
           porte?: string | null
@@ -135,16 +151,24 @@ export type Database = {
         }
         Update: {
           assessor_id?: string | null
+          bairro?: string | null
           banker_id?: string | null
           canal_origem?: string | null
+          canal_relacionamento?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           conversion_at?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          estado?: string | null
           id?: string
           last_contact_at?: string | null
+          logradouro?: string | null
           next_action_at?: string | null
           nome_razao?: string
+          numero?: string | null
           observacoes?: string | null
           owner_id?: string
           porte?: string | null
