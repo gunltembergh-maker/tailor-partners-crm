@@ -1,79 +1,77 @@
 
-# Modulo Contas (Clientes) - Lista e Detalhe
+# Paineis (Fluxo de Inteligencia) e Relatorios
 
 ## Resumo
 
-Evoluir a lista de Clientes com colunas tabulares, filtros adicionais (Banker, Assessor, Segmento), acoes rapidas inline (criar tarefa, adicionar nota, marcar como critico), e reescrever o detalhe do cliente com 4 abas customizadas incluindo aba de Oportunidades com vinculacao e criacao.
+Reescrever `src/pages/Paineis.tsx` com uma pagina informativa "Fluxo de Inteligencia (CRM)" contendo 5 colunas/cards visuais que servem como guia de uso do CRM. Reescrever `src/pages/Relatorios.tsx` com 4 relatorios baseados em dados reais usando graficos do recharts.
 
 ---
 
 ## O que muda para o usuario
 
-1. Lista de contas passa de cards simples para uma tabela com colunas: Nome/Razao, Status, Banker, Assessor, Patrimonio/Receita, Ultimo contato, Proxima acao
-2. Novos filtros: Banker, Assessor e Segmento (alem do Status ja existente)
-3. Acoes rapidas em cada linha: "Criar tarefa", "Adicionar nota", "Marcar como critico" (ou desmarcar se ja for critico)
-4. Detalhe do cliente ganha aba "Oportunidades" (substituindo "Anexos") com lista de oportunidades vinculadas, botao para vincular existente e botao para criar nova oportunidade ja associada ao cliente
-5. Abas do detalhe: Resumo, Tarefas, Historico, Oportunidades
+1. **Paineis** deixa de ser placeholder e exibe um fluxo visual com 5 etapas do CRM (Captura, Processamento, Distribuicao, Historico, Expansao), cada uma com icones e textos curtos explicativos
+2. **Relatorios** exibe 4 graficos interativos:
+   - Leads por status (ultimos 90 dias) - grafico de barras
+   - Conversao por responsavel (ultimos 90 dias) - grafico de barras horizontal
+   - Oportunidades ganhas/perdidas por mes - grafico de barras agrupado
+   - Carteira de clientes por status - grafico de barras com soma de patrimonio/receita
 
 ---
 
 ## Detalhes Tecnicos
 
-### 1. Reescrever `src/pages/Clientes.tsx`
+### 1. Reescrever `src/pages/Paineis.tsx`
 
-**Dados carregados:**
-- `clients`: todos os clientes com campos completos
-- `profiles`: lista de profiles (para resolver nomes de banker_id e assessor_id)
+Pagina estatica/informativa com layout horizontal de 5 cards conectados por setas visuais (ou grid responsivo). Cada card representa uma etapa do fluxo:
 
-**Novos filtros (estados):**
-- `bankerFilter`: string ("__all__" ou user_id) - dropdown com nomes de bankers
-- `assessorFilter`: string ("__all__" ou user_id) - dropdown com nomes de assessores
-- `segmentoFilter`: string ("__all__" ou valor) - dropdown com segmentos unicos extraidos dos clientes
+| Etapa | Icone | Titulo | Itens |
+|-------|-------|--------|-------|
+| 1. Captura de dados | Globe | Captura de Dados | Site, WhatsApp, Formularios, Plataformas |
+| 2. Processamento e analise | Brain/Cpu | Processamento e Analise | Segmento, Potencial, Score |
+| 3. Distribuicao interna | Share2/Network | Distribuicao Interna | Comercial, Marketing, Atendimento, Operacoes |
+| 4. Historico e aprendizado | BookOpen/History | Historico e Aprendizado | Registro continuo, Alertas, Previsoes |
+| 5. Expansao de receita | TrendingUp | Expansao de Receita | Upsell, Cross-sell, Novas ofertas |
 
-**Layout da lista:**
-- Substituir grid de Cards por componente Table do shadcn
-- Colunas: Nome/Razao (clicavel para detalhe), Status (Badge), Banker (nome), Assessor (nome), Patrimonio (formatCurrency), Ultimo contato (formatDate de last_contact_at), Proxima acao (formatDate de next_action_at)
-- Linha clicavel navega para `/clientes/:id`
+Usar Cards do shadcn com icones do lucide-react. Layout responsivo: 5 colunas em desktop, empilhado em mobile. Entre cada card, um icone de seta (ChevronRight ou ArrowRight) para indicar fluxo.
 
-**Acoes rapidas (coluna de acoes ou dropdown na linha):**
-- Usar DropdownMenu do shadcn com 3 opcoes:
-  - "Criar tarefa": abre Dialog com form simplificado (tipo, descricao, due_at) e insere task com related_type="CLIENT" e related_id=client.id
-  - "Adicionar nota": abre Dialog com Textarea e insere nota com related_type="CLIENT" e related_id=client.id
-  - "Marcar como critico" / "Desmarcar critico": toggle entre status atual e "CRITICO" (se ja for CRITICO, volta para ATIVO_NET)
-- Botoes de acao param propagacao do click (e.stopPropagation) para nao navegar ao detalhe
+### 2. Reescrever `src/pages/Relatorios.tsx`
 
-**Filtros aplicados:**
-- Status, Banker, Assessor e Segmento alem da busca textual existente
+Carregar dados de `leads`, `clients`, `opportunities` e `profiles` do Supabase. Processar no cliente para gerar 4 relatorios:
 
-### 2. Reescrever `src/pages/ClienteDetalhe.tsx`
+**Relatorio 1 - Leads por Status (90 dias):**
+- Filtrar leads com created_at nos ultimos 90 dias
+- Agrupar por status e contar
+- Grafico de barras vertical usando recharts (BarChart + ChartContainer)
 
-**Nao usar mais o `DetailLayout` generico** - criar layout customizado diretamente no componente para acomodar a aba de Oportunidades.
+**Relatorio 2 - Conversao por Responsavel (90 dias):**
+- Filtrar leads com created_at nos ultimos 90 dias
+- Agrupar por owner_id, contar total e convertidos (status=CONVERTIDO)
+- Calcular taxa = convertidos/total
+- Resolver nome via profiles
+- Grafico de barras horizontal
 
-**Abas (4):**
-1. **Resumo**: manter cards atuais de Informacoes Gerais e Dados Comerciais (copiar do atual)
-2. **Tarefas**: lista de tasks com related_type="CLIENT" e related_id=id (copiar logica do DetailLayout)
-3. **Historico**: timeline de notas com formulario para nova nota (copiar logica do DetailLayout)
-4. **Oportunidades**: nova aba com:
-   - Lista de oportunidades onde client_id = id (buscar da tabela opportunities)
-   - Cada oportunidade mostra: titulo, stage (Badge), valor_estimado, close_date
-   - Oportunidade clicavel navega para `/oportunidades/:id`
-   - Botao "Nova Oportunidade": abre Dialog com form (titulo, valor_estimado, probabilidade, close_date, observacoes) e insere com client_id=id e owner_id=user.id
-   - Botao "Vincular Existente": abre Dialog com Select/Combobox listando oportunidades sem client_id, ao selecionar faz update da oportunidade setando client_id=id
+**Relatorio 3 - Oportunidades Ganhas/Perdidas por Mes:**
+- Filtrar oportunidades com stage GANHA ou PERDIDA
+- Agrupar por mes (usando last_update_at ou updated_at)
+- Contar ganhas e perdidas por mes
+- Grafico de barras agrupado (2 series: ganhas em verde, perdidas em vermelho)
 
-**Dados carregados:**
-- client (por id)
-- tasks (related_type="CLIENT", related_id=id)
-- notes (related_type="CLIENT", related_id=id)
-- opportunities (client_id=id)
-- unlinkedOpportunities (client_id IS NULL, para o dialog de vincular)
+**Relatorio 4 - Carteira de Clientes por Status:**
+- Agrupar clientes por status (ATIVO_NET, INATIVO_PLD, CRITICO)
+- Somar patrimonio_ou_receita por grupo
+- Grafico de barras com valor em R$
 
-### Arquivos modificados (2)
+Usar componentes `ChartContainer`, `ChartTooltip`, `ChartTooltipContent` do chart.tsx ja existente, com `BarChart`, `Bar`, `XAxis`, `YAxis`, `CartesianGrid` do recharts.
 
-- `src/pages/Clientes.tsx` - reescrita com tabela, filtros, acoes rapidas
-- `src/pages/ClienteDetalhe.tsx` - reescrita com 4 abas customizadas incluindo Oportunidades
+Layout: 2x2 grid de cards, cada card com titulo e grafico dentro.
 
-### Nenhum arquivo novo
+---
 
-### Nenhuma migracao de banco necessaria
+## Arquivos modificados (2)
 
-A tabela `opportunities` ja possui campo `client_id` (uuid nullable) que sera usado para vinculacao.
+- `src/pages/Paineis.tsx` - reescrita com fluxo visual de 5 etapas
+- `src/pages/Relatorios.tsx` - reescrita com 4 graficos recharts
+
+## Nenhum arquivo novo
+
+## Nenhuma migracao de banco necessaria
