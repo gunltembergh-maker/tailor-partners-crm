@@ -2,11 +2,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/lib/format";
 import {
-  LayoutDashboard,
-  Users,
-  Briefcase,
+  Home,
+  Star,
   Target,
+  Users,
   CheckSquare,
+  CalendarDays,
+  Briefcase,
+  BarChart3,
+  FileText,
   LogOut,
   UserCircle,
 } from "lucide-react";
@@ -24,11 +28,15 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Dashboard", icon: LayoutDashboard, path: "/" },
+  { title: "Início", icon: Home, path: "/" },
+  { title: "Prioridades", icon: Star, path: "/prioridades" },
   { title: "Leads", icon: Target, path: "/leads" },
-  { title: "Clientes", icon: Users, path: "/clientes" },
-  { title: "Oportunidades", icon: Briefcase, path: "/oportunidades" },
+  { title: "Contas", icon: Users, path: "/clientes" },
   { title: "Tarefas", icon: CheckSquare, path: "/tarefas" },
+  { title: "Calendário", icon: CalendarDays, path: "/calendario" },
+  { title: "Oportunidades", icon: Briefcase, path: "/oportunidades" },
+  { title: "Painéis", icon: BarChart3, path: "/paineis" },
+  { title: "Relatórios", icon: FileText, path: "/relatorios" },
 ];
 
 export function AppSidebar() {
@@ -81,7 +89,7 @@ export function AppSidebar() {
               {profile?.full_name || "Usuário"}
             </p>
             <p className="text-xs text-sidebar-foreground/50 truncate">
-              {role ? roleLabels[role] || role : ""} · {profile?.email}
+              {role ? roleLabels[role] || role : ""}
             </p>
           </div>
         </div>

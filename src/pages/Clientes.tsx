@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -11,12 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Building2 } from "lucide-react";
+import { Plus, Search, Building2, ArrowUpDown } from "lucide-react";
 import { formatCurrency, formatDate, clientStatusLabels, clientStatusColors, tipoPessoaLabels } from "@/lib/format";
 
 export default function Clientes() {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("__all__");
+  const [sortBy, setSortBy] = useState("recent");
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -65,30 +69,54 @@ export default function Clientes() {
     load();
   }
 
-  const filtered = clients.filter(
-    (c) =>
+  const filtered = clients
+    .filter((c) =>
       c.nome_razao.toLowerCase().includes(search.toLowerCase()) ||
       (c.cpf_cnpj || "").includes(search) ||
       (c.email || "").toLowerCase().includes(search.toLowerCase())
-  );
+    )
+    .filter((c) => statusFilter === "__all__" || c.status === statusFilter)
+    .sort((a, b) => {
+      if (sortBy === "recent") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      if (sortBy === "name") return a.nome_razao.localeCompare(b.nome_razao);
+      return 0;
+    });
 
   return (
     <AppLayout>
       <div className="animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-display font-bold text-foreground">Clientes</h1>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
+          <h1 className="text-2xl font-display font-bold text-foreground">Contas</h1>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-52">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar clientes..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+              <Input placeholder="Buscar contas..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos</SelectItem>
+                {Object.entries(clientStatusLabels).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[140px]"><ArrowUpDown className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Mais recentes</SelectItem>
+                <SelectItem value="oldest">Mais antigos</SelectItem>
+                <SelectItem value="name">Nome A-Z</SelectItem>
+              </SelectContent>
+            </Select>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" />Novo Cliente</Button>
+                <Button><Plus className="h-4 w-4 mr-2" />Nova Conta</Button>
               </DialogTrigger>
               <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="font-display">Novo Cliente</DialogTitle>
+                  <DialogTitle className="font-display">Nova Conta</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-3">
                   <div>
@@ -125,7 +153,7 @@ export default function Clientes() {
                   </div>
                   <div><Label>Risco / Alertas</Label><Input value={form.risco_ou_alertas} onChange={(e) => setForm({ ...form, risco_ou_alertas: e.target.value })} /></div>
                   <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} rows={2} /></div>
-                  <Button type="submit" className="w-full">Criar Cliente</Button>
+                  <Button type="submit" className="w-full">Criar Conta</Button>
                 </form>
               </DialogContent>
             </Dialog>
@@ -134,14 +162,18 @@ export default function Clientes() {
 
         <div className="grid gap-3">
           {filtered.length === 0 && (
-            <Card className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</Card>
+            <Card className="p-8 text-center text-muted-foreground">Nenhuma conta encontrada.</Card>
           )}
           {filtered.map((client) => (
-            <Card key={client.id} className="shadow-sm hover:shadow-md transition-shadow">
+            <Card
+              key={client.id}
+              className="shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => navigate(`/clientes/${client.id}`)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-secondary rounded-lg shrink-0">
-                    <Building2 className="h-5 w-5 text-tailor-copper" />
+                    <Building2 className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
