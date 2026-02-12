@@ -1,111 +1,79 @@
 
-
-# Tela Inicio com Secoes Expansiveis
+# Modulo Contas (Clientes) - Lista e Detalhe
 
 ## Resumo
 
-Reescrever `src/pages/Dashboard.tsx` para exibir 3 secoes expansiveis (Leads, Clientes, Oportunidades), cada uma com cards clicaveis contendo contadores e somatorios em R$. Cada card filtra e navega para a lista correspondente, e cada secao pode ser expandida para mostrar uma mini-tabela com os top 10 itens.
+Evoluir a lista de Clientes com colunas tabulares, filtros adicionais (Banker, Assessor, Segmento), acoes rapidas inline (criar tarefa, adicionar nota, marcar como critico), e reescrever o detalhe do cliente com 4 abas customizadas incluindo aba de Oportunidades com vinculacao e criacao.
 
 ---
 
 ## O que muda para o usuario
 
-1. Tela Inicio dividida em 3 secoes colapsaveis: Leads, Clientes, Oportunidades
-2. Cada secao tem 5 cards com metricas especificas (contadores e valores em R$)
-3. Clicar num card navega para a lista correspondente ja filtrada (via query params)
-4. Cada secao tem botao "Expandir painel" que mostra mini-tabela com top 10 itens daquele filtro
-5. Topo exibe "Ultima atualizacao: {hora}" e botao "Atualizar" para recarregar
+1. Lista de contas passa de cards simples para uma tabela com colunas: Nome/Razao, Status, Banker, Assessor, Patrimonio/Receita, Ultimo contato, Proxima acao
+2. Novos filtros: Banker, Assessor e Segmento (alem do Status ja existente)
+3. Acoes rapidas em cada linha: "Criar tarefa", "Adicionar nota", "Marcar como critico" (ou desmarcar se ja for critico)
+4. Detalhe do cliente ganha aba "Oportunidades" (substituindo "Anexos") com lista de oportunidades vinculadas, botao para vincular existente e botao para criar nova oportunidade ja associada ao cliente
+5. Abas do detalhe: Resumo, Tarefas, Historico, Oportunidades
 
 ---
 
 ## Detalhes Tecnicos
 
-### 1. Reescrever `src/pages/Dashboard.tsx`
+### 1. Reescrever `src/pages/Clientes.tsx`
 
-**Dados carregados (uma funcao `loadData`):**
-- `leads`: todos os leads (id, nome_razao, status, last_contact_at, conversion_at, created_at, valor_potencial)
-- `clients`: todos os clientes (id, nome_razao, status, patrimonio_ou_receita)
-- `tasks`: todas as tarefas (id, status, due_at, related_type, related_id)
-- `opportunities`: todas as oportunidades (id, titulo, stage, close_date, last_update_at, valor_estimado, created_at)
+**Dados carregados:**
+- `clients`: todos os clientes com campos completos
+- `profiles`: lista de profiles (para resolver nomes de banker_id e assessor_id)
 
-**Estado:**
-- `lastUpdated`: Date - timestamp da ultima carga
-- `loading`: boolean
-- `expandedSection`: string | null - qual secao esta com mini-tabela aberta
-- `expandedCard`: string | null - qual card esta com painel expandido
+**Novos filtros (estados):**
+- `bankerFilter`: string ("__all__" ou user_id) - dropdown com nomes de bankers
+- `assessorFilter`: string ("__all__" ou user_id) - dropdown com nomes de assessores
+- `segmentoFilter`: string ("__all__" ou valor) - dropdown com segmentos unicos extraidos dos clientes
 
-**Secao LEADS (5 cards):**
+**Layout da lista:**
+- Substituir grid de Cards por componente Table do shadcn
+- Colunas: Nome/Razao (clicavel para detalhe), Status (Badge), Banker (nome), Assessor (nome), Patrimonio (formatCurrency), Ultimo contato (formatDate de last_contact_at), Proxima acao (formatDate de next_action_at)
+- Linha clicavel navega para `/clientes/:id`
 
-| Card | Calculo | Navegacao |
-|------|---------|-----------|
-| Leads Novos | leads com status="NOVO", contar | /leads?status=NOVO |
-| Atividades Hoje | tasks com due_at=hoje e related_type="LEAD", contar leads unicos | /tarefas?related_type=LEAD&due=today |
-| Sem Contato (30d) | leads com last_contact_at null OU > 30 dias, contar | /leads?filter=sem_contato |
-| Convertidos Hoje | leads com conversion_at=hoje, contar | /leads?status=CONVERTIDO |
-| Taxa de Conversao (90d) | leads com conversion_at nos ultimos 90d / leads criados nos ultimos 90d, exibir como % | Nao navega |
+**Acoes rapidas (coluna de acoes ou dropdown na linha):**
+- Usar DropdownMenu do shadcn com 3 opcoes:
+  - "Criar tarefa": abre Dialog com form simplificado (tipo, descricao, due_at) e insere task com related_type="CLIENT" e related_id=client.id
+  - "Adicionar nota": abre Dialog com Textarea e insere nota com related_type="CLIENT" e related_id=client.id
+  - "Marcar como critico" / "Desmarcar critico": toggle entre status atual e "CRITICO" (se ja for CRITICO, volta para ATIVO_NET)
+- Botoes de acao param propagacao do click (e.stopPropagation) para nao navegar ao detalhe
 
-**Secao CLIENTES (5 cards):**
+**Filtros aplicados:**
+- Status, Banker, Assessor e Segmento alem da busca textual existente
 
-| Card | Calculo | Navegacao |
-|------|---------|-----------|
-| Ativos (NET) | status="ATIVO_NET", contar + somar patrimonio_ou_receita | /clientes?status=ATIVO_NET |
-| Inativos (PLD) | status="INATIVO_PLD", contar + somar patrimonio_ou_receita | /clientes?status=INATIVO_PLD |
-| Tarefas Atrasadas | tasks ATRASADA e related_type="CLIENT", contar clientes unicos | /tarefas?related_type=CLIENT&status=ATRASADA |
-| Tarefas Hoje | tasks com due_at=hoje e related_type="CLIENT", contar clientes unicos | /tarefas?related_type=CLIENT&due=today |
-| Criticos | status="CRITICO", contar + somar patrimonio_ou_receita | /clientes?status=CRITICO |
+### 2. Reescrever `src/pages/ClienteDetalhe.tsx`
 
-**Secao OPORTUNIDADES (5 cards):**
+**Nao usar mais o `DetailLayout` generico** - criar layout customizado diretamente no componente para acomodar a aba de Oportunidades.
 
-| Card | Calculo | Navegacao |
-|------|---------|-----------|
-| Iniciais | stage="INICIAL", contar + somar valor_estimado | /oportunidades?stage=INICIAL |
-| Atrasadas | close_date < hoje e stage nao GANHA/PERDIDA, contar + somar valor_estimado | /oportunidades?filter=atrasadas |
-| Sem Atualizacao (30d) | last_update_at < hoje-30d e stage nao GANHA/PERDIDA, contar | /oportunidades?filter=sem_atualizacao |
-| Convertidas Hoje | stage="GANHA" e last_update_at=hoje, contar + somar valor_estimado | /oportunidades?stage=GANHA |
-| Taxa de Conversao (90d) | ganhas nos 90d / (ganhas + perdidas nos 90d), exibir como % | Nao navega |
+**Abas (4):**
+1. **Resumo**: manter cards atuais de Informacoes Gerais e Dados Comerciais (copiar do atual)
+2. **Tarefas**: lista de tasks com related_type="CLIENT" e related_id=id (copiar logica do DetailLayout)
+3. **Historico**: timeline de notas com formulario para nova nota (copiar logica do DetailLayout)
+4. **Oportunidades**: nova aba com:
+   - Lista de oportunidades onde client_id = id (buscar da tabela opportunities)
+   - Cada oportunidade mostra: titulo, stage (Badge), valor_estimado, close_date
+   - Oportunidade clicavel navega para `/oportunidades/:id`
+   - Botao "Nova Oportunidade": abre Dialog com form (titulo, valor_estimado, probabilidade, close_date, observacoes) e insere com client_id=id e owner_id=user.id
+   - Botao "Vincular Existente": abre Dialog com Select/Combobox listando oportunidades sem client_id, ao selecionar faz update da oportunidade setando client_id=id
 
-**Componente visual:**
-- Usar Collapsible do shadcn para cada secao (Leads, Clientes, Oportunidades)
-- Cada secao tem icone, titulo e contador total
-- Dentro, grid 2x3 ou 3x2 de cards
-- Cada card: titulo, valor principal (contador), subtitulo (valor em R$ quando aplicavel)
-- Cards clicaveis com `useNavigate`
-- Botao "Expandir painel" em cada card que mostra mini-tabela com top 10 registros (nome, status/stage, valor)
-- Topo: titulo "Inicio", "Ultima atualizacao: HH:MM" e botao "Atualizar" com icone RefreshCw
+**Dados carregados:**
+- client (por id)
+- tasks (related_type="CLIENT", related_id=id)
+- notes (related_type="CLIENT", related_id=id)
+- opportunities (client_id=id)
+- unlinkedOpportunities (client_id IS NULL, para o dialog de vincular)
 
-**Mini-tabela (painel expandido):**
-- Usa componente Table do shadcn
-- Top 10 itens correspondentes ao filtro do card
-- Colunas: Nome, Status/Stage, Valor, Data
-- Linhas clicaveis navegando para detalhe (/leads/:id, /clientes/:id, /oportunidades/:id)
+### Arquivos modificados (2)
 
-### 2. Atualizar paginas de lista para ler query params
+- `src/pages/Clientes.tsx` - reescrita com tabela, filtros, acoes rapidas
+- `src/pages/ClienteDetalhe.tsx` - reescrita com 4 abas customizadas incluindo Oportunidades
 
-Atualizar `Leads.tsx`, `Clientes.tsx`, `Oportunidades.tsx` para ler `searchParams` da URL e aplicar filtros iniciais:
-- `?status=NOVO` -> seta statusFilter
-- `?stage=INICIAL` -> seta stageFilter
-- `?filter=sem_contato` -> filtra leads sem contato > 30 dias (filtro customizado)
-- `?filter=atrasadas` -> filtra oportunidades com close_date < hoje
+### Nenhum arquivo novo
 
-Usar `useSearchParams` do react-router-dom para ler os parametros na montagem.
+### Nenhuma migracao de banco necessaria
 
-### 3. Funcoes auxiliares de data
-
-Adicionar em `src/lib/format.ts`:
-- `isToday(date: string)`: verifica se uma data e hoje
-- `isDaysAgo(date: string, days: number)`: verifica se uma data e anterior a N dias atras
-
----
-
-## Arquivos modificados
-
-- `src/pages/Dashboard.tsx` - reescrita completa
-- `src/pages/Leads.tsx` - ler query params para filtros iniciais
-- `src/pages/Clientes.tsx` - ler query params para filtros iniciais
-- `src/pages/Oportunidades.tsx` - ler query params para filtros iniciais
-- `src/lib/format.ts` - adicionar helpers isToday e isDaysAgo
-
-## Nenhum arquivo novo necessario
-
-## Nenhuma migracao de banco necessaria
-
+A tabela `opportunities` ja possui campo `client_id` (uuid nullable) que sera usado para vinculacao.
