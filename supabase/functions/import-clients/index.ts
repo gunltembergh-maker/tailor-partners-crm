@@ -91,13 +91,24 @@ Deno.serve(async (req) => {
         nome_razao: c.nome_razao || "",
         cpf_cnpj: cleanField(c.cpf_cnpj),
         tipo_pessoa: parseTipoPessoa(c.tipo_pessoa || ""),
-        patrimonio_ou_receita: parseNumber(String(c.patrimonio_ou_receita || "0")),
+        patrimonio_ou_receita: parseNumber(String(c.patrimonio_ou_receita ?? "")),
         segmento: cleanField(c.segmento),
         banker_name: cleanField(c.banker_name),
         finder_name: cleanField(c.finder_name),
         canal: cleanField(c.canal),
         advisor_name: cleanField(c.advisor_name),
         status: "ATIVO_NET",
+        codigo_xp: cleanField(c.codigo_xp),
+        pl_declarado: parseNumber(String(c.pl_declarado ?? "")),
+        perfil: cleanField(c.perfil),
+        nascimento: cleanField(c.nascimento),
+        cidade: cleanField(c.cidade),
+        estado: cleanField(c.estado),
+        estado_civil: cleanField(c.estado_civil),
+        tag: cleanField(c.tag),
+        endereco: cleanField(c.endereco),
+        sow: cleanField(c.sow),
+        casa: cleanField(c.casa),
       }));
     }
 
@@ -106,6 +117,17 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "No valid records found" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // If clearFirst flag is set, delete all existing clients before inserting
+    if (body.clearFirst) {
+      const { error: delError } = await supabase.from("clients").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (delError) {
+        return new Response(
+          JSON.stringify({ error: `Failed to clear clients: ${delError.message}` }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Insert in batches of 50
