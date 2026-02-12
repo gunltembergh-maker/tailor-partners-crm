@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -17,9 +17,10 @@ import { formatCurrency, formatDate, clientStatusLabels, clientStatusColors, tip
 
 export default function Clientes() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [clients, setClients] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("__all__");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "__all__");
   const [sortBy, setSortBy] = useState("recent");
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
