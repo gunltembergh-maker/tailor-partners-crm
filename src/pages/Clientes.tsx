@@ -58,6 +58,16 @@ export default function Clientes() {
     return profiles.find((p) => p.user_id === userId)?.full_name || "-";
   };
 
+  const bankerDisplay = (client: any) => {
+    if (client.banker_id) return profileName(client.banker_id);
+    return client.banker_name || "-";
+  };
+
+  const assessorDisplay = (client: any) => {
+    if (client.assessor_id) return profileName(client.assessor_id);
+    return client.advisor_name || "-";
+  };
+
   const segmentos = [...new Set(clients.map((c) => c.segmento).filter(Boolean))];
   const bankers = [...new Map(clients.filter((c) => c.banker_id).map((c) => [c.banker_id, profileName(c.banker_id)])).entries()].filter(([, name]) => name !== "-");
   const assessors = [...new Map(clients.filter((c) => c.assessor_id).map((c) => [c.assessor_id, profileName(c.assessor_id)])).entries()].filter(([, name]) => name !== "-");
@@ -276,8 +286,8 @@ export default function Clientes() {
                         {clientStatusLabels[client.status]}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{profileName(client.banker_id)}</TableCell>
-                    <TableCell className="hidden md:table-cell">{profileName(client.assessor_id)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{bankerDisplay(client)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{assessorDisplay(client)}</TableCell>
                     <TableCell className="hidden lg:table-cell">{formatCurrency(client.patrimonio_ou_receita)}</TableCell>
                     <TableCell className="hidden lg:table-cell">{formatDate(client.last_contact_at)}</TableCell>
                     <TableCell className="hidden lg:table-cell">{formatDate(client.next_action_at)}</TableCell>
