@@ -11,6 +11,7 @@ import {
   Briefcase,
   BarChart3,
   FileText,
+  Upload,
   LogOut,
   UserCircle,
 } from "lucide-react";
@@ -37,6 +38,7 @@ const menuItems = [
   { title: "Oportunidades", icon: Briefcase, path: "/oportunidades" },
   { title: "Painéis", icon: BarChart3, path: "/paineis" },
   { title: "Relatórios", icon: FileText, path: "/relatorios" },
+  { title: "Importar Base", icon: Upload, path: "/import-clients" },
 ];
 
 export function AppSidebar() {
