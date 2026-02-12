@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -11,12 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search, Loader2, ArrowUpDown } from "lucide-react";
 import { formatCurrency, formatDate, leadStatusLabels, leadStatusColors, canalOrigemLabels, tipoPessoaLabels, porteLabels } from "@/lib/format";
 
 export default function Leads() {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("__all__");
+  const [sortBy, setSortBy] = useState("recent");
   const [open, setOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const { user } = useAuth();
@@ -97,26 +101,50 @@ export default function Leads() {
     loadLeads();
   }
 
-  const filtered = leads.filter(
-    (l) =>
+  const filtered = leads
+    .filter((l) =>
       l.nome_razao.toLowerCase().includes(search.toLowerCase()) ||
       (l.cpf_cnpj || "").includes(search) ||
       (l.email || "").toLowerCase().includes(search.toLowerCase())
-  );
+    )
+    .filter((l) => statusFilter === "__all__" || l.status === statusFilter)
+    .sort((a, b) => {
+      if (sortBy === "recent") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      if (sortBy === "name") return a.nome_razao.localeCompare(b.nome_razao);
+      return 0;
+    });
 
   return (
     <AppLayout>
       <div className="animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <h1 className="text-2xl font-display font-bold text-foreground">Leads</h1>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-52">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar leads..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos</SelectItem>
+                {Object.entries(leadStatusLabels).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[140px]"><ArrowUpDown className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Mais recentes</SelectItem>
+                <SelectItem value="oldest">Mais antigos</SelectItem>
+                <SelectItem value="name">Nome A-Z</SelectItem>
+              </SelectContent>
+            </Select>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-2" />Novo Lead</Button>
+                <Button><Plus className="h-4 w-4 mr-2" />Novo</Button>
               </DialogTrigger>
               <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -139,12 +167,7 @@ export default function Leads() {
                     <div>
                       <Label>CNPJ</Label>
                       <div className="flex gap-2">
-                        <Input
-                          value={form.cpf_cnpj}
-                          onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })}
-                          placeholder="00.000.000/0000-00"
-                          className="flex-1"
-                        />
+                        <Input value={form.cpf_cnpj} onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })} placeholder="00.000.000/0000-00" className="flex-1" />
                         <Button type="button" variant="outline" onClick={consultarCNPJ} disabled={isSearching} className="shrink-0">
                           {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
                         </Button>
@@ -153,11 +176,7 @@ export default function Leads() {
                   ) : (
                     <div>
                       <Label>CPF</Label>
-                      <Input
-                        value={form.cpf_cnpj}
-                        onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })}
-                        placeholder="000.000.000-00"
-                      />
+                      <Input value={form.cpf_cnpj} onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })} placeholder="000.000.000-00" />
                     </div>
                   )}
 
@@ -210,7 +229,11 @@ export default function Leads() {
             <Card className="p-8 text-center text-muted-foreground">Nenhum lead encontrado.</Card>
           )}
           {filtered.map((lead) => (
-            <Card key={lead.id} className="shadow-sm hover:shadow-md transition-shadow">
+            <Card
+              key={lead.id}
+              className="shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => navigate(`/leads/${lead.id}`)}
+            >
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0">
@@ -228,7 +251,7 @@ export default function Leads() {
                       {lead.porte && ` · Porte: ${porteLabels[lead.porte] || lead.porte}`}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Badge variant="secondary" className={leadStatusColors[lead.status]}>
                       {leadStatusLabels[lead.status]}
                     </Badge>
