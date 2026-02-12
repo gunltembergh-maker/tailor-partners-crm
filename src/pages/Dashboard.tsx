@@ -24,16 +24,16 @@ export default function Dashboard() {
       const [leads, clients, opps, tasks] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("clients").select("id", { count: "exact", head: true }),
-        supabase.from("opportunities").select("value, stage"),
+        supabase.from("opportunities").select("valor_estimado, stage"),
         supabase.from("tasks").select("id, status"),
       ]);
 
       const pipelineValue = (opps.data || [])
-        .filter((o) => !["fechado_ganho", "fechado_perdido"].includes(o.stage))
-        .reduce((sum, o) => sum + (o.value || 0), 0);
+        .filter((o: any) => !["GANHA", "PERDIDA"].includes(o.stage))
+        .reduce((sum: number, o: any) => sum + (o.valor_estimado || 0), 0);
 
       const pendingTasks = (tasks.data || []).filter(
-        (t) => t.status === "pendente" || t.status === "em_andamento"
+        (t: any) => t.status === "ABERTA" || t.status === "ATRASADA"
       ).length;
 
       setStats({

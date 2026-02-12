@@ -16,148 +16,208 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
-          address: string | null
-          assigned_to: string | null
-          cnpj: string | null
-          company: string | null
+          assessor_id: string | null
+          banker_id: string | null
+          cpf_cnpj: string | null
           created_at: string
-          created_by: string
           email: string | null
           id: string
-          name: string
-          notes: string | null
-          phone: string | null
-          segment: string | null
-          total_assets: number | null
+          last_contact_at: string | null
+          next_action_at: string | null
+          nome_razao: string
+          observacoes: string | null
+          patrimonio_ou_receita: number | null
+          risco_ou_alertas: string | null
+          segmento: string | null
+          status: Database["public"]["Enums"]["client_status"]
+          telefone: string | null
+          tipo_pessoa: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at: string
         }
         Insert: {
-          address?: string | null
-          assigned_to?: string | null
-          cnpj?: string | null
-          company?: string | null
+          assessor_id?: string | null
+          banker_id?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
-          created_by: string
           email?: string | null
           id?: string
-          name: string
-          notes?: string | null
-          phone?: string | null
-          segment?: string | null
-          total_assets?: number | null
+          last_contact_at?: string | null
+          next_action_at?: string | null
+          nome_razao: string
+          observacoes?: string | null
+          patrimonio_ou_receita?: number | null
+          risco_ou_alertas?: string | null
+          segmento?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          telefone?: string | null
+          tipo_pessoa?: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at?: string
         }
         Update: {
-          address?: string | null
-          assigned_to?: string | null
-          cnpj?: string | null
-          company?: string | null
+          assessor_id?: string | null
+          banker_id?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
-          created_by?: string
           email?: string | null
           id?: string
-          name?: string
-          notes?: string | null
-          phone?: string | null
-          segment?: string | null
-          total_assets?: number | null
+          last_contact_at?: string | null
+          next_action_at?: string | null
+          nome_razao?: string
+          observacoes?: string | null
+          patrimonio_ou_receita?: number | null
+          risco_ou_alertas?: string | null
+          segmento?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          telefone?: string | null
+          tipo_pessoa?: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at?: string
         }
         Relationships: []
       }
       leads: {
         Row: {
-          assigned_to: string | null
-          company: string | null
+          assessor_id: string | null
+          banker_id: string | null
+          canal_origem: string | null
+          conversion_at: string | null
+          cpf_cnpj: string | null
           created_at: string
-          created_by: string
           email: string | null
-          estimated_value: number | null
           id: string
-          name: string
-          notes: string | null
-          phone: string | null
-          source: string | null
+          last_contact_at: string | null
+          next_action_at: string | null
+          nome_razao: string
+          observacoes: string | null
+          owner_id: string
+          score: number | null
+          segmento: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          telefone: string | null
+          tipo_pessoa: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at: string
+          valor_potencial: number | null
         }
         Insert: {
-          assigned_to?: string | null
-          company?: string | null
+          assessor_id?: string | null
+          banker_id?: string | null
+          canal_origem?: string | null
+          conversion_at?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
-          created_by: string
           email?: string | null
-          estimated_value?: number | null
           id?: string
-          name: string
-          notes?: string | null
-          phone?: string | null
-          source?: string | null
+          last_contact_at?: string | null
+          next_action_at?: string | null
+          nome_razao: string
+          observacoes?: string | null
+          owner_id: string
+          score?: number | null
+          segmento?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          telefone?: string | null
+          tipo_pessoa?: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at?: string
+          valor_potencial?: number | null
         }
         Update: {
-          assigned_to?: string | null
-          company?: string | null
+          assessor_id?: string | null
+          banker_id?: string | null
+          canal_origem?: string | null
+          conversion_at?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
-          created_by?: string
           email?: string | null
-          estimated_value?: number | null
           id?: string
-          name?: string
-          notes?: string | null
-          phone?: string | null
-          source?: string | null
+          last_contact_at?: string | null
+          next_action_at?: string | null
+          nome_razao?: string
+          observacoes?: string | null
+          owner_id?: string
+          score?: number | null
+          segmento?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          telefone?: string | null
+          tipo_pessoa?: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at?: string
+          valor_potencial?: number | null
+        }
+        Relationships: []
+      }
+      notes: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          related_id: string
+          related_type: Database["public"]["Enums"]["related_type"]
+          texto: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          related_id: string
+          related_type: Database["public"]["Enums"]["related_type"]
+          texto: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          related_id?: string
+          related_type?: Database["public"]["Enums"]["related_type"]
+          texto?: string
         }
         Relationships: []
       }
       opportunities: {
         Row: {
-          assigned_to: string | null
           client_id: string | null
+          close_date: string | null
           created_at: string
-          created_by: string
-          expected_close_date: string | null
           id: string
+          last_update_at: string | null
           lead_id: string | null
-          notes: string | null
-          probability: number | null
+          observacoes: string | null
+          origem: string | null
+          owner_id: string
+          probabilidade: number | null
           stage: Database["public"]["Enums"]["opportunity_stage"]
-          title: string
+          titulo: string
           updated_at: string
-          value: number | null
+          valor_estimado: number | null
         }
         Insert: {
-          assigned_to?: string | null
           client_id?: string | null
+          close_date?: string | null
           created_at?: string
-          created_by: string
-          expected_close_date?: string | null
           id?: string
+          last_update_at?: string | null
           lead_id?: string | null
-          notes?: string | null
-          probability?: number | null
+          observacoes?: string | null
+          origem?: string | null
+          owner_id: string
+          probabilidade?: number | null
           stage?: Database["public"]["Enums"]["opportunity_stage"]
-          title: string
+          titulo: string
           updated_at?: string
-          value?: number | null
+          valor_estimado?: number | null
         }
         Update: {
-          assigned_to?: string | null
           client_id?: string | null
+          close_date?: string | null
           created_at?: string
-          created_by?: string
-          expected_close_date?: string | null
           id?: string
+          last_update_at?: string | null
           lead_id?: string | null
-          notes?: string | null
-          probability?: number | null
+          observacoes?: string | null
+          origem?: string | null
+          owner_id?: string
+          probabilidade?: number | null
           stage?: Database["public"]["Enums"]["opportunity_stage"]
-          title?: string
+          titulo?: string
           updated_at?: string
-          value?: number | null
+          valor_estimado?: number | null
         }
         Relationships: [
           {
@@ -178,6 +238,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active: boolean
           avatar_url: string | null
           created_at: string
           email: string
@@ -188,6 +249,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active?: boolean
           avatar_url?: string | null
           created_at?: string
           email?: string
@@ -198,6 +260,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active?: boolean
           avatar_url?: string | null
           created_at?: string
           email?: string
@@ -211,45 +274,42 @@ export type Database = {
       }
       tasks: {
         Row: {
-          assigned_to: string | null
           created_at: string
-          created_by: string
-          description: string | null
-          due_date: string | null
+          descricao: string | null
+          done_at: string | null
+          due_at: string | null
           id: string
-          priority: Database["public"]["Enums"]["task_priority"]
+          owner_id: string
           related_id: string | null
-          related_type: string | null
+          related_type: Database["public"]["Enums"]["related_type"] | null
           status: Database["public"]["Enums"]["task_status"]
-          title: string
+          tipo: Database["public"]["Enums"]["task_tipo"]
           updated_at: string
         }
         Insert: {
-          assigned_to?: string | null
           created_at?: string
-          created_by: string
-          description?: string | null
-          due_date?: string | null
+          descricao?: string | null
+          done_at?: string | null
+          due_at?: string | null
           id?: string
-          priority?: Database["public"]["Enums"]["task_priority"]
+          owner_id: string
           related_id?: string | null
-          related_type?: string | null
+          related_type?: Database["public"]["Enums"]["related_type"] | null
           status?: Database["public"]["Enums"]["task_status"]
-          title: string
+          tipo?: Database["public"]["Enums"]["task_tipo"]
           updated_at?: string
         }
         Update: {
-          assigned_to?: string | null
           created_at?: string
-          created_by?: string
-          description?: string | null
-          due_date?: string | null
+          descricao?: string | null
+          done_at?: string | null
+          due_at?: string | null
           id?: string
-          priority?: Database["public"]["Enums"]["task_priority"]
+          owner_id?: string
           related_id?: string | null
-          related_type?: string | null
+          related_type?: Database["public"]["Enums"]["related_type"] | null
           status?: Database["public"]["Enums"]["task_status"]
-          title?: string
+          tipo?: Database["public"]["Enums"]["task_tipo"]
           updated_at?: string
         }
         Relationships: []
@@ -286,24 +346,32 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "gerente" | "consultor"
+      app_role: "ASSESSOR" | "BANKER" | "LIDER"
+      client_status: "ATIVO_NET" | "INATIVO_PLD" | "CRITICO"
       lead_status:
-        | "novo"
-        | "contatado"
-        | "qualificado"
-        | "proposta"
-        | "negociacao"
-        | "ganho"
-        | "perdido"
+        | "NOVO"
+        | "CONTATO_INICIADO"
+        | "QUALIFICADO"
+        | "REUNIAO"
+        | "PROPOSTA"
+        | "CONVERTIDO"
+        | "PERDIDO"
       opportunity_stage:
-        | "prospeccao"
-        | "qualificacao"
-        | "proposta"
-        | "negociacao"
-        | "fechado_ganho"
-        | "fechado_perdido"
-      task_priority: "baixa" | "media" | "alta" | "urgente"
-      task_status: "pendente" | "em_andamento" | "concluida" | "cancelada"
+        | "INICIAL"
+        | "EM_ANDAMENTO"
+        | "NEGOCIACAO"
+        | "GANHA"
+        | "PERDIDA"
+      related_type: "LEAD" | "CLIENT" | "OPPORTUNITY"
+      task_status: "ABERTA" | "CONCLUIDA" | "ATRASADA"
+      task_tipo:
+        | "LIGACAO"
+        | "WHATSAPP"
+        | "EMAIL"
+        | "REUNIAO"
+        | "POS_VENDA"
+        | "OUTRO"
+      tipo_pessoa: "PF" | "PJ"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -431,26 +499,35 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "gerente", "consultor"],
+      app_role: ["ASSESSOR", "BANKER", "LIDER"],
+      client_status: ["ATIVO_NET", "INATIVO_PLD", "CRITICO"],
       lead_status: [
-        "novo",
-        "contatado",
-        "qualificado",
-        "proposta",
-        "negociacao",
-        "ganho",
-        "perdido",
+        "NOVO",
+        "CONTATO_INICIADO",
+        "QUALIFICADO",
+        "REUNIAO",
+        "PROPOSTA",
+        "CONVERTIDO",
+        "PERDIDO",
       ],
       opportunity_stage: [
-        "prospeccao",
-        "qualificacao",
-        "proposta",
-        "negociacao",
-        "fechado_ganho",
-        "fechado_perdido",
+        "INICIAL",
+        "EM_ANDAMENTO",
+        "NEGOCIACAO",
+        "GANHA",
+        "PERDIDA",
       ],
-      task_priority: ["baixa", "media", "alta", "urgente"],
-      task_status: ["pendente", "em_andamento", "concluida", "cancelada"],
+      related_type: ["LEAD", "CLIENT", "OPPORTUNITY"],
+      task_status: ["ABERTA", "CONCLUIDA", "ATRASADA"],
+      task_tipo: [
+        "LIGACAO",
+        "WHATSAPP",
+        "EMAIL",
+        "REUNIAO",
+        "POS_VENDA",
+        "OUTRO",
+      ],
+      tipo_pessoa: ["PF", "PJ"],
     },
   },
 } as const

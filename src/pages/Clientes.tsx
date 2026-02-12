@@ -6,24 +6,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Building2 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/format";
-import { Tables } from "@/integrations/supabase/types";
-
-type Client = Tables<"clients">;
+import { formatCurrency, formatDate, clientStatusLabels, clientStatusColors, tipoPessoaLabels } from "@/lib/format";
 
 export default function Clientes() {
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    name: "", email: "", phone: "", company: "", cnpj: "", address: "", segment: "", total_assets: "", notes: "",
+    tipo_pessoa: "PF", nome_razao: "", cpf_cnpj: "", email: "", telefone: "",
+    status: "ATIVO_NET", patrimonio_ou_receita: "", segmento: "", risco_ou_alertas: "", observacoes: "",
   });
 
   async function load() {
@@ -37,32 +37,39 @@ export default function Clientes() {
     e.preventDefault();
     if (!user) return;
     const { error } = await supabase.from("clients").insert({
-      name: form.name,
+      tipo_pessoa: form.tipo_pessoa as any,
+      nome_razao: form.nome_razao,
+      cpf_cnpj: form.cpf_cnpj || null,
       email: form.email || null,
-      phone: form.phone || null,
-      company: form.company || null,
-      cnpj: form.cnpj || null,
-      address: form.address || null,
-      segment: form.segment || null,
-      total_assets: form.total_assets ? parseFloat(form.total_assets) : 0,
-      notes: form.notes || null,
-      created_by: user.id,
+      telefone: form.telefone || null,
+      status: form.status as any,
+      patrimonio_ou_receita: form.patrimonio_ou_receita ? parseFloat(form.patrimonio_ou_receita) : 0,
+      segmento: form.segmento || null,
+      risco_ou_alertas: form.risco_ou_alertas || null,
+      observacoes: form.observacoes || null,
+      banker_id: user.id,
+      assessor_id: user.id,
     });
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Cliente criado!" });
-      setForm({ name: "", email: "", phone: "", company: "", cnpj: "", address: "", segment: "", total_assets: "", notes: "" });
+      setForm({ tipo_pessoa: "PF", nome_razao: "", cpf_cnpj: "", email: "", telefone: "", status: "ATIVO_NET", patrimonio_ou_receita: "", segmento: "", risco_ou_alertas: "", observacoes: "" });
       setOpen(false);
       load();
     }
   }
 
+  async function updateStatus(id: string, status: string) {
+    await supabase.from("clients").update({ status: status as any }).eq("id", id);
+    load();
+  }
+
   const filtered = clients.filter(
     (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.company || "").toLowerCase().includes(search.toLowerCase()) ||
-      (c.cnpj || "").includes(search)
+      c.nome_razao.toLowerCase().includes(search.toLowerCase()) ||
+      (c.cpf_cnpj || "").includes(search) ||
+      (c.email || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -79,26 +86,45 @@ export default function Clientes() {
               <DialogTrigger asChild>
                 <Button><Plus className="h-4 w-4 mr-2" />Novo Cliente</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="font-display">Novo Cliente</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-3">
-                  <div><Label>Nome *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+                  <div>
+                    <Label>Tipo Pessoa</Label>
+                    <Select value={form.tipo_pessoa} onValueChange={(v) => setForm({ ...form, tipo_pessoa: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(tipoPessoaLabels).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Nome / Razão Social *</Label><Input value={form.nome_razao} onChange={(e) => setForm({ ...form, nome_razao: e.target.value })} required /></div>
+                  <div><Label>CPF / CNPJ</Label><Input value={form.cpf_cnpj} onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })} /></div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-                    <div><Label>Telefone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                    <div><Label>Telefone</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
+                  </div>
+                  <div>
+                    <Label>Status</Label>
+                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(clientStatusLabels).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Empresa</Label><Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} /></div>
-                    <div><Label>CNPJ</Label><Input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} /></div>
+                    <div><Label>Patrimônio / Receita (R$)</Label><Input type="number" step="0.01" value={form.patrimonio_ou_receita} onChange={(e) => setForm({ ...form, patrimonio_ou_receita: e.target.value })} /></div>
+                    <div><Label>Segmento</Label><Input value={form.segmento} onChange={(e) => setForm({ ...form, segmento: e.target.value })} /></div>
                   </div>
-                  <div><Label>Endereço</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Segmento</Label><Input value={form.segment} onChange={(e) => setForm({ ...form, segment: e.target.value })} /></div>
-                    <div><Label>Patrimônio (R$)</Label><Input type="number" step="0.01" value={form.total_assets} onChange={(e) => setForm({ ...form, total_assets: e.target.value })} /></div>
-                  </div>
-                  <div><Label>Observações</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+                  <div><Label>Risco / Alertas</Label><Input value={form.risco_ou_alertas} onChange={(e) => setForm({ ...form, risco_ou_alertas: e.target.value })} /></div>
+                  <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} rows={2} /></div>
                   <Button type="submit" className="w-full">Criar Cliente</Button>
                 </form>
               </DialogContent>
@@ -118,16 +144,20 @@ export default function Clientes() {
                     <Building2 className="h-5 w-5 text-tailor-copper" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-foreground truncate">{client.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground truncate">{client.nome_razao}</h3>
+                      <Badge variant="outline" className="text-[10px] shrink-0">{tipoPessoaLabels[client.tipo_pessoa]}</Badge>
+                      <Badge variant="secondary" className={clientStatusColors[client.status]}>
+                        {clientStatusLabels[client.status]}
+                      </Badge>
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      {client.company && `${client.company} · `}
-                      {client.segment && `${client.segment} · `}
-                      {client.cnpj}
+                      {client.segmento && `${client.segmento} · `}{client.cpf_cnpj}
                     </p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
                       {client.email && <span>{client.email}</span>}
-                      {client.phone && <span>{client.phone}</span>}
-                      <span>Patrimônio: {formatCurrency(client.total_assets)}</span>
+                      {client.telefone && <span>{client.telefone}</span>}
+                      <span>Patrimônio: {formatCurrency(client.patrimonio_ou_receita)}</span>
                       <span>{formatDate(client.created_at)}</span>
                     </div>
                   </div>
