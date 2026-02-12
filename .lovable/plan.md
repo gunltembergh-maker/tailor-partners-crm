@@ -1,77 +1,100 @@
 
-# Paineis (Fluxo de Inteligencia) e Relatorios
+
+# Autenticacao e Perfis de Acesso (BANKER, FINDER, LIDER, ADMIN)
 
 ## Resumo
 
-Reescrever `src/pages/Paineis.tsx` com uma pagina informativa "Fluxo de Inteligencia (CRM)" contendo 5 colunas/cards visuais que servem como guia de uso do CRM. Reescrever `src/pages/Relatorios.tsx` com 4 relatorios baseados em dados reais usando graficos do recharts.
+Evoluir o sistema de roles adicionando FINDER e ADMIN ao enum `app_role`, atualizar todas as politicas RLS para filtrar dados por responsavel (BANKER/FINDER veem apenas seus proprios registros, LIDER/ADMIN veem tudo), e ajustar o seletor "Ver como" para funcionar tambem para ADMIN. O cadastro nao permite escolha de perfil - os roles serao atribuidos via upload de base.
 
 ---
 
 ## O que muda para o usuario
 
-1. **Paineis** deixa de ser placeholder e exibe um fluxo visual com 5 etapas do CRM (Captura, Processamento, Distribuicao, Historico, Expansao), cada uma com icones e textos curtos explicativos
-2. **Relatorios** exibe 4 graficos interativos:
-   - Leads por status (ultimos 90 dias) - grafico de barras
-   - Conversao por responsavel (ultimos 90 dias) - grafico de barras horizontal
-   - Oportunidades ganhas/perdidas por mes - grafico de barras agrupado
-   - Carteira de clientes por status - grafico de barras com soma de patrimonio/receita
+1. Dois novos perfis disponiveis: FINDER e ADMIN
+2. BANKER e FINDER so veem leads, clientes, oportunidades e tarefas onde sao responsaveis (owner, banker ou assessor)
+3. LIDER e ADMIN veem todos os registros e podem usar o seletor "Ver como" na topbar
+4. ADMIN tem acesso total (mesma visibilidade do LIDER por enquanto)
+5. O cadastro continua sem selecao de perfil - roles serao atribuidos manualmente
 
 ---
 
 ## Detalhes Tecnicos
 
-### 1. Reescrever `src/pages/Paineis.tsx`
+### 1. Migracao de banco de dados
 
-Pagina estatica/informativa com layout horizontal de 5 cards conectados por setas visuais (ou grid responsivo). Cada card representa uma etapa do fluxo:
+**Adicionar valores ao enum `app_role`:**
 
-| Etapa | Icone | Titulo | Itens |
-|-------|-------|--------|-------|
-| 1. Captura de dados | Globe | Captura de Dados | Site, WhatsApp, Formularios, Plataformas |
-| 2. Processamento e analise | Brain/Cpu | Processamento e Analise | Segmento, Potencial, Score |
-| 3. Distribuicao interna | Share2/Network | Distribuicao Interna | Comercial, Marketing, Atendimento, Operacoes |
-| 4. Historico e aprendizado | BookOpen/History | Historico e Aprendizado | Registro continuo, Alertas, Previsoes |
-| 5. Expansao de receita | TrendingUp | Expansao de Receita | Upsell, Cross-sell, Novas ofertas |
+```text
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'FINDER';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'ADMIN';
+```
 
-Usar Cards do shadcn com icones do lucide-react. Layout responsivo: 5 colunas em desktop, empilhado em mobile. Entre cada card, um icone de seta (ChevronRight ou ArrowRight) para indicar fluxo.
+**Criar funcao auxiliar `is_admin_or_lider`:**
 
-### 2. Reescrever `src/pages/Relatorios.tsx`
+Funcao SECURITY DEFINER que verifica se o usuario tem role LIDER ou ADMIN, usada nas politicas RLS.
 
-Carregar dados de `leads`, `clients`, `opportunities` e `profiles` do Supabase. Processar no cliente para gerar 4 relatorios:
+**Atualizar politicas RLS SELECT em todas as tabelas de dados:**
 
-**Relatorio 1 - Leads por Status (90 dias):**
-- Filtrar leads com created_at nos ultimos 90 dias
-- Agrupar por status e contar
-- Grafico de barras vertical usando recharts (BarChart + ChartContainer)
+- **leads**: trocar `true` por `is_admin_or_lider(auth.uid()) OR auth.uid() = owner_id OR auth.uid() = banker_id OR auth.uid() = assessor_id`
+- **clients**: trocar `true` por `is_admin_or_lider(auth.uid()) OR auth.uid() = banker_id OR auth.uid() = assessor_id`
+- **opportunities**: trocar `true` por `is_admin_or_lider(auth.uid()) OR auth.uid() = owner_id`
+- **tasks**: trocar `true` por `is_admin_or_lider(auth.uid()) OR auth.uid() = owner_id`
+- **notes**: manter `true` (notas sao contextuais e precisam ser visiveis para quem acessa o registro pai)
 
-**Relatorio 2 - Conversao por Responsavel (90 dias):**
-- Filtrar leads com created_at nos ultimos 90 dias
-- Agrupar por owner_id, contar total e convertidos (status=CONVERTIDO)
-- Calcular taxa = convertidos/total
-- Resolver nome via profiles
-- Grafico de barras horizontal
+**Atualizar politica RLS em user_roles:**
 
-**Relatorio 3 - Oportunidades Ganhas/Perdidas por Mes:**
-- Filtrar oportunidades com stage GANHA ou PERDIDA
-- Agrupar por mes (usando last_update_at ou updated_at)
-- Contar ganhas e perdidas por mes
-- Grafico de barras agrupado (2 series: ganhas em verde, perdidas em vermelho)
+- Adicionar politica SELECT para ADMIN poder ver todos os roles (similar ao LIDER existente)
 
-**Relatorio 4 - Carteira de Clientes por Status:**
-- Agrupar clientes por status (ATIVO_NET, INATIVO_PLD, CRITICO)
-- Somar patrimonio_ou_receita por grupo
-- Grafico de barras com valor em R$
+**Atualizar trigger `handle_new_user`:**
 
-Usar componentes `ChartContainer`, `ChartTooltip`, `ChartTooltipContent` do chart.tsx ja existente, com `BarChart`, `Bar`, `XAxis`, `YAxis`, `CartesianGrid` do recharts.
+- Nao atribuir role automaticamente no cadastro (remover INSERT em user_roles do trigger), ja que o usuario informou que vai subir uma base com os perfis
 
-Layout: 2x2 grid de cards, cada card com titulo e grafico dentro.
+### 2. Atualizar `src/lib/format.ts`
+
+Adicionar labels para os novos roles:
+
+```text
+roleLabels:
+  ASSESSOR -> "Assessor"
+  BANKER -> "Banker"
+  FINDER -> "Finder"
+  LIDER -> "Lider"
+  ADMIN -> "Admin"
+```
+
+### 3. Atualizar `src/contexts/ViewAsContext.tsx`
+
+- Mudar a condicao `isLider` para `isLiderOrAdmin` que verifica se role e "LIDER" ou "ADMIN"
+- Usar essa flag para habilitar o seletor "Ver como" e o carregamento da lista de membros
+
+### 4. Atualizar `src/components/AppLayout.tsx`
+
+- Usar `isLiderOrAdmin` (renomeado de `isLider`) para exibir o seletor "Ver como"
+- Nenhuma mudanca visual, apenas a logica de exibicao
+
+### 5. Atualizar `src/hooks/useAuth.tsx`
+
+- Ajustar `fetchRole` para tratar o caso onde o usuario nao tem role atribuido (retornar null graciosamente em vez de erro 406)
+- Usar `.maybeSingle()` em vez de `.single()` para evitar erro quando nao ha linha
+
+### 6. Nao alterar as paginas de dados
+
+As paginas (Leads, Clientes, Oportunidades, Tarefas, Dashboard, Prioridades) continuam buscando todos os registros sem filtro no codigo. O RLS no banco de dados cuida automaticamente de restringir os dados retornados conforme o perfil do usuario.
 
 ---
 
-## Arquivos modificados (2)
+## Arquivos modificados
 
-- `src/pages/Paineis.tsx` - reescrita com fluxo visual de 5 etapas
-- `src/pages/Relatorios.tsx` - reescrita com 4 graficos recharts
+- `src/lib/format.ts` - adicionar roleLabels para FINDER e ADMIN
+- `src/contexts/ViewAsContext.tsx` - suportar ADMIN alem de LIDER
+- `src/components/AppLayout.tsx` - usar isLiderOrAdmin
+- `src/hooks/useAuth.tsx` - usar maybeSingle() no fetchRole
 
-## Nenhum arquivo novo
+## Migracoes de banco
 
-## Nenhuma migracao de banco necessaria
+- Adicionar FINDER e ADMIN ao enum app_role
+- Criar funcao is_admin_or_lider
+- Atualizar politicas RLS SELECT em leads, clients, opportunities, tasks
+- Adicionar politica SELECT em user_roles para ADMIN
+- Atualizar trigger handle_new_user para nao atribuir role padrao
+
