@@ -26,7 +26,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
   const { role } = useAuth();
   const [viewAsUserId, setViewAs] = useState<string | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const isLider = role === "LIDER";
+  const isLider = role === "LIDER" || role === "ADMIN";
 
   useEffect(() => {
     if (!isLider) return;

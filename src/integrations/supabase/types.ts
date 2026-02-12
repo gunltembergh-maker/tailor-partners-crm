@@ -347,6 +347,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "ASSESSOR" | "BANKER" | "LIDER" | "FINDER" | "ADMIN"

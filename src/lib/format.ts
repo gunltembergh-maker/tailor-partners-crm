@@ -117,7 +117,9 @@ export const porteLabels: Record<string, string> = {
 export const roleLabels: Record<string, string> = {
   ASSESSOR: "Assessor",
   BANKER: "Banker",
+  FINDER: "Finder",
   LIDER: "Líder",
+  ADMIN: "Admin",
 };
 
 export function isToday(date: string | null | undefined): boolean {
