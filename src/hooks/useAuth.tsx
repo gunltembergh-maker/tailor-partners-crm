@@ -64,8 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .single();
-    if (data) setRole(data.role);
+      .maybeSingle();
+    setRole(data?.role ?? null);
   }
 
   const signIn = async (email: string, password: string) => {
