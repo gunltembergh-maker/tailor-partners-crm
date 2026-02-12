@@ -19,6 +19,7 @@ import Calendario from "./pages/Calendario";
 import Paineis from "./pages/Paineis";
 import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
+import ImportClients from "./pages/ImportClients";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ function AppRoutes() {
       <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
       <Route path="/paineis" element={<ProtectedRoute><Paineis /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+      <Route path="/import-clients" element={<ImportClients />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
