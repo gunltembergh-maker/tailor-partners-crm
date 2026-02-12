@@ -11,19 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search } from "lucide-react";
-import { formatCurrency, formatDate, leadStatusLabels, leadStatusColors, canalOrigemLabels, tipoPessoaLabels } from "@/lib/format";
+import { Plus, Search, Loader2 } from "lucide-react";
+import { formatCurrency, formatDate, leadStatusLabels, leadStatusColors, canalOrigemLabels, tipoPessoaLabels, porteLabels } from "@/lib/format";
 
 export default function Leads() {
   const [leads, setLeads] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
   const [form, setForm] = useState({
     tipo_pessoa: "PF", nome_razao: "", cpf_cnpj: "", email: "", telefone: "",
     canal_origem: "Outro", valor_potencial: "", segmento: "", score: "", observacoes: "",
+    porte: "",
   });
 
   async function loadLeads() {
@@ -32,6 +34,36 @@ export default function Leads() {
   }
 
   useEffect(() => { loadLeads(); }, []);
+
+  async function consultarCNPJ() {
+    if (!form.cpf_cnpj) {
+      toast({ title: "Informe o CNPJ", variant: "destructive" });
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("consulta-cnpj", {
+        body: { cnpj: form.cpf_cnpj },
+      });
+      if (error || data?.error) {
+        toast({ title: "Erro", description: data?.error || error?.message || "CNPJ não encontrado", variant: "destructive" });
+      } else {
+        setForm((prev) => ({
+          ...prev,
+          nome_razao: data.razao_social || prev.nome_razao,
+          email: data.email || prev.email,
+          telefone: data.telefone || prev.telefone,
+          segmento: data.atividade_principal || prev.segmento,
+          porte: data.porte || prev.porte,
+        }));
+        toast({ title: "CNPJ encontrado!", description: "Dados preenchidos automaticamente." });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro na consulta", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSearching(false);
+    }
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -48,12 +80,13 @@ export default function Leads() {
       score: form.score ? parseInt(form.score) : null,
       observacoes: form.observacoes || null,
       owner_id: user.id,
-    });
+      porte: form.tipo_pessoa === "PJ" && form.porte ? form.porte : null,
+    } as any);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Lead criado!" });
-      setForm({ tipo_pessoa: "PF", nome_razao: "", cpf_cnpj: "", email: "", telefone: "", canal_origem: "Outro", valor_potencial: "", segmento: "", score: "", observacoes: "" });
+      setForm({ tipo_pessoa: "PF", nome_razao: "", cpf_cnpj: "", email: "", telefone: "", canal_origem: "Outro", valor_potencial: "", segmento: "", score: "", observacoes: "", porte: "" });
       setOpen(false);
       loadLeads();
     }
@@ -92,7 +125,7 @@ export default function Leads() {
                 <form onSubmit={handleCreate} className="space-y-3">
                   <div>
                     <Label>Tipo Pessoa</Label>
-                    <Select value={form.tipo_pessoa} onValueChange={(v) => setForm({ ...form, tipo_pessoa: v })}>
+                    <Select value={form.tipo_pessoa} onValueChange={(v) => setForm({ ...form, tipo_pessoa: v, cpf_cnpj: "", porte: "" })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(tipoPessoaLabels).map(([k, v]) => (
@@ -101,8 +134,34 @@ export default function Leads() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {form.tipo_pessoa === "PJ" ? (
+                    <div>
+                      <Label>CNPJ</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={form.cpf_cnpj}
+                          onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })}
+                          placeholder="00.000.000/0000-00"
+                          className="flex-1"
+                        />
+                        <Button type="button" variant="outline" onClick={consultarCNPJ} disabled={isSearching} className="shrink-0">
+                          {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <Label>CPF</Label>
+                      <Input
+                        value={form.cpf_cnpj}
+                        onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })}
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+                  )}
+
                   <div><Label>Nome / Razão Social *</Label><Input value={form.nome_razao} onChange={(e) => setForm({ ...form, nome_razao: e.target.value })} required /></div>
-                  <div><Label>CPF / CNPJ</Label><Input value={form.cpf_cnpj} onChange={(e) => setForm({ ...form, cpf_cnpj: e.target.value })} /></div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>E-mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
                     <div><Label>Telefone</Label><Input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} /></div>
@@ -123,6 +182,21 @@ export default function Leads() {
                     <div><Label>Score (0-100)</Label><Input type="number" min="0" max="100" value={form.score} onChange={(e) => setForm({ ...form, score: e.target.value })} /></div>
                   </div>
                   <div><Label>Segmento</Label><Input value={form.segmento} onChange={(e) => setForm({ ...form, segmento: e.target.value })} /></div>
+
+                  {form.tipo_pessoa === "PJ" && (
+                    <div>
+                      <Label>Porte</Label>
+                      <Select value={form.porte} onValueChange={(v) => setForm({ ...form, porte: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione o porte" /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(porteLabels).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} rows={2} /></div>
                   <Button type="submit" className="w-full">Criar Lead</Button>
                 </form>
@@ -151,6 +225,7 @@ export default function Leads() {
                       {formatDate(lead.created_at)} · {formatCurrency(lead.valor_potencial)}
                       {lead.segmento && ` · ${lead.segmento}`}
                       {lead.score != null && ` · Score: ${lead.score}`}
+                      {lead.porte && ` · Porte: ${porteLabels[lead.porte] || lead.porte}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">

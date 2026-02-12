@@ -108,6 +108,12 @@ export const tipoPessoaLabels: Record<string, string> = {
   PJ: "Pessoa Jurídica",
 };
 
+export const porteLabels: Record<string, string> = {
+  PEQUENO: "Pequeno",
+  MEDIO: "Médio",
+  GRANDE: "Grande",
+};
+
 export const roleLabels: Record<string, string> = {
   ASSESSOR: "Assessor",
   BANKER: "Banker",

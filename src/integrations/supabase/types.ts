@@ -89,6 +89,7 @@ export type Database = {
           nome_razao: string
           observacoes: string | null
           owner_id: string
+          porte: string | null
           score: number | null
           segmento: string | null
           status: Database["public"]["Enums"]["lead_status"]
@@ -111,6 +112,7 @@ export type Database = {
           nome_razao: string
           observacoes?: string | null
           owner_id: string
+          porte?: string | null
           score?: number | null
           segmento?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
@@ -133,6 +135,7 @@ export type Database = {
           nome_razao?: string
           observacoes?: string | null
           owner_id?: string
+          porte?: string | null
           score?: number | null
           segmento?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
