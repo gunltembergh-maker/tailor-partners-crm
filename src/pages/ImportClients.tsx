@@ -44,13 +44,13 @@ export default function ImportClients() {
         casa: r["Casa"] || null,
       }));
 
-      // Send in batches of 200
+      // Send in batches of 200, first batch clears existing data
       const batchSize = 200;
       let totalInserted = 0;
       for (let i = 0; i < clients.length; i += batchSize) {
         const batch = clients.slice(i, i + batchSize);
         const { data, error } = await supabase.functions.invoke("import-clients", {
-          body: { clients: batch },
+          body: { clients: batch, clearFirst: i === 0 },
         });
         if (error) {
           setStatus(`Erro no lote ${Math.floor(i/batchSize)+1}: ${error.message}`);
