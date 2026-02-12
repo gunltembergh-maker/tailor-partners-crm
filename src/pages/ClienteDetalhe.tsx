@@ -141,6 +141,7 @@ export default function ClienteDetalhe() {
           {/* RESUMO */}
           <TabsContent value="resumo">
             <div className="grid gap-4 md:grid-cols-2">
+              {/* Informações Gerais */}
               <Card>
                 <CardContent className="p-5 space-y-3">
                   <h3 className="font-display font-semibold text-foreground">Informações Gerais</h3>
@@ -153,23 +154,86 @@ export default function ClienteDetalhe() {
                     <span>{client.email || "-"}</span>
                     <span className="text-muted-foreground">Telefone</span>
                     <span>{client.telefone || "-"}</span>
-                    <span className="text-muted-foreground">Segmento</span>
-                    <span>{client.segmento || "-"}</span>
+                    <span className="text-muted-foreground">Nascimento</span>
+                    <span>{client.nascimento || "-"}</span>
+                    <span className="text-muted-foreground">Estado Civil</span>
+                    <span>{client.estado_civil || "-"}</span>
+                    <span className="text-muted-foreground">Perfil</span>
+                    <span>{client.perfil || "-"}</span>
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Endereço */}
+              <Card>
+                <CardContent className="p-5 space-y-3">
+                  <h3 className="font-display font-semibold text-foreground">Endereço</h3>
+                  <div className="grid grid-cols-2 gap-y-2 text-sm">
+                    <span className="text-muted-foreground">Endereço</span>
+                    <span>{client.endereco || "-"}</span>
+                    <span className="text-muted-foreground">Cidade</span>
+                    <span>{client.cidade || "-"}</span>
+                    <span className="text-muted-foreground">Estado</span>
+                    <span>{client.estado || "-"}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dados Comerciais */}
               <Card>
                 <CardContent className="p-5 space-y-3">
                   <h3 className="font-display font-semibold text-foreground">Dados Comerciais</h3>
                   <div className="grid grid-cols-2 gap-y-2 text-sm">
                     <span className="text-muted-foreground">Status</span>
                     <Badge variant="secondary" className={clientStatusColors[client.status]}>{clientStatusLabels[client.status]}</Badge>
-                    <span className="text-muted-foreground">Patrimônio</span>
+                    <span className="text-muted-foreground">Patrimônio (PL Tailor)</span>
                     <span>{formatCurrency(client.patrimonio_ou_receita)}</span>
-                    <span className="text-muted-foreground">Risco/Alertas</span>
-                    <span>{client.risco_ou_alertas || "-"}</span>
+                    <span className="text-muted-foreground">PL Declarado</span>
+                    <span>{formatCurrency(client.pl_declarado)}</span>
+                    <span className="text-muted-foreground">SoW</span>
+                    <span>{client.sow || "-"}</span>
+                    <span className="text-muted-foreground">Segmento</span>
+                    <span>{client.segmento || "-"}</span>
+                    <span className="text-muted-foreground">Canal</span>
+                    <span>{client.canal || "-"}</span>
+                    <span className="text-muted-foreground">Casa</span>
+                    <span>{client.casa || "-"}</span>
+                    <span className="text-muted-foreground">Código XP</span>
+                    <span>{client.codigo_xp || "-"}</span>
+                    <span className="text-muted-foreground">TAG</span>
+                    <span>{client.tag || "-"}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Equipe Responsável */}
+              <Card>
+                <CardContent className="p-5 space-y-3">
+                  <h3 className="font-display font-semibold text-foreground">Equipe Responsável</h3>
+                  <div className="grid grid-cols-2 gap-y-2 text-sm">
+                    <span className="text-muted-foreground">Banker</span>
+                    <span>{client.banker_name || "-"}</span>
+                    <span className="text-muted-foreground">Assessor</span>
+                    <span>{client.advisor_name || "-"}</span>
+                    <span className="text-muted-foreground">Finder</span>
+                    <span>{client.finder_name || "-"}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Datas e Alertas */}
+              <Card className="md:col-span-2">
+                <CardContent className="p-5 space-y-3">
+                  <h3 className="font-display font-semibold text-foreground">Datas e Alertas</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 text-sm">
                     <span className="text-muted-foreground">Criado em</span>
                     <span>{formatDate(client.created_at)}</span>
+                    <span className="text-muted-foreground">Último Contato</span>
+                    <span>{formatDate(client.last_contact_at)}</span>
+                    <span className="text-muted-foreground">Próxima Ação</span>
+                    <span>{formatDate(client.next_action_at)}</span>
+                    <span className="text-muted-foreground">Risco/Alertas</span>
+                    <span>{client.risco_ou_alertas || "-"}</span>
                   </div>
                   {client.observacoes && (
                     <div className="pt-2 border-t border-border">

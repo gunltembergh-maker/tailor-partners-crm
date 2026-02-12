@@ -73,6 +73,17 @@ Deno.serve(async (req) => {
           canal: cleanField(cols[18]),
           advisor_name: cleanField(cols[2]),
           status: "ATIVO_NET",
+          codigo_xp: cleanField(cols[0]),
+          pl_declarado: parseNumber(cols[4]),
+          perfil: cleanField(cols[5]),
+          nascimento: cleanField(cols[7]),
+          cidade: cleanField(cols[8]),
+          estado: cleanField(cols[9]),
+          estado_civil: cleanField(cols[10]),
+          tag: cleanField(cols[12]),
+          endereco: cleanField(cols[13]),
+          sow: cleanField(cols[14]),
+          casa: cleanField(cols[19]),
         });
       }
     } else if (body.clients && Array.isArray(body.clients)) {

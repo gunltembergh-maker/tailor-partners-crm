@@ -31,6 +31,17 @@ export default function ImportClients() {
         finder_name: !r["Finder"] || r["Finder"] === "Sem Finder" ? null : r["Finder"],
         canal: !r["Canal"] || r["Canal"] === "Sem Canal" ? null : r["Canal"],
         advisor_name: r["Assessor"] || null,
+        codigo_xp: r["Cód do Cliente"] ? String(r["Cód do Cliente"]) : null,
+        pl_declarado: typeof r["PL Declarado"] === "number" ? r["PL Declarado"] : null,
+        perfil: r["Perfil"] || null,
+        nascimento: r["Nascimento"] ? String(r["Nascimento"]) : null,
+        cidade: r["Cidade"] || null,
+        estado: r["Estado"] || null,
+        estado_civil: r["Estado Civil"] || null,
+        tag: r["TAG"] || null,
+        endereco: r["Endereço"] || null,
+        sow: r["SoW"] ? String(r["SoW"]) : null,
+        casa: r["Casa"] || null,
       }));
 
       // Send in batches of 200
