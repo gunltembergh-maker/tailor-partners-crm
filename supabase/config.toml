@@ -1,1 +1,4 @@
 project_id = "jtlelokzpqkgvlwomfus"
+
+[functions.consulta-cnpj]
+verify_jwt = false
