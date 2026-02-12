@@ -24,6 +24,7 @@ export type Database = {
           cpf_cnpj: string | null
           created_at: string
           email: string | null
+          finder_id: string | null
           finder_name: string | null
           id: string
           last_contact_at: string | null
@@ -47,6 +48,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          finder_id?: string | null
           finder_name?: string | null
           id?: string
           last_contact_at?: string | null
@@ -70,6 +72,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          finder_id?: string | null
           finder_name?: string | null
           id?: string
           last_contact_at?: string | null
@@ -101,6 +104,7 @@ export type Database = {
           created_at: string
           email: string | null
           estado: string | null
+          finder_id: string | null
           id: string
           last_contact_at: string | null
           logradouro: string | null
@@ -132,6 +136,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           estado?: string | null
+          finder_id?: string | null
           id?: string
           last_contact_at?: string | null
           logradouro?: string | null
@@ -163,6 +168,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           estado?: string | null
+          finder_id?: string | null
           id?: string
           last_contact_at?: string | null
           logradouro?: string | null
