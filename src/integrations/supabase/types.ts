@@ -21,20 +21,31 @@ export type Database = {
           banker_id: string | null
           banker_name: string | null
           canal: string | null
+          casa: string | null
+          cidade: string | null
+          codigo_xp: string | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
+          endereco: string | null
+          estado: string | null
+          estado_civil: string | null
           finder_id: string | null
           finder_name: string | null
           id: string
           last_contact_at: string | null
+          nascimento: string | null
           next_action_at: string | null
           nome_razao: string
           observacoes: string | null
           patrimonio_ou_receita: number | null
+          perfil: string | null
+          pl_declarado: number | null
           risco_ou_alertas: string | null
           segmento: string | null
+          sow: string | null
           status: Database["public"]["Enums"]["client_status"]
+          tag: string | null
           telefone: string | null
           tipo_pessoa: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at: string
@@ -45,20 +56,31 @@ export type Database = {
           banker_id?: string | null
           banker_name?: string | null
           canal?: string | null
+          casa?: string | null
+          cidade?: string | null
+          codigo_xp?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          estado_civil?: string | null
           finder_id?: string | null
           finder_name?: string | null
           id?: string
           last_contact_at?: string | null
+          nascimento?: string | null
           next_action_at?: string | null
           nome_razao: string
           observacoes?: string | null
           patrimonio_ou_receita?: number | null
+          perfil?: string | null
+          pl_declarado?: number | null
           risco_ou_alertas?: string | null
           segmento?: string | null
+          sow?: string | null
           status?: Database["public"]["Enums"]["client_status"]
+          tag?: string | null
           telefone?: string | null
           tipo_pessoa?: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at?: string
@@ -69,20 +91,31 @@ export type Database = {
           banker_id?: string | null
           banker_name?: string | null
           canal?: string | null
+          casa?: string | null
+          cidade?: string | null
+          codigo_xp?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          estado_civil?: string | null
           finder_id?: string | null
           finder_name?: string | null
           id?: string
           last_contact_at?: string | null
+          nascimento?: string | null
           next_action_at?: string | null
           nome_razao?: string
           observacoes?: string | null
           patrimonio_ou_receita?: number | null
+          perfil?: string | null
+          pl_declarado?: number | null
           risco_ou_alertas?: string | null
           segmento?: string | null
+          sow?: string | null
           status?: Database["public"]["Enums"]["client_status"]
+          tag?: string | null
           telefone?: string | null
           tipo_pessoa?: Database["public"]["Enums"]["tipo_pessoa"]
           updated_at?: string
