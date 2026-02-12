@@ -2,3 +2,6 @@ project_id = "jtlelokzpqkgvlwomfus"
 
 [functions.consulta-cnpj]
 verify_jwt = false
+
+[functions.import-clients]
+verify_jwt = false
