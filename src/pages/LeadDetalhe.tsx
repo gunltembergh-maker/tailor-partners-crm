@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DetailLayout } from "@/components/DetailLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency, formatDate, leadStatusLabels, leadStatusColors, tipoPessoaLabels, porteLabels } from "@/lib/format";
+import { formatCurrency, formatDate, leadStatusLabels, leadStatusColors, tipoPessoaLabels, porteLabels, canalRelacionamentoLabels } from "@/lib/format";
 
 export default function LeadDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +43,26 @@ export default function LeadDetalhe() {
                 <span>{porteLabels[lead.porte] || lead.porte}</span>
               </>
             )}
+            {lead.canal_relacionamento && (
+              <>
+                <span className="text-muted-foreground">Canal de Relacionamento</span>
+                <span>{canalRelacionamentoLabels[lead.canal_relacionamento] || lead.canal_relacionamento}</span>
+              </>
+            )}
           </div>
+          {(lead.logradouro || lead.cidade || lead.estado) && (
+            <div className="pt-2 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-1">Endereço</p>
+              <p className="text-sm">
+                {[lead.logradouro, lead.numero].filter(Boolean).join(", ")}
+                {lead.complemento && ` - ${lead.complemento}`}
+              </p>
+              <p className="text-sm">
+                {[lead.bairro, lead.cidade, lead.estado].filter(Boolean).join(" - ")}
+                {lead.cep && ` · CEP: ${lead.cep}`}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
       <Card>

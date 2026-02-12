@@ -50,6 +50,11 @@ serve(async (req) => {
       porte: mapPorte(data.porte),
       uf: data.uf || "",
       municipio: data.municipio || "",
+      logradouro: data.logradouro || "",
+      numero: data.numero || "",
+      complemento: data.complemento || "",
+      bairro: data.bairro || "",
+      cep: data.cep || "",
     };
 
     return new Response(JSON.stringify(result), {
