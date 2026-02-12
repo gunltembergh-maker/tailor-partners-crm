@@ -1,100 +1,70 @@
 
 
-# Autenticacao e Perfis de Acesso (BANKER, FINDER, LIDER, ADMIN)
+# Importacao da Base CRM para Contas
 
 ## Resumo
 
-Evoluir o sistema de roles adicionando FINDER e ADMIN ao enum `app_role`, atualizar todas as politicas RLS para filtrar dados por responsavel (BANKER/FINDER veem apenas seus proprios registros, LIDER/ADMIN veem tudo), e ajustar o seletor "Ver como" para funcionar tambem para ADMIN. O cadastro nao permite escolha de perfil - os roles serao atribuidos via upload de base.
+Importar os ~770 clientes da planilha Base_CRM.xlsx para a tabela `clients`, mapeando todas as colunas relevantes e preenchendo os campos `banker_name`, `finder_name` e `canal`.
 
 ---
 
-## O que muda para o usuario
+## O que vai acontecer
 
-1. Dois novos perfis disponiveis: FINDER e ADMIN
-2. BANKER e FINDER so veem leads, clientes, oportunidades e tarefas onde sao responsaveis (owner, banker ou assessor)
-3. LIDER e ADMIN veem todos os registros e podem usar o seletor "Ver como" na topbar
-4. ADMIN tem acesso total (mesma visibilidade do LIDER por enquanto)
-5. O cadastro continua sem selecao de perfil - roles serao atribuidos manualmente
+1. Todos os ~770 clientes da planilha serao inseridos na tabela de Contas
+2. Cada cliente tera os campos Banker, Finder e Canal preenchidos conforme a planilha
+3. Os campos `banker_id` e `assessor_id` ficarao nulos por enquanto (os usuarios ainda nao se cadastraram no sistema)
+4. O tipo de pessoa sera mapeado automaticamente: "PESSOA FISICA" para PF, "PESSOA JURIDICA" para PJ
+
+---
+
+## Mapeamento de colunas (Planilha -> Banco)
+
+```text
+Nome Cliente         -> nome_razao
+Documento            -> cpf_cnpj
+Tipo de Cliente      -> tipo_pessoa (PF ou PJ)
+PL Tailor            -> patrimonio_ou_receita
+Setor                -> segmento
+Banker               -> banker_name
+Finder               -> finder_name
+Canal                -> canal
+```
+
+Valores como "Sem Finder" e "Sem Canal" serao tratados como nulo.
 
 ---
 
 ## Detalhes Tecnicos
 
-### 1. Migracao de banco de dados
+### 1. Edge function `import-clients`
 
-**Adicionar valores ao enum `app_role`:**
+Criar uma edge function que:
+- Recebe os dados dos clientes em JSON via POST
+- Usa a service role key para inserir diretamente, contornando o RLS
+- Faz upsert por `cpf_cnpj` para evitar duplicatas
+- Mapeia "PESSOA FISICA" -> "PF" e "PESSOA JURIDICA" -> "PJ"
+- Trata "Sem Finder", "Sem Canal" como null
+- Insere em lotes de 50 para evitar timeouts
 
-```text
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'FINDER';
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'ADMIN';
-```
+### 2. Script de chamada no frontend
 
-**Criar funcao auxiliar `is_admin_or_lider`:**
+Criar uma pagina/componente temporario de administracao (ou usar a propria edge function diretamente) que:
+- Prepara os ~770 registros em formato JSON a partir dos dados ja parseados da planilha
+- Chama a edge function para fazer a importacao
+- Exibe o resultado (quantos registros importados com sucesso)
 
-Funcao SECURITY DEFINER que verifica se o usuario tem role LIDER ou ADMIN, usada nas politicas RLS.
+### 3. Alternativa mais simples (recomendada)
 
-**Atualizar politicas RLS SELECT em todas as tabelas de dados:**
+Como os dados ja foram parseados, gerar um SQL INSERT direto via migracao com todos os ~770 registros. Isso e mais rapido e nao requer edge function.
 
-- **leads**: trocar `true` por `is_admin_or_lider(auth.uid()) OR auth.uid() = owner_id OR auth.uid() = banker_id OR auth.uid() = assessor_id`
-- **clients**: trocar `true` por `is_admin_or_lider(auth.uid()) OR auth.uid() = banker_id OR auth.uid() = assessor_id`
-- **opportunities**: trocar `true` por `is_admin_or_lider(auth.uid()) OR auth.uid() = owner_id`
-- **tasks**: trocar `true` por `is_admin_or_lider(auth.uid()) OR auth.uid() = owner_id`
-- **notes**: manter `true` (notas sao contextuais e precisam ser visiveis para quem acessa o registro pai)
+A migracao ira:
+- Inserir todos os registros de uma vez
+- Usar `ON CONFLICT (cpf_cnpj) DO NOTHING` se adicionarmos um indice unico no cpf_cnpj, ou simplesmente inserir tudo de uma vez (tabela esta vazia)
 
-**Atualizar politica RLS em user_roles:**
+### Arquivos criados/modificados
 
-- Adicionar politica SELECT para ADMIN poder ver todos os roles (similar ao LIDER existente)
+- `supabase/functions/import-clients/index.ts` - edge function para importacao em massa
+- Ou: nova migracao SQL com todos os INSERTs (abordagem mais simples)
 
-**Atualizar trigger `handle_new_user`:**
-
-- Nao atribuir role automaticamente no cadastro (remover INSERT em user_roles do trigger), ja que o usuario informou que vai subir uma base com os perfis
-
-### 2. Atualizar `src/lib/format.ts`
-
-Adicionar labels para os novos roles:
-
-```text
-roleLabels:
-  ASSESSOR -> "Assessor"
-  BANKER -> "Banker"
-  FINDER -> "Finder"
-  LIDER -> "Lider"
-  ADMIN -> "Admin"
-```
-
-### 3. Atualizar `src/contexts/ViewAsContext.tsx`
-
-- Mudar a condicao `isLider` para `isLiderOrAdmin` que verifica se role e "LIDER" ou "ADMIN"
-- Usar essa flag para habilitar o seletor "Ver como" e o carregamento da lista de membros
-
-### 4. Atualizar `src/components/AppLayout.tsx`
-
-- Usar `isLiderOrAdmin` (renomeado de `isLider`) para exibir o seletor "Ver como"
-- Nenhuma mudanca visual, apenas a logica de exibicao
-
-### 5. Atualizar `src/hooks/useAuth.tsx`
-
-- Ajustar `fetchRole` para tratar o caso onde o usuario nao tem role atribuido (retornar null graciosamente em vez de erro 406)
-- Usar `.maybeSingle()` em vez de `.single()` para evitar erro quando nao ha linha
-
-### 6. Nao alterar as paginas de dados
-
-As paginas (Leads, Clientes, Oportunidades, Tarefas, Dashboard, Prioridades) continuam buscando todos os registros sem filtro no codigo. O RLS no banco de dados cuida automaticamente de restringir os dados retornados conforme o perfil do usuario.
-
----
-
-## Arquivos modificados
-
-- `src/lib/format.ts` - adicionar roleLabels para FINDER e ADMIN
-- `src/contexts/ViewAsContext.tsx` - suportar ADMIN alem de LIDER
-- `src/components/AppLayout.tsx` - usar isLiderOrAdmin
-- `src/hooks/useAuth.tsx` - usar maybeSingle() no fetchRole
-
-## Migracoes de banco
-
-- Adicionar FINDER e ADMIN ao enum app_role
-- Criar funcao is_admin_or_lider
-- Atualizar politicas RLS SELECT em leads, clients, opportunities, tasks
-- Adicionar politica SELECT em user_roles para ADMIN
-- Atualizar trigger handle_new_user para nao atribuir role padrao
+A abordagem recomendada e usar a edge function, pois permite reusar no futuro para atualizacoes de base.
 
