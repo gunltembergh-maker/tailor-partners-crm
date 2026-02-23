@@ -1,21 +1,27 @@
 
 
-# Restringir "Importar Base" para ADMIN
+# Dash Comercial - Nova Rota e Item no Menu
 
 ## O que sera feito
-O item "Importar Base" no menu lateral sera exibido apenas para usuarios com role ADMIN. Usuarios com outros perfis (LIDER, BANKER, FINDER, ASSESSOR) nao verao esse link.
+Adicionar um novo item "Dash Comercial" no menu lateral, criar a rota `/relatorios/dash-comercial` e uma pagina placeholder seguindo o padrao visual existente.
 
-## Detalhes tecnicos
+## Mudancas
 
-### Arquivo: `src/components/AppSidebar.tsx`
+### 1. Novo arquivo: `src/pages/DashComercial.tsx`
+- Pagina usando `AppLayout` (mesmo padrao das demais)
+- Titulo "Dash Comercial" e subtitulo "Dashboard Power BI (TailorPartners)"
+- Um Card placeholder com texto "Carregando dashboard..."
+- Layout responsivo com Tailwind
 
-1. Importar o hook `useAuth` (ja importado) para acessar o `role` do usuario
-2. Separar o item "Importar Base" do array fixo `menuItems`
-3. Renderizar condicionalmente esse item apenas quando `role === "ADMIN"`
+### 2. `src/components/AppSidebar.tsx`
+- Adicionar item "Dash Comercial" com icone `BarChart3` (ou `PieChart`) no array `menuItems`, logo apos "Relatorios"
+- Path: `/relatorios/dash-comercial`
 
-A rota `/import-clients` tambem sera protegida no `App.tsx` com `ProtectedRoute` para garantir que mesmo acessando a URL diretamente, apenas usuarios autenticados consigam entrar.
+### 3. `src/App.tsx`
+- Importar o componente `DashComercial`
+- Adicionar rota `/relatorios/dash-comercial` com `ProtectedRoute`, posicionada antes da rota `/relatorios`
 
-### Arquivos modificados
-- `src/components/AppSidebar.tsx` - condicional no menu
-- `src/App.tsx` - proteger a rota com `ProtectedRoute`
+## O que NAO sera alterado
+- Nenhuma rota ou item de menu existente
+- Nenhum componente ou pagina existente
 
