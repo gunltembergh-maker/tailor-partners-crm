@@ -38,6 +38,7 @@ const menuItems = [
   { title: "Oportunidades", icon: Briefcase, path: "/oportunidades" },
   { title: "Painéis", icon: BarChart3, path: "/paineis" },
   { title: "Relatórios", icon: FileText, path: "/relatorios" },
+  { title: "Dash Comercial", icon: BarChart3, path: "/relatorios/dash-comercial" },
 ];
 
 const adminMenuItems = [
