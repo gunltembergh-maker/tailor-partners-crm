@@ -1,34 +1,57 @@
 
+# Embed Power BI no Dash Comercial
 
-# Fix ingest-sharepoint-file: Resposta imediata + processamento em background
+## Resumo
+Substituir o placeholder atual por um iframe do Power BI com controle de acesso, loading state, timeout e modo tela cheia interno.
 
-## Problema
-A function atual processa o Excel inteiro antes de responder, causando timeout no Power Automate e erros de "Memory limit exceeded" (visivel nos logs).
+## Logica de acesso
 
-## Solucao
-Reestruturar para responder HTTP 202 imediatamente e processar o arquivo em background via `EdgeRuntime.waitUntil()`.
+1. A rota ja esta protegida por `ProtectedRoute` (usuario precisa estar logado).
+2. Apos autenticado, validar se o email do usuario termina com `@tailorpartners.com.br` (dominio usado no projeto conforme contexto de restricao de dominio).
+3. Se o dominio nao bater, exibir mensagem de acesso negado com orientacoes.
 
-## Mudancas no arquivo `supabase/functions/ingest-sharepoint-file/index.ts`
+## Funcionalidades da pagina
 
-### Fluxo principal (sincrono, <2s):
-1. Validar `x-ingest-key` -> 401 se invalido
-2. Parse do JSON body
-3. Validar `sourceKey` e `contentBase64`
-4. Inserir registro em `sync_logs` com `status = "received"`
-5. Retornar HTTP 202 `{ ok: true, status: "accepted", sourceKey, fileName }`
-6. Disparar `EdgeRuntime.waitUntil(processFileJob(...))`
+### Estados
+- **Acesso negado**: card com icone de alerta e mensagem orientando o usuario a usar email corporativo.
+- **Carregando**: skeleton/loader cobrindo a area do iframe ate o evento `onLoad` disparar.
+- **Timeout (15s)**: se o iframe nao carregar em 15 segundos, exibir aviso com passos para resolver (trocar conta Microsoft, etc).
+- **Carregado**: iframe visivel, loader oculto.
 
-### Funcao `processFileJob` (background):
-1. Decodificar base64 -> bytes
-2. Parsear Excel com XLSX
-3. Para cada sheet mapeada: truncate + insert em batches de 500
-4. Atualizar `sync_logs` para `status = "success"` com `rows_written`
-5. Em caso de erro: atualizar `sync_logs` para `status = "error"` com mensagem
+### Iframe
+- `src`: URL do Secure Embed fornecida
+- `className="w-full"` com altura `calc(100vh - 180px)` para ocupar a area util
+- `allowFullScreen`, `frameBorder="0"`
 
-### Detalhes tecnicos
-- Adicionar `declare const EdgeRuntime: { waitUntil(p: Promise<void>): void }` para tipagem Deno
-- O `sync_logs` precisa ser atualizado (nao inserido novamente) — usar `.update().eq("id", logId)` com o ID retornado do insert inicial
-- Manter o `contentBase64` em memoria e passa-lo para a funcao background (nao re-parsear o body)
+### Tela cheia interna
+- Botao "Tela cheia" (icone `Maximize`) ao lado do titulo
+- Ao clicar, abrir overlay `fixed inset-0 z-50 bg-background` com o mesmo iframe ocupando 100vh/100vw
+- Botao "Fechar" (icone `X`) no canto superior direito do overlay
+- Estado controlado por `useState<boolean>`
+
+## Detalhes tecnicos
+
+### Arquivo modificado: `src/pages/DashComercial.tsx`
+
+- Importar `useAuth` para obter `user` e verificar `user.email`
+- Importar `useState`, `useEffect`, `useCallback` do React
+- Importar icones: `Maximize`, `X`, `AlertTriangle`, `Loader2`
+- Importar componentes UI: `Card`, `CardContent`, `Button`, `Alert`, `Skeleton`
+
+```text
+Fluxo:
+1. const { user } = useAuth()
+2. Verificar user.email?.endsWith("@tailorpartners.com.br")
+3. Se nao: renderizar card de acesso negado
+4. Se sim:
+   a. Estado loading = true, timeout = false, fullscreen = false
+   b. setTimeout de 15s para setar timeout = true
+   c. iframe onLoad -> loading = false, limpar timeout
+   d. Renderizar header + iframe + botao tela cheia
+   e. Se fullscreen: overlay fixed com iframe + botao fechar
+```
 
 ### Nenhum outro arquivo sera alterado
-
+- A rota ja existe e esta protegida
+- O item de menu ja existe
+- Nenhum secret ou token necessario (Secure Embed)
