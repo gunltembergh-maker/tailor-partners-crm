@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.import-clients]
 verify_jwt = false
+
+[functions.ingest-sharepoint-file]
+verify_jwt = false

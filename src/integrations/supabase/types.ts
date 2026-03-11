@@ -350,6 +350,327 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_base_crm: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_captacao_total: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_comissoes_historico: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_comissoes_m0: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_contas_total: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_depara: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_diversificador_consolidado: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_envios_nps: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_nps_advisor: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_ordem_pl: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_posicao_renda_fixa: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_positivador_m0_agrupado: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_positivador_m0_desagrupado: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_positivador_total_agrupado: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_positivador_total_desagrupado: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_saldo_consolidado: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          error: string | null
+          file_name: string | null
+          id: string
+          received_at: string
+          rows_written: number | null
+          source_key: string
+          source_path: string | null
+          status: string
+        }
+        Insert: {
+          error?: string | null
+          file_name?: string | null
+          id?: string
+          received_at?: string
+          rows_written?: number | null
+          source_key: string
+          source_path?: string | null
+          status?: string
+        }
+        Update: {
+          error?: string | null
+          file_name?: string | null
+          id?: string
+          received_at?: string
+          rows_written?: number | null
+          source_key?: string
+          source_path?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string
@@ -442,7 +763,109 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_base_crm: {
+        Row: {
+          assessor: string | null
+          banker: string | null
+          canal: string | null
+          cidade: string | null
+          codigo_cliente: string | null
+          data_crm: Json | null
+          data_saldo: Json | null
+          endereco_ajustado: string | null
+          estado: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          nome_cliente: string | null
+          perfil: string | null
+          pl_declarado_ajustado: number | null
+          pl_declarado_raw: number | null
+          pl_tailor: number | null
+          primeiro_nome: string | null
+          saldo_consolidado: number | null
+          setor: string | null
+          sow: number | null
+          sow_ajustado: number | null
+          tag: string | null
+        }
+        Relationships: []
+      }
+      vw_diversificador_consolidado: {
+        Row: {
+          assessor: string | null
+          classe: string | null
+          conta: string | null
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+          nome: string | null
+          percentual: number | null
+          subclasse: string | null
+          valor: number | null
+        }
+        Insert: {
+          assessor?: never
+          classe?: never
+          conta?: never
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          nome?: never
+          percentual?: never
+          subclasse?: never
+          valor?: never
+        }
+        Update: {
+          assessor?: never
+          classe?: never
+          conta?: never
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          nome?: never
+          percentual?: never
+          subclasse?: never
+          valor?: never
+        }
+        Relationships: []
+      }
+      vw_positivador_total_agrupado: {
+        Row: {
+          assessor: string | null
+          conta: string | null
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+          net_em_m: number | null
+          nome: string | null
+          pl_declarado: number | null
+          pl_declarado_ajustado: number | null
+        }
+        Insert: {
+          assessor?: never
+          conta?: never
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          nome?: never
+          pl_declarado?: never
+          pl_declarado_ajustado?: never
+        }
+        Update: {
+          assessor?: never
+          conta?: never
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          nome?: never
+          pl_declarado?: never
+          pl_declarado_ajustado?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
