@@ -21,6 +21,7 @@ import Relatorios from "./pages/Relatorios";
 import DashComercial from "./pages/DashComercial";
 import NotFound from "./pages/NotFound";
 import ImportClients from "./pages/ImportClients";
+import ImportarBases from "./pages/ImportarBases";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ function AppRoutes() {
       <Route path="/relatorios/dash-comercial" element={<ProtectedRoute><DashComercial /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
       <Route path="/import-clients" element={<ProtectedRoute><ImportClients /></ProtectedRoute>} />
+      <Route path="/admin/importar-bases" element={<ProtectedRoute><ImportarBases /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

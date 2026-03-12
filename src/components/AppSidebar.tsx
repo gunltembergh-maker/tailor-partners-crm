@@ -42,7 +42,7 @@ const menuItems = [
 ];
 
 const adminMenuItems = [
-  { title: "Importar Base", icon: Upload, path: "/import-clients" },
+  { title: "Importar Bases", icon: Upload, path: "/admin/importar-bases" },
 ];
 
 export function AppSidebar() {

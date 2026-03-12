@@ -422,6 +422,24 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_consolidado_receita: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
       raw_contas_total: {
         Row: {
           data: Json
