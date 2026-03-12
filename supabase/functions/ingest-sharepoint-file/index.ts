@@ -6,7 +6,7 @@ declare const EdgeRuntime: { waitUntil(p: Promise<void>): void };
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-ingest-key",
+    "authorization, x-client-info, apikey, content-type, x-ingest-key, x-source-key, x-file-name, x-source-path",
 };
 
 const SOURCE_MAP: Record<string, { sheets: Record<string, string> }> = {
@@ -72,7 +72,7 @@ function findSheet(workbook: XLSX.WorkBook, sheetName: string): string | undefin
 async function processFileJob(
   logId: string,
   sourceKey: string,
-  contentBase64: string,
+  fileBytes: Uint8Array,
   fileName: string | null,
   sourcePath: string | null
 ) {
@@ -80,14 +80,7 @@ async function processFileJob(
   const mapping = SOURCE_MAP[sourceKey];
 
   try {
-    // Decode base64
-    const binaryString = atob(contentBase64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    const workbook = XLSX.read(bytes, { type: "array" });
+    const workbook = XLSX.read(fileBytes, { type: "array" });
 
     let totalRows = 0;
     const errors: string[] = [];
@@ -164,17 +157,51 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
     }
 
-    // 2. Parse body
-    const body = await req.json();
-    const { sourceKey, fileName, sourcePath, contentBase64 } = body;
+    // 2. Parse body — detect JSON vs binary mode
+    const contentType = req.headers.get("content-type") ?? "";
 
-    if (!sourceKey || !contentBase64) {
-      return new Response(
-        JSON.stringify({ error: "sourceKey and contentBase64 are required" }),
-        { status: 400, headers }
-      );
+    let sourceKey: string | null = null;
+    let fileName: string | null = null;
+    let sourcePath: string | null = null;
+    let fileBytes: Uint8Array | null = null;
+
+    if (contentType.includes("application/json")) {
+      // JSON mode (base64-encoded file)
+      const body = await req.json();
+      sourceKey = body.sourceKey ?? null;
+      fileName = body.fileName ?? null;
+      sourcePath = body.sourcePath ?? null;
+      const contentBase64 = body.contentBase64;
+
+      if (!sourceKey || !contentBase64) {
+        return new Response(
+          JSON.stringify({ error: "sourceKey and contentBase64 are required" }),
+          { status: 400, headers }
+        );
+      }
+
+      const binaryString = atob(contentBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+      fileBytes = bytes;
+    } else {
+      // Binary mode (octet-stream or any non-JSON)
+      sourceKey = req.headers.get("x-source-key");
+      fileName = req.headers.get("x-file-name");
+      sourcePath = req.headers.get("x-source-path");
+
+      if (!sourceKey) {
+        return new Response(
+          JSON.stringify({ error: "x-source-key header is required" }),
+          { status: 400, headers }
+        );
+      }
+
+      const ab = await req.arrayBuffer();
+      fileBytes = new Uint8Array(ab);
     }
 
+    // 3. Validate sourceKey
     const mapping = SOURCE_MAP[sourceKey];
     if (!mapping) {
       return new Response(
@@ -185,7 +212,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 3. Insert sync_logs with status "received"
+    // 4. Insert sync_logs with status "received"
     const supabase = getSupabaseClient();
     const { data: logRow, error: logError } = await supabase
       .from("sync_logs")
@@ -206,12 +233,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 4. Kick off background processing
+    // 5. Kick off background processing
     EdgeRuntime.waitUntil(
-      processFileJob(logRow.id, sourceKey, contentBase64, fileName || null, sourcePath || null)
+      processFileJob(logRow.id, sourceKey, fileBytes, fileName || null, sourcePath || null)
     );
 
-    // 5. Respond immediately
+    // 6. Respond immediately
     return new Response(
       JSON.stringify({
         ok: true,
