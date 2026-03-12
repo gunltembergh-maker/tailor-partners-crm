@@ -19,9 +19,6 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { toast } from "@/hooks/use-toast";
 
 // ── Constants ──
