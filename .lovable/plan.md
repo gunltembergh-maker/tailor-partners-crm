@@ -1,50 +1,57 @@
 
+# Embed Power BI no Dash Comercial
 
-# Ajustar ingest-sharepoint-file para usar ANON_KEY
+## Resumo
+Substituir o placeholder atual por um iframe do Power BI com controle de acesso, loading state, timeout e modo tela cheia interno.
 
-## Problema
-A função usa `SUPABASE_SERVICE_ROLE_KEY` que pode não estar disponível. O usuário quer usar apenas `SUPABASE_ANON_KEY` (disponível automaticamente no runtime).
+## Logica de acesso
 
-## Plano
+1. A rota ja esta protegida por `ProtectedRoute` (usuario precisa estar logado).
+2. Apos autenticado, validar se o email do usuario termina com `@tailorpartners.com.br` (dominio usado no projeto conforme contexto de restricao de dominio).
+3. Se o dominio nao bater, exibir mensagem de acesso negado com orientacoes.
 
-### 1. Migração SQL — Adicionar políticas RLS para anon role nas tabelas raw_* e sync_logs
+## Funcionalidades da pagina
 
-Criar políticas permissivas para o role `anon` em todas as tabelas usadas pela função:
+### Estados
+- **Acesso negado**: card com icone de alerta e mensagem orientando o usuario a usar email corporativo.
+- **Carregando**: skeleton/loader cobrindo a area do iframe ate o evento `onLoad` disparar.
+- **Timeout (15s)**: se o iframe nao carregar em 15 segundos, exibir aviso com passos para resolver (trocar conta Microsoft, etc).
+- **Carregado**: iframe visivel, loader oculto.
 
-- `sync_logs` — INSERT, UPDATE, SELECT para anon
-- `raw_captacao_total` — DELETE, INSERT para anon
-- `raw_contas_total` — DELETE, INSERT para anon
-- `raw_diversificador_consolidado` — DELETE, INSERT para anon
-- `raw_posicao_renda_fixa` — DELETE, INSERT para anon
-- `raw_saldo_consolidado` — DELETE, INSERT para anon
-- `raw_base_crm` — DELETE, INSERT para anon
-- `raw_depara` — DELETE, INSERT para anon
-- `raw_ordem_pl` — DELETE, INSERT para anon
-- `raw_positivador_total_desagrupado` — DELETE, INSERT para anon
-- `raw_positivador_total_agrupado` — DELETE, INSERT para anon
-- `raw_positivador_m0_desagrupado` — DELETE, INSERT para anon
-- `raw_positivador_m0_agrupado` — DELETE, INSERT para anon
-- `raw_comissoes_historico` — DELETE, INSERT para anon
-- `raw_comissoes_m0` — DELETE, INSERT para anon
-- `raw_envios_nps` — DELETE, INSERT para anon
-- `raw_nps_advisor` — DELETE, INSERT para anon
+### Iframe
+- `src`: URL do Secure Embed fornecida
+- `className="w-full"` com altura `calc(100vh - 180px)` para ocupar a area util
+- `allowFullScreen`, `frameBorder="0"`
 
-Cada política terá `USING (true)` / `WITH CHECK (true)` — fase 1 sem segurança granular.
+### Tela cheia interna
+- Botao "Tela cheia" (icone `Maximize`) ao lado do titulo
+- Ao clicar, abrir overlay `fixed inset-0 z-50 bg-background` com o mesmo iframe ocupando 100vh/100vw
+- Botao "Fechar" (icone `X`) no canto superior direito do overlay
+- Estado controlado por `useState<boolean>`
 
-### 2. Atualizar Edge Function `supabase/functions/ingest-sharepoint-file/index.ts`
+## Detalhes tecnicos
 
-Trocar `getSupabaseClient()` para:
-```typescript
-function getSupabaseClient() {
-  return createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!
-  );
-}
+### Arquivo modificado: `src/pages/DashComercial.tsx`
+
+- Importar `useAuth` para obter `user` e verificar `user.email`
+- Importar `useState`, `useEffect`, `useCallback` do React
+- Importar icones: `Maximize`, `X`, `AlertTriangle`, `Loader2`
+- Importar componentes UI: `Card`, `CardContent`, `Button`, `Alert`, `Skeleton`
+
+```text
+Fluxo:
+1. const { user } = useAuth()
+2. Verificar user.email?.endsWith("@tailorpartners.com.br")
+3. Se nao: renderizar card de acesso negado
+4. Se sim:
+   a. Estado loading = true, timeout = false, fullscreen = false
+   b. setTimeout de 15s para setar timeout = true
+   c. iframe onLoad -> loading = false, limpar timeout
+   d. Renderizar header + iframe + botao tela cheia
+   e. Se fullscreen: overlay fixed com iframe + botao fechar
 ```
 
-Manter tudo o mais inalterado: `verify_jwt = false`, validação `x-ingest-key`, resposta 202, `waitUntil`.
-
-### Nota de segurança
-Na fase 2, essas políticas anon deverão ser removidas e substituídas por validação adequada (ex: custom claims ou service role restrito).
-
+### Nenhum outro arquivo sera alterado
+- A rota ja existe e esta protegida
+- O item de menu ja existe
+- Nenhum secret ou token necessario (Secure Embed)
