@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type LucideIcon } from "lucide-react";
 
@@ -13,19 +12,17 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, subtitle, icon: Icon, loading, className }: MetricCardProps) {
   return (
-    <Card className={className}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
-          {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
-        </div>
-        {loading ? (
-          <Skeleton className="h-8 w-24 mt-2" />
-        ) : (
-          <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
-        )}
-        {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
-      </CardContent>
-    </Card>
+    <div className={`border border-border rounded bg-card px-3 py-2.5 ${className ?? ""}`}>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+        {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+      </div>
+      {loading ? (
+        <Skeleton className="h-7 w-20 mt-1" />
+      ) : (
+        <p className="text-xl font-bold mt-0.5" style={{ color: "hsl(var(--primary))" }}>{value}</p>
+      )}
+      {subtitle && <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>}
+    </div>
   );
 }
