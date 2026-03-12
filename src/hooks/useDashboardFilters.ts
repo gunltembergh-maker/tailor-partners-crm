@@ -9,6 +9,7 @@ export interface DashboardFilters {
   documento: string;
   tipoCliente: string;
   casa: string;
+  vencimento: string;
 }
 
 const now = new Date();
@@ -24,6 +25,7 @@ const defaultFilters: DashboardFilters = {
   documento: "",
   tipoCliente: "",
   casa: "",
+  vencimento: "",
 };
 
 export function useDashboardFilters() {
@@ -66,6 +68,9 @@ export function useDashboardFilters() {
     }
     if (appliedFilters.casa) {
       chips.push({ key: "casa", label: "Casa", value: appliedFilters.casa });
+    }
+    if (appliedFilters.vencimento) {
+      chips.push({ key: "vencimento", label: "Vencimento", value: appliedFilters.vencimento });
     }
     return chips;
   }, [appliedFilters]);
