@@ -10,28 +10,16 @@ const corsHeaders = {
 };
 
 const SOURCE_MAP: Record<string, { sheets: Record<string, string> }> = {
-  captacao_total: {
-    sheets: { "Captação Total": "raw_captacao_total" },
-  },
-  contas_total: {
-    sheets: { "Contas Total": "raw_contas_total" },
-  },
+  captacao_total: { sheets: { "Captação Total": "raw_captacao_total" } },
+  contas_total: { sheets: { "Contas Total": "raw_contas_total" } },
   diversificador: {
     sheets: {
       "Diversificador Consolidado": "raw_diversificador_consolidado",
       "Posição Renda Fixa": "raw_posicao_renda_fixa",
     },
   },
-  saldo_consolidado: {
-    // Pode ser "Tabela2" como nome de sheet/tabela no XLSX lib
-    sheets: { Tabela2: "raw_saldo_consolidado" },
-  },
-  depara: {
-    sheets: {
-      "Base CRM": "raw_base_crm",
-      DePara: "raw_depara",
-    },
-  },
+  saldo_consolidado: { sheets: { Tabela2: "raw_saldo_consolidado" } },
+  depara: { sheets: { "Base CRM": "raw_base_crm", DePara: "raw_depara" } },
   positivador: {
     sheets: {
       "Ordem PL": "raw_ordem_pl",
@@ -47,16 +35,10 @@ const SOURCE_MAP: Record<string, { sheets: Record<string, string> }> = {
       Comissões: "raw_comissoes_m0",
     },
   },
-  nps: {
-    sheets: {
-      Envios: "raw_envios_nps",
-      Medallia: "raw_nps_advisor",
-    },
-  },
+  nps: { sheets: { Envios: "raw_envios_nps", Medallia: "raw_nps_advisor" } },
 };
 
 function getSupabaseClient() {
-  // No Lovable Cloud: SUPABASE_URL e SUPABASE_ANON_KEY costumam existir no runtime.
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
 }
 
@@ -77,13 +59,6 @@ function findSheet(workbook: XLSX.WorkBook, sheetName: string): string | undefin
   );
 }
 
-function decodeBase64ToBytes(contentBase64: string): Uint8Array {
-  const binaryString = atob(contentBase64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-  return bytes;
-}
-
 async function processFileJob(
   logId: string,
   sourceKey: string,
@@ -102,22 +77,15 @@ async function processFileJob(
 
     for (const [sheetName, tableName] of Object.entries(mapping.sheets)) {
       const actualSheetName = findSheet(workbook, sheetName);
-
       if (!actualSheetName) {
         errors.push(`Sheet "${sheetName}" not found. Available: ${workbook.SheetNames.join(", ")}`);
         continue;
       }
 
       const sheet = workbook.Sheets[actualSheetName];
-
-      // Usa 1ª linha como header
-      const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, {
-        defval: null,
-      });
-
+      const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
       if (rows.length === 0) continue;
 
-      // "Truncate" simples (fase 1)
       const { error: delError } = await supabase.from(tableName).delete().gte("id", 0);
       if (delError) {
         errors.push(`Truncate ${tableName}: ${delError.message}`);
@@ -137,7 +105,6 @@ async function processFileJob(
     }
 
     const status = errors.length > 0 ? "partial" : "success";
-
     await supabase
       .from("sync_logs")
       .update({
@@ -159,94 +126,46 @@ async function processFileJob(
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const headers = { ...corsHeaders, "Content-Type": "application/json" };
 
   try {
-    // 1) Validate ingest key
+    // Auth por ingest-key
     const ingestKey = req.headers.get("x-ingest-key");
     const expectedKey = Deno.env.get("INGEST_KEY");
     if (!ingestKey || !expectedKey || ingestKey !== expectedKey) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
     }
 
-    // 2) Detect mode: prefer binary if x-source-key exists (Power Automate)
-    const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
-    const isBinary = req.headers.has("x-source-key") || contentType.includes("application/octet-stream");
+    // BINÁRIO-ONLY: exige x-source-key
+    const sourceKey = req.headers.get("x-source-key");
+    const fileName = decodeURIComponentSafe(req.headers.get("x-file-name"));
+    const sourcePath = decodeURIComponentSafe(req.headers.get("x-source-path"));
 
-    let sourceKey: string | null = null;
-    let fileName: string | null = null;
-    let sourcePath: string | null = null;
-    let fileBytes: Uint8Array | null = null;
-
-    if (isBinary) {
-      // Binary mode
-      sourceKey = req.headers.get("x-source-key");
-      // Esses headers chegam URL-encoded (ASCII). Decodifica pra log.
-      fileName = decodeURIComponentSafe(req.headers.get("x-file-name"));
-      sourcePath = decodeURIComponentSafe(req.headers.get("x-source-path"));
-
-      if (!sourceKey) {
-        return new Response(JSON.stringify({ error: "Missing header x-source-key" }), {
-          status: 400,
-          headers,
-        });
-      }
-
-      if (!SOURCE_MAP[sourceKey]) {
-        return new Response(
-          JSON.stringify({
-            error: `Unknown sourceKey: ${sourceKey}. Valid keys: ${Object.keys(SOURCE_MAP).join(", ")}`,
-          }),
-          { status: 400, headers },
-        );
-      }
-
-      const ab = await req.arrayBuffer();
-      fileBytes = new Uint8Array(ab);
-    } else {
-      // JSON+base64 fallback
-      let body: any;
-      try {
-        body = await req.json();
-      } catch {
-        return new Response(
-          JSON.stringify({
-            error:
-              "Invalid JSON body. If sending a file, use Content-Type application/octet-stream and send binary in the body.",
-          }),
-          { status: 400, headers },
-        );
-      }
-
-      sourceKey = body?.sourceKey ?? null;
-      fileName = body?.fileName ?? null;
-      sourcePath = body?.sourcePath ?? null;
-      const contentBase64 = body?.contentBase64 ?? null;
-
-      if (!sourceKey || !contentBase64) {
-        return new Response(JSON.stringify({ error: "sourceKey and contentBase64 are required" }), {
-          status: 400,
-          headers,
-        });
-      }
-
-      if (!SOURCE_MAP[sourceKey]) {
-        return new Response(
-          JSON.stringify({
-            error: `Unknown sourceKey: ${sourceKey}. Valid keys: ${Object.keys(SOURCE_MAP).join(", ")}`,
-          }),
-          { status: 400, headers },
-        );
-      }
-
-      fileBytes = decodeBase64ToBytes(contentBase64);
+    if (!sourceKey) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing header x-source-key (Power Automate must send it).",
+        }),
+        { status: 400, headers },
+      );
     }
 
-    // 3) Create sync log fast
+    if (!SOURCE_MAP[sourceKey]) {
+      return new Response(
+        JSON.stringify({
+          error: `Unknown sourceKey: ${sourceKey}. Valid: ${Object.keys(SOURCE_MAP).join(", ")}`,
+        }),
+        { status: 400, headers },
+      );
+    }
+
+    // Lê binário
+    const ab = await req.arrayBuffer();
+    const fileBytes = new Uint8Array(ab);
+
+    // Log “received”
     const supabase = getSupabaseClient();
     const { data: logRow, error: logError } = await supabase
       .from("sync_logs")
@@ -267,10 +186,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 4) Background processing
-    EdgeRuntime.waitUntil(processFileJob(logRow.id, sourceKey!, fileBytes!, fileName || null, sourcePath || null));
+    // Background job
+    EdgeRuntime.waitUntil(processFileJob(logRow.id, sourceKey, fileBytes, fileName || null, sourcePath || null));
 
-    // 5) IMPORTANT: Power Automate expects 200 OK for binary/partial uploads
+    // Power Automate precisa 200 OK
     return new Response(
       JSON.stringify({
         ok: true,
@@ -282,9 +201,6 @@ Deno.serve(async (req) => {
       { status: 200, headers },
     );
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message ?? String(err) }), {
-      status: 500,
-      headers,
-    });
+    return new Response(JSON.stringify({ error: err?.message ?? String(err) }), { status: 500, headers });
   }
 });
