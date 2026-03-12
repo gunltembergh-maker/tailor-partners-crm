@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MetricCard } from "./MetricCard";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import {
   useCaptacaoData,
@@ -15,9 +16,18 @@ import {
 } from "recharts";
 import { ArrowUpRight, Users, TrendingUp } from "lucide-react";
 
-const PBI_COLORS = ["hsl(var(--accent))", "hsl(var(--tailor-copper))", "hsl(var(--muted-foreground))", "hsl(var(--tailor-warning))"];
-const PBI_BLUE = "hsl(var(--accent))";
-const PBI_ORANGE = "hsl(var(--tailor-copper))";
+const PBI_PALETTE = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--accent))",
+  "hsl(var(--primary))",
+  "hsl(var(--muted-foreground))",
+  "hsl(var(--destructive))",
+  "hsl(var(--secondary-foreground))",
+];
 
 interface Props {
   filters: DashboardFilters;
@@ -35,9 +45,9 @@ function fmtMes(anoMes: string) {
   return `${meses[parseInt(m, 10) - 1]}/${y}`;
 }
 
-function PbiCard({ title, children }: { title: string; children: React.ReactNode }) {
+function PbiCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="border border-border rounded bg-card overflow-hidden">
+    <div className={`border border-border rounded bg-card overflow-hidden ${className ?? ""}`}>
       <div className="px-3 py-1.5 border-b border-border">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
       </div>
@@ -53,7 +63,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <p className="text-[10px] font-semibold text-foreground mb-0.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-[10px]" style={{ color: p.color }}>
-          {p.name}: {fmtBRL(p.value)}
+          {p.name}: {typeof p.value === "number" && Math.abs(p.value) > 100 ? fmtBRL(p.value) : p.value}
         </p>
       ))}
     </div>
@@ -69,7 +79,7 @@ export function QuantitativoTab({ filters }: Props) {
 
   const loading = captLoading || contasLoading || posLoading || recMLoading || recDLoading;
 
-  // Contas metrics
+  // === Contas metrics ===
   const contasMetrics = useMemo(() => {
     if (!contas) return { migracao: 0, habilitacao: 0, ativacao: 0 };
     let migracao = 0, habilitacao = 0, ativacao = 0;
@@ -82,7 +92,45 @@ export function QuantitativoTab({ filters }: Props) {
     return { migracao, habilitacao, ativacao };
   }, [contas]);
 
-  // Captação metrics
+  // === Total por Tipo (stacked horizontal bar by Casa) ===
+  const totalPorTipo = useMemo(() => {
+    if (!contas) return [];
+    const map = new Map<string, Record<string, number>>();
+    contas.forEach((r: any) => {
+      const tipo = (r.tipo || "Outros").trim();
+      const casa = (r.casa || "Outros").trim();
+      if (!map.has(tipo)) map.set(tipo, {});
+      const obj = map.get(tipo)!;
+      obj[casa] = (obj[casa] || 0) + 1;
+    });
+    return [...map.entries()].map(([tipo, casas]) => ({ tipo, ...casas }));
+  }, [contas]);
+
+  const casasContas = useMemo(() => {
+    if (!contas) return [];
+    const s = new Set<string>();
+    contas.forEach((r: any) => { if (r.casa) s.add(r.casa.trim()); });
+    return [...s].sort();
+  }, [contas]);
+
+  // === Contas por mês (stacked bar) ===
+  const contasPorMes = useMemo(() => {
+    if (!contas) return [];
+    const map = new Map<string, { Ativação: number; Habilitação: number; Migração: number }>();
+    contas.forEach((r: any) => {
+      const k = r.ano_mes || "";
+      const prev = map.get(k) || { Ativação: 0, Habilitação: 0, Migração: 0 };
+      const t = (r.tipo || "").toLowerCase();
+      if (t.includes("ativa")) prev.Ativação++;
+      else if (t.includes("habilit")) prev.Habilitação++;
+      else if (t.includes("migra")) prev.Migração++;
+      map.set(k, prev);
+    });
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([mes, v]) => ({ mes: fmtMes(mes), ...v }));
+  }, [contas]);
+
+  // === Captação metrics ===
   const captacaoMetrics = useMemo(() => {
     if (!captacao) return { mtd: 0, ytd: 0 };
     const now = new Date();
@@ -96,28 +144,27 @@ export function QuantitativoTab({ filters }: Props) {
     return { mtd, ytd };
   }, [captacao]);
 
-  // Captação por mês
-  const captacaoPorMes = useMemo(() => {
-    if (!captacao) return [];
-    const map = new Map<string, { aporte: number; resgate: number; captacao: number }>();
+  // === Captação por mês (stacked bar by tipo_captacao) ===
+  const { captacaoPorMesStacked, captacaoTipos } = useMemo(() => {
+    if (!captacao) return { captacaoPorMesStacked: [], captacaoTipos: [] };
+    const tipos = new Set<string>();
+    const map = new Map<string, Record<string, number>>();
     captacao.forEach((r: any) => {
-      const k = r.ano_mes || "";
-      const prev = map.get(k) || { aporte: 0, resgate: 0, captacao: 0 };
-      map.set(k, {
-        aporte: prev.aporte + (Number(r.aporte) || 0),
-        resgate: prev.resgate + (Number(r.resgate) || 0),
-        captacao: prev.captacao + (Number(r.captacao) || 0),
-      });
+      const mes = r.ano_mes || "";
+      const tipo = r.tipo_captacao || "Outros";
+      tipos.add(tipo);
+      if (!map.has(mes)) map.set(mes, {});
+      const obj = map.get(mes)!;
+      obj[tipo] = (obj[tipo] || 0) + (Number(r.captacao) || 0);
     });
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([mes, v]) => ({
-      mes: fmtMes(mes),
-      Aporte: v.aporte,
-      Resgate: v.resgate,
-      "Captação Líq.": v.captacao,
-    }));
+    return {
+      captacaoPorMesStacked: [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([mes, v]) => ({ mes: fmtMes(mes), ...v })),
+      captacaoTipos: [...tipos].sort(),
+    };
   }, [captacao]);
 
-  // Captação por tipo
+  // === Captação por tipo (donut) ===
   const captacaoPorTipo = useMemo(() => {
     if (!captacao) return [];
     const map = new Map<string, number>();
@@ -125,24 +172,30 @@ export function QuantitativoTab({ filters }: Props) {
       const k = r.tipo_captacao || "Outros";
       map.set(k, (map.get(k) || 0) + (Number(r.captacao) || 0));
     });
-    return [...map.entries()].map(([name, value]) => ({ name, value }));
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
   }, [captacao]);
 
-  // AuC por mês
-  const aucPorMes = useMemo(() => {
-    if (!positivador) return [];
-    const map = new Map<string, number>();
+  // === AuC por mês (multi-series line by Casa) ===
+  const { aucPorMesMulti, aucCasas } = useMemo(() => {
+    if (!positivador) return { aucPorMesMulti: [], aucCasas: [] };
+    const casaSet = new Set<string>();
+    const map = new Map<string, Record<string, number>>();
     positivador.forEach((r: any) => {
-      const k = r.ano_mes || "";
-      map.set(k, (map.get(k) || 0) + (Number(r.net_em_m) || 0));
+      const mes = r.ano_mes || "";
+      const casa = r.casa || "Outros";
+      casaSet.add(casa);
+      if (!map.has(mes)) map.set(mes, {});
+      const obj = map.get(mes)!;
+      obj[casa] = (obj[casa] || 0) + (Number(r.net_em_m) || 0);
     });
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([mes, net]) => ({
-      mes: fmtMes(mes),
-      "AuC (M)": net,
-    }));
+    return {
+      aucPorMesMulti: [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([mes, v]) => ({ mes: fmtMes(mes), ...v })),
+      aucCasas: [...casaSet].sort(),
+    };
   }, [positivador]);
 
-  // AuC por casa
+  // === AuC por Casa (donut) ===
   const aucPorCasa = useMemo(() => {
     if (!positivador) return [];
     const map = new Map<string, number>();
@@ -150,40 +203,112 @@ export function QuantitativoTab({ filters }: Props) {
       const k = r.casa || "Outros";
       map.set(k, (map.get(k) || 0) + (Number(r.net_em_m) || 0));
     });
-    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([casa, net]) => ({ casa, net }));
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
   }, [positivador]);
 
-  // Clientes/AuC por Faixa PL
-  const aucPorFaixaPL = useMemo(() => {
-    if (!positivador) return [];
-    const map = new Map<string, { net: number; clientes: Set<string>; ordem: number }>();
+  // === # Clientes por Faixa PL por mês (stacked bar) ===
+  const { clientesFaixaMes, faixasPL } = useMemo(() => {
+    if (!positivador) return { clientesFaixaMes: [], faixasPL: [] };
+    const faixas = new Set<string>();
+    // mes -> faixa -> set of docs
+    const map = new Map<string, Map<string, Set<string>>>();
     positivador.forEach((r: any) => {
-      const k = r.faixa_pl || "N/D";
-      const prev = map.get(k) || { net: 0, clientes: new Set<string>(), ordem: Number(r.ordem_pl) || 99 };
-      prev.net += Number(r.net_em_m) || 0;
-      if (r.documento) prev.clientes.add(r.documento);
-      map.set(k, prev);
+      const mes = r.ano_mes || "";
+      const faixa = r.faixa_pl || "N/D";
+      faixas.add(faixa);
+      if (!map.has(mes)) map.set(mes, new Map());
+      const fMap = map.get(mes)!;
+      if (!fMap.has(faixa)) fMap.set(faixa, new Set());
+      if (r.documento) fMap.get(faixa)!.add(r.documento);
     });
-    return [...map.entries()]
-      .sort((a, b) => a[1].ordem - b[1].ordem)
-      .map(([faixa, v]) => ({ faixa, net: v.net, clientes: v.clientes.size }));
+    // Sort faixas by ordem_pl
+    const ordemMap = new Map<string, number>();
+    positivador.forEach((r: any) => {
+      if (r.faixa_pl && r.ordem_pl != null) ordemMap.set(r.faixa_pl, Number(r.ordem_pl));
+    });
+    const sortedFaixas = [...faixas].sort((a, b) => (ordemMap.get(a) || 99) - (ordemMap.get(b) || 99));
+
+    return {
+      clientesFaixaMes: [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([mes, fMap]) => {
+          const row: any = { mes: fmtMes(mes) };
+          sortedFaixas.forEach(f => { row[f] = fMap.get(f)?.size || 0; });
+          return row;
+        }),
+      faixasPL: sortedFaixas,
+    };
   }, [positivador]);
 
-  // Receita por mês
-  const receitaPorMes = useMemo(() => {
-    if (!receitaMensal) return [];
-    const map = new Map<string, number>();
-    receitaMensal.forEach((r: any) => {
-      const k = r.mes_ano || "";
-      map.set(k, (map.get(k) || 0) + (Number(r.comissao_total) || 0));
+  // === AuC por Faixa PL por mês (stacked bar) ===
+  const aucFaixaMes = useMemo(() => {
+    if (!positivador || !faixasPL.length) return [];
+    const map = new Map<string, Record<string, number>>();
+    positivador.forEach((r: any) => {
+      const mes = r.ano_mes || "";
+      const faixa = r.faixa_pl || "N/D";
+      if (!map.has(mes)) map.set(mes, {});
+      const obj = map.get(mes)!;
+      obj[faixa] = (obj[faixa] || 0) + (Number(r.net_em_m) || 0);
     });
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([mes, receita]) => ({
-      mes: fmtMes(mes),
-      Receita: receita,
-    }));
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([mes, v]) => ({ mes: fmtMes(mes), ...v }));
+  }, [positivador, faixasPL]);
+
+  // === Receita total ===
+  const receitaTotal = useMemo(() => {
+    if (!receitaMensal) return 0;
+    return receitaMensal.reduce((s: number, r: any) => s + (Number(r.comissao_total) || 0), 0);
   }, [receitaMensal]);
 
-  // Receita por categoria
+  // === Receita Bruta tabela por Categoria x Mês ===
+  const { receitaTabela, receitaMeses } = useMemo(() => {
+    if (!receitaDet) return { receitaTabela: [], receitaMeses: [] };
+    const meses = new Set<string>();
+    const map = new Map<string, Record<string, number>>();
+    receitaDet.forEach((r: any) => {
+      const cat = r.categoria || "Outros";
+      const mes = r.mes_ano || "";
+      meses.add(mes);
+      if (!map.has(cat)) map.set(cat, {});
+      const obj = map.get(cat)!;
+      obj[mes] = (obj[mes] || 0) + (Number(r.comissao_bruta) || 0);
+    });
+    const sortedMeses = [...meses].sort();
+    return {
+      receitaTabela: [...map.entries()].sort((a, b) => {
+        const totalA = Object.values(a[1]).reduce((s, v) => s + v, 0);
+        const totalB = Object.values(b[1]).reduce((s, v) => s + v, 0);
+        return totalB - totalA;
+      }).map(([cat, mesMap]) => ({
+        categoria: cat,
+        ...mesMap,
+        total: Object.values(mesMap).reduce((s, v) => s + v, 0),
+      })),
+      receitaMeses: sortedMeses,
+    };
+  }, [receitaDet]);
+
+  // === Receita por mês (stacked bar by categoria) ===
+  const { receitaPorMesStacked, receitaCategorias } = useMemo(() => {
+    if (!receitaDet) return { receitaPorMesStacked: [], receitaCategorias: [] };
+    const cats = new Set<string>();
+    const map = new Map<string, Record<string, number>>();
+    receitaDet.forEach((r: any) => {
+      const mes = r.mes_ano || "";
+      const cat = r.categoria || "Outros";
+      cats.add(cat);
+      if (!map.has(mes)) map.set(mes, {});
+      const obj = map.get(mes)!;
+      obj[cat] = (obj[cat] || 0) + (Number(r.comissao_bruta) || 0);
+    });
+    return {
+      receitaPorMesStacked: [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([mes, v]) => ({ mes: fmtMes(mes), ...v })),
+      receitaCategorias: [...cats].sort(),
+    };
+  }, [receitaDet]);
+
+  // === Receita por Categoria (donut) ===
   const receitaPorCategoria = useMemo(() => {
     if (!receitaDet) return [];
     const map = new Map<string, number>();
@@ -191,10 +316,7 @@ export function QuantitativoTab({ filters }: Props) {
       const k = r.categoria || "Outros";
       map.set(k, (map.get(k) || 0) + (Number(r.comissao_bruta) || 0));
     });
-    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([categoria, receita]) => ({
-      categoria,
-      receita,
-    }));
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
   }, [receitaDet]);
 
   if (loading) {
@@ -203,57 +325,81 @@ export function QuantitativoTab({ filters }: Props) {
         <div className="grid grid-cols-5 gap-2">
           {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20" />)}
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          <Skeleton className="h-64 col-span-2" />
-          <Skeleton className="h-64" />
-        </div>
+        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-64" />)}
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      {/* Row 1: Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+      {/* Row 1: Metric cards + Total por Tipo */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-2">
         <MetricCard title="Migração" value={contasMetrics.migracao} icon={Users} />
         <MetricCard title="Habilitação" value={contasMetrics.habilitacao} icon={Users} />
         <MetricCard title="Ativação" value={contasMetrics.ativacao} icon={Users} />
-        <MetricCard title="Captação MTD" value={fmtBRL(captacaoMetrics.mtd)} icon={ArrowUpRight} />
-        <MetricCard title="Captação YTD" value={fmtBRL(captacaoMetrics.ytd)} icon={TrendingUp} />
-      </div>
-
-      {/* Row 2: Captação por Mês + Captação por Tipo */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         <div className="lg:col-span-2">
-          <PbiCard title="Captação por Mês">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={captacaoPorMes} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
+          <PbiCard title="Total por Tipo">
+            <ResponsiveContainer width="100%" height={70}>
+              <BarChart data={totalPorTipo} layout="vertical" margin={{ top: 0, right: 5, left: 60, bottom: 0 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="tipo" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} width={55} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 10 }} />
-                <Bar dataKey="Aporte" fill={PBI_BLUE} radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Resgate" fill={PBI_ORANGE} radius={[2, 2, 0, 0]} />
+                {casasContas.map((casa, i) => (
+                  <Bar key={casa} dataKey={casa} stackId="a" fill={PBI_PALETTE[i % PBI_PALETTE.length]} />
+                ))}
               </BarChart>
             </ResponsiveContainer>
           </PbiCard>
         </div>
-        <PbiCard title="Captação por Tipo">
+      </div>
+
+      {/* Row 2: Contas por mês */}
+      <PbiCard title="Contas por Mês">
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={contasPorMes} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
+            <Bar dataKey="Ativação" stackId="a" fill={PBI_PALETTE[0]} radius={[0, 0, 0, 0]} />
+            <Bar dataKey="Habilitação" stackId="a" fill={PBI_PALETTE[1]} radius={[0, 0, 0, 0]} />
+            <Bar dataKey="Migração" stackId="a" fill={PBI_PALETTE[2]} radius={[2, 2, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </PbiCard>
+
+      {/* Row 3: Captação cards */}
+      <div className="grid grid-cols-2 gap-2">
+        <MetricCard title="Captação Líq. MTD" value={fmtBRL(captacaoMetrics.mtd)} icon={ArrowUpRight} />
+        <MetricCard title="Captação Líq. YTD" value={fmtBRL(captacaoMetrics.ytd)} icon={TrendingUp} />
+      </div>
+
+      {/* Row 4: Captação por mês (stacked) + Tipo donut */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+        <div className="lg:col-span-2">
+          <PbiCard title="Captação por Mês">
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={captacaoPorMesStacked} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${(v / 1e6).toFixed(1)}M`} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 9 }} />
+                {captacaoTipos.map((tipo, i) => (
+                  <Bar key={tipo} dataKey={tipo} stackId="a" fill={PBI_PALETTE[i % PBI_PALETTE.length]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </PbiCard>
+        </div>
+        <PbiCard title="Tipo de Captação">
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
-              <Pie
-                data={captacaoPorTipo}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                labelLine={{ strokeWidth: 0.5 }}
-              >
+              <Pie data={captacaoPorTipo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ strokeWidth: 0.5 }}>
                 {captacaoPorTipo.map((_, i) => (
-                  <Cell key={i} fill={PBI_COLORS[i % PBI_COLORS.length]} />
+                  <Cell key={i} fill={PBI_PALETTE[i % PBI_PALETTE.length]} />
                 ))}
               </Pie>
               <Tooltip formatter={(v: number) => fmtBRL(v)} />
@@ -262,73 +408,130 @@ export function QuantitativoTab({ filters }: Props) {
         </PbiCard>
       </div>
 
-      {/* Row 3: AuC por Mês + AuC por Casa */}
+      {/* Row 5: AuC por mês (multi-series line) + AuC por Casa (donut) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         <PbiCard title="AuC por Mês">
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={aucPorMes} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <LineChart data={aucPorMesMulti} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
               <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
               <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="AuC (M)" stroke={PBI_BLUE} strokeWidth={2} dot={{ r: 3, fill: PBI_BLUE }} />
+              <Legend wrapperStyle={{ fontSize: 10 }} />
+              {aucCasas.map((casa, i) => (
+                <Line key={casa} type="monotone" dataKey={casa} stroke={PBI_PALETTE[i % PBI_PALETTE.length]} strokeWidth={2} dot={{ r: 2 }} />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </PbiCard>
         <PbiCard title="AuC por Casa">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={aucPorCasa} layout="vertical" margin={{ top: 5, right: 10, left: 60, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
-              <YAxis type="category" dataKey="casa" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={55} />
+            <PieChart>
+              <Pie data={aucPorCasa} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ strokeWidth: 0.5 }}>
+                {aucPorCasa.map((_, i) => (
+                  <Cell key={i} fill={PBI_PALETTE[i % PBI_PALETTE.length]} />
+                ))}
+              </Pie>
               <Tooltip formatter={(v: number) => fmtBRL(v)} />
-              <Bar dataKey="net" fill={PBI_BLUE} radius={[0, 2, 2, 0]} />
-            </BarChart>
+            </PieChart>
           </ResponsiveContainer>
         </PbiCard>
       </div>
 
-      {/* Row 4: Faixa PL + Receita por Mês */}
+      {/* Row 6: # Clientes por Faixa PL */}
+      <PbiCard title="# Clientes por Faixa PL">
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={clientesFaixaMes} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: 9 }} />
+            {faixasPL.map((faixa, i) => (
+              <Bar key={faixa} dataKey={faixa} stackId="a" fill={PBI_PALETTE[i % PBI_PALETTE.length]} />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </PbiCard>
+
+      {/* Row 7: AuC por Faixa PL */}
+      <PbiCard title="AuC por Faixa PL">
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={aucFaixaMes} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: 9 }} />
+            {faixasPL.map((faixa, i) => (
+              <Bar key={faixa} dataKey={faixa} stackId="a" fill={PBI_PALETTE[i % PBI_PALETTE.length]} />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </PbiCard>
+
+      {/* Row 8: Receita Tailor card */}
+      <MetricCard title="Receita Bruta Tailor (estimada)" value={fmtBRL(receitaTotal)} icon={TrendingUp} />
+
+      {/* Row 9: Receita Bruta tabela por Categoria x Mês */}
+      <PbiCard title="Receita Bruta por Categoria x Mês">
+        <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="text-[10px] py-1 sticky left-0 bg-muted/50">Categoria</TableHead>
+                {receitaMeses.map(m => (
+                  <TableHead key={m} className="text-[10px] py-1 text-right">{fmtMes(m)}</TableHead>
+                ))}
+                <TableHead className="text-[10px] py-1 text-right font-bold">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {receitaTabela.map((row: any, i) => (
+                <TableRow key={row.categoria} className={i % 2 === 0 ? "bg-card" : "bg-muted/20"}>
+                  <TableCell className="text-[10px] py-1 sticky left-0 bg-inherit font-medium">{row.categoria}</TableCell>
+                  {receitaMeses.map(m => (
+                    <TableCell key={m} className="text-[10px] py-1 text-right">{fmtBRL(row[m] || 0)}</TableCell>
+                  ))}
+                  <TableCell className="text-[10px] py-1 text-right font-bold">{fmtBRL(row.total)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </PbiCard>
+
+      {/* Row 10: Receita por mês (stacked) + Receita por Categoria (donut) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-        <PbiCard title="Clientes e AuC por Faixa PL">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={aucPorFaixaPL} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="faixa" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 10 }} />
-              <Bar yAxisId="left" dataKey="net" name="AuC (M)" fill={PBI_BLUE} radius={[2, 2, 0, 0]} />
-              <Bar yAxisId="right" dataKey="clientes" name="# Clientes" fill={PBI_ORANGE} radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </PbiCard>
-        <PbiCard title="Receita Tailor por Mês">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={receitaPorMes} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+        <PbiCard title="Receita Bruta por Mês">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={receitaPorMesStacked} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
               <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${(v / 1e3).toFixed(0)}K`} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="Receita" fill={PBI_BLUE} radius={[2, 2, 0, 0]} />
+              <Legend wrapperStyle={{ fontSize: 9 }} />
+              {receitaCategorias.map((cat, i) => (
+                <Bar key={cat} dataKey={cat} stackId="a" fill={PBI_PALETTE[i % PBI_PALETTE.length]} />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </PbiCard>
+        <PbiCard title="Receita por Categoria">
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie data={receitaPorCategoria} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ strokeWidth: 0.5 }}>
+                {receitaPorCategoria.map((_, i) => (
+                  <Cell key={i} fill={PBI_PALETTE[i % PBI_PALETTE.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v: number) => fmtBRL(v)} />
+            </PieChart>
+          </ResponsiveContainer>
+        </PbiCard>
       </div>
-
-      {/* Row 5: Receita por Categoria */}
-      <PbiCard title="Receita por Categoria">
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={receitaPorCategoria} layout="vertical" margin={{ top: 5, right: 10, left: 80, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => fmtBRL(v)} />
-            <YAxis type="category" dataKey="categoria" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={75} />
-            <Tooltip formatter={(v: number) => fmtBRL(v)} />
-            <Bar dataKey="receita" fill={PBI_BLUE} radius={[0, 2, 2, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </PbiCard>
     </div>
   );
 }

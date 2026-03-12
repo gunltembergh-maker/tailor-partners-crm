@@ -122,6 +122,24 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_refresh: {
+        Row: {
+          id: number
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          id?: number
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          id?: number
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           assessor_id: string | null
@@ -1082,6 +1100,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {

@@ -3,12 +3,15 @@ import { AppLayout } from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Filter, X } from "lucide-react";
+import { Filter, X, RefreshCw } from "lucide-react";
 import { LastUpdateBadges } from "@/components/dashboard/LastUpdateBadges";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { QuantitativoTab } from "@/components/dashboard/QuantitativoTab";
 import { QualitativoTab } from "@/components/dashboard/QualitativoTab";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
+import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
+import { Progress } from "@/components/ui/progress";
+import { format } from "date-fns";
 
 export default function DashboardComercial() {
   const {
@@ -22,15 +25,29 @@ export default function DashboardComercial() {
     removeChip,
   } = useDashboardFilters();
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const { lastUpdatedAt, isRefreshing } = useDashboardRefresh();
 
   return (
     <AppLayout>
       <div className="space-y-2">
+        {/* Refresh loading bar */}
+        {isRefreshing && (
+          <div className="fixed top-0 left-0 right-0 z-50">
+            <Progress value={100} className="h-0.5 rounded-none [&>div]:animate-pulse" />
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold text-foreground">Dashboard Comercial</h1>
             <LastUpdateBadges />
+            {lastUpdatedAt && (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+                Dados: {format(new Date(lastUpdatedAt), "dd/MM HH:mm")}
+              </span>
+            )}
           </div>
           <Button
             variant="outline"
