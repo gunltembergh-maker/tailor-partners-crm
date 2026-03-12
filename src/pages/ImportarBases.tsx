@@ -454,7 +454,7 @@ function StatusBadge({ status }: { status: FileStatus }) {
     case "importing":
       return <Badge variant="secondary" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" />Importando</Badge>;
     case "success":
-      return <Badge className="gap-1 bg-emerald-600"><CheckCircle2 className="h-3 w-3" />Sucesso</Badge>;
+      return <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Sucesso</Badge>;
     case "error":
       return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Erro</Badge>;
     case "ignored":
