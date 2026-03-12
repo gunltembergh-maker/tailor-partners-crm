@@ -23,6 +23,7 @@ const SOURCE_MAP: Record<string, { sheets: Record<string, string> }> = {
     },
   },
   saldo_consolidado: {
+    // Pode ser "Tabela2" como nome de sheet/tabela no XLSX lib
     sheets: { Tabela2: "raw_saldo_consolidado" },
   },
   depara: {
@@ -55,15 +56,32 @@ const SOURCE_MAP: Record<string, { sheets: Record<string, string> }> = {
 };
 
 function getSupabaseClient() {
+  // No Lovable Cloud: SUPABASE_URL e SUPABASE_ANON_KEY costumam existir no runtime.
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+}
+
+function decodeURIComponentSafe(v: string | null) {
+  if (!v) return null;
+  try {
+    return decodeURIComponent(v);
+  } catch {
+    return v;
+  }
 }
 
 function findSheet(workbook: XLSX.WorkBook, sheetName: string): string | undefined {
   return (
-    workbook.SheetNames.find((s: string) => s === sheetName) ||
-    workbook.SheetNames.find((s: string) => s.toLowerCase() === sheetName.toLowerCase()) ||
-    workbook.SheetNames.find((s: string) => s.toLowerCase().includes(sheetName.toLowerCase()))
+    workbook.SheetNames.find((s) => s === sheetName) ||
+    workbook.SheetNames.find((s) => s.toLowerCase() === sheetName.toLowerCase()) ||
+    workbook.SheetNames.find((s) => s.toLowerCase().includes(sheetName.toLowerCase()))
   );
+}
+
+function decodeBase64ToBytes(contentBase64: string): Uint8Array {
+  const binaryString = atob(contentBase64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+  return bytes;
 }
 
 async function processFileJob(
@@ -81,7 +99,6 @@ async function processFileJob(
 
     let totalRows = 0;
     const errors: string[] = [];
-    const sheetResults: Record<string, number> = {};
 
     for (const [sheetName, tableName] of Object.entries(mapping.sheets)) {
       const actualSheetName = findSheet(workbook, sheetName);
@@ -92,13 +109,15 @@ async function processFileJob(
       }
 
       const sheet = workbook.Sheets[actualSheetName];
-      const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-      if (rows.length === 0) {
-        sheetResults[sheetName] = 0;
-        continue;
-      }
+      // Usa 1ª linha como header
+      const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, {
+        defval: null,
+      });
 
+      if (rows.length === 0) continue;
+
+      // "Truncate" simples (fase 1)
       const { error: delError } = await supabase.from(tableName).delete().gte("id", 0);
       if (delError) {
         errors.push(`Truncate ${tableName}: ${delError.message}`);
@@ -106,24 +125,19 @@ async function processFileJob(
       }
 
       const batchSize = 500;
-      let insertedForSheet = 0;
-
       for (let i = 0; i < rows.length; i += batchSize) {
         const batch = rows.slice(i, i + batchSize).map((row) => ({ data: row }));
         const { error: insError } = await supabase.from(tableName).insert(batch);
-
         if (insError) {
           errors.push(`Insert ${tableName} batch ${Math.floor(i / batchSize) + 1}: ${insError.message}`);
         } else {
-          insertedForSheet += batch.length;
+          totalRows += batch.length;
         }
       }
-
-      sheetResults[sheetName] = insertedForSheet;
-      totalRows += insertedForSheet;
     }
 
     const status = errors.length > 0 ? "partial" : "success";
+
     await supabase
       .from("sync_logs")
       .update({
@@ -132,13 +146,13 @@ async function processFileJob(
         error: errors.length > 0 ? errors.join("; ") : null,
       })
       .eq("id", logId);
-  } catch (err) {
+  } catch (err: any) {
     await supabase
       .from("sync_logs")
       .update({
         status: "error",
         rows_written: 0,
-        error: err.message,
+        error: err?.message ?? String(err),
       })
       .eq("id", logId);
   }
@@ -152,28 +166,66 @@ Deno.serve(async (req) => {
   const headers = { ...corsHeaders, "Content-Type": "application/json" };
 
   try {
-    // 1. Validate ingest key
+    // 1) Validate ingest key
     const ingestKey = req.headers.get("x-ingest-key");
     const expectedKey = Deno.env.get("INGEST_KEY");
-    if (!ingestKey || ingestKey !== expectedKey) {
+    if (!ingestKey || !expectedKey || ingestKey !== expectedKey) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
     }
 
-    // 2. Parse body — detect JSON vs binary mode
-    const contentType = req.headers.get("content-type") ?? "";
+    // 2) Detect mode: prefer binary if x-source-key exists (Power Automate)
+    const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
+    const isBinary = req.headers.has("x-source-key") || contentType.includes("application/octet-stream");
 
     let sourceKey: string | null = null;
     let fileName: string | null = null;
     let sourcePath: string | null = null;
     let fileBytes: Uint8Array | null = null;
 
-    if (contentType.includes("application/json")) {
-      // JSON mode (base64-encoded file)
-      const body = await req.json();
-      sourceKey = body.sourceKey ?? null;
-      fileName = body.fileName ?? null;
-      sourcePath = body.sourcePath ?? null;
-      const contentBase64 = body.contentBase64;
+    if (isBinary) {
+      // Binary mode
+      sourceKey = req.headers.get("x-source-key");
+      // Esses headers chegam URL-encoded (ASCII). Decodifica pra log.
+      fileName = decodeURIComponentSafe(req.headers.get("x-file-name"));
+      sourcePath = decodeURIComponentSafe(req.headers.get("x-source-path"));
+
+      if (!sourceKey) {
+        return new Response(JSON.stringify({ error: "Missing header x-source-key" }), {
+          status: 400,
+          headers,
+        });
+      }
+
+      if (!SOURCE_MAP[sourceKey]) {
+        return new Response(
+          JSON.stringify({
+            error: `Unknown sourceKey: ${sourceKey}. Valid keys: ${Object.keys(SOURCE_MAP).join(", ")}`,
+          }),
+          { status: 400, headers },
+        );
+      }
+
+      const ab = await req.arrayBuffer();
+      fileBytes = new Uint8Array(ab);
+    } else {
+      // JSON+base64 fallback
+      let body: any;
+      try {
+        body = await req.json();
+      } catch {
+        return new Response(
+          JSON.stringify({
+            error:
+              "Invalid JSON body. If sending a file, use Content-Type application/octet-stream and send binary in the body.",
+          }),
+          { status: 400, headers },
+        );
+      }
+
+      sourceKey = body?.sourceKey ?? null;
+      fileName = body?.fileName ?? null;
+      sourcePath = body?.sourcePath ?? null;
+      const contentBase64 = body?.contentBase64 ?? null;
 
       if (!sourceKey || !contentBase64) {
         return new Response(JSON.stringify({ error: "sourceKey and contentBase64 are required" }), {
@@ -182,36 +234,19 @@ Deno.serve(async (req) => {
         });
       }
 
-      const binaryString = atob(contentBase64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-      fileBytes = bytes;
-    } else {
-      // Binary mode (octet-stream or any non-JSON)
-      sourceKey = req.headers.get("x-source-key");
-      fileName = req.headers.get("x-file-name");
-      sourcePath = req.headers.get("x-source-path");
-
-      if (!sourceKey) {
-        return new Response(JSON.stringify({ error: "x-source-key header is required" }), { status: 400, headers });
+      if (!SOURCE_MAP[sourceKey]) {
+        return new Response(
+          JSON.stringify({
+            error: `Unknown sourceKey: ${sourceKey}. Valid keys: ${Object.keys(SOURCE_MAP).join(", ")}`,
+          }),
+          { status: 400, headers },
+        );
       }
 
-      const ab = await req.arrayBuffer();
-      fileBytes = new Uint8Array(ab);
+      fileBytes = decodeBase64ToBytes(contentBase64);
     }
 
-    // 3. Validate sourceKey
-    const mapping = SOURCE_MAP[sourceKey];
-    if (!mapping) {
-      return new Response(
-        JSON.stringify({
-          error: `Unknown sourceKey: ${sourceKey}. Valid keys: ${Object.keys(SOURCE_MAP).join(", ")}`,
-        }),
-        { status: 400, headers },
-      );
-    }
-
-    // 4. Insert sync_logs with status "received"
+    // 3) Create sync log fast
     const supabase = getSupabaseClient();
     const { data: logRow, error: logError } = await supabase
       .from("sync_logs")
@@ -232,10 +267,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 5. Kick off background processing
-    EdgeRuntime.waitUntil(processFileJob(logRow.id, sourceKey, fileBytes, fileName || null, sourcePath || null));
+    // 4) Background processing
+    EdgeRuntime.waitUntil(processFileJob(logRow.id, sourceKey!, fileBytes!, fileName || null, sourcePath || null));
 
-    // 6. Respond immediately
+    // 5) IMPORTANT: Power Automate expects 200 OK for binary/partial uploads
     return new Response(
       JSON.stringify({
         ok: true,
@@ -244,9 +279,12 @@ Deno.serve(async (req) => {
         fileName: fileName || null,
         logId: logRow.id,
       }),
-      { status: 200, headers }, // <-- TROCAR 202 POR 200);
+      { status: 200, headers },
     );
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err?.message ?? String(err) }), {
+      status: 500,
+      headers,
+    });
   }
 });
