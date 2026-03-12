@@ -21,6 +21,7 @@ import Relatorios from "./pages/Relatorios";
 import DashComercial from "./pages/DashComercial";
 import NotFound from "./pages/NotFound";
 import ImportClients from "./pages/ImportClients";
+import ImportarBases from "./pages/ImportarBases";
 
 const queryClient = new QueryClient();
 
