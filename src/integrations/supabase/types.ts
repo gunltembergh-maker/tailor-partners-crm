@@ -391,16 +391,19 @@ export type Database = {
           data: Json
           id: number
           ingested_at: string
+          mes_ano: string | null
         }
         Insert: {
           data: Json
           id?: never
           ingested_at?: string
+          mes_ano?: string | null
         }
         Update: {
           data?: Json
           id?: never
           ingested_at?: string
+          mes_ano?: string | null
         }
         Relationships: []
       }
@@ -409,16 +412,19 @@ export type Database = {
           data: Json
           id: number
           ingested_at: string
+          mes_ano: string | null
         }
         Insert: {
           data: Json
           id?: never
           ingested_at?: string
+          mes_ano?: string | null
         }
         Update: {
           data?: Json
           id?: never
           ingested_at?: string
+          mes_ano?: string | null
         }
         Relationships: []
       }
@@ -661,6 +667,7 @@ export type Database = {
           error: string | null
           file_name: string | null
           id: string
+          mes_ano_list: string[] | null
           received_at: string
           rows_written: number | null
           source_key: string
@@ -671,6 +678,7 @@ export type Database = {
           error?: string | null
           file_name?: string | null
           id?: string
+          mes_ano_list?: string[] | null
           received_at?: string
           rows_written?: number | null
           source_key: string
@@ -681,6 +689,7 @@ export type Database = {
           error?: string | null
           file_name?: string | null
           id?: string
+          mes_ano_list?: string[] | null
           received_at?: string
           rows_written?: number | null
           source_key?: string

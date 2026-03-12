@@ -1,59 +1,57 @@
 
-
-# Aprimorar Importar Bases — Suporte a bases grandes e particionamento por mês
+# Embed Power BI no Dash Comercial
 
 ## Resumo
+Substituir o placeholder atual por um iframe do Power BI com controle de acesso, loading state, timeout e modo tela cheia interno.
 
-Reescrever `src/pages/ImportarBases.tsx` com parsing chunked, inserção com retry, particionamento por `mes_ano` para Base Receita, botão cancelar, progresso detalhado e suporte a `.xlsx/.xlsm/.xml`.
+## Logica de acesso
 
-## Alterações
+1. A rota ja esta protegida por `ProtectedRoute` (usuario precisa estar logado).
+2. Apos autenticado, validar se o email do usuario termina com `@tailorpartners.com.br` (dominio usado no projeto conforme contexto de restricao de dominio).
+3. Se o dominio nao bater, exibir mensagem de acesso negado com orientacoes.
 
-### 1. Migração SQL
+## Funcionalidades da pagina
 
-Adicionar coluna `mes_ano_list` (text[]) à tabela `sync_logs` para registrar os períodos processados. Adicionar coluna `mes_ano` (text) às tabelas `raw_comissoes_historico` e `raw_comissoes_m0` para permitir delete parcial por período.
+### Estados
+- **Acesso negado**: card com icone de alerta e mensagem orientando o usuario a usar email corporativo.
+- **Carregando**: skeleton/loader cobrindo a area do iframe ate o evento `onLoad` disparar.
+- **Timeout (15s)**: se o iframe nao carregar em 15 segundos, exibir aviso com passos para resolver (trocar conta Microsoft, etc).
+- **Carregado**: iframe visivel, loader oculto.
 
-### 2. Reescrita de `src/pages/ImportarBases.tsx`
+### Iframe
+- `src`: URL do Secure Embed fornecida
+- `className="w-full"` com altura `calc(100vh - 180px)` para ocupar a area util
+- `allowFullScreen`, `frameBorder="0"`
 
-**Parser robusto:**
-- Aceitar `.xml`, `.xlsx`, `.xlsm` no dropzone.
-- Para `.xml`: `file.text()` + `XLSX.read(text, { type: "string" })`.
-- Para `.xlsx/.xlsm`: `file.arrayBuffer()` + `XLSX.read(ab, { type: "array", cellDates: true })`.
-- Nunca chamar `sheet_to_json` na aba inteira. Ler `sheet['!ref']`, iterar em chunks de 2000 linhas usando `XLSX.utils.sheet_to_json` com range limitado (`{ range: startRow, header: headers }`). Yield (`await new Promise(r => setTimeout(r, 0))`) entre chunks.
+### Tela cheia interna
+- Botao "Tela cheia" (icone `Maximize`) ao lado do titulo
+- Ao clicar, abrir overlay `fixed inset-0 z-50 bg-background` com o mesmo iframe ocupando 100vh/100vw
+- Botao "Fechar" (icone `X`) no canto superior direito do overlay
+- Estado controlado por `useState<boolean>`
 
-**Inserção com retry e progresso:**
-- `BATCH_SIZE = 250`. Insert sequencial.
-- Retry até 2x por batch com backoff de 500ms.
-- Estado por arquivo: `{ rowsImported, totalRows, currentSheet, percentComplete, elapsedMs, estimatedRemainingMs, logs: string[] }`.
-- Progress bar visual por arquivo (componente `Progress`).
+## Detalhes tecnicos
 
-**Particionamento por mês (Base Receita):**
-- Configuração: `PARTITIONED_TABLES` = `{ raw_comissoes_historico: "Data", raw_comissoes_m0: "Data" }`.
-- Durante parse de cada chunk, extrair coluna `Data`, converter para `YYYYMM` (`mes_ano`). Linhas sem data valida: log de warning, pular linha.
-- Agrupar linhas por `mes_ano`.
-- Para cada `mes_ano`: `delete from table where mes_ano = X`, depois insert batches.
-- Inserir `mes_ano` como campo extra no objeto `{ data: row, mes_ano: "202501" }`.
-- Fallback: tabelas não particionadas → delete total + insert (comportamento atual).
+### Arquivo modificado: `src/pages/DashComercial.tsx`
 
-**Cancelamento:**
-- `AbortController` ref. Botão "Cancelar" seta `aborted = true`.
-- Checagem de abort entre batches e entre sheets.
+- Importar `useAuth` para obter `user` e verificar `user.email`
+- Importar `useState`, `useEffect`, `useCallback` do React
+- Importar icones: `Maximize`, `X`, `AlertTriangle`, `Loader2`
+- Importar componentes UI: `Card`, `CardContent`, `Button`, `Alert`, `Skeleton`
 
-**Logs na UI:**
-- Array de log messages por arquivo, mostrado em collapsible abaixo da row do arquivo.
-- Cada evento relevante (sheet encontrada, batch inserido, erro, retry, mes_ano processado) adiciona entrada ao log.
+```text
+Fluxo:
+1. const { user } = useAuth()
+2. Verificar user.email?.endsWith("@tailorpartners.com.br")
+3. Se nao: renderizar card de acesso negado
+4. Se sim:
+   a. Estado loading = true, timeout = false, fullscreen = false
+   b. setTimeout de 15s para setar timeout = true
+   c. iframe onLoad -> loading = false, limpar timeout
+   d. Renderizar header + iframe + botao tela cheia
+   e. Se fullscreen: overlay fixed com iframe + botao fechar
+```
 
-**sync_logs:**
-- Status: `received` → `importing` → `success`/`partial`/`error`.
-- `mes_ano_list`: array dos períodos processados (ex: `["202501","202502"]`).
-- Update progressivo durante importação.
-
-**Sugestão .xlsm:**
-- Se erro no parse de `.xlsm`, exibir toast "Erro ao ler macro. Salve como .xlsx e tente novamente."
-
-### 3. Arquivos
-
-| Arquivo | Acao |
-|---|---|
-| Migracao SQL | Criar — add `mes_ano` to raw_comissoes_*, `mes_ano_list` to sync_logs |
-| `src/pages/ImportarBases.tsx` | Reescrever completo |
-
+### Nenhum outro arquivo sera alterado
+- A rota ja existe e esta protegida
+- O item de menu ja existe
+- Nenhum secret ou token necessario (Secure Embed)
