@@ -19,6 +19,7 @@ import Calendario from "./pages/Calendario";
 import Paineis from "./pages/Paineis";
 import Relatorios from "./pages/Relatorios";
 import DashComercial from "./pages/DashComercial";
+import DashboardComercial from "./pages/DashboardComercial";
 import NotFound from "./pages/NotFound";
 import ImportClients from "./pages/ImportClients";
 import ImportarBases from "./pages/ImportarBases";
