@@ -416,9 +416,9 @@ export default function ImportarBases() {
 
             // Delete existing data for this period
             addLog(entry.id, `🗑️ Deletando ${mesAno} em ${tableName}`);
-            const { error: delErr } = await supabase
+            const { error: delErr } = await (supabase
               .from(tableName as RawTable)
-              .delete()
+              .delete() as any)
               .eq("mes_ano", mesAno);
             if (delErr) {
               errors.push(`Delete ${tableName} ${mesAno}: ${delErr.message}`);
