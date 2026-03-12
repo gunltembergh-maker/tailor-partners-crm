@@ -62,6 +62,7 @@ function AppRoutes() {
       <Route path="/prioridades" element={<ProtectedRoute><Prioridades /></ProtectedRoute>} />
       <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
       <Route path="/paineis" element={<ProtectedRoute><Paineis /></ProtectedRoute>} />
+      <Route path="/dashboards/comercial" element={<ProtectedRoute><DashboardComercial /></ProtectedRoute>} />
       <Route path="/relatorios/dash-comercial" element={<ProtectedRoute><DashComercial /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
       <Route path="/import-clients" element={<ProtectedRoute><ImportClients /></ProtectedRoute>} />
