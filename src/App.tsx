@@ -20,6 +20,7 @@ import Paineis from "./pages/Paineis";
 import Relatorios from "./pages/Relatorios";
 import DashComercial from "./pages/DashComercial";
 import DashboardComercial from "./pages/DashboardComercial";
+import AuditoriaComercial from "./pages/AuditoriaComercial";
 import NotFound from "./pages/NotFound";
 import ImportClients from "./pages/ImportClients";
 import ImportarBases from "./pages/ImportarBases";
