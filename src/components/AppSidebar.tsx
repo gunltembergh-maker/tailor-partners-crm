@@ -47,6 +47,7 @@ const dashboardItems = [
 
 const adminMenuItems = [
   { title: "Importar Bases", icon: Upload, path: "/admin/importar-bases" },
+  { title: "Auditoria Comercial", icon: ClipboardCheck, path: "/admin/auditoria-comercial" },
 ];
 
 export function AppSidebar() {
