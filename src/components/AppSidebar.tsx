@@ -12,6 +12,7 @@ import {
   BarChart3,
   FileText,
   Upload,
+  ClipboardCheck,
   LogOut,
   UserCircle,
 } from "lucide-react";
