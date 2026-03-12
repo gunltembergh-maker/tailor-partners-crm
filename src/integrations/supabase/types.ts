@@ -818,78 +818,258 @@ export type Database = {
         }
         Relationships: []
       }
-      vw_diversificador_consolidado: {
+      vw_captacao_total: {
         Row: {
-          assessor: string | null
-          classe: string | null
-          conta: string | null
-          data: Json | null
+          advisor: string | null
+          ano_mes: string | null
+          aporte: number | null
+          banker: string | null
+          canal: string | null
+          captacao: number | null
+          casa: string | null
+          data_mov: string | null
+          documento: string | null
+          finder: string | null
           id: number | null
           ingested_at: string | null
-          nome: string | null
-          percentual: number | null
-          subclasse: string | null
-          valor: number | null
+          resgate: number | null
+          tipo_captacao: string | null
+          tipo_cliente: string | null
         }
         Insert: {
-          assessor?: never
-          classe?: never
-          conta?: never
-          data?: Json | null
+          advisor?: never
+          ano_mes?: never
+          aporte?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          data_mov?: never
+          documento?: never
+          finder?: never
           id?: number | null
           ingested_at?: string | null
-          nome?: never
-          percentual?: never
-          subclasse?: never
-          valor?: never
+          resgate?: never
+          tipo_captacao?: never
+          tipo_cliente?: never
         }
         Update: {
-          assessor?: never
-          classe?: never
-          conta?: never
-          data?: Json | null
+          advisor?: never
+          ano_mes?: never
+          aporte?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          data_mov?: never
+          documento?: never
+          finder?: never
           id?: number | null
           ingested_at?: string | null
-          nome?: never
-          percentual?: never
-          subclasse?: never
-          valor?: never
+          resgate?: never
+          tipo_captacao?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      vw_contas_total: {
+        Row: {
+          advisor: string | null
+          ano_mes: string | null
+          banker: string | null
+          canal: string | null
+          casa: string | null
+          conta: string | null
+          data_mov: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          tipo: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          ano_mes?: never
+          banker?: never
+          canal?: never
+          casa?: never
+          conta?: never
+          data_mov?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          tipo?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          ano_mes?: never
+          banker?: never
+          canal?: never
+          casa?: never
+          conta?: never
+          data_mov?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          tipo?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      vw_diversificador_consolidado: {
+        Row: {
+          advisor: string | null
+          ativo_ajustado: string | null
+          banker: string | null
+          casa: string | null
+          conta: string | null
+          data: Json | null
+          data_posicao: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          indexador: string | null
+          ingested_at: string | null
+          net: number | null
+          produto_ajustado: string | null
+          tipo_cliente: string | null
+          vencimento: string | null
+        }
+        Insert: {
+          advisor?: never
+          ativo_ajustado?: never
+          banker?: never
+          casa?: never
+          conta?: never
+          data?: Json | null
+          data_posicao?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          indexador?: never
+          ingested_at?: string | null
+          net?: never
+          produto_ajustado?: never
+          tipo_cliente?: never
+          vencimento?: never
+        }
+        Update: {
+          advisor?: never
+          ativo_ajustado?: never
+          banker?: never
+          casa?: never
+          conta?: never
+          data?: Json | null
+          data_posicao?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          indexador?: never
+          ingested_at?: string | null
+          net?: never
+          produto_ajustado?: never
+          tipo_cliente?: never
+          vencimento?: never
         }
         Relationships: []
       }
       vw_positivador_total_agrupado: {
         Row: {
-          assessor: string | null
+          advisor: string | null
+          ano_mes: string | null
+          banker: string | null
+          canal: string | null
+          casa: string | null
           conta: string | null
           data: Json | null
+          data_posicao: string | null
+          documento: string | null
+          faixa_pl: string | null
+          finder: string | null
           id: number | null
           ingested_at: string | null
           net_em_m: number | null
-          nome: string | null
+          ordem_pl: number | null
           pl_declarado: number | null
-          pl_declarado_ajustado: number | null
+          tipo_cliente: string | null
         }
         Insert: {
-          assessor?: never
+          advisor?: never
+          ano_mes?: never
+          banker?: never
+          canal?: never
+          casa?: never
           conta?: never
           data?: Json | null
+          data_posicao?: never
+          documento?: never
+          faixa_pl?: never
+          finder?: never
           id?: number | null
           ingested_at?: string | null
           net_em_m?: never
-          nome?: never
+          ordem_pl?: never
           pl_declarado?: never
-          pl_declarado_ajustado?: never
+          tipo_cliente?: never
         }
         Update: {
-          assessor?: never
+          advisor?: never
+          ano_mes?: never
+          banker?: never
+          canal?: never
+          casa?: never
           conta?: never
           data?: Json | null
+          data_posicao?: never
+          documento?: never
+          faixa_pl?: never
+          finder?: never
           id?: number | null
           ingested_at?: string | null
           net_em_m?: never
-          nome?: never
+          ordem_pl?: never
           pl_declarado?: never
-          pl_declarado_ajustado?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      vw_receita_detalhada: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          canal: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta: number | null
+          data_mov: string | null
+          documento: string | null
+          finder: string | null
+          fonte: string | null
+          id: number | null
+          ingested_at: string | null
+          mes_ano: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
+      vw_receita_mensal: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          canal: string | null
+          comissao_total: number | null
+          documento: string | null
+          finder: string | null
+          mes_ano: string | null
+          qtd_registros: number | null
+          tipo_cliente: string | null
         }
         Relationships: []
       }
