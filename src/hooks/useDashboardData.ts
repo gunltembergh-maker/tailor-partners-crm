@@ -33,7 +33,7 @@ export function useFilterOptions() {
     queryFn: async () => {
       const { data: captData } = await supabase
         .from("vw_captacao_total" as any)
-        .select("banker, advisor, finder, casa, tipo_cliente")
+        .select("banker, advisor, finder, casa, tipo_cliente, ano_mes")
         .limit(5000);
       
       const sets = {
@@ -42,6 +42,7 @@ export function useFilterOptions() {
         finder: new Set<string>(),
         casa: new Set<string>(),
         tipoCliente: new Set<string>(),
+        anoMes: new Set<string>(),
       };
       (captData ?? []).forEach((r: any) => {
         if (r.banker) sets.banker.add(r.banker);
@@ -49,6 +50,7 @@ export function useFilterOptions() {
         if (r.finder) sets.finder.add(r.finder);
         if (r.casa) sets.casa.add(r.casa);
         if (r.tipo_cliente) sets.tipoCliente.add(r.tipo_cliente);
+        if (r.ano_mes) sets.anoMes.add(r.ano_mes);
       });
       return {
         bankers: [...sets.banker].sort(),
@@ -56,6 +58,7 @@ export function useFilterOptions() {
         finders: [...sets.finder].sort(),
         casas: [...sets.casa].sort(),
         tiposCliente: [...sets.tipoCliente].sort(),
+        anoMeses: [...sets.anoMes].sort(),
       };
     },
     staleTime: 5 * 60_000,
@@ -63,8 +66,12 @@ export function useFilterOptions() {
 }
 
 function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) {
-  const { s, e } = anoMesRange(filters.periodoInicio, filters.periodoFim);
-  q = q.gte(dateCol, s).lte(dateCol, e);
+  if (filters.anoMes.length) {
+    q = q.in(dateCol, filters.anoMes);
+  } else {
+    const { s, e } = anoMesRange(filters.periodoInicio, filters.periodoFim);
+    q = q.gte(dateCol, s).lte(dateCol, e);
+  }
   if (filters.documento) q = q.ilike("documento", `%${filters.documento}%`);
   if (filters.tipoCliente) q = q.eq("tipo_cliente", filters.tipoCliente);
   if (filters.casa) q = q.eq("casa", filters.casa);
@@ -108,7 +115,7 @@ export function usePositivadorData(filters: DashboardFilters) {
     queryFn: async () => {
       let q = supabase
         .from("vw_positivador_total_agrupado" as any)
-        .select("ano_mes, documento, banker, advisor, finder, casa, tipo_cliente, faixa_pl, ordem_pl, net_em_m, pl_declarado");
+        .select("ano_mes, documento, banker, advisor, finder, casa, tipo_cliente, faixa_pl, ordem_pl, net_em_m, pl_declarado, conta");
       q = applyCommonFilters(q, filters, "ano_mes");
       const { data, error } = await q;
       if (error) throw error;

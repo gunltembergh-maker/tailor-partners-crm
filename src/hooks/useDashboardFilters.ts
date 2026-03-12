@@ -3,6 +3,7 @@ import { useState, useCallback, useMemo } from "react";
 export interface DashboardFilters {
   periodoInicio: string;
   periodoFim: string;
+  anoMes: string[];
   banker: string[];
   advisor: string[];
   finder: string[];
@@ -19,6 +20,7 @@ const today = now.toISOString().slice(0, 10);
 const defaultFilters: DashboardFilters = {
   periodoInicio: startOfYear,
   periodoFim: today,
+  anoMes: [],
   banker: [],
   advisor: [],
   finder: [],
@@ -51,6 +53,9 @@ export function useDashboardFilters() {
 
   const activeChips = useMemo(() => {
     const chips: { key: keyof DashboardFilters; label: string; value: string }[] = [];
+    if (appliedFilters.anoMes.length) {
+      appliedFilters.anoMes.forEach(v => chips.push({ key: "anoMes", label: "Ano Mês", value: v }));
+    }
     if (appliedFilters.banker.length) {
       appliedFilters.banker.forEach(v => chips.push({ key: "banker", label: "Banker", value: v }));
     }
@@ -78,7 +83,7 @@ export function useDashboardFilters() {
   const removeChip = useCallback((key: keyof DashboardFilters, value: string) => {
     setAppliedFilters(prev => {
       const next = { ...prev };
-      if (key === "banker" || key === "advisor" || key === "finder") {
+      if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes") {
         next[key] = prev[key].filter(v => v !== value);
       } else {
         (next as any)[key] = "";
@@ -87,7 +92,7 @@ export function useDashboardFilters() {
     });
     setPendingFilters(prev => {
       const next = { ...prev };
-      if (key === "banker" || key === "advisor" || key === "finder") {
+      if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes") {
         next[key] = prev[key].filter(v => v !== value);
       } else {
         (next as any)[key] = "";
