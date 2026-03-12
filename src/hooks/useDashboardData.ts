@@ -32,10 +32,6 @@ export function useFilterOptions() {
   return useQuery({
     queryKey: ["dashboard-filter-options"],
     queryFn: async () => {
-      const [bankers, advisors, finders, casas] = await Promise.all([
-        supabase.rpc("get_distinct_values" as any, { col: "banker" }).then(() => null).catch(() => null),
-        null, null, null,
-      ]);
       // Fetch distinct values from vw_captacao_total
       const { data: captData } = await supabase
         .from("vw_captacao_total" as any)
