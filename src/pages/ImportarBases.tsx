@@ -650,80 +650,13 @@ export default function ImportarBases() {
                 </TableHeader>
                 <TableBody>
                   {files.map((f) => (
-                    <Collapsible key={f.id} open={expandedLogs.has(f.id)} onOpenChange={() => toggleLogs(f.id)} asChild>
-                      <>
-                        <TableRow>
-                          <TableCell className="p-2">
-                            <CollapsibleTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                {expandedLogs.has(f.id) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                              </Button>
-                            </CollapsibleTrigger>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
-                              <span className="truncate max-w-[200px]">{f.file.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {f.status === "ignored" ? (
-                              <Badge variant="secondary">Ignorado</Badge>
-                            ) : f.sourceKey ? (
-                              <Badge variant="outline">{SOURCE_MAP[f.sourceKey]?.label ?? f.sourceKey}</Badge>
-                            ) : (
-                              <Select value={f.sourceKey ?? ""} onValueChange={(v) => updateFile(f.id, { sourceKey: v })}>
-                                <SelectTrigger className="w-[160px] h-8 text-xs">
-                                  <SelectValue placeholder="Escolher tipo..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(SOURCE_MAP).map(([k, v]) => (
-                                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge status={f.status} />
-                          </TableCell>
-                          <TableCell>
-                            {f.status === "importing" ? (
-                              <div className="w-32 space-y-1">
-                                <Progress value={f.percentComplete} className="h-2" />
-                                <span className="text-xs text-muted-foreground">{f.percentComplete}%</span>
-                              </div>
-                            ) : f.errorMsg ? (
-                              <span className="text-xs text-destructive line-clamp-1 max-w-[200px]">{f.errorMsg}</span>
-                            ) : f.status === "success" ? (
-                              <span className="text-xs text-muted-foreground">
-                                {f.mesAnoList.length > 0 && `Períodos: ${f.mesAnoList.join(", ")}`}
-                              </span>
-                            ) : "—"}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {f.rowsImported > 0 ? f.rowsImported.toLocaleString("pt-BR") : "—"}
-                          </TableCell>
-                        </TableRow>
-                        <CollapsibleContent asChild>
-                          <tr>
-                            <td colSpan={6} className="p-0">
-                              <div className="bg-muted/30 border-t px-4 py-2 max-h-48 overflow-y-auto">
-                                {f.logs.length === 0 ? (
-                                  <p className="text-xs text-muted-foreground">Nenhum log ainda.</p>
-                                ) : (
-                                  <div className="space-y-0.5">
-                                    {f.logs.map((log, i) => (
-                                      <p key={i} className="text-xs font-mono text-muted-foreground">{log}</p>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        </CollapsibleContent>
-                      </>
-                    </Collapsible>
+                    <FileRow
+                      key={f.id}
+                      f={f}
+                      expanded={expandedLogs.has(f.id)}
+                      onToggle={() => toggleLogs(f.id)}
+                      onUpdateSourceKey={(v) => updateFile(f.id, { sourceKey: v })}
+                    />
                   ))}
                 </TableBody>
               </Table>
