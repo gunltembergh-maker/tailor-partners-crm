@@ -533,6 +533,16 @@ export default function ImportarBases() {
 
       addLog(entry.id, `Importação finalizada: ${totalRowsInserted} linhas, status: ${finalStatus}`);
       loadLastSyncs();
+
+      // Signal dashboard refresh after successful/partial import
+      if (finalStatus === "success" || (errors.length > 0 && totalRowsInserted > 0)) {
+        try {
+          await supabase.rpc("increment_dashboard_refresh" as any);
+          addLog(entry.id, "📊 Sinal de refresh do dashboard enviado");
+        } catch (e) {
+          // Non-critical, don't block
+        }
+      }
     } catch (err: any) {
       const msg = err?.message ?? String(err);
       updateFile(entry.id, { status: "error", errorMsg: msg, percentComplete: 0 });
