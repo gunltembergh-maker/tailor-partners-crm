@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import {
   useContasKpis, useContasAggMes, useContasTotalPorTipo,
-  useCaptacaoData, usePositivadorData,
+  useCaptacaoKpis, useCaptacaoAggMes, useCaptacaoTreemap,
+  usePositivadorData,
   useReceitaMensalData, useReceitaDetalhadaData,
 } from "@/hooks/useDashboardData";
 import {
