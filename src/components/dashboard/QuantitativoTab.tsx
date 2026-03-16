@@ -6,8 +6,9 @@ import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import {
   useContasKpis, useContasAggMes, useContasTotalPorTipo,
   useCaptacaoKpis, useCaptacaoAggMes, useCaptacaoTreemap,
-  usePositivadorData,
-  useReceitaMensalData, useReceitaDetalhadaData,
+  useAucMes, useAucCasa,
+  useFaixaPlClientes, useFaixaPlAuc,
+  useReceitaKpi, useReceitaMesCategoria, useReceitaTreemapCategoria, useReceitaMatriz,
 } from "@/hooks/useDashboardData";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -21,13 +22,6 @@ interface Props { filters: DashboardFilters; }
 
 function fmtBRL(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
-}
-function fmtMes(anoMes: string) {
-  if (!anoMes || anoMes.length < 6) return anoMes;
-  const m = anoMes.slice(4, 6);
-  const y = anoMes.slice(2, 4);
-  const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  return `${meses[parseInt(m, 10) - 1]}/${y}`;
 }
 
 function PbiCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
@@ -75,43 +69,50 @@ const TreemapContent = ({ x, y, width, height, name, value, index }: any) => {
 };
 
 export function QuantitativoTab({ filters }: Props) {
-  // === Row 1 & 2: Contas via RPCs ===
+  // === Contas ===
   const { data: kpis, isLoading: kpisLoading } = useContasKpis(filters);
   const { data: contasAgg, isLoading: aggLoading } = useContasAggMes(filters);
   const { data: contasTipo, isLoading: tipoLoading } = useContasTotalPorTipo(filters);
 
-  // === Captação via RPCs ===
+  // === Captação ===
   const { data: captKpis, isLoading: captKpisLoading } = useCaptacaoKpis(filters);
   const { data: captAggMes, isLoading: captAggLoading } = useCaptacaoAggMes(filters);
   const { data: captTreemap, isLoading: captTreeLoading } = useCaptacaoTreemap(filters);
 
-  // === Remaining sections: existing view-based hooks ===
-  const { data: positivador, isLoading: posLoading } = usePositivadorData(filters);
-  const { data: receitaMensal, isLoading: recMLoading } = useReceitaMensalData(filters);
-  const { data: receitaDet, isLoading: recDLoading } = useReceitaDetalhadaData(filters);
+  // === AuC ===
+  const { data: aucMes, isLoading: aucMesLoading } = useAucMes(filters);
+  const { data: aucCasa, isLoading: aucCasaLoading } = useAucCasa(filters);
 
-  const loading = kpisLoading || aggLoading || tipoLoading || captKpisLoading || captAggLoading || captTreeLoading || posLoading || recMLoading || recDLoading;
+  // === Faixa PL ===
+  const { data: faixaClientes, isLoading: faixaCliLoading } = useFaixaPlClientes(filters);
+  const { data: faixaAuc, isLoading: faixaAucLoading } = useFaixaPlAuc(filters);
 
-  // === Contas por mês (pivot RPC data) ===
+  // === Receita ===
+  const { data: receitaKpi, isLoading: recKpiLoading } = useReceitaKpi(filters);
+  const { data: receitaMesCat, isLoading: recMesCatLoading } = useReceitaMesCategoria(filters);
+  const { data: receitaTreemap, isLoading: recTreeLoading } = useReceitaTreemapCategoria(filters);
+  const { data: receitaMatriz, isLoading: recMatrizLoading } = useReceitaMatriz(filters);
+
+  const loading = kpisLoading || aggLoading || tipoLoading || captKpisLoading || captAggLoading || captTreeLoading
+    || aucMesLoading || aucCasaLoading || faixaCliLoading || faixaAucLoading
+    || recKpiLoading || recMesCatLoading || recTreeLoading || recMatrizLoading;
+
+  // === Contas por mês (pivot) ===
   const contasPorMes = useMemo(() => {
     if (!contasAgg?.length) return [];
     const map = new Map<number, { anomes_nome: string; Ativação: number; Habilitação: number; Migração: number }>();
     contasAgg.forEach((r: any) => {
-      if (!map.has(r.anomes)) {
-        map.set(r.anomes, { anomes_nome: r.anomes_nome || String(r.anomes), Ativação: 0, Habilitação: 0, Migração: 0 });
-      }
+      if (!map.has(r.anomes)) map.set(r.anomes, { anomes_nome: r.anomes_nome || String(r.anomes), Ativação: 0, Habilitação: 0, Migração: 0 });
       const row = map.get(r.anomes)!;
       const t = (r.tipo || "").toLowerCase();
       if (t.includes("ativa")) row.Ativação += Number(r.qtd) || 0;
       else if (t.includes("habilit")) row.Habilitação += Number(r.qtd) || 0;
       else if (t.includes("migra")) row.Migração += Number(r.qtd) || 0;
     });
-    return [...map.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([, v]) => ({ mes: v.anomes_nome, ...v }));
+    return [...map.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => ({ mes: v.anomes_nome, ...v }));
   }, [contasAgg]);
 
-  // === Total por Tipo (pivot RPC data by casa) ===
+  // === Total por Tipo (pivot by casa) ===
   const { totalPorTipo, casasContas } = useMemo(() => {
     if (!contasTipo?.length) return { totalPorTipo: [], casasContas: [] };
     const casaSet = new Set<string>();
@@ -121,8 +122,7 @@ export function QuantitativoTab({ filters }: Props) {
       const casa = r.casa || "Outros";
       casaSet.add(casa);
       if (!tipoMap.has(tipo)) tipoMap.set(tipo, {});
-      const obj = tipoMap.get(tipo)!;
-      obj[casa] = (obj[casa] || 0) + (Number(r.qtd) || 0);
+      tipoMap.get(tipo)![casa] = (tipoMap.get(tipo)![casa] || 0) + (Number(r.qtd) || 0);
     });
     return {
       totalPorTipo: [...tipoMap.entries()].map(([tipo, casas]) => ({ tipo, ...casas })),
@@ -130,7 +130,7 @@ export function QuantitativoTab({ filters }: Props) {
     };
   }, [contasTipo]);
 
-  // === Captação por mês (pivot RPC data) ===
+  // === Captação por mês (pivot) ===
   const { captacaoPorMesStacked, captacaoTipos } = useMemo(() => {
     if (!captAggMes?.length) return { captacaoPorMesStacked: [], captacaoTipos: [] };
     const tipos = new Set<string>();
@@ -143,158 +143,84 @@ export function QuantitativoTab({ filters }: Props) {
       (obj as any)[tipo] = ((obj as any)[tipo] || 0) + (Number(r.valor) || 0);
     });
     return {
-      captacaoPorMesStacked: [...map.entries()]
-        .sort((a, b) => a[0] - b[0])
-        .map(([, v]) => ({ mes: v.anomes_nome, ...v })),
+      captacaoPorMesStacked: [...map.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => ({ mes: v.anomes_nome, ...v })),
       captacaoTipos: [...tipos].sort(),
     };
   }, [captAggMes]);
 
-  // === Captação por tipo (treemap from RPC) ===
+  // === Captação treemap ===
   const captacaoPorTipo = useMemo(() => {
     if (!captTreemap?.length) return [];
-    return captTreemap.map((r: any) => ({
-      name: r.tipo_captacao || "Outros",
-      value: Math.abs(Number(r.valor) || 0),
-    }));
+    return captTreemap.map((r: any) => ({ name: r.tipo_captacao || "Outros", value: Math.abs(Number(r.valor) || 0) }));
   }, [captTreemap]);
 
-  // === AuC por mês ===
-  const { aucPorMesMulti, aucCasas } = useMemo(() => {
-    if (!positivador) return { aucPorMesMulti: [], aucCasas: [] };
-    const casaSet = new Set<string>();
-    const map = new Map<string, Record<string, number>>();
-    positivador.forEach((r: any) => {
-      const mes = r.ano_mes || "";
-      const casa = r.casa || "Outros";
-      casaSet.add(casa);
-      if (!map.has(mes)) map.set(mes, {});
-      const obj = map.get(mes)!;
-      obj[casa] = (obj[casa] || 0) + (Number(r.net_em_m) || 0);
-    });
-    return {
-      aucPorMesMulti: [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([mes, v]) => ({ mes: fmtMes(mes), ...v })),
-      aucCasas: [...casaSet].sort(),
-    };
-  }, [positivador]);
+  // === AuC por mês (line chart data) ===
+  const aucMesData = useMemo(() => {
+    if (!aucMes?.length) return [];
+    return aucMes.map((r: any) => ({ mes: r.anomes_nome, auc: Number(r.auc) || 0 }));
+  }, [aucMes]);
 
-  // === AuC por Casa (donut) ===
-  const aucPorCasa = useMemo(() => {
-    if (!positivador) return [];
-    const map = new Map<string, number>();
-    positivador.forEach((r: any) => {
-      const k = r.casa || "Outros";
-      map.set(k, (map.get(k) || 0) + (Number(r.net_em_m) || 0));
-    });
-    return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
-  }, [positivador]);
+  // === AuC por casa (donut data) ===
+  const aucCasaData = useMemo(() => {
+    if (!aucCasa?.length) return [];
+    return aucCasa.map((r: any) => ({ name: r.casa || "Outros", value: Number(r.auc) || 0 }));
+  }, [aucCasa]);
 
-  // === Faixa PL ===
-  const { clientesFaixaMes, faixasPL } = useMemo(() => {
-    if (!positivador) return { clientesFaixaMes: [], faixasPL: [] };
-    const faixas = new Set<string>();
-    const map = new Map<string, Map<string, Set<string>>>();
-    positivador.forEach((r: any) => {
-      const mes = r.ano_mes || "";
-      const faixa = r.faixa_pl || "N/D";
-      faixas.add(faixa);
-      if (!map.has(mes)) map.set(mes, new Map());
-      const fMap = map.get(mes)!;
-      if (!fMap.has(faixa)) fMap.set(faixa, new Set());
-      if (r.documento) fMap.get(faixa)!.add(r.documento);
-    });
-    const ordemMap = new Map<string, number>();
-    positivador.forEach((r: any) => {
-      if (r.faixa_pl && r.ordem_pl != null) ordemMap.set(r.faixa_pl, Number(r.ordem_pl));
-    });
-    const sortedFaixas = [...faixas].sort((a, b) => (ordemMap.get(a) || 99) - (ordemMap.get(b) || 99));
-    return {
-      clientesFaixaMes: [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([mes, fMap]) => {
-          const row: any = { mes: fmtMes(mes) };
-          sortedFaixas.forEach(f => { row[f] = fMap.get(f)?.size || 0; });
-          return row;
-        }),
-      faixasPL: sortedFaixas,
-    };
-  }, [positivador]);
+  // === Faixa PL (horizontal bars) ===
+  const faixaClientesData = useMemo(() => {
+    if (!faixaClientes?.length) return [];
+    return faixaClientes.map((r: any) => ({ faixa: r.faixa_pl, clientes: Number(r.clientes) || 0 }));
+  }, [faixaClientes]);
 
-  const aucFaixaMes = useMemo(() => {
-    if (!positivador || !faixasPL.length) return [];
-    const map = new Map<string, Record<string, number>>();
-    positivador.forEach((r: any) => {
-      const mes = r.ano_mes || "";
-      const faixa = r.faixa_pl || "N/D";
-      if (!map.has(mes)) map.set(mes, {});
-      const obj = map.get(mes)!;
-      obj[faixa] = (obj[faixa] || 0) + (Number(r.net_em_m) || 0);
-    });
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([mes, v]) => ({ mes: fmtMes(mes), ...v }));
-  }, [positivador, faixasPL]);
+  const faixaAucData = useMemo(() => {
+    if (!faixaAuc?.length) return [];
+    return faixaAuc.map((r: any) => ({ faixa: r.faixa_pl, auc: Number(r.auc) || 0 }));
+  }, [faixaAuc]);
 
-  // === Receita ===
-  const receitaTotal = useMemo(() => {
-    if (!receitaMensal) return 0;
-    return receitaMensal.reduce((s: number, r: any) => s + (Number(r.comissao_total) || 0), 0);
-  }, [receitaMensal]);
-
-  const { receitaTabela, receitaMeses } = useMemo(() => {
-    if (!receitaDet) return { receitaTabela: [], receitaMeses: [] };
-    const meses = new Set<string>();
-    const map = new Map<string, Record<string, number>>();
-    receitaDet.forEach((r: any) => {
-      const cat = r.categoria || "Outros";
-      const mes = r.mes_ano || "";
-      meses.add(mes);
-      if (!map.has(cat)) map.set(cat, {});
-      const obj = map.get(cat)!;
-      obj[mes] = (obj[mes] || 0) + (Number(r.comissao_bruta) || 0);
-    });
-    const sortedMeses = [...meses].sort();
-    return {
-      receitaTabela: [...map.entries()].sort((a, b) => {
-        const totalA = Object.values(a[1]).reduce((s, v) => s + v, 0);
-        const totalB = Object.values(b[1]).reduce((s, v) => s + v, 0);
-        return totalB - totalA;
-      }).map(([cat, mesMap]) => ({
-        categoria: cat,
-        ...mesMap,
-        total: Object.values(mesMap).reduce((s, v) => s + v, 0),
-      })),
-      receitaMeses: sortedMeses,
-    };
-  }, [receitaDet]);
-
+  // === Receita por mês x categoria (stacked bar) ===
   const { receitaPorMesStacked, receitaCategorias } = useMemo(() => {
-    if (!receitaDet) return { receitaPorMesStacked: [], receitaCategorias: [] };
+    if (!receitaMesCat?.length) return { receitaPorMesStacked: [], receitaCategorias: [] };
     const cats = new Set<string>();
-    const map = new Map<string, Record<string, number>>();
-    receitaDet.forEach((r: any) => {
-      const mes = r.mes_ano || "";
+    const map = new Map<number, { anomes_nome: string } & Record<string, number>>();
+    receitaMesCat.forEach((r: any) => {
       const cat = r.categoria || "Outros";
       cats.add(cat);
-      if (!map.has(mes)) map.set(mes, {});
-      const obj = map.get(mes)!;
-      obj[cat] = (obj[cat] || 0) + (Number(r.comissao_bruta) || 0);
+      if (!map.has(r.anomes)) map.set(r.anomes, { anomes_nome: r.anomes_nome } as any);
+      (map.get(r.anomes) as any)[cat] = ((map.get(r.anomes) as any)[cat] || 0) + (Number(r.valor) || 0);
     });
     return {
-      receitaPorMesStacked: [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([mes, v]) => ({ mes: fmtMes(mes), ...v })),
+      receitaPorMesStacked: [...map.entries()].sort((a, b) => a[0] - b[0]).map(([, v]) => ({ mes: v.anomes_nome, ...v })),
       receitaCategorias: [...cats].sort(),
     };
-  }, [receitaDet]);
+  }, [receitaMesCat]);
 
+  // === Receita treemap ===
   const receitaPorCategoria = useMemo(() => {
-    if (!receitaDet) return [];
-    const map = new Map<string, number>();
-    receitaDet.forEach((r: any) => {
-      const k = r.categoria || "Outros";
-      map.set(k, (map.get(k) || 0) + Math.abs(Number(r.comissao_bruta) || 0));
+    if (!receitaTreemap?.length) return [];
+    return receitaTreemap.map((r: any) => ({ name: r.categoria || "Outros", value: Math.abs(Number(r.valor) || 0) }));
+  }, [receitaTreemap]);
+
+  // === Receita matriz (table pivot by anomes) ===
+  const { matrizTabela, matrizMeses } = useMemo(() => {
+    if (!receitaMatriz?.length) return { matrizTabela: [], matrizMeses: [] };
+    const mesesSet = new Set<string>();
+    const docMap = new Map<string, { documento: string; casa: string; faixa_pl: string } & Record<string, number>>();
+    receitaMatriz.forEach((r: any) => {
+      const key = r.documento || "N/D";
+      const mesKey = r.anomes_nome || String(r.anomes);
+      mesesSet.add(mesKey);
+      if (!docMap.has(key)) docMap.set(key, { documento: key, casa: r.casa || "", faixa_pl: r.faixa_pl || "" } as any);
+      const obj = docMap.get(key)!;
+      (obj as any)[`rec_${mesKey}`] = ((obj as any)[`rec_${mesKey}`] || 0) + (Number(r.receita) || 0);
+      (obj as any)[`auc_${mesKey}`] = ((obj as any)[`auc_${mesKey}`] || 0) + (Number(r.auc) || 0);
     });
-    return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
-  }, [receitaDet]);
+    const sortedMeses = [...mesesSet].sort();
+    const rows = [...docMap.values()].map(row => {
+      const total = sortedMeses.reduce((s, m) => s + ((row as any)[`rec_${m}`] || 0), 0);
+      return { ...row, total };
+    }).sort((a, b) => b.total - a.total);
+    return { matrizTabela: rows, matrizMeses: sortedMeses };
+  }, [receitaMatriz]);
 
   if (loading) {
     return (
@@ -309,14 +235,14 @@ export function QuantitativoTab({ filters }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* Row 1: 3 metric cards from RPC */}
+      {/* Row 1: Contas KPIs */}
       <div className="grid grid-cols-3 gap-2">
         <MetricCard title="Migração" value={kpis?.migracao ?? 0} icon={Users} />
         <MetricCard title="Habilitação" value={kpis?.habilitacao ?? 0} icon={Users} />
         <MetricCard title="Ativação" value={kpis?.ativacao ?? 0} icon={Users} />
       </div>
 
-      {/* Row 2: Contas por Mês (2/3) + Total por Tipo (1/3) — from RPCs */}
+      {/* Row 2: Contas por Mês + Total por Tipo */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         <div className="lg:col-span-2">
           <PbiCard title="Contas">
@@ -354,7 +280,7 @@ export function QuantitativoTab({ filters }: Props) {
         <MetricCard title="Captação Líq. YTD" value={fmtBRL(captKpis?.captacao_ytd ?? 0)} icon={TrendingUp} />
       </div>
 
-      {/* Row 4: Captação por mês + Treemap tipo captação */}
+      {/* Row 4: Captação por mês + Treemap */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         <div className="lg:col-span-2">
           <PbiCard title="Captação por Mês">
@@ -374,12 +300,7 @@ export function QuantitativoTab({ filters }: Props) {
         </div>
         <PbiCard title="Tipo de Captação">
           <ResponsiveContainer width="100%" height={240}>
-            <Treemap
-              data={captacaoPorTipo}
-              dataKey="value"
-              aspectRatio={1}
-              content={<TreemapContent />}
-            />
+            <Treemap data={captacaoPorTipo} dataKey="value" aspectRatio={1} content={<TreemapContent />} />
           </ResponsiveContainer>
         </PbiCard>
       </div>
@@ -388,24 +309,21 @@ export function QuantitativoTab({ filters }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         <PbiCard title="AuC por Mês">
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={aucPorMesMulti} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <LineChart data={aucMesData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
               <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#6B7280" }} />
               <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
               <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 10 }} />
-              {aucCasas.map((casa, i) => (
-                <Line key={casa} type="monotone" dataKey={casa} stroke={PBI[i % PBI.length]} strokeWidth={2} dot={{ r: 2 }} />
-              ))}
+              <Line type="monotone" dataKey="auc" name="AuC" stroke={PBI[0]} strokeWidth={2} dot={{ r: 2 }} />
             </LineChart>
           </ResponsiveContainer>
         </PbiCard>
         <PbiCard title="AuC por Casa">
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie data={aucPorCasa} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={40}
+              <Pie data={aucCasaData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={40}
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ strokeWidth: 0.5 }}>
-                {aucPorCasa.map((_, i) => (
+                {aucCasaData.map((_, i) => (
                   <Cell key={i} fill={PBI[i % PBI.length]} />
                 ))}
               </Pie>
@@ -415,60 +333,56 @@ export function QuantitativoTab({ filters }: Props) {
         </PbiCard>
       </div>
 
-      {/* Row 6: # Clientes por Faixa PL + AuC por Faixa PL */}
+      {/* Row 6: Faixa PL — # Clientes + AuC */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         <PbiCard title="# Clientes por Faixa PL">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={clientesFaixaMes} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#6B7280" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} />
+            <BarChart data={faixaClientesData} layout="vertical" margin={{ top: 5, right: 10, left: 80, bottom: 5 }}>
+              <XAxis type="number" tick={{ fontSize: 10, fill: "#6B7280" }} />
+              <YAxis type="category" dataKey="faixa" tick={{ fontSize: 9, fill: "#6B7280" }} width={75} />
               <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 9 }} />
-              {faixasPL.map((faixa, i) => (
-                <Bar key={faixa} dataKey={faixa} stackId="a" fill={PBI[i % PBI.length]} />
-              ))}
+              <Bar dataKey="clientes" fill={PBI[0]} radius={[0, 2, 2, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </PbiCard>
         <PbiCard title="AuC por Faixa PL">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={aucFaixaMes} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="mes" tick={{ fontSize: 10, fill: "#6B7280" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
+            <BarChart data={faixaAucData} layout="vertical" margin={{ top: 5, right: 10, left: 80, bottom: 5 }}>
+              <XAxis type="number" tick={{ fontSize: 10, fill: "#6B7280" }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
+              <YAxis type="category" dataKey="faixa" tick={{ fontSize: 9, fill: "#6B7280" }} width={75} />
               <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 9 }} />
-              {faixasPL.map((faixa, i) => (
-                <Bar key={faixa} dataKey={faixa} stackId="a" fill={PBI[i % PBI.length]} />
-              ))}
+              <Bar dataKey="auc" name="AuC" fill={PBI[1]} radius={[0, 2, 2, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </PbiCard>
       </div>
 
       {/* Row 7: Receita Tailor card */}
-      <MetricCard title="Receita Bruta Tailor" value={fmtBRL(receitaTotal)} icon={TrendingUp} />
+      <MetricCard title="Receita Bruta Tailor" value={fmtBRL(receitaKpi?.receita_total ?? 0)} icon={TrendingUp} />
 
-      {/* Row 8: Receita Bruta tabela */}
-      <PbiCard title="Receita Bruta por Categoria x Mês">
+      {/* Row 8: Receita Matriz */}
+      <PbiCard title="Receita por Documento x Mês">
         <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
           <Table>
             <TableHeader>
               <TableRow style={{ backgroundColor: "#F3F4F6" }}>
-                <TableHead className="text-[10px] py-1 sticky left-0" style={{ backgroundColor: "#F3F4F6" }}>Categoria</TableHead>
-                {receitaMeses.map(m => (
-                  <TableHead key={m} className="text-[10px] py-1 text-right">{fmtMes(m)}</TableHead>
+                <TableHead className="text-[10px] py-1 sticky left-0" style={{ backgroundColor: "#F3F4F6" }}>Documento</TableHead>
+                <TableHead className="text-[10px] py-1">Casa</TableHead>
+                <TableHead className="text-[10px] py-1">Faixa PL</TableHead>
+                {matrizMeses.map(m => (
+                  <TableHead key={m} className="text-[10px] py-1 text-right">{m}</TableHead>
                 ))}
                 <TableHead className="text-[10px] py-1 text-right font-bold">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {receitaTabela.map((row: any, i) => (
-                <TableRow key={row.categoria} style={{ backgroundColor: i % 2 === 0 ? "#fff" : "#F9FAFB" }}>
-                  <TableCell className="text-[10px] py-1 sticky left-0 font-medium" style={{ backgroundColor: "inherit" }}>{row.categoria}</TableCell>
-                  {receitaMeses.map(m => (
-                    <TableCell key={m} className="text-[10px] py-1 text-right">{fmtBRL(row[m] || 0)}</TableCell>
+              {matrizTabela.slice(0, 100).map((row: any, i) => (
+                <TableRow key={row.documento} style={{ backgroundColor: i % 2 === 0 ? "#fff" : "#F9FAFB" }}>
+                  <TableCell className="text-[10px] py-1 sticky left-0 font-medium" style={{ backgroundColor: "inherit" }}>{row.documento}</TableCell>
+                  <TableCell className="text-[10px] py-1">{row.casa}</TableCell>
+                  <TableCell className="text-[10px] py-1">{row.faixa_pl}</TableCell>
+                  {matrizMeses.map(m => (
+                    <TableCell key={m} className="text-[10px] py-1 text-right">{fmtBRL(row[`rec_${m}`] || 0)}</TableCell>
                   ))}
                   <TableCell className="text-[10px] py-1 text-right font-bold">{fmtBRL(row.total)}</TableCell>
                 </TableRow>
@@ -478,7 +392,7 @@ export function QuantitativoTab({ filters }: Props) {
         </div>
       </PbiCard>
 
-      {/* Row 9: Receita stacked + Treemap por categoria */}
+      {/* Row 9: Receita stacked + Treemap */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         <PbiCard title="Receita Bruta por Mês">
           <ResponsiveContainer width="100%" height={240}>
@@ -496,12 +410,7 @@ export function QuantitativoTab({ filters }: Props) {
         </PbiCard>
         <PbiCard title="Receita por Categoria">
           <ResponsiveContainer width="100%" height={240}>
-            <Treemap
-              data={receitaPorCategoria}
-              dataKey="value"
-              aspectRatio={1}
-              content={<TreemapContent />}
-            />
+            <Treemap data={receitaPorCategoria} dataKey="value" aspectRatio={1} content={<TreemapContent />} />
           </ResponsiveContainer>
         </PbiCard>
       </div>
