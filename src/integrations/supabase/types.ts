@@ -935,6 +935,162 @@ export type Database = {
         }
         Relationships: []
       }
+      br_comissoes_all: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta: number | null
+          data_ref: string | null
+          documento: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
+      br_comissoes_historico_all: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta: number | null
+          data_ref: string | null
+          documento: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          banker?: never
+          categoria?: never
+          cliente?: never
+          comissao_bruta?: never
+          data_ref?: never
+          documento?: never
+          id?: number | null
+          ingested_at?: string | null
+          produto?: never
+          subcategoria?: never
+          subproduto?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          banker?: never
+          categoria?: never
+          cliente?: never
+          comissao_bruta?: never
+          data_ref?: never
+          documento?: never
+          id?: number | null
+          ingested_at?: string | null
+          produto?: never
+          subcategoria?: never
+          subproduto?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      br_comissoes_m0_all: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta: number | null
+          data_ref: string | null
+          documento: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          banker?: never
+          categoria?: never
+          cliente?: never
+          comissao_bruta?: never
+          data_ref?: never
+          documento?: never
+          id?: number | null
+          ingested_at?: string | null
+          produto?: never
+          subcategoria?: never
+          subproduto?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          banker?: never
+          categoria?: never
+          cliente?: never
+          comissao_bruta?: never
+          data_ref?: never
+          documento?: never
+          id?: number | null
+          ingested_at?: string | null
+          produto?: never
+          subcategoria?: never
+          subproduto?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      br_receita_categoria_mes: {
+        Row: {
+          categoria: string | null
+          mes_ano: number | null
+          valor: number | null
+        }
+        Relationships: []
+      }
+      br_receita_mensal: {
+        Row: {
+          documento: string | null
+          mes_ano: number | null
+          receita_total: number | null
+        }
+        Relationships: []
+      }
+      br_receita_mensal_enriquecida: {
+        Row: {
+          advisor_pos: string | null
+          anomes: number | null
+          anomes_nome: string | null
+          banker_pos: string | null
+          canal_pos: string | null
+          casa_pos: string | null
+          documento: string | null
+          faixa_pl: string | null
+          finder_pos: string | null
+          net_em_m: number | null
+          ordem_pl: number | null
+          pl_declarado_ajustado: number | null
+          receita_total: number | null
+          tipo_cliente_pos: string | null
+        }
+        Relationships: []
+      }
+      br_receita_treemap_categoria: {
+        Row: {
+          categoria: string | null
+          valor: number | null
+        }
+        Relationships: []
+      }
       cap_captacao_agg_mes: {
         Row: {
           anomes: number | null
@@ -962,40 +1118,6 @@ export type Database = {
           tipo_captacao: string | null
           tipo_cliente: string | null
         }
-        Insert: {
-          advisor?: never
-          anomes?: never
-          aporte?: never
-          banker?: never
-          canal?: never
-          captacao?: never
-          casa?: never
-          data_ref?: never
-          documento?: never
-          finder?: never
-          id?: number | null
-          ingested_at?: string | null
-          resgate?: never
-          tipo_captacao?: never
-          tipo_cliente?: never
-        }
-        Update: {
-          advisor?: never
-          anomes?: never
-          aporte?: never
-          banker?: never
-          canal?: never
-          captacao?: never
-          casa?: never
-          data_ref?: never
-          documento?: never
-          finder?: never
-          id?: number | null
-          ingested_at?: string | null
-          resgate?: never
-          tipo_captacao?: never
-          tipo_cliente?: never
-        }
         Relationships: []
       }
       cap_captacao_total_all: {
@@ -1016,46 +1138,126 @@ export type Database = {
           tipo_captacao: string | null
           tipo_cliente: string | null
         }
-        Insert: {
-          advisor?: never
-          anomes?: never
-          aporte?: never
-          banker?: never
-          canal?: never
-          captacao?: never
-          casa?: never
-          data_ref?: never
-          documento?: never
-          finder?: never
-          id?: number | null
-          ingested_at?: string | null
-          resgate?: never
-          tipo_captacao?: never
-          tipo_cliente?: never
-        }
-        Update: {
-          advisor?: never
-          anomes?: never
-          aporte?: never
-          banker?: never
-          canal?: never
-          captacao?: never
-          casa?: never
-          data_ref?: never
-          documento?: never
-          finder?: never
-          id?: number | null
-          ingested_at?: string | null
-          resgate?: never
-          tipo_captacao?: never
-          tipo_cliente?: never
-        }
         Relationships: []
       }
       cap_captacao_treemap: {
         Row: {
           tipo_captacao: string | null
           valor: number | null
+        }
+        Relationships: []
+      }
+      pos_total_agrupado: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          casa: string | null
+          data_posicao: string | null
+          documento: string | null
+          faixa_pl: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          net_em_m: number | null
+          ordem_pl: number | null
+          pl_declarado: number | null
+          pl_declarado_ajustado: number | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          canal?: never
+          casa?: never
+          data_posicao?: never
+          documento?: never
+          faixa_pl?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          ordem_pl?: never
+          pl_declarado?: never
+          pl_declarado_ajustado?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          canal?: never
+          casa?: never
+          data_posicao?: never
+          documento?: never
+          faixa_pl?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          ordem_pl?: never
+          pl_declarado?: never
+          pl_declarado_ajustado?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      pos_total_agrupado_all: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          casa: string | null
+          data_posicao: string | null
+          documento: string | null
+          faixa_pl: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          net_em_m: number | null
+          ordem_pl: number | null
+          pl_declarado: number | null
+          pl_declarado_ajustado: number | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          canal?: never
+          casa?: never
+          data_posicao?: never
+          documento?: never
+          faixa_pl?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          ordem_pl?: never
+          pl_declarado?: never
+          pl_declarado_ajustado?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          canal?: never
+          casa?: never
+          data_posicao?: never
+          documento?: never
+          faixa_pl?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          ordem_pl?: never
+          pl_declarado?: never
+          pl_declarado_ajustado?: never
+          tipo_cliente?: never
         }
         Relationships: []
       }
@@ -1211,9 +1413,22 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_dim_casa: {
+        Row: {
+          casa: string | null
+        }
+        Relationships: []
+      }
       vw_dim_documento: {
         Row: {
           documento: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_faixa_pl: {
+        Row: {
+          faixa_pl: string | null
+          ordem_pl: number | null
         }
         Relationships: []
       }
@@ -1399,6 +1614,36 @@ export type Database = {
       }
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
+      parse_num_any: { Args: { v: string }; Returns: number }
+      rpc_auc_casa: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          auc: number
+          casa: string
+        }[]
+      }
+      rpc_auc_mes: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          auc: number
+        }[]
+      }
       rpc_captacao_agg_mes: {
         Args: {
           p_advisor?: string[]
@@ -1488,6 +1733,98 @@ export type Database = {
           casa: string
           qtd: number
           tipo: string
+        }[]
+      }
+      rpc_faixa_pl_auc: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          auc: number
+          faixa_pl: string
+          ordem_pl: number
+        }[]
+      }
+      rpc_faixa_pl_clientes: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          clientes: number
+          faixa_pl: string
+          ordem_pl: number
+        }[]
+      }
+      rpc_receita_kpi: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          receita_total: number
+        }[]
+      }
+      rpc_receita_matriz: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          auc: number
+          casa: string
+          documento: string
+          faixa_pl: string
+          receita: number
+        }[]
+      }
+      rpc_receita_mes_categoria: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          categoria: string
+          valor: number
+        }[]
+      }
+      rpc_receita_treemap_categoria: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          categoria: string
+          valor: number
         }[]
       }
     }
