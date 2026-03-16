@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import {
   useContasKpis, useContasAggMes, useContasTotalPorTipo,
-  useCaptacaoData, usePositivadorData,
+  useCaptacaoKpis, useCaptacaoAggMes, useCaptacaoTreemap,
+  usePositivadorData,
   useReceitaMensalData, useReceitaDetalhadaData,
 } from "@/hooks/useDashboardData";
 import {
@@ -79,13 +80,17 @@ export function QuantitativoTab({ filters }: Props) {
   const { data: contasAgg, isLoading: aggLoading } = useContasAggMes(filters);
   const { data: contasTipo, isLoading: tipoLoading } = useContasTotalPorTipo(filters);
 
+  // === Captação via RPCs ===
+  const { data: captKpis, isLoading: captKpisLoading } = useCaptacaoKpis(filters);
+  const { data: captAggMes, isLoading: captAggLoading } = useCaptacaoAggMes(filters);
+  const { data: captTreemap, isLoading: captTreeLoading } = useCaptacaoTreemap(filters);
+
   // === Remaining sections: existing view-based hooks ===
-  const { data: captacao, isLoading: captLoading } = useCaptacaoData(filters);
   const { data: positivador, isLoading: posLoading } = usePositivadorData(filters);
   const { data: receitaMensal, isLoading: recMLoading } = useReceitaMensalData(filters);
   const { data: receitaDet, isLoading: recDLoading } = useReceitaDetalhadaData(filters);
 
-  const loading = kpisLoading || aggLoading || tipoLoading || captLoading || posLoading || recMLoading || recDLoading;
+  const loading = kpisLoading || aggLoading || tipoLoading || captKpisLoading || captAggLoading || captTreeLoading || posLoading || recMLoading || recDLoading;
 
   // === Contas por mês (pivot RPC data) ===
   const contasPorMes = useMemo(() => {
@@ -125,50 +130,34 @@ export function QuantitativoTab({ filters }: Props) {
     };
   }, [contasTipo]);
 
-  // === Captação metrics ===
-  const captacaoMetrics = useMemo(() => {
-    if (!captacao) return { mtd: 0, ytd: 0 };
-    const now = new Date();
-    const curMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
-    let mtd = 0, ytd = 0;
-    captacao.forEach((r: any) => {
-      const val = Number(r.captacao) || 0;
-      ytd += val;
-      if (r.ano_mes === curMonth) mtd += val;
-    });
-    return { mtd, ytd };
-  }, [captacao]);
-
-  // === Captação por mês (stacked bar by tipo_captacao) ===
+  // === Captação por mês (pivot RPC data) ===
   const { captacaoPorMesStacked, captacaoTipos } = useMemo(() => {
-    if (!captacao) return { captacaoPorMesStacked: [], captacaoTipos: [] };
+    if (!captAggMes?.length) return { captacaoPorMesStacked: [], captacaoTipos: [] };
     const tipos = new Set<string>();
-    const map = new Map<string, Record<string, number>>();
-    captacao.forEach((r: any) => {
-      const mes = r.ano_mes || "";
+    const map = new Map<number, { anomes_nome: string } & Record<string, number>>();
+    captAggMes.forEach((r: any) => {
       const tipo = r.tipo_captacao || "Outros";
       tipos.add(tipo);
-      if (!map.has(mes)) map.set(mes, {});
-      const obj = map.get(mes)!;
-      obj[tipo] = (obj[tipo] || 0) + (Number(r.captacao) || 0);
+      if (!map.has(r.anomes)) map.set(r.anomes, { anomes_nome: r.anomes_nome } as any);
+      const obj = map.get(r.anomes)!;
+      (obj as any)[tipo] = ((obj as any)[tipo] || 0) + (Number(r.valor) || 0);
     });
     return {
-      captacaoPorMesStacked: [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([mes, v]) => ({ mes: fmtMes(mes), ...v })),
+      captacaoPorMesStacked: [...map.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([, v]) => ({ mes: v.anomes_nome, ...v })),
       captacaoTipos: [...tipos].sort(),
     };
-  }, [captacao]);
+  }, [captAggMes]);
 
-  // === Captação por tipo (treemap) ===
+  // === Captação por tipo (treemap from RPC) ===
   const captacaoPorTipo = useMemo(() => {
-    if (!captacao) return [];
-    const map = new Map<string, number>();
-    captacao.forEach((r: any) => {
-      const k = r.tipo_captacao || "Outros";
-      map.set(k, (map.get(k) || 0) + Math.abs(Number(r.captacao) || 0));
-    });
-    return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
-  }, [captacao]);
+    if (!captTreemap?.length) return [];
+    return captTreemap.map((r: any) => ({
+      name: r.tipo_captacao || "Outros",
+      value: Math.abs(Number(r.valor) || 0),
+    }));
+  }, [captTreemap]);
 
   // === AuC por mês ===
   const { aucPorMesMulti, aucCasas } = useMemo(() => {
@@ -361,8 +350,8 @@ export function QuantitativoTab({ filters }: Props) {
 
       {/* Row 3: Captação cards */}
       <div className="grid grid-cols-2 gap-2">
-        <MetricCard title="Captação Líq. MTD" value={fmtBRL(captacaoMetrics.mtd)} icon={ArrowUpRight} />
-        <MetricCard title="Captação Líq. YTD" value={fmtBRL(captacaoMetrics.ytd)} icon={TrendingUp} />
+        <MetricCard title="Captação Líq. MTD" value={fmtBRL(captKpis?.captacao_mtd ?? 0)} icon={ArrowUpRight} />
+        <MetricCard title="Captação Líq. YTD" value={fmtBRL(captKpis?.captacao_ytd ?? 0)} icon={TrendingUp} />
       </div>
 
       {/* Row 4: Captação por mês + Treemap tipo captação */}

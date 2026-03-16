@@ -935,6 +935,130 @@ export type Database = {
         }
         Relationships: []
       }
+      cap_captacao_agg_mes: {
+        Row: {
+          anomes: number | null
+          anomes_nome: string | null
+          tipo_captacao: string | null
+          valor: number | null
+        }
+        Relationships: []
+      }
+      cap_captacao_total: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          aporte: number | null
+          banker: string | null
+          canal: string | null
+          captacao: number | null
+          casa: string | null
+          data_ref: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          resgate: number | null
+          tipo_captacao: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          aporte?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          data_ref?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          resgate?: never
+          tipo_captacao?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          aporte?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          data_ref?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          resgate?: never
+          tipo_captacao?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      cap_captacao_total_all: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          aporte: number | null
+          banker: string | null
+          canal: string | null
+          captacao: number | null
+          casa: string | null
+          data_ref: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          resgate: number | null
+          tipo_captacao: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          aporte?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          data_ref?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          resgate?: never
+          tipo_captacao?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          aporte?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          data_ref?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          resgate?: never
+          tipo_captacao?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      cap_captacao_treemap: {
+        Row: {
+          tipo_captacao: string | null
+          valor: number | null
+        }
+        Relationships: []
+      }
       vw_base_crm: {
         Row: {
           assessor: string | null
@@ -1096,6 +1220,12 @@ export type Database = {
       vw_dim_finder: {
         Row: {
           finder: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_tipo_captacao: {
+        Row: {
+          tipo_captacao: string | null
         }
         Relationships: []
       }
@@ -1269,6 +1399,51 @@ export type Database = {
       }
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
+      rpc_captacao_agg_mes: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          tipo_captacao: string
+          valor: number
+        }[]
+      }
+      rpc_captacao_kpis: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          captacao_mtd: number
+          captacao_ytd: number
+          ref_date: string
+        }[]
+      }
+      rpc_captacao_treemap: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          tipo_captacao: string
+          valor: number
+        }[]
+      }
       rpc_contas_agg_mes: {
         Args: {
           p_advisor?: string[]
