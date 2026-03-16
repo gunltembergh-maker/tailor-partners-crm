@@ -90,7 +90,7 @@ export function QuantitativoTab({ filters }: Props) {
   const { data: receitaMensal, isLoading: recMLoading } = useReceitaMensalData(filters);
   const { data: receitaDet, isLoading: recDLoading } = useReceitaDetalhadaData(filters);
 
-  const loading = kpisLoading || aggLoading || tipoLoading || captLoading || posLoading || recMLoading || recDLoading;
+  const loading = kpisLoading || aggLoading || tipoLoading || captKpisLoading || captAggLoading || captTreeLoading || posLoading || recMLoading || recDLoading;
 
   // === Contas por mês (pivot RPC data) ===
   const contasPorMes = useMemo(() => {
