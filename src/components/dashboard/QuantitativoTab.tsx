@@ -350,8 +350,8 @@ export function QuantitativoTab({ filters }: Props) {
 
       {/* Row 3: Captação cards */}
       <div className="grid grid-cols-2 gap-2">
-        <MetricCard title="Captação Líq. MTD" value={fmtBRL(captacaoMetrics.mtd)} icon={ArrowUpRight} />
-        <MetricCard title="Captação Líq. YTD" value={fmtBRL(captacaoMetrics.ytd)} icon={TrendingUp} />
+        <MetricCard title="Captação Líq. MTD" value={fmtBRL(captKpis?.captacao_mtd ?? 0)} icon={ArrowUpRight} />
+        <MetricCard title="Captação Líq. YTD" value={fmtBRL(captKpis?.captacao_ytd ?? 0)} icon={TrendingUp} />
       </div>
 
       {/* Row 4: Captação por mês + Treemap tipo captação */}

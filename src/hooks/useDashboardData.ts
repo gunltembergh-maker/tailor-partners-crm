@@ -114,6 +114,52 @@ export function useContasTotalPorTipo(filters: DashboardFilters) {
   });
 }
 
+// ─── Captação RPCs ───
+
+export function useCaptacaoKpis(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["captacao-kpis", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_captacao_kpis", params as any);
+      if (error) throw error;
+      const row = (data as any)?.[0] ?? { ref_date: null, captacao_mtd: 0, captacao_ytd: 0 };
+      return {
+        ref_date: row.ref_date,
+        captacao_mtd: Number(row.captacao_mtd) || 0,
+        captacao_ytd: Number(row.captacao_ytd) || 0,
+      };
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useCaptacaoAggMes(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["captacao-agg-mes", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_captacao_agg_mes", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useCaptacaoTreemap(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["captacao-treemap", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_captacao_treemap", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
 // ─── Existing view-based hooks (kept for other sections) ───
 
 function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) {
