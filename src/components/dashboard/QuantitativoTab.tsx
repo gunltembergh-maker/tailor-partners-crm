@@ -80,8 +80,12 @@ export function QuantitativoTab({ filters }: Props) {
   const { data: contasAgg, isLoading: aggLoading } = useContasAggMes(filters);
   const { data: contasTipo, isLoading: tipoLoading } = useContasTotalPorTipo(filters);
 
+  // === Captação via RPCs ===
+  const { data: captKpis, isLoading: captKpisLoading } = useCaptacaoKpis(filters);
+  const { data: captAggMes, isLoading: captAggLoading } = useCaptacaoAggMes(filters);
+  const { data: captTreemap, isLoading: captTreeLoading } = useCaptacaoTreemap(filters);
+
   // === Remaining sections: existing view-based hooks ===
-  const { data: captacao, isLoading: captLoading } = useCaptacaoData(filters);
   const { data: positivador, isLoading: posLoading } = usePositivadorData(filters);
   const { data: receitaMensal, isLoading: recMLoading } = useReceitaMensalData(filters);
   const { data: receitaDet, isLoading: recDLoading } = useReceitaDetalhadaData(filters);
