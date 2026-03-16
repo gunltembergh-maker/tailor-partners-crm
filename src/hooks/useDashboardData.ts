@@ -8,6 +8,47 @@ function anoMesRange(inicio: string, fim: string) {
   return { s, e };
 }
 
+/** Convert DashboardFilters → RPC params (null when empty) */
+function buildRpcParams(filters: DashboardFilters) {
+  return {
+    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
+    p_banker: filters.banker.length ? filters.banker : null,
+    p_documento: filters.documento ? [filters.documento] : null,
+    p_advisor: filters.advisor.length ? filters.advisor : null,
+    p_finder: filters.finder.length ? filters.finder : null,
+    p_tipo_cliente: filters.tipoCliente ? [filters.tipoCliente] : null,
+  };
+}
+
+// ─── Filter options from dimension views ───
+
+export function useFilterOptions() {
+  return useQuery({
+    queryKey: ["dashboard-filter-options"],
+    queryFn: async () => {
+      const [anoMesRes, bankerRes, advisorRes, finderRes, tipoClienteRes] = await Promise.all([
+        supabase.from("vw_dim_anomes").select("anomes").order("anomes", { ascending: true }),
+        supabase.from("vw_dim_banker").select("banker"),
+        supabase.from("vw_dim_advisor").select("advisor"),
+        supabase.from("vw_dim_finder").select("finder"),
+        supabase.from("vw_dim_tipo_cliente").select("tipo_cliente"),
+      ]);
+
+      return {
+        anoMeses: (anoMesRes.data ?? []).map((r: any) => String(r.anomes)).filter(Boolean),
+        bankers: (bankerRes.data ?? []).map((r: any) => r.banker as string).filter(Boolean).sort(),
+        advisors: (advisorRes.data ?? []).map((r: any) => r.advisor as string).filter(Boolean).sort(),
+        finders: (finderRes.data ?? []).map((r: any) => r.finder as string).filter(Boolean).sort(),
+        tiposCliente: (tipoClienteRes.data ?? []).map((r: any) => r.tipo_cliente as string).filter(Boolean).sort(),
+        casas: [] as string[], // kept for compat
+      };
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+// ─── Sync logs ───
+
 export function useSyncLogs() {
   return useQuery({
     queryKey: ["sync-logs-latest"],
@@ -27,43 +68,53 @@ export function useSyncLogs() {
   });
 }
 
-export function useFilterOptions() {
+// ─── Contas RPCs ───
+
+export function useContasKpis(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
   return useQuery({
-    queryKey: ["dashboard-filter-options"],
+    queryKey: ["contas-kpis", params],
     queryFn: async () => {
-      const { data: captData } = await supabase
-        .from("vw_captacao_total" as any)
-        .select("banker, advisor, finder, casa, tipo_cliente, ano_mes")
-        .limit(5000);
-      
-      const sets = {
-        banker: new Set<string>(),
-        advisor: new Set<string>(),
-        finder: new Set<string>(),
-        casa: new Set<string>(),
-        tipoCliente: new Set<string>(),
-        anoMes: new Set<string>(),
-      };
-      (captData ?? []).forEach((r: any) => {
-        if (r.banker) sets.banker.add(r.banker);
-        if (r.advisor) sets.advisor.add(r.advisor);
-        if (r.finder) sets.finder.add(r.finder);
-        if (r.casa) sets.casa.add(r.casa);
-        if (r.tipo_cliente) sets.tipoCliente.add(r.tipo_cliente);
-        if (r.ano_mes) sets.anoMes.add(r.ano_mes);
-      });
+      const { data, error } = await supabase.rpc("rpc_contas_kpis", params as any);
+      if (error) throw error;
+      const row = (data as any)?.[0] ?? { migracao: 0, habilitacao: 0, ativacao: 0 };
       return {
-        bankers: [...sets.banker].sort(),
-        advisors: [...sets.advisor].sort(),
-        finders: [...sets.finder].sort(),
-        casas: [...sets.casa].sort(),
-        tiposCliente: [...sets.tipoCliente].sort(),
-        anoMeses: [...sets.anoMes].sort(),
+        migracao: Number(row.migracao) || 0,
+        habilitacao: Number(row.habilitacao) || 0,
+        ativacao: Number(row.ativacao) || 0,
       };
     },
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
   });
 }
+
+export function useContasAggMes(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["contas-agg-mes", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_contas_agg_mes", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useContasTotalPorTipo(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["contas-total-por-tipo", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_contas_total_por_tipo", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+// ─── Existing view-based hooks (kept for other sections) ───
 
 function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) {
   if (filters.anoMes.length) {
