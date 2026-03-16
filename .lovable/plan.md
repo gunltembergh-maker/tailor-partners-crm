@@ -1,55 +1,57 @@
 
+# Embed Power BI no Dash Comercial
 
-# Quantitativo Partes 3 & 4 — AuC, Faixa PL, Receita via RPCs
+## Resumo
+Substituir o placeholder atual por um iframe do Power BI com controle de acesso, loading state, timeout e modo tela cheia interno.
 
-## Summary
+## Logica de acesso
 
-Replace the remaining view-based hooks (`usePositivadorData`, `useReceitaMensalData`, `useReceitaDetalhadaData`) with RPC-based hooks, matching the same pattern used for Contas and Captação.
+1. A rota ja esta protegida por `ProtectedRoute` (usuario precisa estar logado).
+2. Apos autenticado, validar se o email do usuario termina com `@tailorpartners.com.br` (dominio usado no projeto conforme contexto de restricao de dominio).
+3. Se o dominio nao bater, exibir mensagem de acesso negado com orientacoes.
 
-## Changes
+## Funcionalidades da pagina
 
-### 1. `src/hooks/useDashboardData.ts` — Add 7 new RPC hooks
+### Estados
+- **Acesso negado**: card com icone de alerta e mensagem orientando o usuario a usar email corporativo.
+- **Carregando**: skeleton/loader cobrindo a area do iframe ate o evento `onLoad` disparar.
+- **Timeout (15s)**: se o iframe nao carregar em 15 segundos, exibir aviso com passos para resolver (trocar conta Microsoft, etc).
+- **Carregado**: iframe visivel, loader oculto.
 
-All use `buildRpcParams(filters)` already in place:
+### Iframe
+- `src`: URL do Secure Embed fornecida
+- `className="w-full"` com altura `calc(100vh - 180px)` para ocupar a area util
+- `allowFullScreen`, `frameBorder="0"`
 
-- `useAucMes(filters)` → `rpc_auc_mes` → `{ anomes, anomes_nome, auc }[]`
-- `useAucCasa(filters)` → `rpc_auc_casa` → `{ casa, auc }[]`
-- `useFaixaPlClientes(filters)` → `rpc_faixa_pl_clientes` → `{ faixa_pl, ordem_pl, clientes }[]`
-- `useFaixaPlAuc(filters)` → `rpc_faixa_pl_auc` → `{ faixa_pl, ordem_pl, auc }[]`
-- `useReceitaKpi(filters)` → `rpc_receita_kpi` → `{ receita_total }` (single row)
-- `useReceitaMesCategoria(filters)` → `rpc_receita_mes_categoria` → `{ anomes, anomes_nome, categoria, valor }[]`
-- `useReceitaTreemapCategoria(filters)` → `rpc_receita_treemap_categoria` → `{ categoria, valor }[]`
-- `useReceitaMatriz(filters)` → `rpc_receita_matriz` → `{ documento, anomes, anomes_nome, casa, faixa_pl, auc, receita }[]`
+### Tela cheia interna
+- Botao "Tela cheia" (icone `Maximize`) ao lado do titulo
+- Ao clicar, abrir overlay `fixed inset-0 z-50 bg-background` com o mesmo iframe ocupando 100vh/100vw
+- Botao "Fechar" (icone `X`) no canto superior direito do overlay
+- Estado controlado por `useState<boolean>`
 
-### 2. `src/components/dashboard/QuantitativoTab.tsx` — Replace view hooks with RPC hooks
+## Detalhes tecnicos
 
-**Imports**: Replace `usePositivadorData`, `useReceitaMensalData`, `useReceitaDetalhadaData` with the 8 new hooks.
+### Arquivo modificado: `src/pages/DashComercial.tsx`
 
-**AuC section (Row 5)**:
-- Line chart: use `useAucMes` directly (`anomes_nome` for X, `auc` for Y) — single line, no pivot by casa needed
-- Donut: use `useAucCasa` directly (`casa` → name, `auc` → value)
-- Remove old `aucPorMesMulti`/`aucCasas`/`aucPorCasa` useMemo blocks
+- Importar `useAuth` para obter `user` e verificar `user.email`
+- Importar `useState`, `useEffect`, `useCallback` do React
+- Importar icones: `Maximize`, `X`, `AlertTriangle`, `Loader2`
+- Importar componentes UI: `Card`, `CardContent`, `Button`, `Alert`, `Skeleton`
 
-**Faixa PL section (Row 6)**:
-- `# Clientes por Faixa PL`: use `useFaixaPlClientes` — horizontal bar sorted by `ordem_pl`
-- `AuC por Faixa PL`: use `useFaixaPlAuc` — horizontal bar sorted by `ordem_pl`
-- Remove old `clientesFaixaMes`/`faixasPL`/`aucFaixaMes` useMemo blocks
+```text
+Fluxo:
+1. const { user } = useAuth()
+2. Verificar user.email?.endsWith("@tailorpartners.com.br")
+3. Se nao: renderizar card de acesso negado
+4. Se sim:
+   a. Estado loading = true, timeout = false, fullscreen = false
+   b. setTimeout de 15s para setar timeout = true
+   c. iframe onLoad -> loading = false, limpar timeout
+   d. Renderizar header + iframe + botao tela cheia
+   e. Se fullscreen: overlay fixed com iframe + botao fechar
+```
 
-**Receita section (Rows 7-9)**:
-- Card: use `useReceitaKpi` for `receita_total`
-- Table: use `useReceitaMatriz` for the detailed matrix (documento, anomes, casa, faixa_pl, auc, receita)
-- Stacked bar: use `useReceitaMesCategoria` — pivot by `categoria`, X axis `anomes_nome`
-- Treemap: use `useReceitaTreemapCategoria` — `categoria` → name, `valor` → value
-- Remove old `receitaTotal`/`receitaTabela`/`receitaMeses`/`receitaPorMesStacked`/`receitaCategorias`/`receitaPorCategoria` useMemo blocks
-
-### 3. Cleanup
-
-Remove unused imports of `usePositivadorData`, `useReceitaMensalData`, `useReceitaDetalhadaData` from QuantitativoTab. The old hooks can remain in `useDashboardData.ts` for use by QualitativoTab.
-
-## Files
-
-| File | Action |
-|---|---|
-| `src/hooks/useDashboardData.ts` | Add 8 RPC hooks |
-| `src/components/dashboard/QuantitativoTab.tsx` | Replace view hooks with RPC hooks, simplify useMemo blocks |
-
+### Nenhum outro arquivo sera alterado
+- A rota ja existe e esta protegida
+- O item de menu ja existe
+- Nenhum secret ou token necessario (Secure Embed)

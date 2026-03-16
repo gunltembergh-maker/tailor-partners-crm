@@ -160,6 +160,117 @@ export function useCaptacaoTreemap(filters: DashboardFilters) {
   });
 }
 
+// ─── AuC RPCs ───
+
+export function useAucMes(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["auc-mes", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_auc_mes", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useAucCasa(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["auc-casa", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_auc_casa", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+// ─── Faixa PL RPCs ───
+
+export function useFaixaPlClientes(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["faixa-pl-clientes", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_faixa_pl_clientes", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useFaixaPlAuc(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["faixa-pl-auc", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_faixa_pl_auc", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+// ─── Receita RPCs ───
+
+export function useReceitaKpi(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["receita-kpi", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_kpi", params as any);
+      if (error) throw error;
+      const row = (data as any)?.[0] ?? { receita_total: 0 };
+      return { receita_total: Number(row.receita_total) || 0 };
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useReceitaMesCategoria(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["receita-mes-categoria", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_mes_categoria", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useReceitaTreemapCategoria(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["receita-treemap-categoria", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_treemap_categoria", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useReceitaMatriz(filters: DashboardFilters) {
+  const params = buildRpcParams(filters);
+  return useQuery({
+    queryKey: ["receita-matriz", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_matriz", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
 // ─── Existing view-based hooks (kept for other sections) ───
 
 function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) {
