@@ -1,57 +1,53 @@
 
-# Embed Power BI no Dash Comercial
 
-## Resumo
-Substituir o placeholder atual por um iframe do Power BI com controle de acesso, loading state, timeout e modo tela cheia interno.
+# Quantitativo — Ajuste PBIX (Partes 3 e 4)
 
-## Logica de acesso
+## Summary
 
-1. A rota ja esta protegida por `ProtectedRoute` (usuario precisa estar logado).
-2. Apos autenticado, validar se o email do usuario termina com `@tailorpartners.com.br` (dominio usado no projeto conforme contexto de restricao de dominio).
-3. Se o dominio nao bater, exibir mensagem de acesso negado com orientacoes.
+Switch AuC, Faixa PL, and Receita sections to new RPCs that match the PBIX layout. Add a `buildRpcParamsPbi` helper that only passes `p_anomes` and `p_banker` (no Documento/Advisor/Finder/TipoCliente) for these blocks. Refactor charts to stacked/100% stacked as needed, and rebuild the Receita Matriz as a hierarchical pivot (Categoria > Subcategoria > Produto > Subproduto).
 
-## Funcionalidades da pagina
+## Changes
 
-### Estados
-- **Acesso negado**: card com icone de alerta e mensagem orientando o usuario a usar email corporativo.
-- **Carregando**: skeleton/loader cobrindo a area do iframe ate o evento `onLoad` disparar.
-- **Timeout (15s)**: se o iframe nao carregar em 15 segundos, exibir aviso com passos para resolver (trocar conta Microsoft, etc).
-- **Carregado**: iframe visivel, loader oculto.
+### 1. `src/hooks/useDashboardData.ts`
 
-### Iframe
-- `src`: URL do Secure Embed fornecida
-- `className="w-full"` com altura `calc(100vh - 180px)` para ocupar a area util
-- `allowFullScreen`, `frameBorder="0"`
+Add `buildRpcParamsPbi(filters)` — only `p_anomes` + `p_banker`, rest null.
 
-### Tela cheia interna
-- Botao "Tela cheia" (icone `Maximize`) ao lado do titulo
-- Ao clicar, abrir overlay `fixed inset-0 z-50 bg-background` com o mesmo iframe ocupando 100vh/100vw
-- Botao "Fechar" (icone `X`) no canto superior direito do overlay
-- Estado controlado por `useState<boolean>`
+Replace/add hooks:
+- `useAucMesStackCasa(filters)` → `rpc_auc_mes_stack_casa` (params: pbi) → `{ anomes, anomes_nome, casa, auc }[]`
+- `useAucCasaM0(filters)` → `rpc_auc_casa_m0` (params: pbi) → `{ casa, auc }[]`
+- `useFaixaPlClientesMes(filters)` → `rpc_faixa_pl_clientes_mes` (params: pbi) → `{ anomes_nome, faixa_pl, ordem_pl, clientes }[]`
+- `useFaixaPlAucMes(filters)` → `rpc_faixa_pl_auc_mes` (params: pbi) → `{ anomes_nome, faixa_pl, ordem_pl, auc }[]`
+- `useReceitaTotal(filters)` → `rpc_receita_total` (params: pbi) → `{ receita }` single row
+- Update `useReceitaMesCategoria` → use pbi params
+- Update `useReceitaTreemapCategoria` → use pbi params
+- `useReceitaMatrizRows(filters)` → `rpc_receita_matriz_rows` (params: pbi) → `{ categoria, subcategoria, produto, subproduto, anomes, anomes_nome, valor }[]`
 
-## Detalhes tecnicos
+Remove old `useAucMes`, `useAucCasa`, `useFaixaPlClientes`, `useFaixaPlAuc`, `useReceitaKpi`, `useReceitaMatriz`.
 
-### Arquivo modificado: `src/pages/DashComercial.tsx`
+### 2. `src/components/dashboard/QuantitativoTab.tsx`
 
-- Importar `useAuth` para obter `user` e verificar `user.email`
-- Importar `useState`, `useEffect`, `useCallback` do React
-- Importar icones: `Maximize`, `X`, `AlertTriangle`, `Loader2`
-- Importar componentes UI: `Card`, `CardContent`, `Button`, `Alert`, `Skeleton`
+**AuC section (Row 5)**:
+- Stacked bar chart (not line) using `useAucMesStackCasa`: pivot by `casa`, X=`anomes_nome`, stacked bars
+- Donut: `useAucCasaM0` (M0 only)
 
-```text
-Fluxo:
-1. const { user } = useAuth()
-2. Verificar user.email?.endsWith("@tailorpartners.com.br")
-3. Se nao: renderizar card de acesso negado
-4. Se sim:
-   a. Estado loading = true, timeout = false, fullscreen = false
-   b. setTimeout de 15s para setar timeout = true
-   c. iframe onLoad -> loading = false, limpar timeout
-   d. Renderizar header + iframe + botao tela cheia
-   e. Se fullscreen: overlay fixed com iframe + botao fechar
-```
+**Faixa PL section (Row 6)**:
+- 100% stacked bar (vertical) for `# Clientes`: `useFaixaPlClientesMes` — Category=`anomes_nome`, Series=`faixa_pl`, stackOffset="expand"
+- 100% stacked bar (vertical) for `AuC`: `useFaixaPlAucMes` — same pattern, stackOffset="expand"
+- YAxis format as percentage
 
-### Nenhum outro arquivo sera alterado
-- A rota ja existe e esta protegida
-- O item de menu ja existe
-- Nenhum secret ou token necessario (Secure Embed)
+**Receita section**:
+- Card: `useReceitaTotal` → `receita`
+- Stacked bar + Treemap: already correct RPCs, just switch to pbi params
+- Matriz: `useReceitaMatrizRows` → frontend pivot:
+  - Build tree: Categoria > Subcategoria > Produto > Subproduto
+  - Columns = unique `anomes_nome` sorted
+  - Exclude `categoria='Outros'`
+  - Expandable rows with indentation
+
+## Files
+
+| File | Action |
+|---|---|
+| `src/hooks/useDashboardData.ts` | Add `buildRpcParamsPbi`, add 5 new hooks, update 2 existing, remove 5 old |
+| `src/components/dashboard/QuantitativoTab.tsx` | Rewrite AuC/Faixa PL/Receita sections to match PBIX |
+
