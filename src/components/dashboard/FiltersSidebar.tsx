@@ -8,6 +8,15 @@ import { useFilterOptions } from "@/hooks/useDashboardData";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+function formatAnoMes(v: string): string {
+  if (!v || v.length < 6) return v;
+  const m = parseInt(v.slice(4, 6), 10);
+  const y = v.slice(0, 4);
+  return `${MESES[m - 1] || "?"}/${y}`;
+}
+
 interface FiltersSidebarProps {
   pendingFilters: DashboardFilters;
   updatePendingFilter: <K extends keyof DashboardFilters>(key: K, value: DashboardFilters[K]) => void;
@@ -44,7 +53,6 @@ export function FiltersSidebar({
       style={{
         backgroundColor: "#1B2A3D",
         minHeight: "calc(100vh - 120px)",
-        borderRadius: "0 0 0 0",
       }}
     >
       {/* Logo */}
@@ -69,13 +77,7 @@ export function FiltersSidebar({
             values={pendingFilters.anoMes}
             options={options?.anoMeses ?? []}
             onToggle={(v) => toggleMulti("anoMes", v)}
-            formatLabel={(v) => {
-              if (!v || v.length < 6) return v;
-              const m = v.slice(4, 6);
-              const y = v.slice(0, 4);
-              const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-              return `${meses[parseInt(m, 10) - 1]}/${y}`;
-            }}
+            formatLabel={formatAnoMes}
           />
 
           {/* Financial Advisor / Finder */}

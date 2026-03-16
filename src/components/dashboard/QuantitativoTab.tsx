@@ -4,7 +4,8 @@ import { MetricCard } from "./MetricCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import {
-  useCaptacaoData, useContasData, usePositivadorData,
+  useContasKpis, useContasAggMes, useContasTotalPorTipo,
+  useCaptacaoData, usePositivadorData,
   useReceitaMensalData, useReceitaDetalhadaData,
 } from "@/hooks/useDashboardData";
 import {
@@ -53,7 +54,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-// Treemap custom content
 const TreemapContent = ({ x, y, width, height, name, value, index }: any) => {
   if (width < 30 || height < 20) return null;
   return (
@@ -74,64 +74,56 @@ const TreemapContent = ({ x, y, width, height, name, value, index }: any) => {
 };
 
 export function QuantitativoTab({ filters }: Props) {
+  // === Row 1 & 2: Contas via RPCs ===
+  const { data: kpis, isLoading: kpisLoading } = useContasKpis(filters);
+  const { data: contasAgg, isLoading: aggLoading } = useContasAggMes(filters);
+  const { data: contasTipo, isLoading: tipoLoading } = useContasTotalPorTipo(filters);
+
+  // === Remaining sections: existing view-based hooks ===
   const { data: captacao, isLoading: captLoading } = useCaptacaoData(filters);
-  const { data: contas, isLoading: contasLoading } = useContasData(filters);
   const { data: positivador, isLoading: posLoading } = usePositivadorData(filters);
   const { data: receitaMensal, isLoading: recMLoading } = useReceitaMensalData(filters);
   const { data: receitaDet, isLoading: recDLoading } = useReceitaDetalhadaData(filters);
 
-  const loading = captLoading || contasLoading || posLoading || recMLoading || recDLoading;
+  const loading = kpisLoading || aggLoading || tipoLoading || captLoading || posLoading || recMLoading || recDLoading;
 
-  // === Contas metrics ===
-  const contasMetrics = useMemo(() => {
-    if (!contas) return { migracao: 0, habilitacao: 0, ativacao: 0 };
-    let migracao = 0, habilitacao = 0, ativacao = 0;
-    contas.forEach((r: any) => {
-      const t = (r.tipo || "").toLowerCase();
-      if (t.includes("migra")) migracao++;
-      else if (t.includes("habilit")) habilitacao++;
-      else if (t.includes("ativa")) ativacao++;
-    });
-    return { migracao, habilitacao, ativacao };
-  }, [contas]);
-
-  // === Total por Tipo (horizontal stacked bar by Casa) ===
-  const totalPorTipo = useMemo(() => {
-    if (!contas) return [];
-    const map = new Map<string, Record<string, number>>();
-    contas.forEach((r: any) => {
-      const tipo = (r.tipo || "Outros").trim();
-      const casa = (r.casa || "Outros").trim();
-      if (!map.has(tipo)) map.set(tipo, {});
-      const obj = map.get(tipo)!;
-      obj[casa] = (obj[casa] || 0) + 1;
-    });
-    return [...map.entries()].map(([tipo, casas]) => ({ tipo, ...casas }));
-  }, [contas]);
-
-  const casasContas = useMemo(() => {
-    if (!contas) return [];
-    const s = new Set<string>();
-    contas.forEach((r: any) => { if (r.casa) s.add(r.casa.trim()); });
-    return [...s].sort();
-  }, [contas]);
-
-  // === Contas por mês (stacked bar) ===
+  // === Contas por mês (pivot RPC data) ===
   const contasPorMes = useMemo(() => {
-    if (!contas) return [];
-    const map = new Map<string, { Ativação: number; Habilitação: number; Migração: number }>();
-    contas.forEach((r: any) => {
-      const k = r.ano_mes || "";
-      const prev = map.get(k) || { Ativação: 0, Habilitação: 0, Migração: 0 };
+    if (!contasAgg?.length) return [];
+    const map = new Map<number, { anomes_nome: string; Ativação: number; Habilitação: number; Migração: number }>();
+    contasAgg.forEach((r: any) => {
+      if (!map.has(r.anomes)) {
+        map.set(r.anomes, { anomes_nome: r.anomes_nome || String(r.anomes), Ativação: 0, Habilitação: 0, Migração: 0 });
+      }
+      const row = map.get(r.anomes)!;
       const t = (r.tipo || "").toLowerCase();
-      if (t.includes("ativa")) prev.Ativação++;
-      else if (t.includes("habilit")) prev.Habilitação++;
-      else if (t.includes("migra")) prev.Migração++;
-      map.set(k, prev);
+      if (t.includes("ativa")) row.Ativação += Number(r.qtd) || 0;
+      else if (t.includes("habilit")) row.Habilitação += Number(r.qtd) || 0;
+      else if (t.includes("migra")) row.Migração += Number(r.qtd) || 0;
     });
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([mes, v]) => ({ mes: fmtMes(mes), ...v }));
-  }, [contas]);
+    return [...map.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([, v]) => ({ mes: v.anomes_nome, ...v }));
+  }, [contasAgg]);
+
+  // === Total por Tipo (pivot RPC data by casa) ===
+  const { totalPorTipo, casasContas } = useMemo(() => {
+    if (!contasTipo?.length) return { totalPorTipo: [], casasContas: [] };
+    const casaSet = new Set<string>();
+    const tipoMap = new Map<string, Record<string, number>>();
+    contasTipo.forEach((r: any) => {
+      const tipo = r.tipo || "Outros";
+      const casa = r.casa || "Outros";
+      casaSet.add(casa);
+      if (!tipoMap.has(tipo)) tipoMap.set(tipo, {});
+      const obj = tipoMap.get(tipo)!;
+      obj[casa] = (obj[casa] || 0) + (Number(r.qtd) || 0);
+    });
+    return {
+      totalPorTipo: [...tipoMap.entries()].map(([tipo, casas]) => ({ tipo, ...casas })),
+      casasContas: [...casaSet].sort(),
+    };
+  }, [contasTipo]);
 
   // === Captação metrics ===
   const captacaoMetrics = useMemo(() => {
@@ -178,7 +170,7 @@ export function QuantitativoTab({ filters }: Props) {
     return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
   }, [captacao]);
 
-  // === AuC por mês (multi-series line by Casa) ===
+  // === AuC por mês ===
   const { aucPorMesMulti, aucCasas } = useMemo(() => {
     if (!positivador) return { aucPorMesMulti: [], aucCasas: [] };
     const casaSet = new Set<string>();
@@ -209,7 +201,7 @@ export function QuantitativoTab({ filters }: Props) {
     return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
   }, [positivador]);
 
-  // === # Clientes por Faixa PL por mês ===
+  // === Faixa PL ===
   const { clientesFaixaMes, faixasPL } = useMemo(() => {
     if (!positivador) return { clientesFaixaMes: [], faixasPL: [] };
     const faixas = new Set<string>();
@@ -239,7 +231,6 @@ export function QuantitativoTab({ filters }: Props) {
     };
   }, [positivador]);
 
-  // === AuC por Faixa PL por mês ===
   const aucFaixaMes = useMemo(() => {
     if (!positivador || !faixasPL.length) return [];
     const map = new Map<string, Record<string, number>>();
@@ -254,13 +245,12 @@ export function QuantitativoTab({ filters }: Props) {
       .map(([mes, v]) => ({ mes: fmtMes(mes), ...v }));
   }, [positivador, faixasPL]);
 
-  // === Receita total ===
+  // === Receita ===
   const receitaTotal = useMemo(() => {
     if (!receitaMensal) return 0;
     return receitaMensal.reduce((s: number, r: any) => s + (Number(r.comissao_total) || 0), 0);
   }, [receitaMensal]);
 
-  // === Receita tabela Categoria x Mês ===
   const { receitaTabela, receitaMeses } = useMemo(() => {
     if (!receitaDet) return { receitaTabela: [], receitaMeses: [] };
     const meses = new Set<string>();
@@ -288,7 +278,6 @@ export function QuantitativoTab({ filters }: Props) {
     };
   }, [receitaDet]);
 
-  // === Receita por mês stacked ===
   const { receitaPorMesStacked, receitaCategorias } = useMemo(() => {
     if (!receitaDet) return { receitaPorMesStacked: [], receitaCategorias: [] };
     const cats = new Set<string>();
@@ -308,7 +297,6 @@ export function QuantitativoTab({ filters }: Props) {
     };
   }, [receitaDet]);
 
-  // === Receita por Categoria (treemap) ===
   const receitaPorCategoria = useMemo(() => {
     if (!receitaDet) return [];
     const map = new Map<string, number>();
@@ -332,14 +320,14 @@ export function QuantitativoTab({ filters }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* Row 1: 3 metric cards */}
+      {/* Row 1: 3 metric cards from RPC */}
       <div className="grid grid-cols-3 gap-2">
-        <MetricCard title="Migração" value={contasMetrics.migracao} icon={Users} />
-        <MetricCard title="Habilitação" value={contasMetrics.habilitacao} icon={Users} />
-        <MetricCard title="Ativação" value={contasMetrics.ativacao} icon={Users} />
+        <MetricCard title="Migração" value={kpis?.migracao ?? 0} icon={Users} />
+        <MetricCard title="Habilitação" value={kpis?.habilitacao ?? 0} icon={Users} />
+        <MetricCard title="Ativação" value={kpis?.ativacao ?? 0} icon={Users} />
       </div>
 
-      {/* Row 2: Contas por Mês (2/3) + Total por Tipo (1/3) */}
+      {/* Row 2: Contas por Mês (2/3) + Total por Tipo (1/3) — from RPCs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         <div className="lg:col-span-2">
           <PbiCard title="Contas">

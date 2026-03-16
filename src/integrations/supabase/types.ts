@@ -808,6 +808,133 @@ export type Database = {
       }
     }
     Views: {
+      bc_contas_total: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          captacao: number | null
+          casa: string | null
+          conta: number | null
+          data_ref: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          tipo: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          conta?: never
+          data_ref?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          tipo?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          conta?: never
+          data_ref?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          tipo?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      bc_contas_total_agg_mes: {
+        Row: {
+          anomes: number | null
+          anomes_nome: string | null
+          qtd: number | null
+          tipo: string | null
+        }
+        Relationships: []
+      }
+      bc_contas_total_all: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          captacao: number | null
+          casa: string | null
+          conta: number | null
+          data_ref: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          tipo: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          conta?: never
+          data_ref?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          tipo?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          canal?: never
+          captacao?: never
+          casa?: never
+          conta?: never
+          data_ref?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          tipo?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      bc_contas_total_kpis: {
+        Row: {
+          ativacao: number | null
+          habilitacao: number | null
+          migracao: number | null
+        }
+        Relationships: []
+      }
+      bc_contas_total_total_por_tipo: {
+        Row: {
+          casa: string | null
+          qtd: number | null
+          tipo: string | null
+        }
+        Relationships: []
+      }
       vw_base_crm: {
         Row: {
           assessor: string | null
@@ -935,6 +1062,46 @@ export type Database = {
           ingested_at?: string | null
           tipo?: never
           tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      vw_dim_advisor: {
+        Row: {
+          advisor: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_anomes: {
+        Row: {
+          ano: number | null
+          anomes: number | null
+          anomes_nome: string | null
+          mes: number | null
+          month_start: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_banker: {
+        Row: {
+          banker: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_documento: {
+        Row: {
+          documento: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_finder: {
+        Row: {
+          finder: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_tipo_cliente: {
+        Row: {
+          tipo_cliente: string | null
         }
         Relationships: []
       }
@@ -1102,6 +1269,52 @@ export type Database = {
       }
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
+      rpc_contas_agg_mes: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          qtd: number
+          tipo: string
+        }[]
+      }
+      rpc_contas_kpis: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          ativacao: number
+          habilitacao: number
+          migracao: number
+        }[]
+      }
+      rpc_contas_total_por_tipo: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          casa: string
+          qtd: number
+          tipo: string
+        }[]
+      }
     }
     Enums: {
       app_role: "ASSESSOR" | "BANKER" | "LIDER" | "FINDER" | "ADMIN"
