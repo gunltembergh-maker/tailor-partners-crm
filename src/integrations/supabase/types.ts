@@ -1065,25 +1065,6 @@ export type Database = {
         }
         Relationships: []
       }
-      br_receita_mensal_enriquecida: {
-        Row: {
-          advisor_pos: string | null
-          anomes: number | null
-          anomes_nome: string | null
-          banker_pos: string | null
-          canal_pos: string | null
-          casa_pos: string | null
-          documento: string | null
-          faixa_pl: string | null
-          finder_pos: string | null
-          net_em_m: number | null
-          ordem_pl: number | null
-          pl_declarado_ajustado: number | null
-          receita_total: number | null
-          tipo_cliente_pos: string | null
-        }
-        Relationships: []
-      }
       br_receita_treemap_categoria: {
         Row: {
           categoria: string | null
@@ -1147,14 +1128,205 @@ export type Database = {
         }
         Relationships: []
       }
+      comissoes_consolidado: {
+        Row: {
+          anomes: number | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta_tailor: number | null
+          data_ref: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+        }
+        Relationships: []
+      }
+      comissoes_consolidado_filtrado: {
+        Row: {
+          anomes: number | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta_tailor: number | null
+          data_ref: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+        }
+        Relationships: []
+      }
+      comissoes_historico_all: {
+        Row: {
+          anomes: number | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta_tailor: number | null
+          data_ref: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+        }
+        Insert: {
+          anomes?: never
+          banker?: never
+          categoria?: never
+          cliente?: never
+          comissao_bruta_tailor?: never
+          data_ref?: never
+          id?: number | null
+          ingested_at?: string | null
+          produto?: never
+          subcategoria?: never
+          subproduto?: never
+        }
+        Update: {
+          anomes?: never
+          banker?: never
+          categoria?: never
+          cliente?: never
+          comissao_bruta_tailor?: never
+          data_ref?: never
+          id?: number | null
+          ingested_at?: string | null
+          produto?: never
+          subcategoria?: never
+          subproduto?: never
+        }
+        Relationships: []
+      }
+      comissoes_m0_all: {
+        Row: {
+          anomes: number | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta_tailor: number | null
+          data_ref: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+        }
+        Insert: {
+          anomes?: never
+          banker?: never
+          categoria?: never
+          cliente?: never
+          comissao_bruta_tailor?: never
+          data_ref?: never
+          id?: number | null
+          ingested_at?: string | null
+          produto?: never
+          subcategoria?: never
+          subproduto?: never
+        }
+        Update: {
+          anomes?: never
+          banker?: never
+          categoria?: never
+          cliente?: never
+          comissao_bruta_tailor?: never
+          data_ref?: never
+          id?: number | null
+          ingested_at?: string | null
+          produto?: never
+          subcategoria?: never
+          subproduto?: never
+        }
+        Relationships: []
+      }
+      pos_m0_desagrupado: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          casa: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          net_em_m: number | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          casa?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          casa?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      pos_m0_desagrupado_all: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          casa: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          net_em_m: number | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          casa?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          casa?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
       pos_total_agrupado: {
         Row: {
           advisor: string | null
           anomes: number | null
           banker: string | null
-          canal: string | null
-          casa: string | null
-          data_posicao: string | null
           documento: string | null
           faixa_pl: string | null
           finder: string | null
@@ -1162,17 +1334,12 @@ export type Database = {
           ingested_at: string | null
           net_em_m: number | null
           ordem_pl: number | null
-          pl_declarado: number | null
-          pl_declarado_ajustado: number | null
           tipo_cliente: string | null
         }
         Insert: {
           advisor?: never
           anomes?: never
           banker?: never
-          canal?: never
-          casa?: never
-          data_posicao?: never
           documento?: never
           faixa_pl?: never
           finder?: never
@@ -1180,17 +1347,12 @@ export type Database = {
           ingested_at?: string | null
           net_em_m?: never
           ordem_pl?: never
-          pl_declarado?: never
-          pl_declarado_ajustado?: never
           tipo_cliente?: never
         }
         Update: {
           advisor?: never
           anomes?: never
           banker?: never
-          canal?: never
-          casa?: never
-          data_posicao?: never
           documento?: never
           faixa_pl?: never
           finder?: never
@@ -1198,8 +1360,6 @@ export type Database = {
           ingested_at?: string | null
           net_em_m?: never
           ordem_pl?: never
-          pl_declarado?: never
-          pl_declarado_ajustado?: never
           tipo_cliente?: never
         }
         Relationships: []
@@ -1209,9 +1369,6 @@ export type Database = {
           advisor: string | null
           anomes: number | null
           banker: string | null
-          canal: string | null
-          casa: string | null
-          data_posicao: string | null
           documento: string | null
           faixa_pl: string | null
           finder: string | null
@@ -1219,17 +1376,12 @@ export type Database = {
           ingested_at: string | null
           net_em_m: number | null
           ordem_pl: number | null
-          pl_declarado: number | null
-          pl_declarado_ajustado: number | null
           tipo_cliente: string | null
         }
         Insert: {
           advisor?: never
           anomes?: never
           banker?: never
-          canal?: never
-          casa?: never
-          data_posicao?: never
           documento?: never
           faixa_pl?: never
           finder?: never
@@ -1237,17 +1389,12 @@ export type Database = {
           ingested_at?: string | null
           net_em_m?: never
           ordem_pl?: never
-          pl_declarado?: never
-          pl_declarado_ajustado?: never
           tipo_cliente?: never
         }
         Update: {
           advisor?: never
           anomes?: never
           banker?: never
-          canal?: never
-          casa?: never
-          data_posicao?: never
           documento?: never
           faixa_pl?: never
           finder?: never
@@ -1255,8 +1402,84 @@ export type Database = {
           ingested_at?: string | null
           net_em_m?: never
           ordem_pl?: never
-          pl_declarado?: never
-          pl_declarado_ajustado?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      pos_total_desagrupado: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          casa: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          net_em_m: number | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          casa?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          casa?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          tipo_cliente?: never
+        }
+        Relationships: []
+      }
+      pos_total_desagrupado_all: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          casa: string | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          ingested_at: string | null
+          net_em_m: number | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          casa?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
+          tipo_cliente?: never
+        }
+        Update: {
+          advisor?: never
+          anomes?: never
+          banker?: never
+          casa?: never
+          documento?: never
+          finder?: never
+          id?: number | null
+          ingested_at?: string | null
+          net_em_m?: never
           tipo_cliente?: never
         }
         Relationships: []
@@ -1413,22 +1636,9 @@ export type Database = {
         }
         Relationships: []
       }
-      vw_dim_casa: {
-        Row: {
-          casa: string | null
-        }
-        Relationships: []
-      }
       vw_dim_documento: {
         Row: {
           documento: string | null
-        }
-        Relationships: []
-      }
-      vw_dim_faixa_pl: {
-        Row: {
-          faixa_pl: string | null
-          ordem_pl: number | null
         }
         Relationships: []
       }
@@ -1629,6 +1839,19 @@ export type Database = {
           casa: string
         }[]
       }
+      rpc_auc_casa_m0: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          auc: number
+          casa: string
+        }[]
+      }
       rpc_auc_mes: {
         Args: {
           p_advisor?: string[]
@@ -1642,6 +1865,22 @@ export type Database = {
           anomes: number
           anomes_nome: string
           auc: number
+        }[]
+      }
+      rpc_auc_mes_stack_casa: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          auc: number
+          casa: string
         }[]
       }
       rpc_captacao_agg_mes: {
@@ -1750,6 +1989,23 @@ export type Database = {
           ordem_pl: number
         }[]
       }
+      rpc_faixa_pl_auc_mes: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          auc: number
+          faixa_pl: string
+          ordem_pl: number
+        }[]
+      }
       rpc_faixa_pl_clientes: {
         Args: {
           p_advisor?: string[]
@@ -1760,6 +2016,23 @@ export type Database = {
           p_tipo_cliente?: string[]
         }
         Returns: {
+          clientes: number
+          faixa_pl: string
+          ordem_pl: number
+        }[]
+      }
+      rpc_faixa_pl_clientes_mes: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
           clientes: number
           faixa_pl: string
           ordem_pl: number
@@ -1797,36 +2070,72 @@ export type Database = {
           receita: number
         }[]
       }
-      rpc_receita_mes_categoria: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
+      rpc_receita_matriz_rows: {
+        Args: { p_anomes?: number[]; p_banker?: string[] }
         Returns: {
           anomes: number
           anomes_nome: string
           categoria: string
+          produto: string
+          subcategoria: string
+          subproduto: string
           valor: number
         }[]
       }
-      rpc_receita_treemap_categoria: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
+      rpc_receita_mes_categoria:
+        | {
+            Args: { p_anomes?: number[]; p_banker?: string[] }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              categoria: string
+              valor: number
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              categoria: string
+              valor: number
+            }[]
+          }
+      rpc_receita_total: {
+        Args: { p_anomes?: number[]; p_banker?: string[] }
         Returns: {
-          categoria: string
-          valor: number
+          receita: number
         }[]
       }
+      rpc_receita_treemap_categoria:
+        | {
+            Args: { p_anomes?: number[]; p_banker?: string[] }
+            Returns: {
+              categoria: string
+              valor: number
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              categoria: string
+              valor: number
+            }[]
+          }
     }
     Enums: {
       app_role: "ASSESSOR" | "BANKER" | "LIDER" | "FINDER" | "ADMIN"

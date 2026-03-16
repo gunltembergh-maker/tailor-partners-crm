@@ -160,14 +160,23 @@ export function useCaptacaoTreemap(filters: DashboardFilters) {
   });
 }
 
-// ─── AuC RPCs ───
+// ─── PBI-only params (AnoMes + Banker) ───
 
-export function useAucMes(filters: DashboardFilters) {
+function buildRpcParamsPbi(filters: DashboardFilters) {
+  return {
+    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
+    p_banker: filters.banker.length ? filters.banker : null,
+  };
+}
+
+// ─── AuC RPCs (PBIX) ───
+
+export function useAucMesStackCasa(filters: DashboardFilters) {
   const params = buildRpcParams(filters);
   return useQuery({
-    queryKey: ["auc-mes", params],
+    queryKey: ["auc-mes-stack-casa", params],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_auc_mes", params as any);
+      const { data, error } = await supabase.rpc("rpc_auc_mes_stack_casa", params as any);
       if (error) throw error;
       return (data as any[]) ?? [];
     },
@@ -175,12 +184,12 @@ export function useAucMes(filters: DashboardFilters) {
   });
 }
 
-export function useAucCasa(filters: DashboardFilters) {
+export function useAucCasaM0(filters: DashboardFilters) {
   const params = buildRpcParams(filters);
   return useQuery({
-    queryKey: ["auc-casa", params],
+    queryKey: ["auc-casa-m0", params],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_auc_casa", params as any);
+      const { data, error } = await supabase.rpc("rpc_auc_casa_m0", params as any);
       if (error) throw error;
       return (data as any[]) ?? [];
     },
@@ -188,14 +197,14 @@ export function useAucCasa(filters: DashboardFilters) {
   });
 }
 
-// ─── Faixa PL RPCs ───
+// ─── Faixa PL RPCs (PBIX — por mês) ───
 
-export function useFaixaPlClientes(filters: DashboardFilters) {
+export function useFaixaPlClientesMes(filters: DashboardFilters) {
   const params = buildRpcParams(filters);
   return useQuery({
-    queryKey: ["faixa-pl-clientes", params],
+    queryKey: ["faixa-pl-clientes-mes", params],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_faixa_pl_clientes", params as any);
+      const { data, error } = await supabase.rpc("rpc_faixa_pl_clientes_mes", params as any);
       if (error) throw error;
       return (data as any[]) ?? [];
     },
@@ -203,12 +212,12 @@ export function useFaixaPlClientes(filters: DashboardFilters) {
   });
 }
 
-export function useFaixaPlAuc(filters: DashboardFilters) {
+export function useFaixaPlAucMes(filters: DashboardFilters) {
   const params = buildRpcParams(filters);
   return useQuery({
-    queryKey: ["faixa-pl-auc", params],
+    queryKey: ["faixa-pl-auc-mes", params],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_faixa_pl_auc", params as any);
+      const { data, error } = await supabase.rpc("rpc_faixa_pl_auc_mes", params as any);
       if (error) throw error;
       return (data as any[]) ?? [];
     },
@@ -216,26 +225,26 @@ export function useFaixaPlAuc(filters: DashboardFilters) {
   });
 }
 
-// ─── Receita RPCs ───
+// ─── Receita RPCs (PBIX) ───
 
-export function useReceitaKpi(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+export function useReceitaTotal(filters: DashboardFilters) {
+  const params = buildRpcParamsPbi(filters);
   return useQuery({
-    queryKey: ["receita-kpi", params],
+    queryKey: ["receita-total-pbi", params],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_receita_kpi", params as any);
+      const { data, error } = await supabase.rpc("rpc_receita_total", params as any);
       if (error) throw error;
-      const row = (data as any)?.[0] ?? { receita_total: 0 };
-      return { receita_total: Number(row.receita_total) || 0 };
+      const row = (data as any)?.[0] ?? { receita: 0 };
+      return { receita: Number(row.receita) || 0 };
     },
     staleTime: 60_000,
   });
 }
 
 export function useReceitaMesCategoria(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = buildRpcParamsPbi(filters);
   return useQuery({
-    queryKey: ["receita-mes-categoria", params],
+    queryKey: ["receita-mes-categoria-pbi", params],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_receita_mes_categoria", params as any);
       if (error) throw error;
@@ -246,9 +255,9 @@ export function useReceitaMesCategoria(filters: DashboardFilters) {
 }
 
 export function useReceitaTreemapCategoria(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = buildRpcParamsPbi(filters);
   return useQuery({
-    queryKey: ["receita-treemap-categoria", params],
+    queryKey: ["receita-treemap-categoria-pbi", params],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_receita_treemap_categoria", params as any);
       if (error) throw error;
@@ -258,12 +267,12 @@ export function useReceitaTreemapCategoria(filters: DashboardFilters) {
   });
 }
 
-export function useReceitaMatriz(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+export function useReceitaMatrizRows(filters: DashboardFilters) {
+  const params = buildRpcParamsPbi(filters);
   return useQuery({
-    queryKey: ["receita-matriz", params],
+    queryKey: ["receita-matriz-rows-pbi", params],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_receita_matriz", params as any);
+      const { data, error } = await supabase.rpc("rpc_receita_matriz_rows", params as any);
       if (error) throw error;
       return (data as any[]) ?? [];
     },
