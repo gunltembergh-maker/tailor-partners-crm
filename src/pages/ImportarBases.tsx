@@ -612,6 +612,7 @@ export default function ImportarBases() {
         </div>
       )}
     </div>
+    </AppLayout>
   );
 }
 
