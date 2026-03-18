@@ -39,7 +39,20 @@ const SOURCE_MAP: Record<string, { label: string; sheets: Record<string, string>
   },
   depara: {
     label: "DePara",
-    sheets: { "Base CRM": "raw_base_crm", DePara: "raw_depara" },
+    sheets: {
+      DePara: "raw_depara",
+      "Base CRM": "raw_base_crm",
+      "Base Consolidada": "raw_base_consolidada",
+      "Base Câmbio": "raw_base_cambio",
+      "Base Gestora": "raw_base_gestora",
+      "Base Corporate Seguros": "raw_base_corp_seguros",
+      "Base Avenue": "raw_base_avenue",
+      "F & O": "raw_base_fo",
+      "Base Lavoro": "raw_base_lavoro",
+      Desligados: "raw_desligados",
+      "Produzido Histórico": "raw_produzido_historico",
+      Pódio: "raw_podio",
+    },
   },
   diversificador: {
     label: "Diversificador",
