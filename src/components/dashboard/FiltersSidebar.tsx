@@ -177,6 +177,10 @@ function PbiMultiSelect({
   onToggle,
   singleSelect = false,
   formatLabel,
+  placeholder,
+  showSelectAll = false,
+  onSelectAll,
+  onClearAll,
 }: {
   label: string;
   values: string[];
@@ -184,6 +188,10 @@ function PbiMultiSelect({
   onToggle: (v: string) => void;
   singleSelect?: boolean;
   formatLabel?: (v: string) => string;
+  placeholder?: string;
+  showSelectAll?: boolean;
+  onSelectAll?: () => void;
+  onClearAll?: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -192,10 +200,21 @@ function PbiMultiSelect({
     o.toLowerCase().includes(search.toLowerCase())
   );
   const display = formatLabel || ((v: string) => v);
+  const allSelected = options.length > 0 && values.length === options.length;
 
   return (
     <div className="space-y-1">
-      <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">{label}</label>
+      <div className="flex items-center justify-between">
+        <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">{label}</label>
+        {showSelectAll && !singleSelect && (
+          <button
+            className="text-[8px] opacity-50 hover:opacity-80"
+            onClick={() => allSelected ? onClearAll?.() : onSelectAll?.()}
+          >
+            {allSelected ? "Limpar" : "Selecionar tudo"}
+          </button>
+        )}
+      </div>
       {values.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {values.map((v) => (
