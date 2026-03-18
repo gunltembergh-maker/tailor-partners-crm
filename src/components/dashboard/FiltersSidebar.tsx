@@ -78,6 +78,10 @@ export function FiltersSidebar({
             options={options?.anoMeses ?? []}
             onToggle={(v) => toggleMulti("anoMes", v)}
             formatLabel={formatAnoMes}
+            placeholder="Todos os meses"
+            showSelectAll
+            onSelectAll={() => updatePendingFilter("anoMes", options?.anoMeses ?? [])}
+            onClearAll={() => updatePendingFilter("anoMes", [])}
           />
 
           {/* Financial Advisor / Finder */}
