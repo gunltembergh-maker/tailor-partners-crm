@@ -1,819 +1,632 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { AppLayout } from "@/components/AppLayout";
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import * as XLSX from "xlsx";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import {
-  Upload, FileSpreadsheet, CheckCircle2, XCircle, Loader2, AlertTriangle,
-  ChevronDown, ChevronRight, Ban,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { toast } from "@/hooks/use-toast";
+import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-// ── Constants ──
-const BATCH_SIZE = 250;
-const CHUNK_SIZE = 2000;
-const MAX_RETRIES = 2;
-const RETRY_DELAY = 500;
+// ─── MAPEAMENTO COMPLETO: Arquivo → Abas → Tabelas Supabase ───────────────────
+// Cada entrada define quais abas de cada arquivo devem ser importadas
+// e para qual tabela raw_ no Supabase cada aba vai
+//
+// REGRA: cada vez que o usuário importa um arquivo, TODAS as abas mapeadas
+// são truncadas e reimportadas automaticamente.
+// ──────────────────────────────────────────────────────────────────────────────
 
-// ── sourceKey → sheet → table mapping ──
-const SOURCE_MAP: Record<string, { label: string; sheets: Record<string, string> }> = {
-  captacao_total: {
-    label: "Captação Total",
-    sheets: { "Captação Total": "raw_captacao_total" },
-  },
-  contas_total: {
-    label: "Base Contas",
-    sheets: { "Contas Total": "raw_contas_total" },
-  },
-  depara: {
-    label: "DePara",
-    sheets: {
-      DePara: "raw_depara",
-      "Base CRM": "raw_base_crm",
-      "Base Consolidada": "raw_base_consolidada",
-      "Base Câmbio": "raw_base_cambio",
-      "Base Gestora": "raw_base_gestora",
-      "Base Corporate Seguros": "raw_base_corp_seguros",
-      "Base Avenue": "raw_base_avenue",
-      "F & O": "raw_base_fo",
-      "Base Lavoro": "raw_base_lavoro",
-      Desligados: "raw_desligados",
-      "Produzido Histórico": "raw_produzido_historico",
-      Pódio: "raw_podio",
-    },
-  },
-  diversificador: {
-    label: "Diversificador",
-    sheets: { "Diversificador Consolidado": "raw_diversificador_consolidado" },
-  },
-  positivador: {
-    label: "Positivador",
-    sheets: {
-      "Ordem PL": "raw_ordem_pl",
-      "Positivador Total Desagrupado": "raw_positivador_total_desagrupado",
-      "Positivador Total Agrupado": "raw_positivador_total_agrupado",
-      "Positivador M0 Desagrupado": "raw_positivador_m0_desagrupado",
-      "Positivador M0 Agrupado": "raw_positivador_m0_agrupado",
-    },
-  },
-  base_receita: {
-    label: "Base Receita",
-    sheets: {
-      "Comissões Histórico": "raw_comissoes_historico",
-      Comissões: "raw_comissoes_m0",
-    },
-  },
-  consolidado_receita: {
-    label: "Consolidado Receita",
-    sheets: { "Receita Consolidada": "raw_consolidado_receita" },
-  },
+type SheetMapping = {
+  sheet: string;          // nome exato da aba no Excel
+  table: string;          // nome da tabela no Supabase (schema public)
+  label: string;          // label amigável para o usuário
+  required: boolean;      // se é obrigatória para o dashboard funcionar
 };
 
-// Tables that use month-based partitioning instead of full truncate
-const PARTITIONED_TABLES: Record<string, string> = {
-  raw_comissoes_historico: "Data",
-  raw_comissoes_m0: "Data",
-};
-
-const IGNORED_KEYS = ["mtm rf", "nps"];
-
-type FileStatus = "pending" | "importing" | "success" | "error" | "ignored" | "cancelled";
-
-interface FileEntry {
+type BaseConfig = {
   id: string;
-  file: File;
-  sourceKey: string | null;
-  detectedKey: string | null;
-  status: FileStatus;
-  rowsImported: number;
-  totalRows: number;
-  errorMsg: string | null;
-  sheetsFound: string[];
-  logs: string[];
-  percentComplete: number;
-  startTime: number | null;
-  mesAnoList: string[];
+  label: string;          // nome exibido no card
+  description: string;    // dica para o usuário
+  acceptedFiles: string[]; // nomes de arquivo aceitos (sem extensão, lowercase)
+  sheets: SheetMapping[];
+  color: string;          // cor do card
+};
+
+const BASES: BaseConfig[] = [
+  {
+    id: "base_receita",
+    label: "Base Receita",
+    description: "Base_Receita.xlsm — contém Comissões (mês atual) e Histórico",
+    acceptedFiles: ["base_receita", "basereceita"],
+    color: "#4472C4",
+    sheets: [
+      {
+        sheet: "Comissões",
+        table: "raw_comissoes_m0",
+        label: "Comissões (mês atual)",
+        required: true,
+      },
+      {
+        sheet: "Comissões Histórico",
+        table: "raw_comissoes_historico",
+        label: "Comissões Histórico",
+        required: true,
+      },
+    ],
+  },
+  {
+    id: "captacao",
+    label: "Captação",
+    description: "Captação.xlsm — contém mês atual e histórico",
+    acceptedFiles: ["captacao", "captação"],
+    color: "#ED7D31",
+    sheets: [
+      {
+        sheet: "Captação Total",
+        table: "raw_captacao_total",
+        label: "Captação Total (mês atual)",
+        required: true,
+      },
+      {
+        sheet: "Captação Histórico",
+        table: "raw_captacao_historico",
+        label: "Captação Histórico",
+        required: true,
+      },
+    ],
+  },
+  {
+    id: "base_contas",
+    label: "Base Contas",
+    description: "Base_Contas.xlsm — habilitações, ativações e migrações",
+    acceptedFiles: ["base_contas", "basecontas"],
+    color: "#A5A5A5",
+    sheets: [
+      {
+        sheet: "Contas Total",
+        table: "raw_contas_total",
+        label: "Contas Total",
+        required: true,
+      },
+    ],
+  },
+  {
+    id: "positivador",
+    label: "Positivador",
+    description: "Positivador.xlsx — AuC total e M0, agrupado e desagrupado",
+    acceptedFiles: ["positivador"],
+    color: "#5B9BD5",
+    sheets: [
+      {
+        sheet: "Positivador Total Agrupado",
+        table: "raw_positivador_total_agrupado",
+        label: "Total Agrupado (Faixa PL)",
+        required: true,
+      },
+      {
+        sheet: "Positivador Total Desagrupado",
+        table: "raw_positivador_total_desagrupado",
+        label: "Total Desagrupado (AuC por Casa)",
+        required: true,
+      },
+      {
+        sheet: "Positivador M0 Desagrupado",
+        table: "raw_positivador_m0_desagrupado",
+        label: "M0 Desagrupado (donut)",
+        required: true,
+      },
+      {
+        sheet: "Positivador M0 Agrupado",
+        table: "raw_positivador_m0_agrupado",
+        label: "M0 Agrupado",
+        required: false,
+      },
+    ],
+  },
+  {
+    id: "diversificador",
+    label: "Diversificador",
+    description: "Diversificador.xlsx — custódia consolidada",
+    acceptedFiles: ["diversificador"],
+    color: "#70AD47",
+    sheets: [
+      {
+        sheet: "Diversificador Consolidado",
+        table: "raw_diversificador_consolidado",
+        label: "Diversificador Consolidado",
+        required: true,
+      },
+    ],
+  },
+  {
+    id: "depara",
+    label: "DePara",
+    description: "DePara.xlsm — CRM, assessores e mapeamentos",
+    acceptedFiles: ["depara"],
+    color: "#264478",
+    sheets: [
+      {
+        sheet: "Base CRM",
+        table: "raw_base_crm",
+        label: "Base CRM",
+        required: true,
+      },
+      {
+        sheet: "DePara",
+        table: "raw_depara",
+        label: "DePara (assessores)",
+        required: true,
+      },
+    ],
+  },
+];
+
+// ─── Tipos de estado ───────────────────────────────────────────────────────────
+type SheetStatus = "idle" | "reading" | "uploading" | "done" | "error" | "not_found";
+
+type SheetResult = {
+  sheet: string;
+  table: string;
+  label: string;
+  status: SheetStatus;
+  rows: number;
+  error?: string;
+};
+
+type BaseResult = {
+  baseId: string;
+  label: string;
+  timestamp: string;
+  sheets: SheetResult[];
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function normalizeFileName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\.[^.]+$/, "")  // remove extensão
+    .replace(/[\s_-]/g, "");
 }
 
-// ── Valid table names ──
-type RawTable =
-  | "raw_captacao_total" | "raw_contas_total" | "raw_base_crm" | "raw_depara"
-  | "raw_diversificador_consolidado" | "raw_ordem_pl"
-  | "raw_positivador_total_desagrupado" | "raw_positivador_total_agrupado"
-  | "raw_positivador_m0_desagrupado" | "raw_positivador_m0_agrupado"
-  | "raw_comissoes_historico" | "raw_comissoes_m0" | "raw_consolidado_receita"
-  | "raw_base_consolidada" | "raw_base_cambio" | "raw_base_gestora"
-  | "raw_base_corp_seguros" | "raw_base_avenue" | "raw_base_fo"
-  | "raw_base_lavoro" | "raw_desligados" | "raw_produzido_historico" | "raw_podio";
-
-// ── Helpers ──
-function normalize(s: string) {
-  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+function detectBase(filename: string): BaseConfig | null {
+  const norm = normalizeFileName(filename);
+  return BASES.find(b => b.acceptedFiles.some(a => norm.includes(a))) ?? null;
 }
 
-function detectSourceKey(fileName: string): { key: string | null; ignored: boolean } {
-  const n = normalize(fileName);
-  for (const ik of IGNORED_KEYS) {
-    if (n.includes(ik)) return { key: null, ignored: true };
-  }
-  if (n.includes("captacao")) return { key: "captacao_total", ignored: false };
-  if (n.includes("base contas") || n.includes("contas total")) return { key: "contas_total", ignored: false };
-  if (n.includes("depara")) return { key: "depara", ignored: false };
-  if (n.includes("diversificador")) return { key: "diversificador", ignored: false };
-  if (n.includes("positivador")) return { key: "positivador", ignored: false };
-  if (n.includes("base receita")) return { key: "base_receita", ignored: false };
-  if (n.includes("consolidado receita") || n.includes("consolidado_receita"))
-    return { key: "consolidado_receita", ignored: false };
-  return { key: null, ignored: false };
-}
-
-function findSheet(sheetNames: string[], target: string): string | undefined {
-  return (
-    sheetNames.find((s) => s === target) ||
-    sheetNames.find((s) => s.toLowerCase() === target.toLowerCase()) ||
-    sheetNames.find((s) => s.toLowerCase().includes(target.toLowerCase()))
-  );
-}
-
-function parseMesAno(value: unknown): string | null {
-  if (value == null) return null;
-  // If it's a Date object (cellDates:true)
-  if (value instanceof Date) {
-    const y = value.getFullYear();
-    const m = String(value.getMonth() + 1).padStart(2, "0");
-    return `${y}${m}`;
-  }
-  // If it's a string like "2025-01-15" or "15/01/2025" or Excel serial
-  const s = String(value).trim();
-  if (!s) return null;
-  // Try parsing as number (Excel serial date)
-  const num = Number(s);
-  if (!isNaN(num) && num > 30000 && num < 60000) {
-    const d = XLSX.SSF.parse_date_code(num);
-    if (d) return `${d.y}${String(d.m).padStart(2, "0")}`;
-  }
-  // Try Date constructor
-  const d = new Date(s);
-  if (!isNaN(d.getTime()) && d.getFullYear() > 1990) {
-    return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
-  }
-  return null;
-}
-
-function getSheetRange(sheet: XLSX.WorkSheet): { startRow: number; endRow: number; ref: string } | null {
-  const ref = sheet["!ref"];
-  if (!ref) return null;
-  const range = XLSX.utils.decode_range(ref);
-  return { startRow: range.s.r, endRow: range.e.r, ref };
-}
-
-/** Parse a chunk of rows from a sheet, using header row from row 0 */
-function parseChunk(
-  sheet: XLSX.WorkSheet,
-  startRow: number,
-  endRow: number,
-  headerRow: number,
-): Record<string, unknown>[] {
-  // Build a temporary range string
-  const range = XLSX.utils.decode_range(sheet["!ref"]!);
-  range.s.r = headerRow;
-  range.e.r = endRow;
-  const allRows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, {
-    range,
-    defval: null,
-  });
-  // Skip rows before startRow (header is row 0, data starts at row 1)
-  const skipCount = startRow - headerRow - 1;
-  if (skipCount > 0) {
-    return allRows.slice(skipCount);
-  }
-  return allRows;
-}
-
-const yieldThread = () => new Promise<void>((r) => setTimeout(r, 0));
-
-async function insertBatchWithRetry(
-  tableName: RawTable,
-  batch: Record<string, unknown>[],
-  addLog: (msg: string) => void,
-): Promise<{ inserted: number; error: string | null }> {
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const { error } = await supabase.from(tableName).insert(batch as any);
-    if (!error) return { inserted: batch.length, error: null };
-    if (attempt < MAX_RETRIES) {
-      addLog(`⚠️ Retry ${attempt + 1}/${MAX_RETRIES} em ${tableName}: ${error.message}`);
-      await new Promise((r) => setTimeout(r, RETRY_DELAY * (attempt + 1)));
-    } else {
-      return { inserted: 0, error: error.message };
+async function truncateAndInsert(
+  table: string,
+  rows: Record<string, unknown>[]
+): Promise<{ ok: boolean; error?: string }> {
+  // 1. Truncar
+  const { error: delErr } = await supabase.from(table as any).delete().neq("id", 0);
+  // fallback: se não tiver coluna id, tenta delete sem filtro
+  if (delErr) {
+    const { error: delErr2 } = await (supabase.from(table as any) as any)
+      .delete()
+      .gte("created_at", "1970-01-01");
+    if (delErr2) {
+      // última tentativa: rpc truncate
+      await supabase.rpc("truncate_table" as any, { tbl: table });
     }
   }
-  return { inserted: 0, error: "Max retries exceeded" };
+
+  if (rows.length === 0) return { ok: true };
+
+  // 2. Inserir em lotes de 500
+  const BATCH = 500;
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const batch = rows.slice(i, i + BATCH).map(row => ({ data: row }));
+    const { error } = await supabase.from(table as any).insert(batch);
+    if (error) return { ok: false, error: error.message };
+  }
+  return { ok: true };
 }
 
-// ── Component ──
+function readSheet(
+  workbook: XLSX.WorkBook,
+  sheetName: string
+): Record<string, unknown>[] | null {
+  const ws = workbook.Sheets[sheetName];
+  if (!ws) return null;
+  const raw = XLSX.utils.sheet_to_json(ws, { defval: null, raw: false });
+  return raw as Record<string, unknown>[];
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
 export default function ImportarBases() {
-  const { role } = useAuth();
-  const [files, setFiles] = useState<FileEntry[]>([]);
-  const [dragging, setDragging] = useState(false);
-  const [lastSyncs, setLastSyncs] = useState<Record<string, { received_at: string; rows_written: number; status: string }>>({});
-  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
-  const inputRef = useRef<HTMLInputElement>(null);
-  const abortRef = useRef(false);
-  const importingRef = useRef(false);
+  const [results, setResults] = useState<BaseResult[]>([]);
+  const [processing, setProcessing] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  useEffect(() => { loadLastSyncs(); }, []);
+  // ─── Processar arquivo drop ───────────────────────────────────────────────
+  const processFile = useCallback(async (file: File) => {
+    const base = detectBase(file.name);
+    if (!base) {
+      alert(
+        `Arquivo "${file.name}" não reconhecido.\n\nNomes aceitos:\n${BASES.map(b => b.description).join("\n")}`
+      );
+      return;
+    }
 
-  async function loadLastSyncs() {
-    const { data } = await supabase
-      .from("sync_logs")
-      .select("source_key, received_at, rows_written, status")
-      .in("status", ["success", "partial"])
-      .order("received_at", { ascending: false })
-      .limit(100);
-    if (!data) return;
-    const map: typeof lastSyncs = {};
-    for (const row of data) {
-      if (!map[row.source_key]) {
-        map[row.source_key] = { received_at: row.received_at, rows_written: row.rows_written ?? 0, status: row.status };
+    const resultId = base.id;
+    const sheetResults: SheetResult[] = base.sheets.map(s => ({
+      sheet: s.sheet,
+      table: s.table,
+      label: s.label,
+      status: "reading" as SheetStatus,
+      rows: 0,
+    }));
+
+    // Adiciona/atualiza o resultado
+    const newResult: BaseResult = {
+      baseId: base.id,
+      label: base.label,
+      timestamp: new Date().toLocaleString("pt-BR"),
+      sheets: sheetResults,
+    };
+    setResults(prev => {
+      const filtered = prev.filter(r => r.baseId !== resultId);
+      return [newResult, ...filtered];
+    });
+    setExpanded(prev => new Set(prev).add(resultId));
+
+    // Ler o arquivo Excel
+    const buffer = await file.arrayBuffer();
+    let workbook: XLSX.WorkBook;
+    try {
+      workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+    } catch (e) {
+      setResults(prev =>
+        prev.map(r =>
+          r.baseId === resultId
+            ? {
+                ...r,
+                sheets: r.sheets.map(s => ({
+                  ...s,
+                  status: "error" as SheetStatus,
+                  error: "Erro ao ler o arquivo Excel",
+                })),
+              }
+            : r
+        )
+      );
+      return;
+    }
+
+    // Processar cada aba
+    for (const sheetDef of base.sheets) {
+      const rows = readSheet(workbook, sheetDef.sheet);
+
+      if (rows === null) {
+        // Aba não encontrada
+        setResults(prev =>
+          prev.map(r =>
+            r.baseId === resultId
+              ? {
+                  ...r,
+                  sheets: r.sheets.map(s =>
+                    s.sheet === sheetDef.sheet
+                      ? {
+                          ...s,
+                          status: "not_found" as SheetStatus,
+                          error: sheetDef.required
+                            ? `Aba "${sheetDef.sheet}" não encontrada no arquivo`
+                            : `Aba "${sheetDef.sheet}" não encontrada (opcional)`,
+                        }
+                      : s
+                  ),
+                }
+              : r
+          )
+        );
+        continue;
       }
-    }
-    setLastSyncs(map);
-  }
 
-  const addFiles = useCallback((fileList: FileList) => {
-    const newEntries: FileEntry[] = [];
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i];
-      const { key, ignored } = detectSourceKey(file.name);
-      newEntries.push({
-        id: `${Date.now()}-${i}`,
-        file,
-        sourceKey: ignored ? "__ignored__" : key,
-        detectedKey: key,
-        status: ignored ? "ignored" : "pending",
-        rowsImported: 0,
-        totalRows: 0,
-        errorMsg: ignored ? "Ignorado nesta fase (MtM RF / NPS)" : null,
-        sheetsFound: [],
-        logs: [],
-        percentComplete: 0,
-        startTime: null,
-        mesAnoList: [],
-      });
+      // Atualizar status para uploading
+      setResults(prev =>
+        prev.map(r =>
+          r.baseId === resultId
+            ? {
+                ...r,
+                sheets: r.sheets.map(s =>
+                  s.sheet === sheetDef.sheet
+                    ? { ...s, status: "uploading" as SheetStatus, rows: rows.length }
+                    : s
+                ),
+              }
+            : r
+        )
+      );
+
+      // Upload para Supabase
+      const { ok, error } = await truncateAndInsert(sheetDef.table, rows);
+
+      setResults(prev =>
+        prev.map(r =>
+          r.baseId === resultId
+            ? {
+                ...r,
+                sheets: r.sheets.map(s =>
+                  s.sheet === sheetDef.sheet
+                    ? {
+                        ...s,
+                        status: ok ? ("done" as SheetStatus) : ("error" as SheetStatus),
+                        rows: rows.length,
+                        error: error,
+                      }
+                    : s
+                ),
+              }
+            : r
+        )
+      );
     }
-    setFiles((prev) => [...prev, ...newEntries]);
   }, []);
 
-  const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true); }, []);
-  const onDragLeave = useCallback(() => setDragging(false), []);
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); setDragging(false);
-    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
-  }, [addFiles]);
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      setProcessing(true);
+      for (const file of acceptedFiles) {
+        await processFile(file);
+      }
+      setProcessing(false);
+    },
+    [processFile]
+  );
 
-  const updateFile = useCallback((id: string, patch: Partial<FileEntry>) =>
-    setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f))), []);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "application/vnd.ms-excel.sheet.macroenabled.12": [".xlsm"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+      "application/vnd.ms-excel": [".xls"],
+    },
+    multiple: true,
+  });
 
-  const addLog = useCallback((id: string, msg: string) =>
-    setFiles((prev) => prev.map((f) =>
-      f.id === id ? { ...f, logs: [...f.logs, `[${new Date().toLocaleTimeString("pt-BR")}] ${msg}`] } : f
-    )), []);
-
-  const toggleLogs = useCallback((id: string) =>
-    setExpandedLogs((prev) => {
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
-    }), []);
+    });
+  };
 
-  // ── Import single file ──
-  async function importFile(entry: FileEntry) {
-    if (!entry.sourceKey || entry.sourceKey === "__ignored__") return;
-    const mapping = SOURCE_MAP[entry.sourceKey];
-    if (!mapping) return;
-
-    updateFile(entry.id, { status: "importing", errorMsg: null, startTime: Date.now(), rowsImported: 0, percentComplete: 0 });
-    addLog(entry.id, `Iniciando importação: ${entry.file.name}`);
-
-    // Create sync_log record
-    const { data: syncRow } = await supabase.from("sync_logs").insert({
-      source_key: entry.sourceKey,
-      file_name: entry.file.name,
-      status: "importing",
-      rows_written: 0,
-    } as any).select("id").single();
-    const syncId = syncRow?.id;
-
-    try {
-      // Read workbook
-      const ext = entry.file.name.split(".").pop()?.toLowerCase();
-      let workbook: XLSX.WorkBook;
-
-      if (ext === "xml") {
-        const text = await entry.file.text();
-        workbook = XLSX.read(text, { type: "string" });
-      } else {
-        // xlsx, xlsm
-        try {
-          const ab = await entry.file.arrayBuffer();
-          workbook = XLSX.read(ab, { type: "array", cellDates: true });
-        } catch (parseErr: any) {
-          if (ext === "xlsm") {
-            toast({
-              title: "Erro ao ler .xlsm",
-              description: "Arquivo com macros pode causar erro. Salve como .xlsx e tente novamente.",
-              variant: "destructive",
-            });
-          }
-          throw parseErr;
-        }
-      }
-
-      const sheetsFound = workbook.SheetNames;
-      updateFile(entry.id, { sheetsFound });
-      addLog(entry.id, `Abas encontradas: ${sheetsFound.join(", ")}`);
-
-      // Calculate total rows across all mapped sheets
-      let grandTotalRows = 0;
-      const sheetMappings: { sheetName: string; actualSheet: string; tableName: string }[] = [];
-
-      for (const [sheetName, tableName] of Object.entries(mapping.sheets)) {
-        let actualSheet: string | undefined;
-        if (sheetName === "__first__") {
-          actualSheet = sheetsFound[0];
-        } else {
-          actualSheet = findSheet(sheetsFound, sheetName);
-        }
-        if (!actualSheet) {
-          addLog(entry.id, `⚠️ Aba "${sheetName}" não encontrada`);
-          continue;
-        }
-        const sheet = workbook.Sheets[actualSheet];
-        const rangeInfo = getSheetRange(sheet);
-        if (rangeInfo) {
-          grandTotalRows += rangeInfo.endRow - rangeInfo.startRow; // approximate
-          sheetMappings.push({ sheetName, actualSheet, tableName });
-        }
-      }
-
-      updateFile(entry.id, { totalRows: grandTotalRows });
-
-      let totalRowsInserted = 0;
-      const errors: string[] = [];
-      const allMesAno = new Set<string>();
-
-      for (const { sheetName, actualSheet, tableName } of sheetMappings) {
-        if (abortRef.current) {
-          addLog(entry.id, "❌ Importação cancelada pelo usuário");
-          break;
-        }
-
-        addLog(entry.id, `📋 Processando aba "${actualSheet}" → ${tableName}`);
-        const sheet = workbook.Sheets[actualSheet];
-        const rangeInfo = getSheetRange(sheet);
-        if (!rangeInfo) continue;
-
-        const isPartitioned = tableName in PARTITIONED_TABLES;
-        const dateColumn = isPartitioned ? PARTITIONED_TABLES[tableName] : null;
-
-        if (isPartitioned && dateColumn) {
-          // ── Partitioned import (by mes_ano) ──
-          addLog(entry.id, `📅 Modo particionado por mês (coluna "${dateColumn}")`);
-
-          // Parse all rows in chunks, grouping by mes_ano
-          const byMesAno: Record<string, Record<string, unknown>[]> = {};
-          let invalidDateCount = 0;
-          const headerRow = rangeInfo.startRow;
-
-          for (let chunkStart = headerRow + 1; chunkStart <= rangeInfo.endRow; chunkStart += CHUNK_SIZE) {
-            if (abortRef.current) break;
-            const chunkEnd = Math.min(chunkStart + CHUNK_SIZE - 1, rangeInfo.endRow);
-            const rows = parseChunk(sheet, chunkStart, chunkEnd, headerRow);
-
-            for (const row of rows) {
-              const dateVal = row[dateColumn];
-              const mesAno = parseMesAno(dateVal);
-              if (!mesAno) {
-                invalidDateCount++;
-                continue;
-              }
-              if (!byMesAno[mesAno]) byMesAno[mesAno] = [];
-              byMesAno[mesAno].push(row);
-            }
-
-            await yieldThread();
-          }
-
-          if (invalidDateCount > 0) {
-            addLog(entry.id, `⚠️ ${invalidDateCount} linhas com data inválida ignoradas em "${actualSheet}"`);
-          }
-
-          const periods = Object.keys(byMesAno).sort();
-          addLog(entry.id, `Períodos encontrados: ${periods.join(", ")}`);
-
-          for (const mesAno of periods) {
-            if (abortRef.current) break;
-            const rows = byMesAno[mesAno];
-
-            // Delete existing data for this period
-            addLog(entry.id, `🗑️ Deletando ${mesAno} em ${tableName}`);
-            const { error: delErr } = await (supabase
-              .from(tableName as RawTable)
-              .delete() as any)
-              .eq("mes_ano", mesAno);
-            if (delErr) {
-              errors.push(`Delete ${tableName} ${mesAno}: ${delErr.message}`);
-              addLog(entry.id, `❌ Erro ao deletar ${mesAno}: ${delErr.message}`);
-              continue;
-            }
-
-            // Insert in batches
-            for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-              if (abortRef.current) break;
-              const batch = rows.slice(i, i + BATCH_SIZE).map((row) => ({
-                data: row as any,
-                mes_ano: mesAno,
-              }));
-
-              const result = await insertBatchWithRetry(
-                tableName as RawTable,
-                batch,
-                (msg) => addLog(entry.id, msg),
-              );
-
-              if (result.error) {
-                errors.push(`Insert ${tableName} ${mesAno} batch: ${result.error}`);
-                addLog(entry.id, `❌ Erro batch ${tableName}: ${result.error}`);
-              } else {
-                totalRowsInserted += result.inserted;
-              }
-
-              const pct = grandTotalRows > 0
-                ? Math.round((totalRowsInserted / grandTotalRows) * 100)
-                : 0;
-              updateFile(entry.id, { rowsImported: totalRowsInserted, percentComplete: Math.min(pct, 100) });
-              await yieldThread();
-            }
-
-            allMesAno.add(mesAno);
-            addLog(entry.id, `✅ ${mesAno}: ${rows.length} linhas inseridas`);
-          }
-        } else {
-          // ── Full truncate + insert (non-partitioned) ──
-          addLog(entry.id, `🗑️ Limpando tabela ${tableName}`);
-          const { error: delErr } = await supabase
-            .from(tableName as RawTable)
-            .delete()
-            .gte("id", 0);
-          if (delErr) {
-            errors.push(`Limpar ${tableName}: ${delErr.message}`);
-            addLog(entry.id, `❌ Erro ao limpar: ${delErr.message}`);
-            continue;
-          }
-
-          // Parse and insert in chunks
-          const headerRow = rangeInfo.startRow;
-          for (let chunkStart = headerRow + 1; chunkStart <= rangeInfo.endRow; chunkStart += CHUNK_SIZE) {
-            if (abortRef.current) break;
-            const chunkEnd = Math.min(chunkStart + CHUNK_SIZE - 1, rangeInfo.endRow);
-            const rows = parseChunk(sheet, chunkStart, chunkEnd, headerRow);
-
-            for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-              if (abortRef.current) break;
-              const batch = rows.slice(i, i + BATCH_SIZE).map((row) => ({ data: row as any }));
-
-              const result = await insertBatchWithRetry(
-                tableName as RawTable,
-                batch,
-                (msg) => addLog(entry.id, msg),
-              );
-
-              if (result.error) {
-                errors.push(`Insert ${tableName} batch: ${result.error}`);
-                addLog(entry.id, `❌ Erro batch ${tableName}: ${result.error}`);
-              } else {
-                totalRowsInserted += result.inserted;
-              }
-
-              const pct = grandTotalRows > 0
-                ? Math.round((totalRowsInserted / grandTotalRows) * 100)
-                : 0;
-              updateFile(entry.id, { rowsImported: totalRowsInserted, percentComplete: Math.min(pct, 100) });
-              await yieldThread();
-            }
-
-            addLog(entry.id, `Chunk processado: ${Math.min(chunkStart + CHUNK_SIZE - 1, rangeInfo.endRow) - chunkStart + 1} linhas`);
-          }
-
-          addLog(entry.id, `✅ ${tableName}: ${totalRowsInserted} linhas inseridas`);
-        }
-      }
-
-      const finalStatus = abortRef.current
-        ? "cancelled"
-        : errors.length > 0
-          ? "error"
-          : "success";
-
-      const mesAnoArr = Array.from(allMesAno).sort();
-
-      updateFile(entry.id, {
-        status: finalStatus === "cancelled" ? "error" : (errors.length > 0 ? "error" : "success"),
-        rowsImported: totalRowsInserted,
-        percentComplete: 100,
-        errorMsg: errors.length > 0 ? errors.join("; ") : (abortRef.current ? "Cancelado" : null),
-        mesAnoList: mesAnoArr,
-      });
-
-      // Update sync_logs
-      if (syncId) {
-        await supabase.from("sync_logs").update({
-          status: abortRef.current ? "error" : (errors.length > 0 ? "partial" : "success"),
-          rows_written: totalRowsInserted,
-          error: errors.length > 0 ? errors.join("; ") : (abortRef.current ? "Cancelado pelo usuário" : null),
-          mes_ano_list: mesAnoArr.length > 0 ? mesAnoArr : null,
-        } as any).eq("id", syncId);
-      }
-
-      addLog(entry.id, `Importação finalizada: ${totalRowsInserted} linhas, status: ${finalStatus}`);
-      loadLastSyncs();
-
-      // Signal dashboard refresh after successful/partial import
-      if (finalStatus === "success" || (errors.length > 0 && totalRowsInserted > 0)) {
-        try {
-          await supabase.rpc("increment_dashboard_refresh" as any);
-          addLog(entry.id, "📊 Sinal de refresh do dashboard enviado");
-        } catch (e) {
-          // Non-critical, don't block
-        }
-      }
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      updateFile(entry.id, { status: "error", errorMsg: msg, percentComplete: 0 });
-      addLog(entry.id, `❌ Erro fatal: ${msg}`);
-
-      if (syncId) {
-        await supabase.from("sync_logs").update({
-          status: "error",
-          rows_written: 0,
-          error: msg,
-        } as any).eq("id", syncId);
-      }
-    }
-  }
-
-  async function importAll() {
-    abortRef.current = false;
-    importingRef.current = true;
-    const pending = files.filter((f) => f.status === "pending" && f.sourceKey && f.sourceKey !== "__ignored__");
-    for (const entry of pending) {
-      if (abortRef.current) break;
-      await importFile(entry);
-    }
-    importingRef.current = false;
-  }
-
-  function cancelImport() {
-    abortRef.current = true;
-    toast({ title: "Cancelamento solicitado", description: "Aguardando batch atual finalizar..." });
-  }
-
-  const pendingCount = files.filter((f) => f.status === "pending" && f.sourceKey && f.sourceKey !== "__ignored__").length;
-  const isImporting = files.some((f) => f.status === "importing");
-
-  if (role !== "ADMIN" && role !== "LIDER") {
-    return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Acesso restrito a administradores.</p>
-        </div>
-      </AppLayout>
-    );
-  }
-
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <AppLayout>
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Importar Bases</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Arraste seus arquivos Excel (.xml, .xlsx, .xlsm) para importar as bases do Dashboard Comercial.
-          </p>
-        </div>
+    <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Importar Bases</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Arraste os arquivos Excel. Cada arquivo importa automaticamente todas as abas necessárias.
+        </p>
+      </div>
 
-        {/* Dropzone */}
-        <div
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onDrop={onDrop}
-          onClick={() => inputRef.current?.click()}
-          className={`
-            border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors
-            ${dragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"}
-          `}
-        >
-          <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm font-medium text-foreground">
-            Arraste arquivos aqui ou clique para selecionar
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            .xml, .xlsx, .xlsm — Base Contas, Base Receita, Captação, Consolidado Receita, DePara, Diversificador, Positivador
-          </p>
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".xml,.xlsx,.xlsm"
-            multiple
-            className="hidden"
-            onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }}
-          />
-        </div>
+      {/* Drop zone */}
+      <div
+        {...getRootProps()}
+        className={cn(
+          "border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors",
+          isDragActive
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+        )}
+      >
+        <input {...getInputProps()} />
+        <Upload className="mx-auto mb-3 text-gray-400" size={36} />
+        {isDragActive ? (
+          <p className="text-blue-600 font-medium">Solte os arquivos aqui…</p>
+        ) : (
+          <>
+            <p className="font-medium text-gray-700">
+              Arraste arquivos aqui ou clique para selecionar
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              .xlsm, .xlsx — Base Receita, Captação, Base Contas, Positivador, Diversificador, DePara
+            </p>
+          </>
+        )}
+        {processing && (
+          <div className="flex items-center justify-center gap-2 mt-3 text-blue-600 text-sm">
+            <Loader2 className="animate-spin" size={16} />
+            Processando…
+          </div>
+        )}
+      </div>
 
-        {/* File list */}
-        {files.length > 0 && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base">Arquivos ({files.length})</CardTitle>
-              <div className="flex gap-2">
-                {isImporting && (
-                  <Button size="sm" variant="destructive" onClick={cancelImport}>
-                    <Ban className="h-3.5 w-3.5 mr-1" /> Cancelar
-                  </Button>
-                )}
-                {pendingCount > 0 && !isImporting && (
-                  <Button size="sm" onClick={importAll}>
-                    Importar {pendingCount} arquivo{pendingCount > 1 ? "s" : ""}
-                  </Button>
-                )}
+      {/* Mapa de bases esperadas */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          <Info size={14} className="text-gray-400" />
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Abas importadas por arquivo
+          </span>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {BASES.map(base => (
+            <div key={base.id} className="px-4 py-2.5">
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
+                  style={{ background: base.color }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800">{base.label}</p>
+                  <p className="text-xs text-gray-400">{base.description}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {base.sheets.map(s => (
+                      <span
+                        key={s.sheet}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
+                          s.required
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
+                            : "bg-gray-100 text-gray-500 border border-gray-200"
+                        )}
+                      >
+                        {s.label}
+                        {!s.required && (
+                          <span className="text-gray-400">(opcional)</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8"></TableHead>
-                    <TableHead>Arquivo</TableHead>
-                    <TableHead>Tipo Detectado</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Progresso</TableHead>
-                    <TableHead className="text-right">Linhas</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {files.map((f) => {
-                    const isOpen = expandedLogs.has(f.id);
-                    return (
-                      <React.Fragment key={f.id}>
-                        <TableRow>
-                          <TableCell className="p-2">
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => toggleLogs(f.id)}>
-                              {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                            </Button>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
-                              <span className="truncate max-w-[200px]">{f.file.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {f.status === "ignored" ? (
-                              <Badge variant="secondary">Ignorado</Badge>
-                            ) : f.sourceKey ? (
-                              <Badge variant="outline">{SOURCE_MAP[f.sourceKey]?.label ?? f.sourceKey}</Badge>
-                            ) : (
-                              <Select value={f.sourceKey ?? ""} onValueChange={(v) => updateFile(f.id, { sourceKey: v })}>
-                                <SelectTrigger className="w-[160px] h-8 text-xs">
-                                  <SelectValue placeholder="Escolher tipo..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(SOURCE_MAP).map(([k, v]) => (
-                                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge status={f.status} />
-                          </TableCell>
-                          <TableCell>
-                            {f.status === "importing" ? (
-                              <div className="w-32 space-y-1">
-                                <Progress value={f.percentComplete} className="h-2" />
-                                <span className="text-xs text-muted-foreground">{f.percentComplete}%</span>
-                              </div>
-                            ) : f.errorMsg ? (
-                              <span className="text-xs text-destructive line-clamp-1 max-w-[200px]">{f.errorMsg}</span>
-                            ) : f.status === "success" ? (
-                              <span className="text-xs text-muted-foreground">
-                                {f.mesAnoList.length > 0 && `Períodos: ${f.mesAnoList.join(", ")}`}
-                              </span>
-                            ) : "—"}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {f.rowsImported > 0 ? f.rowsImported.toLocaleString("pt-BR") : "—"}
-                          </TableCell>
-                        </TableRow>
-                        {isOpen && (
-                          <tr>
-                            <td colSpan={6} className="p-0">
-                              <div className="bg-muted/30 border-t px-4 py-2 max-h-48 overflow-y-auto">
-                                {f.logs.length === 0 ? (
-                                  <p className="text-xs text-muted-foreground">Nenhum log ainda.</p>
-                                ) : (
-                                  <div className="space-y-0.5">
-                                    {f.logs.map((log, i) => (
-                                      <p key={i} className="text-xs font-mono text-muted-foreground">{log}</p>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Resultados */}
+      {results.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            Última Importação por Base
+          </h2>
+          {results.map(result => {
+            const allDone = result.sheets.every(
+              s => s.status === "done" || s.status === "not_found"
+            );
+            const hasError = result.sheets.some(s => s.status === "error");
+            const isLoading = result.sheets.some(
+              s => s.status === "reading" || s.status === "uploading"
+            );
+            const isOpen = expanded.has(result.baseId);
+            const totalRows = result.sheets.reduce((acc, s) => acc + s.rows, 0);
+
+            return (
+              <div
+                key={result.baseId}
+                className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+              >
+                {/* Header do card */}
+                <button
+                  onClick={() => toggleExpand(result.baseId)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                >
+                  <StatusIcon
+                    done={allDone && !hasError}
+                    error={hasError}
+                    loading={isLoading}
+                  />
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-gray-800">{result.label}</p>
+                    <p className="text-xs text-gray-400">{result.timestamp}</p>
+                  </div>
+                  {!isLoading && (
+                    <span className="text-xs text-gray-500 font-medium">
+                      {totalRows.toLocaleString("pt-BR")} linhas
+                    </span>
+                  )}
+                  {isLoading ? (
+                    <Loader2 size={14} className="text-blue-500 animate-spin ml-2" />
+                  ) : isOpen ? (
+                    <ChevronDown size={14} className="text-gray-400 ml-2" />
+                  ) : (
+                    <ChevronRight size={14} className="text-gray-400 ml-2" />
+                  )}
+                </button>
+
+                {/* Detalhes das abas */}
+                {isOpen && (
+                  <div className="border-t border-gray-100">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="text-left px-4 py-2 text-gray-500 font-medium">Aba</th>
+                          <th className="text-left px-4 py-2 text-gray-500 font-medium">Tabela Supabase</th>
+                          <th className="text-right px-4 py-2 text-gray-500 font-medium">Linhas</th>
+                          <th className="text-center px-4 py-2 text-gray-500 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {result.sheets.map(s => (
+                          <tr key={s.sheet} className="hover:bg-gray-50">
+                            <td className="px-4 py-2.5 font-medium text-gray-700">{s.label}</td>
+                            <td className="px-4 py-2.5 font-mono text-gray-400">{s.table}</td>
+                            <td className="px-4 py-2.5 text-right text-gray-600">
+                              {s.rows > 0 ? s.rows.toLocaleString("pt-BR") : "—"}
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
+                              <SheetStatusBadge status={s.status} error={s.error} />
                             </td>
                           </tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Last imports */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Última Importação por Base</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Base</TableHead>
-                  <TableHead>Última Importação</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Linhas</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.entries(SOURCE_MAP).map(([key, { label }]) => {
-                  const sync = lastSyncs[key];
-                  return (
-                    <TableRow key={key}>
-                      <TableCell className="font-medium">{label}</TableCell>
-                      <TableCell>
-                        {sync
-                          ? format(new Date(sync.received_at), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                          : <span className="text-muted-foreground">Nunca</span>}
-                      </TableCell>
-                      <TableCell>
-                        {sync ? (
-                          <Badge variant={sync.status === "success" ? "default" : "secondary"}>
-                            {sync.status}
-                          </Badge>
-                        ) : "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {sync ? sync.rows_written.toLocaleString("pt-BR") : "—"}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-    </AppLayout>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
-function StatusBadge({ status }: { status: FileStatus }) {
+// ─── Sub-componentes ──────────────────────────────────────────────────────────
+
+function StatusIcon({
+  done,
+  error,
+  loading,
+}: {
+  done: boolean;
+  error: boolean;
+  loading: boolean;
+}) {
+  if (loading) return <Loader2 size={18} className="text-blue-500 animate-spin flex-shrink-0" />;
+  if (error) return <XCircle size={18} className="text-red-500 flex-shrink-0" />;
+  if (done) return <CheckCircle size={18} className="text-green-500 flex-shrink-0" />;
+  return <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />;
+}
+
+function SheetStatusBadge({
+  status,
+  error,
+}: {
+  status: SheetStatus;
+  error?: string;
+}) {
   switch (status) {
-    case "pending":
-      return <Badge variant="outline" className="gap-1"><ChevronDown className="h-3 w-3" />Pendente</Badge>;
-    case "importing":
-      return <Badge variant="secondary" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" />Importando</Badge>;
-    case "success":
-      return <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Sucesso</Badge>;
+    case "done":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[10px] font-semibold">
+          <CheckCircle size={10} /> success
+        </span>
+      );
     case "error":
-      return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Erro</Badge>;
-    case "ignored":
-      return <Badge variant="secondary" className="gap-1"><AlertTriangle className="h-3 w-3" />Ignorado</Badge>;
-    case "cancelled":
-      return <Badge variant="destructive" className="gap-1"><Ban className="h-3 w-3" />Cancelado</Badge>;
+      return (
+        <span
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[10px] font-semibold"
+          title={error}
+        >
+          <XCircle size={10} /> erro
+        </span>
+      );
+    case "not_found":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-[10px] font-semibold">
+          ⚠ não encontrada
+        </span>
+      );
+    case "reading":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-semibold">
+          <Loader2 size={10} className="animate-spin" /> lendo…
+        </span>
+      );
+    case "uploading":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-semibold">
+          <Loader2 size={10} className="animate-spin" /> enviando…
+        </span>
+      );
+    default:
+      return (
+        <span className="text-gray-400 text-[10px]">aguardando</span>
+      );
   }
 }
