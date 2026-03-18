@@ -1039,15 +1039,6 @@ export type Database = {
         }
         Relationships: []
       }
-      bc_contas_total_agg_mes: {
-        Row: {
-          anomes: number | null
-          anomes_nome: string | null
-          qtd: number | null
-          tipo: string | null
-        }
-        Relationships: []
-      }
       bc_contas_total_all: {
         Row: {
           advisor: string | null
@@ -1252,15 +1243,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cap_captacao_agg_mes: {
-        Row: {
-          anomes: number | null
-          anomes_nome: string | null
-          tipo_captacao: string | null
-          valor: number | null
-        }
-        Relationships: []
-      }
       cap_captacao_total: {
         Row: {
           advisor: string | null
@@ -1326,33 +1308,17 @@ export type Database = {
       }
       comissoes_consolidado_filtrado: {
         Row: {
+          advisor: string | null
           anomes: number | null
           banker: string | null
           categoria: string | null
-          cliente: string | null
           comissao_bruta_tailor: number | null
-          data_ref: string | null
-          id: number | null
-          ingested_at: string | null
+          documento: string | null
+          finder: string | null
           produto: string | null
           subcategoria: string | null
           subproduto: string | null
-        }
-        Relationships: []
-      }
-      comissoes_consolidado_filtrado_pbi: {
-        Row: {
-          anomes: number | null
-          banker: string | null
-          categoria: string | null
-          cliente: string | null
-          comissao_bruta_tailor: number | null
-          data_ref: string | null
-          id: number | null
-          ingested_at: string | null
-          produto: string | null
-          subcategoria: string | null
-          subproduto: string | null
+          tipo_cliente: string | null
         }
         Relationships: []
       }
@@ -1834,11 +1800,8 @@ export type Database = {
       }
       vw_dim_anomes: {
         Row: {
-          ano: number | null
           anomes: number | null
           anomes_nome: string | null
-          mes: number | null
-          month_start: string | null
         }
         Relationships: []
       }
@@ -1846,7 +1809,6 @@ export type Database = {
         Row: {
           anomes: number | null
           anomes_nome: string | null
-          mes_ini: string | null
         }
         Relationships: []
       }
@@ -2010,13 +1972,6 @@ export type Database = {
         }
         Relationships: []
       }
-      vw_receita_banker_sem_dim: {
-        Row: {
-          banker: string | null
-          valor: number | null
-        }
-        Relationships: []
-      }
       vw_receita_detalhada: {
         Row: {
           advisor: string | null
@@ -2080,19 +2035,34 @@ export type Database = {
           casa: string
         }[]
       }
-      rpc_auc_casa_m0: {
-        Args: {
-          p_advisor?: string[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          auc: number
-          casa: string
-        }[]
-      }
+      rpc_auc_casa_m0:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              auc: number
+              casa: string
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              auc: number
+              casa: string
+            }[]
+          }
       rpc_auc_mes: {
         Args: {
           p_advisor?: string[]
@@ -2152,7 +2122,6 @@ export type Database = {
         Returns: {
           captacao_mtd: number
           captacao_ytd: number
-          ref_date: string
         }[]
       }
       rpc_captacao_treemap: {
@@ -2181,6 +2150,7 @@ export type Database = {
         Returns: {
           anomes: number
           anomes_nome: string
+          casa: string
           qtd: number
           tipo: string
         }[]
