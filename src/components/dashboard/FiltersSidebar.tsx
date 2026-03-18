@@ -229,6 +229,9 @@ function PbiMultiSelect({
           ))}
         </div>
       )}
+      {values.length === 0 && placeholder && !expanded && (
+        <p className="text-[9px] opacity-40 italic">{placeholder}</p>
+      )}
       <div className="relative">
         <Search className="absolute left-2 top-1.5 h-3 w-3 text-white/40" />
         <Input

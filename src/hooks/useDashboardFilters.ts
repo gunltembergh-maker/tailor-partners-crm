@@ -53,8 +53,7 @@ export function useDashboardFilters() {
 
   const activeChips = useMemo(() => {
     const chips: { key: keyof DashboardFilters; label: string; value: string }[] = [];
-    // Only show anoMes chips if different from default
-    if (JSON.stringify(appliedFilters.anoMes) !== JSON.stringify(default14)) {
+    if (appliedFilters.anoMes.length > 0) {
       appliedFilters.anoMes.forEach(v => chips.push({ key: "anoMes", label: "Ano Mês", value: v }));
     }
     if (appliedFilters.banker.length) {
