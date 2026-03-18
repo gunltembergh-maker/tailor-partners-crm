@@ -442,6 +442,7 @@ export default function ImportarBases() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
+    <AppLayout>
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Importar Bases</h1>
