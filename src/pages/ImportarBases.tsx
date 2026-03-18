@@ -319,7 +319,7 @@ export default function ImportarBases() {
     const buffer = await file.arrayBuffer();
     let workbook: XLSX.WorkBook;
     try {
-      workbook = XLSX.read(buffer, { type: "array", cellDates: true, cellNF: false, cellText: false });
+      workbook = XLSX.read(buffer, { type: "array", cellDates: true });
     } catch (e) {
       setResults(prev =>
         prev.map(r =>
