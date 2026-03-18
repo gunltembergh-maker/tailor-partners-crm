@@ -1308,6 +1308,25 @@ export type Database = {
         }
         Relationships: []
       }
+      captacao_consolidado_filtrado: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          aporte: number | null
+          banker: string | null
+          canal: string | null
+          captacao: number | null
+          casa: string | null
+          conta: string | null
+          data: string | null
+          documento: string | null
+          finder: string | null
+          resgate: number | null
+          tipo_captacao: string | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
       comissoes_consolidado: {
         Row: {
           anomes: number | null
@@ -1329,6 +1348,7 @@ export type Database = {
           advisor: string | null
           anomes: number | null
           banker: string | null
+          canal: string | null
           categoria: string | null
           comissao_bruta_tailor: number | null
           documento: string | null
@@ -2038,6 +2058,7 @@ export type Database = {
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
       norm_txt: { Args: { v: string }; Returns: string }
+      parse_num: { Args: { v: string }; Returns: number }
       parse_num_any: { Args: { v: string }; Returns: number }
       rpc_auc_casa: {
         Args: {
