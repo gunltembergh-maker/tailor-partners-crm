@@ -130,6 +130,28 @@ export function FiltersSidebar({
             singleSelect
           />
 
+          {/* Action buttons */}
+          <div className="flex gap-2 pt-1">
+            <Button
+              size="sm"
+              className="flex-1 h-7 text-[10px] bg-white/20 hover:bg-white/30 text-white border-0"
+              onClick={applyFilters}
+              disabled={!hasChanges}
+            >
+              <Check className="h-3 w-3 mr-1" />
+              Aplicar
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[10px] text-white/70 hover:text-white hover:bg-white/10"
+              onClick={resetFilters}
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Limpar
+            </Button>
+          </div>
+
           {/* Vencimento (only qualitativo) */}
           {showVencimento && (
             <div className="space-y-1">
@@ -145,27 +167,6 @@ export function FiltersSidebar({
         </div>
       </ScrollArea>
 
-      {/* Footer buttons */}
-      <div className="px-3 py-3 flex gap-2 border-t border-white/10">
-        <Button
-          size="sm"
-          className="flex-1 h-7 text-[10px] bg-white/20 hover:bg-white/30 text-white border-0"
-          onClick={applyFilters}
-          disabled={!hasChanges}
-        >
-          <Check className="h-3 w-3 mr-1" />
-          Aplicar
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-[10px] text-white/70 hover:text-white hover:bg-white/10"
-          onClick={resetFilters}
-        >
-          <RotateCcw className="h-3 w-3 mr-1" />
-          Limpar
-        </Button>
-      </div>
     </div>
   );
 }
