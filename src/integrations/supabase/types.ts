@@ -368,7 +368,133 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_base_avenue: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_cambio: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_consolidada: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_corp_seguros: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
       raw_base_crm: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_fo: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_gestora: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_lavoro: {
         Row: {
           data: Json
           id: number
@@ -500,6 +626,24 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_desligados: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
       raw_diversificador_consolidado: {
         Row: {
           data: Json
@@ -555,6 +699,24 @@ export type Database = {
         Relationships: []
       }
       raw_ordem_pl: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_podio: {
         Row: {
           data: Json
           id: number
@@ -645,6 +807,24 @@ export type Database = {
         Relationships: []
       }
       raw_positivador_total_desagrupado: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_produzido_historico: {
         Row: {
           data: Json
           id: number
