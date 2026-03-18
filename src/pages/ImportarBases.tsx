@@ -241,7 +241,7 @@ function readSheet(
   // defval: null → células vazias viram null
   const rows = XLSX.utils.sheet_to_json(ws, {
     defval: null,
-    raw: true,
+    raw: false,
     cellDates: true,
   } as any);
 
