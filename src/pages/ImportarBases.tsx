@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { AppLayout } from "@/components/AppLayout";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
@@ -221,14 +220,61 @@ async function truncateAndInsert(
   return { ok: true };
 }
 
+function excelDateToISO(serial: number): string {
+  // Converte número serial do Excel para data ISO (YYYY-MM-DD)
+  const utc_days = Math.floor(serial - 25569);
+  const utc_value = utc_days * 86400;
+  const date = new Date(utc_value * 1000);
+  return date.toISOString().split("T")[0];
+}
+
 function readSheet(
   workbook: XLSX.WorkBook,
   sheetName: string
 ): Record<string, unknown>[] | null {
   const ws = workbook.Sheets[sheetName];
   if (!ws) return null;
-  const raw = XLSX.utils.sheet_to_json(ws, { defval: null, raw: false });
-  return raw as Record<string, unknown>[];
+
+  // raw: true → preserva números como number (evita "270,000.00")
+  // cellDates: true → converte datas automaticamente
+  // defval: null → células vazias viram null
+  const rows = XLSX.utils.sheet_to_json(ws, {
+    defval: null,
+    raw: true,
+    cellDates: true,
+    // Lê TODAS as linhas — incluindo as ocultas por filtro do Excel
+    // SheetJS lê o xml completo, não respeita AutoFilter visibility
+  });
+
+  // Normalizar valores: datas para string ISO, números ficam como number
+  return (rows as Record<string, unknown>[]).map((row) => {
+    const normalized: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(row)) {
+      if (val instanceof Date) {
+        // Formata como "YYYY-MM-DD" para o Postgres
+        normalized[key] = val.toISOString().split("T")[0];
+      } else if (typeof val === "number") {
+        // Verificar se é número serial de data do Excel (entre 1 e 50000)
+        // Só converte se a coluna se chamar algo relacionado a data
+        const keyLower = key.toLowerCase();
+        if (
+          (keyLower.includes("data") ||
+            keyLower.includes("date") ||
+            keyLower.includes("dt_") ||
+            keyLower.includes("nascimento") ||
+            keyLower.includes("vencimento")) &&
+          val > 1000 && val < 55000
+        ) {
+          normalized[key] = excelDateToISO(val);
+        } else {
+          normalized[key] = val;
+        }
+      } else {
+        normalized[key] = val;
+      }
+    }
+    return normalized;
+  });
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -274,7 +320,7 @@ export default function ImportarBases() {
     const buffer = await file.arrayBuffer();
     let workbook: XLSX.WorkBook;
     try {
-      workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+      workbook = XLSX.read(buffer, { type: "array", cellDates: true, cellNF: false, cellText: false });
     } catch (e) {
       setResults(prev =>
         prev.map(r =>
@@ -395,7 +441,6 @@ export default function ImportarBases() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <AppLayout>
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Importar Bases</h1>
@@ -565,7 +610,6 @@ export default function ImportarBases() {
         </div>
       )}
     </div>
-    </AppLayout>
   );
 }
 
