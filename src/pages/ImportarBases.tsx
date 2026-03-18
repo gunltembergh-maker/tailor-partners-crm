@@ -242,7 +242,7 @@ function readSheet(
   const rows = XLSX.utils.sheet_to_json(ws, {
     defval: null,
     raw: true,
-    cellDates: true,
+    // cellDates handled via raw:true
     // Lê TODAS as linhas — incluindo as ocultas por filtro do Excel
     // SheetJS lê o xml completo, não respeita AutoFilter visibility
   });
