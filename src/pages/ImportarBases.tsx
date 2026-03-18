@@ -77,7 +77,7 @@ const SOURCE_MAP: Record<string, { label: string; sheets: Record<string, string>
   },
   consolidado_receita: {
     label: "Consolidado Receita",
-    sheets: { __first__: "raw_consolidado_receita" },
+    sheets: { "Receita Consolidada": "raw_consolidado_receita" },
   },
 };
 
