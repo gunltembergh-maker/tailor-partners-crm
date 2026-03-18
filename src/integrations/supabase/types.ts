@@ -1842,6 +1842,14 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_dim_anomes_all: {
+        Row: {
+          anomes: number | null
+          anomes_nome: string | null
+          mes_ini: string | null
+        }
+        Relationships: []
+      }
       vw_dim_banker: {
         Row: {
           banker: string | null

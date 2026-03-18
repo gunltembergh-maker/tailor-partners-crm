@@ -27,7 +27,7 @@ export function useFilterOptions() {
     queryKey: ["dashboard-filter-options"],
     queryFn: async () => {
       const [anoMesRes, bankerRes, advisorRes, finderRes, tipoClienteRes] = await Promise.all([
-        supabase.from("vw_dim_anomes").select("anomes").order("anomes", { ascending: false }),
+        supabase.from("vw_dim_anomes_all").select("anomes, anomes_nome").order("anomes", { ascending: false }),
         supabase.from("vw_dim_banker").select("banker"),
         supabase.from("vw_dim_advisor").select("advisor"),
         supabase.from("vw_dim_finder").select("finder"),

@@ -13,19 +13,6 @@ export interface DashboardFilters {
   vencimento: string;
 }
 
-function computeDefault14Months(): string[] {
-  const now = new Date();
-  const result: string[] = [];
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const ym = d.getFullYear() * 100 + (d.getMonth() + 1);
-    result.push(String(ym));
-  }
-  return result.sort();
-}
-
-const default14 = computeDefault14Months();
-
 const now = new Date();
 const startOfYear = `${now.getFullYear()}-01-01`;
 const today = now.toISOString().slice(0, 10);
@@ -33,7 +20,7 @@ const today = now.toISOString().slice(0, 10);
 const defaultFilters: DashboardFilters = {
   periodoInicio: startOfYear,
   periodoFim: today,
-  anoMes: default14,
+  anoMes: [],
   banker: [],
   advisor: [],
   finder: [],
@@ -66,8 +53,7 @@ export function useDashboardFilters() {
 
   const activeChips = useMemo(() => {
     const chips: { key: keyof DashboardFilters; label: string; value: string }[] = [];
-    // Only show anoMes chips if different from default
-    if (JSON.stringify(appliedFilters.anoMes) !== JSON.stringify(default14)) {
+    if (appliedFilters.anoMes.length > 0) {
       appliedFilters.anoMes.forEach(v => chips.push({ key: "anoMes", label: "Ano Mês", value: v }));
     }
     if (appliedFilters.banker.length) {
