@@ -1160,6 +1160,22 @@ export type Database = {
         }
         Relationships: []
       }
+      comissoes_consolidado_filtrado_pbi: {
+        Row: {
+          anomes: number | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta_tailor: number | null
+          data_ref: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+        }
+        Relationships: []
+      }
       comissoes_historico_all: {
         Row: {
           anomes: number | null
@@ -1199,6 +1215,22 @@ export type Database = {
           produto?: never
           subcategoria?: never
           subproduto?: never
+        }
+        Relationships: []
+      }
+      comissoes_historico_cut: {
+        Row: {
+          anomes: number | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta_tailor: number | null
+          data_ref: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
         }
         Relationships: []
       }
@@ -1636,6 +1668,19 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_dim_banker_dash: {
+        Row: {
+          banker: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_banker_pbi: {
+        Row: {
+          banker: string | null
+          banker_norm: string | null
+        }
+        Relationships: []
+      }
       vw_dim_documento: {
         Row: {
           documento: string | null
@@ -1777,6 +1822,13 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_receita_banker_sem_dim: {
+        Row: {
+          banker: string | null
+          valor: number | null
+        }
+        Relationships: []
+      }
       vw_receita_detalhada: {
         Row: {
           advisor: string | null
@@ -1824,6 +1876,7 @@ export type Database = {
       }
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
+      norm_txt: { Args: { v: string }; Returns: string }
       parse_num_any: { Args: { v: string }; Returns: number }
       rpc_auc_casa: {
         Args: {
