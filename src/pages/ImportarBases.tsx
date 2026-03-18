@@ -39,7 +39,20 @@ const SOURCE_MAP: Record<string, { label: string; sheets: Record<string, string>
   },
   depara: {
     label: "DePara",
-    sheets: { "Base CRM": "raw_base_crm", DePara: "raw_depara" },
+    sheets: {
+      DePara: "raw_depara",
+      "Base CRM": "raw_base_crm",
+      "Base Consolidada": "raw_base_consolidada",
+      "Base Câmbio": "raw_base_cambio",
+      "Base Gestora": "raw_base_gestora",
+      "Base Corporate Seguros": "raw_base_corp_seguros",
+      "Base Avenue": "raw_base_avenue",
+      "F & O": "raw_base_fo",
+      "Base Lavoro": "raw_base_lavoro",
+      Desligados: "raw_desligados",
+      "Produzido Histórico": "raw_produzido_historico",
+      Pódio: "raw_podio",
+    },
   },
   diversificador: {
     label: "Diversificador",
@@ -100,7 +113,10 @@ type RawTable =
   | "raw_diversificador_consolidado" | "raw_ordem_pl"
   | "raw_positivador_total_desagrupado" | "raw_positivador_total_agrupado"
   | "raw_positivador_m0_desagrupado" | "raw_positivador_m0_agrupado"
-  | "raw_comissoes_historico" | "raw_comissoes_m0" | "raw_consolidado_receita";
+  | "raw_comissoes_historico" | "raw_comissoes_m0" | "raw_consolidado_receita"
+  | "raw_base_consolidada" | "raw_base_cambio" | "raw_base_gestora"
+  | "raw_base_corp_seguros" | "raw_base_avenue" | "raw_base_fo"
+  | "raw_base_lavoro" | "raw_desligados" | "raw_produzido_historico" | "raw_podio";
 
 // ── Helpers ──
 function normalize(s: string) {

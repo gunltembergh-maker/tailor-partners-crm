@@ -368,7 +368,133 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_base_avenue: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_cambio: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_consolidada: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_corp_seguros: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
       raw_base_crm: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_fo: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_gestora: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_base_lavoro: {
         Row: {
           data: Json
           id: number
@@ -500,6 +626,24 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_desligados: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
       raw_diversificador_consolidado: {
         Row: {
           data: Json
@@ -555,6 +699,24 @@ export type Database = {
         Relationships: []
       }
       raw_ordem_pl: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_podio: {
         Row: {
           data: Json
           id: number
@@ -645,6 +807,24 @@ export type Database = {
         Relationships: []
       }
       raw_positivador_total_desagrupado: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          ingested_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          ingested_at?: string
+        }
+        Relationships: []
+      }
+      raw_produzido_historico: {
         Row: {
           data: Json
           id: number
@@ -1160,6 +1340,22 @@ export type Database = {
         }
         Relationships: []
       }
+      comissoes_consolidado_filtrado_pbi: {
+        Row: {
+          anomes: number | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta_tailor: number | null
+          data_ref: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+        }
+        Relationships: []
+      }
       comissoes_historico_all: {
         Row: {
           anomes: number | null
@@ -1199,6 +1395,22 @@ export type Database = {
           produto?: never
           subcategoria?: never
           subproduto?: never
+        }
+        Relationships: []
+      }
+      comissoes_historico_cut: {
+        Row: {
+          anomes: number | null
+          banker: string | null
+          categoria: string | null
+          cliente: string | null
+          comissao_bruta_tailor: number | null
+          data_ref: string | null
+          id: number | null
+          ingested_at: string | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
         }
         Relationships: []
       }
@@ -1636,6 +1848,19 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_dim_banker_dash: {
+        Row: {
+          banker: string | null
+        }
+        Relationships: []
+      }
+      vw_dim_banker_pbi: {
+        Row: {
+          banker: string | null
+          banker_norm: string | null
+        }
+        Relationships: []
+      }
       vw_dim_documento: {
         Row: {
           documento: string | null
@@ -1777,6 +2002,13 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_receita_banker_sem_dim: {
+        Row: {
+          banker: string | null
+          valor: number | null
+        }
+        Relationships: []
+      }
       vw_receita_detalhada: {
         Row: {
           advisor: string | null
@@ -1824,6 +2056,7 @@ export type Database = {
       }
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
+      norm_txt: { Args: { v: string }; Returns: string }
       parse_num_any: { Args: { v: string }; Returns: number }
       rpc_auc_casa: {
         Args: {
