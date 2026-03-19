@@ -324,10 +324,10 @@ export function QuantitativoTab({filters}:Props) {
     const tipos=new Set<string>();const map=new Map<number,any>();
     captMeses.forEach((r:any)=>{
       const tipo=r.tipo_captacao||"Outros";tipos.add(tipo);
-      if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,_total:0});
+      if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,_anomes:r.anomes,_total:0});
       const row=map.get(r.anomes)!;row[tipo]=(row[tipo]||0)+(Number(r.valor)||0);row._total=(row._total||0)+(Number(r.valor)||0);
     });
-    return {captacaoPorMes:[...map.entries()].sort((a,b)=>b[0]-a[0]).map(([,v])=>v),captacaoTipos:[...tipos].sort()};
+    return {captacaoPorMes:[...map.entries()].sort((a,b)=>b[0]-a[0]).map(([k,v])=>({...v,_anomes:k})),captacaoTipos:[...tipos].sort()};
   },[captMeses]);
 
   const captacaoPorTipo=useMemo(()=>{
