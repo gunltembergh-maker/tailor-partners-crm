@@ -259,8 +259,8 @@ export function QuantitativoTab({filters}:Props) {
   const receitaPorCategoria=useMemo(()=>
     receitaTreemap?.map((r:any)=>({name:r.categoria||"Outros",value:Math.abs(Number(r.valor)||0)}))??[],[receitaTreemap]);
 
-  const {matrizTree,matrizMeses}=useMemo(()=>{
-    if(!receitaMatrizRows?.length) return {matrizTree:[] as MatrizNode[],matrizMeses:[] as string[]};
+  const {tree:matrizTree,meses:matrizMeses}=useMemo(()=>{
+    if(!receitaMatrizRows?.length) return {tree:[] as MatrizNode[],meses:[] as string[]};
     return buildMatrizTree(receitaMatrizRows);
   },[receitaMatrizRows]);
 
