@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MetricCard } from "./MetricCard";
 import {
