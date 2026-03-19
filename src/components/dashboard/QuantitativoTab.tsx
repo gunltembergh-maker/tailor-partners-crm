@@ -403,6 +403,16 @@ export function QuantitativoTab({filters}:Props) {
   return (
     <div className="space-y-3">
 
+      {/* Cross-filter banner */}
+      {clickedMonth && (
+        <div className="flex items-center gap-2 rounded px-3 py-1.5 text-white text-xs" style={{ backgroundColor: "#1e3a5f" }}>
+          <span className="font-medium">Filtrando: {monthLabel}</span>
+          <button onClick={() => setClickedMonth(null)} className="ml-auto flex items-center gap-1 hover:opacity-80">
+            <X className="h-3 w-3" /> Limpar filtro
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-2">
         <MetricCard title="Migração"    value={kpis?.migracao    ?? 0} icon={Users}/>
         <MetricCard title="Habilitação" value={kpis?.habilitacao ?? 0} icon={Users}/>
