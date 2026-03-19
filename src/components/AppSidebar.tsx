@@ -55,6 +55,10 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { profile, role, signOut } = useAuth();
 
+  const isAdmin = role === "ADMIN";
+  const isLider = role === "LIDER";
+  const showMainMenu = isAdmin || isLider;
+
   return (
     <Sidebar>
       <SidebarHeader className="px-6 py-5">
@@ -69,6 +73,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {showMainMenu && (
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
             Menu
@@ -90,6 +95,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
