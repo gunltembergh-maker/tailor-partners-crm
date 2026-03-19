@@ -1,36 +1,41 @@
 
 
-# Fix YTD card + Auth/Permissions explanation
+# Fix Captação Líq. MTD/YTD cards
 
-## 1. Fix Captação Líq. YTD card (line 458)
+## Problem
+- YTD without filter currently calculates Jan-to-latest-month of the current year (~year accumulation), but user wants the sum of ALL historical months (~R$833Mi).
+- YTD with filter should equal MTD (single month value).
 
-When `clickedMonth` is active, show `captacao_mtd` instead of `captacao_ytd` — a simple frontend change on line 458:
+## Solution
 
-```tsx
-<MetricCard 
-  title={clickedMonth ? `Captação Líq. ${monthLabel}` : "Captação Líq. YTD"} 
-  value={fmtKpi(clickedMonth ? (captKpis?.captacao_mtd??0) : (captKpis?.captacao_ytd??0))} 
-  icon={TrendingUp}
-/>
+### 1. Database migration — update `rpc_captacao_kpis`
+
+Change the `captacao_ytd` calculation:
+- **p_anomes IS NULL**: `SUM(captacao)` — no date filter at all, totals everything
+- **p_anomes provided**: `SUM(captacao) FILTER (WHERE anomes = ref_mes)` — same as MTD
+
+```sql
+CREATE OR REPLACE FUNCTION public.rpc_captacao_kpis(...)
+RETURNS TABLE(captacao_mtd numeric, captacao_ytd numeric)
+...
+  SELECT
+    SUM(captacao) FILTER (WHERE anomes = (SELECT ref_mes FROM ref)) AS captacao_mtd,
+    CASE
+      WHEN p_anomes IS NULL THEN SUM(captacao)
+      ELSE SUM(captacao) FILTER (WHERE anomes = (SELECT ref_mes FROM ref))
+    END AS captacao_ytd
+  FROM base;
 ```
 
-This way:
-- `clickedMonth = null` → label "Captação Líq. YTD", value = `captacao_ytd` (accumulated year)
-- `clickedMonth` active → label "Captação Líq. [mês]", value = `captacao_mtd` (that month only)
+### 2. Frontend — no changes needed
 
-No RPC or other file changes needed.
+Line 458 already has the correct logic:
+- MTD card: always shows `captacao_mtd`
+- YTD card: shows `captacao_ytd` without filter, `captacao_mtd` with filter
 
----
+The RPC fix alone satisfies all requirements.
 
-## 2. Auth & Permissions architecture (research answer)
-
-**Authentication**: Managed in `src/hooks/useAuth.tsx`. It wraps Supabase Auth, provides `signIn`, `signUp`, `signOut`, and exposes `session`, `user`, `profile`, and `role` via React Context.
-
-**Roles**: Stored in a `user_roles` table (enum: ADMIN, LIDER, BANKER, FINDER, ASSESSOR). A `has_role()` security-definer function is used for RLS policies. Auto-assignment happens via the `handle_new_user()` trigger for known emails in `team_reference`.
-
-**Sidebar / menu**: `src/components/AppSidebar.tsx` renders the navigation. Admin menu items (Importar Bases, Auditoria Comercial) are conditionally shown only when `role === "ADMIN"`.
-
-**Route protection**: `src/App.tsx` uses a `ProtectedRoute` wrapper that redirects unauthenticated users to `/auth`. There is no per-route role check — all authenticated users can access all routes; only the sidebar visibility differs.
-
-**"View As" feature**: `src/contexts/ViewAsContext.tsx` lets ADMIN/LIDER users impersonate other team members' data views.
+| File | Change |
+|---|---|
+| New migration SQL | Update `rpc_captacao_kpis` YTD logic |
 
