@@ -347,13 +347,23 @@ export function QuantitativoTab({filters}:Props) {
   const receitaPorCategoriaAll=useMemo(()=>
     receitaTreemap?.map((r:any)=>({name:r.categoria||"Outros",value:Math.abs(Number(r.valor)||0)}))??[],[receitaTreemap]);
 
-  const {tree:matrizTree,meses:matrizMeses}=useMemo(()=>{
-    if(!receitaMatrizRows?.length) return {tree:[] as MatrizNode[],meses:[] as string[]};
-    return buildMatrizTree(receitaMatrizRows);
-  },[receitaMatrizRows]);
+  const {rows:matrizRows,meses:matrizMeses}=useMemo(()=>{
+    if(!receitaMatrizCat?.length) return {rows:[] as {categoria:string;values:Record<string,number>;total:number}[],meses:[] as string[]};
+    return buildMatrizFlat(receitaMatrizCat);
+  },[receitaMatrizCat]);
 
   const [matrizExpanded,setMatrizExpanded]=useState<Set<string>>(new Set());
   const toggleMatriz=(key:string)=>setMatrizExpanded(prev=>{const n=new Set(prev);n.has(key)?n.delete(key):n.add(key);return n;});
+
+  /** Build detail children lazily when a category is expanded */
+  const detailChildren=useMemo(()=>{
+    if(!receitaMatrizRows?.length) return new Map<string,MatrizNode[]>();
+    const map=new Map<string,MatrizNode[]>();
+    matrizExpanded.forEach(cat=>{
+      map.set(cat,buildDetailTree(receitaMatrizRows,cat,matrizMeses));
+    });
+    return map;
+  },[receitaMatrizRows,matrizExpanded,matrizMeses]);
 
   if(loading) return (
     <div className="space-y-3">
