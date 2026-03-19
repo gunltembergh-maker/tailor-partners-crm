@@ -1,66 +1,36 @@
 
 
-# Fix Captação Líq. MTD/YTD to properly respond to clickedMonth
+# Fix YTD card + Auth/Permissions explanation
 
-## Problem
-The RPC `rpc_captacao_kpis` ignores `p_anomes` in its base CTE. MTD always picks the latest month from ALL data, and YTD just sums rows matching `p_anomes` (not a true year-to-date).
+## 1. Fix Captação Líq. YTD card (line 458)
 
-When `clickedMonth = 202511`:
-- **MTD** should = captação of Nov/25 → currently returns latest month (wrong)
-- **YTD** should = captação Jan/25 through Nov/25 → currently returns only Nov/25 (wrong)
+When `clickedMonth` is active, show `captacao_mtd` instead of `captacao_ytd` — a simple frontend change on line 458:
 
-## Solution: Two changes
-
-### 1. Database migration — fix `rpc_captacao_kpis`
-
-Replace the function so that:
-- When `p_anomes IS NULL`: MTD = max month in data, YTD = all months of that max month's year
-- When `p_anomes` is provided: MTD = sum of the provided month(s), YTD = all months from Jan of that year up to and including max(p_anomes)
-
-```sql
-CREATE OR REPLACE FUNCTION public.rpc_captacao_kpis(
-  p_anomes integer[] DEFAULT NULL,
-  p_banker text[] DEFAULT NULL,
-  p_documento text[] DEFAULT NULL,
-  p_advisor text[] DEFAULT NULL,
-  p_finder text[] DEFAULT NULL,
-  p_tipo_cliente text[] DEFAULT NULL
-) RETURNS TABLE(captacao_mtd numeric, captacao_ytd numeric)
-LANGUAGE sql STABLE AS $$
-  WITH base AS (
-    SELECT anomes, captacao
-    FROM captacao_consolidado_filtrado
-    WHERE (p_banker IS NULL OR banker = ANY(p_banker))
-      AND (p_documento IS NULL OR documento = ANY(p_documento))
-      AND (p_advisor IS NULL OR advisor = ANY(p_advisor))
-      AND (p_finder IS NULL OR finder = ANY(p_finder))
-      AND (p_tipo_cliente IS NULL OR tipo_cliente = ANY(p_tipo_cliente))
-  ),
-  ref AS (
-    SELECT COALESCE(
-      (SELECT MAX(x) FROM unnest(p_anomes) x),
-      (SELECT MAX(anomes) FROM base)
-    ) AS ref_mes
-  ),
-  yr AS (
-    SELECT (ref_mes / 100 * 100) AS year_start FROM ref  -- e.g. 202500
-  )
-  SELECT
-    SUM(captacao) FILTER (WHERE anomes = (SELECT ref_mes FROM ref)) AS captacao_mtd,
-    SUM(captacao) FILTER (
-      WHERE anomes >= (SELECT year_start + 1 FROM yr)
-        AND anomes <= (SELECT ref_mes FROM ref)
-    ) AS captacao_ytd
-  FROM base;
-$$;
+```tsx
+<MetricCard 
+  title={clickedMonth ? `Captação Líq. ${monthLabel}` : "Captação Líq. YTD"} 
+  value={fmtKpi(clickedMonth ? (captKpis?.captacao_mtd??0) : (captKpis?.captacao_ytd??0))} 
+  icon={TrendingUp}
+/>
 ```
 
-### 2. `QuantitativoTab.tsx` — labels (already done, verify)
+This way:
+- `clickedMonth = null` → label "Captação Líq. YTD", value = `captacao_ytd` (accumulated year)
+- `clickedMonth` active → label "Captação Líq. [mês]", value = `captacao_mtd` (that month only)
 
-Lines 457-458 already have the dynamic labels. No further frontend change needed — the data path (`useCaptacaoKpis(effectiveFilters)`) is already correct.
+No RPC or other file changes needed.
 
-## Files affected
-| File | Change |
-|---|---|
-| New migration SQL | Replace `rpc_captacao_kpis` with month-aware logic |
+---
+
+## 2. Auth & Permissions architecture (research answer)
+
+**Authentication**: Managed in `src/hooks/useAuth.tsx`. It wraps Supabase Auth, provides `signIn`, `signUp`, `signOut`, and exposes `session`, `user`, `profile`, and `role` via React Context.
+
+**Roles**: Stored in a `user_roles` table (enum: ADMIN, LIDER, BANKER, FINDER, ASSESSOR). A `has_role()` security-definer function is used for RLS policies. Auto-assignment happens via the `handle_new_user()` trigger for known emails in `team_reference`.
+
+**Sidebar / menu**: `src/components/AppSidebar.tsx` renders the navigation. Admin menu items (Importar Bases, Auditoria Comercial) are conditionally shown only when `role === "ADMIN"`.
+
+**Route protection**: `src/App.tsx` uses a `ProtectedRoute` wrapper that redirects unauthenticated users to `/auth`. There is no per-route role check — all authenticated users can access all routes; only the sidebar visibility differs.
+
+**"View As" feature**: `src/contexts/ViewAsContext.tsx` lets ADMIN/LIDER users impersonate other team members' data views.
 
