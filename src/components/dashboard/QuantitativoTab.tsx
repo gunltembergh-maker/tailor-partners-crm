@@ -526,14 +526,14 @@ export function QuantitativoTab({filters}:Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         <PbiCard title="# de Cliente por Faixa de PL" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={230}>
-            <AreaChart data={faixaCliRows} margin={CM}>
+            <AreaChart data={faixaCliRows} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
               <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
               <YAxis tick={{fontSize:9,fill:"#6B7280"}}/>
               <Tooltip content={<Percent100Tooltip/>}/>
               <Legend wrapperStyle={{fontSize:9}} verticalAlign="top"/>
               {faixaSeries.map((faixa)=>(
-                <Area key={faixa} type="monotone" dataKey={faixa} stackId="1"
+                <Area key={faixa} type="monotone" dataKey={faixa} stackId="1" cursor="pointer"
                   fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
                   stroke={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
                   fillOpacity={0.7}/>
