@@ -55,6 +55,10 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { profile, role, signOut } = useAuth();
 
+  const isAdmin = role === "ADMIN";
+  const isLider = role === "LIDER";
+  const showMainMenu = isAdmin || isLider;
+
   return (
     <Sidebar>
       <SidebarHeader className="px-6 py-5">
