@@ -454,8 +454,8 @@ export function QuantitativoTab({filters}:Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <MetricCard title="Captação Líq. MTD" value={fmtKpi(captKpis?.captacao_mtd??0)} icon={ArrowUpRight}/>
-        <MetricCard title="Captação Líq. YTD" value={fmtKpi(captKpis?.captacao_ytd??0)} icon={TrendingUp}/>
+        <MetricCard title={clickedMonth ? `Captação Líq. ${monthLabel}` : "Captação Líq. MTD"} value={fmtKpi(captKpis?.captacao_mtd??0)} icon={ArrowUpRight}/>
+        <MetricCard title={clickedMonth ? `Captação Líq. YTD ${monthLabel}` : "Captação Líq. YTD"} value={fmtKpi(captKpis?.captacao_ytd??0)} icon={TrendingUp}/>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
