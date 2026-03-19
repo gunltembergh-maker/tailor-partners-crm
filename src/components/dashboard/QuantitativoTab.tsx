@@ -164,29 +164,41 @@ function pivotDesc<T extends Record<string,any>>(
 
 interface MatrizNode {key:string;label:string;depth:number;values:Record<string,number>;total:number;children:MatrizNode[];}
 
-function buildMatrizTree(data:any[]):{tree:MatrizNode[];meses:string[]} {
-  const sorted=[...data].sort((a,b)=>(b.anomes||0)-(a.anomes||0));
+/** Build category-level matrix from the lightweight cat RPC */
+function buildMatrizFlat(catData:any[]):{rows:{categoria:string;values:Record<string,number>;total:number}[];meses:string[]} {
   const mesesMap=new Map<number,string>();
-  sorted.forEach(r=>{if(!mesesMap.has(r.anomes))mesesMap.set(r.anomes,r.anomes_nome||String(r.anomes));});
+  catData.forEach(r=>{if(!mesesMap.has(r.anomes))mesesMap.set(r.anomes,r.anomes_nome||String(r.anomes));});
   const meses=[...mesesMap.entries()].sort((a,b)=>b[0]-a[0]).map(([,n])=>n);
-  const catMap=new Map<string,any>();
-  sorted.forEach(r=>{
-    const cat=r.categoria||"N/D",sub=r.subcategoria||"",prod=r.produto||"";
-    const mes=r.anomes_nome||String(r.anomes),val=Number(r.valor)||0;
-    if(!catMap.has(cat))catMap.set(cat,{total:0,values:{},children:new Map()});
+  const catMap=new Map<string,{values:Record<string,number>;total:number}>();
+  catData.forEach(r=>{
+    const cat=r.categoria||"N/D",mes=r.anomes_nome||String(r.anomes),val=Number(r.valor)||0;
+    if(!catMap.has(cat))catMap.set(cat,{values:{},total:0});
     const c=catMap.get(cat)!;c.total+=val;c.values[mes]=(c.values[mes]||0)+val;
-    const sk=`${cat}|${sub}`;
-    if(!c.children.has(sk))c.children.set(sk,{label:sub||"(sem sub)",total:0,values:{},children:new Map()});
-    const s=c.children.get(sk)!;s.total+=val;s.values[mes]=(s.values[mes]||0)+val;
-    const pk=`${sk}|${prod}`;
-    if(!s.children.has(pk))s.children.set(pk,{label:prod||"(sem produto)",total:0,values:{},children:new Map()});
+  });
+  const rows=[...catMap.entries()].map(([cat,v])=>({categoria:cat,...v})).sort((a,b)=>b.total-a.total);
+  return {rows,meses};
+}
+
+/** Build detail tree for a single expanded category from the detail RPC */
+function buildDetailTree(data:any[],categoria:string,meses:string[]):MatrizNode[] {
+  const catRows=data.filter(r=>(r.categoria||"N/D")===categoria);
+  const subMap=new Map<string,any>();
+  catRows.forEach(r=>{
+    const sub=r.subcategoria||"",prod=r.produto||"";
+    const mes=r.anomes_nome||String(r.anomes),val=Number(r.valor)||0;
+    const sk=sub;
+    if(!subMap.has(sk))subMap.set(sk,{label:sub||"(sem sub)",total:0,values:{},children:new Map()});
+    const s=subMap.get(sk)!;s.total+=val;s.values[mes]=(s.values[mes]||0)+val;
+    const pk=`${sub}|${prod}`;
+    if(!s.children.has(pk))s.children.set(pk,{label:prod||"(sem produto)",total:0,values:{}});
     const p=s.children.get(pk)!;p.total+=val;p.values[mes]=(p.values[mes]||0)+val;
   });
-  const toNodes=(map:Map<string,any>,depth:number,prefix=""):MatrizNode[]=>[...map.entries()].map(([k,v])=>({
-    key:prefix+k,label:depth===0?k.split("|").pop()!:v.label,depth,values:v.values,total:v.total,
-    children:v.children?toNodes(v.children,depth+1,k+"|"):[],
+  return [...subMap.entries()].map(([k,v])=>({
+    key:`${categoria}|${k}`,label:v.label,depth:1,values:v.values,total:v.total,
+    children:[...v.children.entries()].map(([pk,pv])=>({
+      key:`${categoria}|${pk}`,label:pv.label,depth:2,values:pv.values,total:pv.total,children:[],
+    })).sort((a,b)=>b.total-a.total),
   })).sort((a,b)=>b.total-a.total);
-  return {tree:toNodes(catMap,0),meses};
 }
 
 function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];expanded:Set<string>;toggle:(k:string)=>void}) {
