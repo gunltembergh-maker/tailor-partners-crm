@@ -12,6 +12,7 @@ import {
   useFaixaPlClientesMes, useFaixaPlAucMes,
   useReceitaTotal, useReceitaMesCategoria,
   useReceitaTreemapCategoria, useReceitaMatrizRows,
+  useReceitaMatrizRowsCat,
 } from "@/hooks/useDashboardData";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
