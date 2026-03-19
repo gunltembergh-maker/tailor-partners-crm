@@ -73,6 +73,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {showMainMenu && (
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
             Menu
@@ -94,6 +95,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
