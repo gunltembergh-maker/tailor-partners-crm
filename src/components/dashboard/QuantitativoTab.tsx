@@ -16,6 +16,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell, Treemap, LabelList,
+  AreaChart, Area,
 } from "recharts";
 import { ArrowUpRight, Users, TrendingUp, ChevronRight, ChevronDown } from "lucide-react";
 
@@ -27,6 +28,17 @@ const PBI_COLORS = [
 const CASA_COLORS: Record<string,string> = {
   "XP":"#4472C4","XP US":"#ED7D31","Avenue":"#A5A5A5",
   "Gestora":"#FFC000","Itaú":"#5B9BD5","Morgan Stanley":"#70AD47",
+};
+const FAIXA_COLORS: Record<string,string> = {
+  "Inativo":"#1a1a2e","-300k":"#e8a838","300k-500k":"#4a90d9",
+  "500k-1M":"#c0392b","1-3M":"#27ae60","3-5M":"#16a085",
+  "5-10M":"#7f8c8d","+10M":"#8e44ad",
+};
+const RECEITA_COLORS: Record<string,string> = {
+  "Assessoria":"#1f4e79","Câmbio":"#2980b9","Consórcio":"#e67e22",
+  "Benefícios":"#8e44ad","Garantia":"#e74c3c","Seguro de Vida":"#c0392b",
+  "Offshore":"#16a085","Wealth Solutions":"#27ae60","Demais Ramos":"#95a5a6",
+  "Consultoria":"#f39c12","Corporate & Banking":"#7f8c8d",
 };
 
 function fmtMi(v: number) {
@@ -40,15 +52,25 @@ function fmtFull(v: number) {
 }
 function fmtKpi(v: number) {
   const abs = Math.abs(v);
-  if (abs >= 1e6) return `R$ ${(v/1e6).toFixed(2).replace(".",",")} Mi`;
+  if (abs >= 1e6) return `R$ ${(v/1e6).toFixed(2)} Mi`;
   return fmtFull(v);
 }
 
-function PbiCard({title,children,className}:{title:string;children:React.ReactNode;className?:string}) {
+/** Reusable 12-month default filter */
+function filterLast12<T extends Record<string,any>>(data: T[] | undefined, anoMesKey: string, selectedAnoMes: string[]): T[] {
+  const all = [...new Set((data ?? []).map((d: any) => d[anoMesKey]))].sort((a: number, b: number) => b - a);
+  const filtered = selectedAnoMes?.length > 0
+    ? all.filter((m: number) => selectedAnoMes.includes(String(m)))
+    : all.slice(0, 12);
+  return (data ?? []).filter((d: any) => filtered.includes(d[anoMesKey]));
+}
+
+function PbiCard({title,subtitle,children,className}:{title:string;subtitle?:string;children:React.ReactNode;className?:string}) {
   return (
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${className??""}`}>
       <div className="px-3 py-1.5 border-b border-gray-100">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+        {subtitle && <p className="text-[9px] text-gray-400">{subtitle}</p>}
       </div>
       <div className="p-2">{children}</div>
     </div>
@@ -76,7 +98,7 @@ const Percent100Tooltip = ({active,payload,label}:any) => {
     <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 shadow-md text-[10px]">
       <p className="font-semibold mb-0.5 text-gray-800">{label}</p>
       {payload.map((p:any,i:number)=>(
-        <p key={i} style={{color:p.color}}>{p.name}: {total>0?((p.value/total)*100).toFixed(1):0}%</p>
+        <p key={i} style={{color:p.color}}>{p.name}: {total>0?fmtFull(p.value):0} ({total>0?((p.value/total)*100).toFixed(1):0}%)</p>
       ))}
     </div>
   );
@@ -103,6 +125,26 @@ const TreemapContent = ({x,y,width,height,name,value,index}:any) => {
     </g>
   );
 };
+
+/** Interactive legend for treemaps */
+function TreemapLegend({data,selected,onSelect,colorMap}:{data:{name:string;value:number}[];selected:string|null;onSelect:(v:string|null)=>void;colorMap?:Record<string,string>}) {
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-2 px-1">
+      {data.map((d,i)=>{
+        const active=!selected||selected===d.name;
+        const color=colorMap?.[d.name]||PBI_COLORS[i%PBI_COLORS.length];
+        return (
+          <button key={d.name} onClick={()=>onSelect(selected===d.name?null:d.name)}
+            className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border transition-opacity ${active?"opacity-100 border-gray-300":"opacity-40 border-transparent"}`}>
+            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{backgroundColor:color}}/>
+            <span className="truncate max-w-[80px]">{d.name}</span>
+            <ChevronRight className="h-2.5 w-2.5 text-gray-400"/>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function pivotDesc<T extends Record<string,any>>(
   data:T[],anoMesKey:string,nomeKey:string,seriesKey:string,valueKey:string
@@ -194,13 +236,25 @@ export function QuantitativoTab({filters}:Props) {
 
   const loading=[l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14].some(Boolean);
 
-  const contasMeses=useMemo(()=>{
-    const todosAnomes=[...new Set(contasAgg?.map((d:any)=>d.anomes)??[])].sort((a:number,b:number)=>b-a);
-    const anomesFiltrados=filters.anoMes?.length>0
-      ? todosAnomes.filter((m:number)=>filters.anoMes.includes(String(m)))
-      : todosAnomes.slice(0,12);
-    return (contasAgg??[]).filter((d:any)=>anomesFiltrados.includes(d.anomes));
-  },[contasAgg,filters.anoMes]);
+  // State for interactive treemap legends
+  const [selectedCaptTipo, setSelectedCaptTipo] = useState<string|null>(null);
+  const [selectedReceitaCat, setSelectedReceitaCat] = useState<string|null>(null);
+
+  // ─── 12-month filtered memos ───
+
+  const contasMeses=useMemo(()=>filterLast12(contasAgg,"anomes",filters.anoMes),[contasAgg,filters.anoMes]);
+
+  const captMeses=useMemo(()=>filterLast12(captAggMes,"anomes",filters.anoMes),[captAggMes,filters.anoMes]);
+
+  const aucMeses=useMemo(()=>filterLast12(aucStackCasa,"anomes",filters.anoMes),[aucStackCasa,filters.anoMes]);
+
+  const faixaCliMeses=useMemo(()=>filterLast12(faixaCliMes,"anomes",filters.anoMes),[faixaCliMes,filters.anoMes]);
+
+  const faixaAucMeses=useMemo(()=>filterLast12(faixaAucMes,"anomes",filters.anoMes),[faixaAucMes,filters.anoMes]);
+
+  const receitaMeses=useMemo(()=>filterLast12(receitaMesCat,"anomes",filters.anoMes),[receitaMesCat,filters.anoMes]);
+
+  // ─── Derived chart data ───
 
   const contasComTotal=useMemo(()=>{
     if(!contasMeses?.length) return [];
@@ -226,45 +280,57 @@ export function QuantitativoTab({filters}:Props) {
   },[contasTipo]);
 
   const {captacaoPorMes,captacaoTipos}=useMemo(()=>{
-    if(!captAggMes?.length) return {captacaoPorMes:[],captacaoTipos:[] as string[]};
+    if(!captMeses?.length) return {captacaoPorMes:[],captacaoTipos:[] as string[]};
     const tipos=new Set<string>();const map=new Map<number,any>();
-    captAggMes.forEach((r:any)=>{
+    captMeses.forEach((r:any)=>{
       const tipo=r.tipo_captacao||"Outros";tipos.add(tipo);
       if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,_total:0});
       const row=map.get(r.anomes)!;row[tipo]=(row[tipo]||0)+(Number(r.valor)||0);row._total=(row._total||0)+(Number(r.valor)||0);
     });
     return {captacaoPorMes:[...map.entries()].sort((a,b)=>b[0]-a[0]).map(([,v])=>v),captacaoTipos:[...tipos].sort()};
-  },[captAggMes]);
+  },[captMeses]);
 
-  const captacaoPorTipo=useMemo(()=>
+  const captacaoPorTipo=useMemo(()=>{
+    const all = captTreemap?.map((r:any)=>({name:r.tipo_captacao||"Outros",value:Math.abs(Number(r.valor)||0)}))??[];
+    if (selectedCaptTipo) return all.filter(d=>d.name===selectedCaptTipo);
+    return all;
+  },[captTreemap,selectedCaptTipo]);
+
+  const captacaoPorTipoAll=useMemo(()=>
     captTreemap?.map((r:any)=>({name:r.tipo_captacao||"Outros",value:Math.abs(Number(r.valor)||0)}))??[],[captTreemap]);
 
   const {aucPorMes,aucCasas}=useMemo(()=>{
-    if(!aucStackCasa?.length) return {aucPorMes:[],aucCasas:[] as string[]};
-    const {rows,series}=pivotDesc(aucStackCasa,"anomes","anomes_nome","casa","auc");
+    if(!aucMeses?.length) return {aucPorMes:[],aucCasas:[] as string[]};
+    const {rows,series}=pivotDesc(aucMeses,"anomes","anomes_nome","casa","auc");
     return {aucPorMes:rows.map(r=>({...r,_total:series.reduce((s,c)=>s+(r[c]||0),0)})),aucCasas:series};
-  },[aucStackCasa]);
+  },[aucMeses]);
 
   const aucCasaData=useMemo(()=>aucCasaM0?.map((r:any)=>({name:r.casa||"Outros",value:Number(r.auc)||0}))??[],[aucCasaM0]);
 
   const {faixaCliRows,faixaAucRows,faixaSeries}=useMemo(()=>{
-    if(!faixaCliMes?.length) return {faixaCliRows:[],faixaAucRows:[],faixaSeries:[] as string[]};
-    const sc=[...faixaCliMes].sort((a:any,b:any)=>(b.anomes||0)-(a.anomes||0));
+    if(!faixaCliMeses?.length) return {faixaCliRows:[],faixaAucRows:[],faixaSeries:[] as string[]};
+    const sc=[...faixaCliMeses].sort((a:any,b:any)=>(b.anomes||0)-(a.anomes||0));
     const {rows:cliRows,series}=pivotDesc(sc,"anomes","anomes_nome","faixa_pl","clientes");
     const ordemMap=new Map<string,number>();sc.forEach((r:any)=>{if(!ordemMap.has(r.faixa_pl))ordemMap.set(r.faixa_pl,r.ordem_pl||0);});
     const ss=[...series].sort((a,b)=>(ordemMap.get(a)||0)-(ordemMap.get(b)||0));
-    const sa=[...(faixaAucMes||[])].sort((a:any,b:any)=>(b.anomes||0)-(a.anomes||0));
+    const sa=[...faixaAucMeses].sort((a:any,b:any)=>(b.anomes||0)-(a.anomes||0));
     const {rows:aucRows}=pivotDesc(sa,"anomes","anomes_nome","faixa_pl","auc");
     return {faixaCliRows:cliRows,faixaAucRows:aucRows,faixaSeries:ss};
-  },[faixaCliMes,faixaAucMes]);
+  },[faixaCliMeses,faixaAucMeses]);
 
   const {receitaPorMes,receitaCats}=useMemo(()=>{
-    if(!receitaMesCat?.length) return {receitaPorMes:[],receitaCats:[] as string[]};
-    const {rows,series}=pivotDesc(receitaMesCat,"anomes","anomes_nome","categoria","valor");
+    if(!receitaMeses?.length) return {receitaPorMes:[],receitaCats:[] as string[]};
+    const {rows,series}=pivotDesc(receitaMeses,"anomes","anomes_nome","categoria","valor");
     return {receitaPorMes:rows.map(r=>({...r,_total:series.reduce((s,c)=>s+(r[c]||0),0)})),receitaCats:series};
-  },[receitaMesCat]);
+  },[receitaMeses]);
 
-  const receitaPorCategoria=useMemo(()=>
+  const receitaPorCategoria=useMemo(()=>{
+    const all = receitaTreemap?.map((r:any)=>({name:r.categoria||"Outros",value:Math.abs(Number(r.valor)||0)}))??[];
+    if (selectedReceitaCat) return all.filter(d=>d.name===selectedReceitaCat);
+    return all;
+  },[receitaTreemap,selectedReceitaCat]);
+
+  const receitaPorCategoriaAll=useMemo(()=>
     receitaTreemap?.map((r:any)=>({name:r.categoria||"Outros",value:Math.abs(Number(r.valor)||0)}))??[],[receitaTreemap]);
 
   const {tree:matrizTree,meses:matrizMeses}=useMemo(()=>{
@@ -295,7 +361,7 @@ export function QuantitativoTab({filters}:Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         <div className="lg:col-span-2">
-          <PbiCard title="Contas">
+          <PbiCard title="Contas" subtitle="Total - Últimos 12 meses">
             <ResponsiveContainer width="100%" height={230}>
               <BarChart data={contasComTotal} margin={CM}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
@@ -334,7 +400,7 @@ export function QuantitativoTab({filters}:Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         <div className="lg:col-span-2">
-          <PbiCard title="Captação por Mês">
+          <PbiCard title="Captação por Mês" subtitle="Total - Últimos 12 meses">
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={captacaoPorMes} margin={CM}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
@@ -353,14 +419,15 @@ export function QuantitativoTab({filters}:Props) {
           </PbiCard>
         </div>
         <PbiCard title="Tipo de Captação">
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={210}>
             <Treemap data={captacaoPorTipo} dataKey="value" aspectRatio={1} content={<TreemapContent/>}/>
           </ResponsiveContainer>
+          <TreemapLegend data={captacaoPorTipoAll} selected={selectedCaptTipo} onSelect={setSelectedCaptTipo}/>
         </PbiCard>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-        <PbiCard title="AuC por Mês">
+        <PbiCard title="AuC por Mês" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={aucPorMes} margin={CM}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
@@ -378,15 +445,14 @@ export function QuantitativoTab({filters}:Props) {
           </ResponsiveContainer>
         </PbiCard>
 
-        <PbiCard title="AuC por Casa (M0)">
+        <PbiCard title="AuC por Casa">
           <ResponsiveContainer width="100%" height={230}>
             <PieChart>
               <Pie data={aucCasaData} dataKey="value" nameKey="name" cx="50%" cy="45%"
-                outerRadius={80} innerRadius={45} labelLine={false}
+                outerRadius={80} innerRadius={45} labelLine={true}
                 label={({cx,cy,midAngle,outerRadius,name,percent})=>{
-                  if(percent<0.03) return null;
-                  const R=Math.PI/180,x=cx+(outerRadius+18)*Math.cos(-midAngle*R),y=cy+(outerRadius+18)*Math.sin(-midAngle*R);
-                  return <text x={x} y={y} textAnchor={x>cx?"start":"end"} fill="#374151" fontSize={9}>{`${name} (${(percent*100).toFixed(1)}%)`}</text>;
+                  const R=Math.PI/180,x=cx+(outerRadius+22)*Math.cos(-midAngle*R),y=cy+(outerRadius+22)*Math.sin(-midAngle*R);
+                  return <text x={x} y={y} textAnchor={x>cx?"start":"end"} fill="#374151" fontSize={8}>{`${name} (${(percent*100).toFixed(1)}%)`}</text>;
                 }}>
                 {aucCasaData.map((e,i)=><Cell key={i} fill={CASA_COLORS[e.name]||PBI_COLORS[i%PBI_COLORS.length]}/>)}
               </Pie>
@@ -398,32 +464,38 @@ export function QuantitativoTab({filters}:Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-        <PbiCard title="# de Cliente por Faixa de PL">
+        <PbiCard title="# de Cliente por Faixa de PL" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={faixaCliRows} stackOffset="expand" margin={CM}>
+            <AreaChart data={faixaCliRows} margin={CM}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
               <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-              <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v*100).toFixed(0)}%`}/>
+              <YAxis tick={{fontSize:9,fill:"#6B7280"}}/>
               <Tooltip content={<Percent100Tooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}}/>
-              {faixaSeries.map((faixa,i)=>(
-                <Bar key={faixa} dataKey={faixa} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]}/>
+              <Legend wrapperStyle={{fontSize:9}} verticalAlign="top"/>
+              {faixaSeries.map((faixa)=>(
+                <Area key={faixa} type="monotone" dataKey={faixa} stackId="1"
+                  fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
+                  stroke={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
+                  fillOpacity={0.7}/>
               ))}
-            </BarChart>
+            </AreaChart>
           </ResponsiveContainer>
         </PbiCard>
-        <PbiCard title="AuC por Faixa de PL">
+        <PbiCard title="AuC por Faixa de PL" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={faixaAucRows} stackOffset="expand" margin={CM}>
+            <AreaChart data={faixaAucRows} margin={CM}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
               <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-              <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v*100).toFixed(0)}%`}/>
+              <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
               <Tooltip content={<Percent100Tooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}}/>
-              {faixaSeries.map((faixa,i)=>(
-                <Bar key={faixa} dataKey={faixa} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]}/>
+              <Legend wrapperStyle={{fontSize:9}} verticalAlign="top"/>
+              {faixaSeries.map((faixa)=>(
+                <Area key={faixa} type="monotone" dataKey={faixa} stackId="1"
+                  fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
+                  stroke={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
+                  fillOpacity={0.7}/>
               ))}
-            </BarChart>
+            </AreaChart>
           </ResponsiveContainer>
         </PbiCard>
       </div>
@@ -468,7 +540,7 @@ export function QuantitativoTab({filters}:Props) {
       </PbiCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-        <PbiCard title="Receita Bruta Tailor (estimada)">
+        <PbiCard title="Receita Bruta Tailor (estimada)" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={receitaPorMes} margin={CM}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
@@ -477,7 +549,7 @@ export function QuantitativoTab({filters}:Props) {
               <Tooltip content={<CustomTooltip/>}/>
               <Legend wrapperStyle={{fontSize:9}}/>
               {receitaCats.map((cat,i)=>(
-                <Bar key={cat} dataKey={cat} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]}
+                <Bar key={cat} dataKey={cat} stackId="a" fill={RECEITA_COLORS[cat]||PBI_COLORS[i%PBI_COLORS.length]}
                   radius={i===receitaCats.length-1?[2,2,0,0]:undefined}>
                   {i===receitaCats.length-1&&<LabelList dataKey="_total" content={<BarTopLabel/>}/>}
                 </Bar>
@@ -486,9 +558,10 @@ export function QuantitativoTab({filters}:Props) {
           </ResponsiveContainer>
         </PbiCard>
         <PbiCard title="Soma de Comissão Bruta Tailor por Categoria">
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={210}>
             <Treemap data={receitaPorCategoria} dataKey="value" aspectRatio={1} content={<TreemapContent/>}/>
           </ResponsiveContainer>
+          <TreemapLegend data={receitaPorCategoriaAll} selected={selectedReceitaCat} onSelect={setSelectedReceitaCat} colorMap={RECEITA_COLORS}/>
         </PbiCard>
       </div>
 
