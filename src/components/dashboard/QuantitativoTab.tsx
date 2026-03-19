@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { MetricCard } from "./MetricCard";
 import {
@@ -19,7 +20,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Treemap, LabelList,
   AreaChart, Area,
 } from "recharts";
-import { ArrowUpRight, Users, TrendingUp, ChevronRight, ChevronDown } from "lucide-react";
+import { ArrowUpRight, Users, TrendingUp, ChevronRight, ChevronDown, X } from "lucide-react";
 
 const PBI_COLORS = [
   "#4472C4","#ED7D31","#A5A5A5","#FFC000","#5B9BD5",
@@ -232,21 +233,46 @@ function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];
 interface Props {filters:DashboardFilters;}
 
 export function QuantitativoTab({filters}:Props) {
-  const {data:kpis,isLoading:l1}=useContasKpis(filters);
-  const {data:contasAgg,isLoading:l2}=useContasAggMes(filters);
-  const {data:contasTipo,isLoading:l3}=useContasTotalPorTipo(filters);
-  const {data:captKpis,isLoading:l4}=useCaptacaoKpis(filters);
-  const {data:captAggMes,isLoading:l5}=useCaptacaoAggMes(filters);
-  const {data:captTreemap,isLoading:l6}=useCaptacaoTreemap(filters);
-  const {data:aucStackCasa,isLoading:l7}=useAucMesStackCasa(filters);
-  const {data:aucCasaM0,isLoading:l8}=useAucCasaM0(filters);
-  const {data:faixaCliMes,isLoading:l9}=useFaixaPlClientesMes(filters);
-  const {data:faixaAucMes,isLoading:l10}=useFaixaPlAucMes(filters);
-  const {data:receitaTotalData,isLoading:l11}=useReceitaTotal(filters);
-  const {data:receitaMesCat,isLoading:l12}=useReceitaMesCategoria(filters);
-  const {data:receitaTreemap,isLoading:l13}=useReceitaTreemapCategoria(filters);
-  const {data:receitaMatrizRows}=useReceitaMatrizRows(filters);
-  const {data:receitaMatrizCat,isLoading:l14}=useReceitaMatrizRowsCat(filters);
+  // ─── Cross-filter state ───
+  const [clickedMonth, setClickedMonth] = useState<number|null>(null);
+
+  // Reset clickedMonth when sidebar anoMes changes
+  useEffect(() => { setClickedMonth(null); }, [filters.anoMes]);
+
+  const effectiveFilters = useMemo<DashboardFilters>(() => {
+    if (!clickedMonth) return filters;
+    return { ...filters, anoMes: [String(clickedMonth)] };
+  }, [filters, clickedMonth]);
+
+  const monthLabel = useMemo(() => {
+    if (!clickedMonth) return "";
+    const d = new Date(Math.floor(clickedMonth / 100), (clickedMonth % 100) - 1);
+    return d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }).replace(".", "");
+  }, [clickedMonth]);
+
+  const handleChartClick = (data: any) => {
+    if (!data?.activePayload?.[0]) return;
+    const raw = data.activePayload[0].payload;
+    const am = Number(raw._anomes);
+    if (!am) return;
+    setClickedMonth(prev => prev === am ? null : am);
+  };
+
+  const {data:kpis,isLoading:l1}=useContasKpis(effectiveFilters);
+  const {data:contasAgg,isLoading:l2}=useContasAggMes(effectiveFilters);
+  const {data:contasTipo,isLoading:l3}=useContasTotalPorTipo(effectiveFilters);
+  const {data:captKpis,isLoading:l4}=useCaptacaoKpis(effectiveFilters);
+  const {data:captAggMes,isLoading:l5}=useCaptacaoAggMes(effectiveFilters);
+  const {data:captTreemap,isLoading:l6}=useCaptacaoTreemap(effectiveFilters);
+  const {data:aucStackCasa,isLoading:l7}=useAucMesStackCasa(effectiveFilters);
+  const {data:aucCasaM0,isLoading:l8}=useAucCasaM0(effectiveFilters);
+  const {data:faixaCliMes,isLoading:l9}=useFaixaPlClientesMes(effectiveFilters);
+  const {data:faixaAucMes,isLoading:l10}=useFaixaPlAucMes(effectiveFilters);
+  const {data:receitaTotalData,isLoading:l11}=useReceitaTotal(effectiveFilters);
+  const {data:receitaMesCat,isLoading:l12}=useReceitaMesCategoria(effectiveFilters);
+  const {data:receitaTreemap,isLoading:l13}=useReceitaTreemapCategoria(effectiveFilters);
+  const {data:receitaMatrizRows}=useReceitaMatrizRows(effectiveFilters);
+  const {data:receitaMatrizCat,isLoading:l14}=useReceitaMatrizRowsCat(effectiveFilters);
 
   const loading=[l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14].some(Boolean);
 
@@ -256,17 +282,17 @@ export function QuantitativoTab({filters}:Props) {
 
   // ─── 12-month filtered memos ───
 
-  const contasMeses=useMemo(()=>filterLast12(contasAgg,"anomes",filters.anoMes),[contasAgg,filters.anoMes]);
+  const contasMeses=useMemo(()=>filterLast12(contasAgg,"anomes",effectiveFilters.anoMes),[contasAgg,effectiveFilters.anoMes]);
 
-  const captMeses=useMemo(()=>filterLast12(captAggMes,"anomes",filters.anoMes),[captAggMes,filters.anoMes]);
+  const captMeses=useMemo(()=>filterLast12(captAggMes,"anomes",effectiveFilters.anoMes),[captAggMes,effectiveFilters.anoMes]);
 
-  const aucMeses=useMemo(()=>filterLast12(aucStackCasa,"anomes",filters.anoMes),[aucStackCasa,filters.anoMes]);
+  const aucMeses=useMemo(()=>filterLast12(aucStackCasa,"anomes",effectiveFilters.anoMes),[aucStackCasa,effectiveFilters.anoMes]);
 
-  const faixaCliMeses=useMemo(()=>filterLast12(faixaCliMes,"anomes",filters.anoMes),[faixaCliMes,filters.anoMes]);
+  const faixaCliMeses=useMemo(()=>filterLast12(faixaCliMes,"anomes",effectiveFilters.anoMes),[faixaCliMes,effectiveFilters.anoMes]);
 
-  const faixaAucMeses=useMemo(()=>filterLast12(faixaAucMes,"anomes",filters.anoMes),[faixaAucMes,filters.anoMes]);
+  const faixaAucMeses=useMemo(()=>filterLast12(faixaAucMes,"anomes",effectiveFilters.anoMes),[faixaAucMes,effectiveFilters.anoMes]);
 
-  const receitaMeses=useMemo(()=>filterLast12(receitaMesCat,"anomes",filters.anoMes),[receitaMesCat,filters.anoMes]);
+  const receitaMeses=useMemo(()=>filterLast12(receitaMesCat,"anomes",effectiveFilters.anoMes),[receitaMesCat,effectiveFilters.anoMes]);
 
   // ─── Derived chart data ───
 
@@ -274,13 +300,13 @@ export function QuantitativoTab({filters}:Props) {
     if(!contasMeses?.length) return [];
     const map=new Map<number,any>();
     contasMeses.forEach((r:any)=>{
-      if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,Ativação:0,Habilitação:0,Migração:0});
+      if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,_anomes:r.anomes,Ativação:0,Habilitação:0,Migração:0});
       const row=map.get(r.anomes)!,t=(r.tipo||"").toLowerCase();
       if(t.includes("ativa"))row.Ativação+=Number(r.qtd)||0;
       else if(t.includes("habilit"))row.Habilitação+=Number(r.qtd)||0;
       else if(t.includes("migra"))row.Migração+=Number(r.qtd)||0;
     });
-    return [...map.entries()].sort((a,b)=>b[0]-a[0]).map(([,v])=>({...v,_total:(v.Ativação||0)+(v.Habilitação||0)+(v.Migração||0)}));
+    return [...map.entries()].sort((a,b)=>b[0]-a[0]).map(([k,v])=>({...v,_anomes:k,_total:(v.Ativação||0)+(v.Habilitação||0)+(v.Migração||0)}));
   },[contasMeses]);
 
   const {totalPorTipo,casasContas}=useMemo(()=>{
@@ -298,10 +324,10 @@ export function QuantitativoTab({filters}:Props) {
     const tipos=new Set<string>();const map=new Map<number,any>();
     captMeses.forEach((r:any)=>{
       const tipo=r.tipo_captacao||"Outros";tipos.add(tipo);
-      if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,_total:0});
+      if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,_anomes:r.anomes,_total:0});
       const row=map.get(r.anomes)!;row[tipo]=(row[tipo]||0)+(Number(r.valor)||0);row._total=(row._total||0)+(Number(r.valor)||0);
     });
-    return {captacaoPorMes:[...map.entries()].sort((a,b)=>b[0]-a[0]).map(([,v])=>v),captacaoTipos:[...tipos].sort()};
+    return {captacaoPorMes:[...map.entries()].sort((a,b)=>b[0]-a[0]).map(([k,v])=>({...v,_anomes:k})),captacaoTipos:[...tipos].sort()};
   },[captMeses]);
 
   const captacaoPorTipo=useMemo(()=>{
@@ -377,6 +403,16 @@ export function QuantitativoTab({filters}:Props) {
   return (
     <div className="space-y-3">
 
+      {/* Cross-filter banner */}
+      {clickedMonth && (
+        <div className="flex items-center gap-2 rounded px-3 py-1.5 text-white text-xs" style={{ backgroundColor: "#1e3a5f" }}>
+          <span className="font-medium">Filtrando: {monthLabel}</span>
+          <button onClick={() => setClickedMonth(null)} className="ml-auto flex items-center gap-1 hover:opacity-80">
+            <X className="h-3 w-3" /> Limpar filtro
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-2">
         <MetricCard title="Migração"    value={kpis?.migracao    ?? 0} icon={Users}/>
         <MetricCard title="Habilitação" value={kpis?.habilitacao ?? 0} icon={Users}/>
@@ -387,15 +423,15 @@ export function QuantitativoTab({filters}:Props) {
         <div className="lg:col-span-2">
           <PbiCard title="Contas" subtitle="Total - Últimos 12 meses">
             <ResponsiveContainer width="100%" height={230}>
-              <BarChart data={contasComTotal} margin={CM}>
+              <BarChart data={contasComTotal} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
                 <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
                 <YAxis tick={{fontSize:9,fill:"#6B7280"}}/>
                 <Tooltip content={<CustomTooltip/>}/>
                 <Legend wrapperStyle={{fontSize:10}}/>
-                <Bar dataKey="Ativação"    stackId="a" fill={PBI_COLORS[0]}/>
-                <Bar dataKey="Habilitação" stackId="a" fill={PBI_COLORS[1]}/>
-                <Bar dataKey="Migração"    stackId="a" fill={PBI_COLORS[2]} radius={[2,2,0,0]}>
+                <Bar dataKey="Ativação"    stackId="a" fill={PBI_COLORS[0]} cursor="pointer"/>
+                <Bar dataKey="Habilitação" stackId="a" fill={PBI_COLORS[1]} cursor="pointer"/>
+                <Bar dataKey="Migração"    stackId="a" fill={PBI_COLORS[2]} radius={[2,2,0,0]} cursor="pointer">
                   <LabelList dataKey="_total" content={<BarTopLabel/>}/>
                 </Bar>
               </BarChart>
@@ -426,14 +462,14 @@ export function QuantitativoTab({filters}:Props) {
         <div className="lg:col-span-2">
           <PbiCard title="Captação por Mês" subtitle="Total - Últimos 12 meses">
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={captacaoPorMes} margin={CM}>
+              <BarChart data={captacaoPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
                 <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
                 <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
                 <Tooltip content={<CustomTooltip/>}/>
                 <Legend wrapperStyle={{fontSize:9}}/>
                 {captacaoTipos.map((tipo,i)=>(
-                  <Bar key={tipo} dataKey={tipo} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]}
+                  <Bar key={tipo} dataKey={tipo} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                     radius={i===captacaoTipos.length-1?[2,2,0,0]:undefined}>
                     {i===captacaoTipos.length-1&&<LabelList dataKey="_total" content={<BarTopLabel/>}/>}
                   </Bar>
@@ -453,14 +489,14 @@ export function QuantitativoTab({filters}:Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         <PbiCard title="AuC por Mês" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={aucPorMes} margin={CM}>
+            <BarChart data={aucPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
               <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
               <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
               <Tooltip content={<CustomTooltip/>}/>
               <Legend wrapperStyle={{fontSize:9}}/>
               {aucCasas.map((casa,i)=>(
-                <Bar key={casa} dataKey={casa} stackId="a" fill={CASA_COLORS[casa]||PBI_COLORS[i%PBI_COLORS.length]}
+                <Bar key={casa} dataKey={casa} stackId="a" fill={CASA_COLORS[casa]||PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                   radius={i===aucCasas.length-1?[2,2,0,0]:undefined}>
                   {i===aucCasas.length-1&&<LabelList dataKey="_total" content={<BarTopLabel/>}/>}
                 </Bar>
@@ -490,14 +526,14 @@ export function QuantitativoTab({filters}:Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         <PbiCard title="# de Cliente por Faixa de PL" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={230}>
-            <AreaChart data={faixaCliRows} margin={CM}>
+            <AreaChart data={faixaCliRows} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
               <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
               <YAxis tick={{fontSize:9,fill:"#6B7280"}}/>
               <Tooltip content={<Percent100Tooltip/>}/>
               <Legend wrapperStyle={{fontSize:9}} verticalAlign="top"/>
               {faixaSeries.map((faixa)=>(
-                <Area key={faixa} type="monotone" dataKey={faixa} stackId="1"
+                <Area key={faixa} type="monotone" dataKey={faixa} stackId="1" cursor="pointer"
                   fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
                   stroke={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
                   fillOpacity={0.7}/>
@@ -507,14 +543,14 @@ export function QuantitativoTab({filters}:Props) {
         </PbiCard>
         <PbiCard title="AuC por Faixa de PL" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={230}>
-            <AreaChart data={faixaAucRows} margin={CM}>
+            <AreaChart data={faixaAucRows} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
               <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
               <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
               <Tooltip content={<Percent100Tooltip/>}/>
               <Legend wrapperStyle={{fontSize:9}} verticalAlign="top"/>
               {faixaSeries.map((faixa)=>(
-                <Area key={faixa} type="monotone" dataKey={faixa} stackId="1"
+                <Area key={faixa} type="monotone" dataKey={faixa} stackId="1" cursor="pointer"
                   fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
                   stroke={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
                   fillOpacity={0.7}/>
@@ -585,14 +621,14 @@ export function QuantitativoTab({filters}:Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         <PbiCard title="Receita Bruta Tailor (estimada)" subtitle="Total - Últimos 12 meses">
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={receitaPorMes} margin={CM}>
+            <BarChart data={receitaPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
               <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
               <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(1)}M`}/>
               <Tooltip content={<CustomTooltip/>}/>
               <Legend wrapperStyle={{fontSize:9}}/>
               {receitaCats.map((cat,i)=>(
-                <Bar key={cat} dataKey={cat} stackId="a" fill={RECEITA_COLORS[cat]||PBI_COLORS[i%PBI_COLORS.length]}
+                <Bar key={cat} dataKey={cat} stackId="a" fill={RECEITA_COLORS[cat]||PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                   radius={i===receitaCats.length-1?[2,2,0,0]:undefined}>
                   {i===receitaCats.length-1&&<LabelList dataKey="_total" content={<BarTopLabel/>}/>}
                 </Bar>
