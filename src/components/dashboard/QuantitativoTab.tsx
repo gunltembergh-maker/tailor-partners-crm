@@ -245,7 +245,8 @@ export function QuantitativoTab({filters}:Props) {
   const {data:receitaTotalData,isLoading:l11}=useReceitaTotal(filters);
   const {data:receitaMesCat,isLoading:l12}=useReceitaMesCategoria(filters);
   const {data:receitaTreemap,isLoading:l13}=useReceitaTreemapCategoria(filters);
-  const {data:receitaMatrizRows,isLoading:l14}=useReceitaMatrizRows(filters);
+  const {data:receitaMatrizRows}=useReceitaMatrizRows(filters);
+  const {data:receitaMatrizCat,isLoading:l14}=useReceitaMatrizRowsCat(filters);
 
   const loading=[l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14].some(Boolean);
 
