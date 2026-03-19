@@ -194,10 +194,18 @@ export function QuantitativoTab({filters}:Props) {
 
   const loading=[l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14].some(Boolean);
 
+  const contasMeses=useMemo(()=>{
+    const todosAnomes=[...new Set(contasAgg?.map((d:any)=>d.anomes)??[])].sort((a:number,b:number)=>b-a);
+    const anomesFiltrados=filters.anoMes?.length>0
+      ? todosAnomes.filter((m:number)=>filters.anoMes.includes(String(m)))
+      : todosAnomes.slice(0,12);
+    return (contasAgg??[]).filter((d:any)=>anomesFiltrados.includes(d.anomes));
+  },[contasAgg,filters.anoMes]);
+
   const contasComTotal=useMemo(()=>{
-    if(!contasAgg?.length) return [];
+    if(!contasMeses?.length) return [];
     const map=new Map<number,any>();
-    contasAgg.forEach((r:any)=>{
+    contasMeses.forEach((r:any)=>{
       if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,Ativação:0,Habilitação:0,Migração:0});
       const row=map.get(r.anomes)!,t=(r.tipo||"").toLowerCase();
       if(t.includes("ativa"))row.Ativação+=Number(r.qtd)||0;
@@ -205,7 +213,7 @@ export function QuantitativoTab({filters}:Props) {
       else if(t.includes("migra"))row.Migração+=Number(r.qtd)||0;
     });
     return [...map.entries()].sort((a,b)=>b[0]-a[0]).map(([,v])=>({...v,_total:(v.Ativação||0)+(v.Habilitação||0)+(v.Migração||0)}));
-  },[contasAgg]);
+  },[contasMeses]);
 
   const {totalPorTipo,casasContas}=useMemo(()=>{
     if(!contasTipo?.length) return {totalPorTipo:[],casasContas:[] as string[]};
