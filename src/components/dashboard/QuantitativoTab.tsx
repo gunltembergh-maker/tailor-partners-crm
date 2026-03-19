@@ -462,14 +462,14 @@ export function QuantitativoTab({filters}:Props) {
         <div className="lg:col-span-2">
           <PbiCard title="Captação por Mês" subtitle="Total - Últimos 12 meses">
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={captacaoPorMes} margin={CM}>
+              <BarChart data={captacaoPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
                 <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
                 <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
                 <Tooltip content={<CustomTooltip/>}/>
                 <Legend wrapperStyle={{fontSize:9}}/>
                 {captacaoTipos.map((tipo,i)=>(
-                  <Bar key={tipo} dataKey={tipo} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]}
+                  <Bar key={tipo} dataKey={tipo} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                     radius={i===captacaoTipos.length-1?[2,2,0,0]:undefined}>
                     {i===captacaoTipos.length-1&&<LabelList dataKey="_total" content={<BarTopLabel/>}/>}
                   </Bar>
