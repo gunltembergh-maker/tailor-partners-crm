@@ -233,21 +233,46 @@ function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];
 interface Props {filters:DashboardFilters;}
 
 export function QuantitativoTab({filters}:Props) {
-  const {data:kpis,isLoading:l1}=useContasKpis(filters);
-  const {data:contasAgg,isLoading:l2}=useContasAggMes(filters);
-  const {data:contasTipo,isLoading:l3}=useContasTotalPorTipo(filters);
-  const {data:captKpis,isLoading:l4}=useCaptacaoKpis(filters);
-  const {data:captAggMes,isLoading:l5}=useCaptacaoAggMes(filters);
-  const {data:captTreemap,isLoading:l6}=useCaptacaoTreemap(filters);
-  const {data:aucStackCasa,isLoading:l7}=useAucMesStackCasa(filters);
-  const {data:aucCasaM0,isLoading:l8}=useAucCasaM0(filters);
-  const {data:faixaCliMes,isLoading:l9}=useFaixaPlClientesMes(filters);
-  const {data:faixaAucMes,isLoading:l10}=useFaixaPlAucMes(filters);
-  const {data:receitaTotalData,isLoading:l11}=useReceitaTotal(filters);
-  const {data:receitaMesCat,isLoading:l12}=useReceitaMesCategoria(filters);
-  const {data:receitaTreemap,isLoading:l13}=useReceitaTreemapCategoria(filters);
-  const {data:receitaMatrizRows}=useReceitaMatrizRows(filters);
-  const {data:receitaMatrizCat,isLoading:l14}=useReceitaMatrizRowsCat(filters);
+  // ─── Cross-filter state ───
+  const [clickedMonth, setClickedMonth] = useState<number|null>(null);
+
+  // Reset clickedMonth when sidebar anoMes changes
+  useEffect(() => { setClickedMonth(null); }, [filters.anoMes]);
+
+  const effectiveFilters = useMemo<DashboardFilters>(() => {
+    if (!clickedMonth) return filters;
+    return { ...filters, anoMes: [String(clickedMonth)] };
+  }, [filters, clickedMonth]);
+
+  const monthLabel = useMemo(() => {
+    if (!clickedMonth) return "";
+    const d = new Date(Math.floor(clickedMonth / 100), (clickedMonth % 100) - 1);
+    return d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }).replace(".", "");
+  }, [clickedMonth]);
+
+  const handleChartClick = (data: any) => {
+    if (!data?.activePayload?.[0]) return;
+    const raw = data.activePayload[0].payload;
+    const am = Number(raw._anomes);
+    if (!am) return;
+    setClickedMonth(prev => prev === am ? null : am);
+  };
+
+  const {data:kpis,isLoading:l1}=useContasKpis(effectiveFilters);
+  const {data:contasAgg,isLoading:l2}=useContasAggMes(effectiveFilters);
+  const {data:contasTipo,isLoading:l3}=useContasTotalPorTipo(effectiveFilters);
+  const {data:captKpis,isLoading:l4}=useCaptacaoKpis(effectiveFilters);
+  const {data:captAggMes,isLoading:l5}=useCaptacaoAggMes(effectiveFilters);
+  const {data:captTreemap,isLoading:l6}=useCaptacaoTreemap(effectiveFilters);
+  const {data:aucStackCasa,isLoading:l7}=useAucMesStackCasa(effectiveFilters);
+  const {data:aucCasaM0,isLoading:l8}=useAucCasaM0(effectiveFilters);
+  const {data:faixaCliMes,isLoading:l9}=useFaixaPlClientesMes(effectiveFilters);
+  const {data:faixaAucMes,isLoading:l10}=useFaixaPlAucMes(effectiveFilters);
+  const {data:receitaTotalData,isLoading:l11}=useReceitaTotal(effectiveFilters);
+  const {data:receitaMesCat,isLoading:l12}=useReceitaMesCategoria(effectiveFilters);
+  const {data:receitaTreemap,isLoading:l13}=useReceitaTreemapCategoria(effectiveFilters);
+  const {data:receitaMatrizRows}=useReceitaMatrizRows(effectiveFilters);
+  const {data:receitaMatrizCat,isLoading:l14}=useReceitaMatrizRowsCat(effectiveFilters);
 
   const loading=[l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14].some(Boolean);
 
@@ -257,17 +282,17 @@ export function QuantitativoTab({filters}:Props) {
 
   // ─── 12-month filtered memos ───
 
-  const contasMeses=useMemo(()=>filterLast12(contasAgg,"anomes",filters.anoMes),[contasAgg,filters.anoMes]);
+  const contasMeses=useMemo(()=>filterLast12(contasAgg,"anomes",effectiveFilters.anoMes),[contasAgg,effectiveFilters.anoMes]);
 
-  const captMeses=useMemo(()=>filterLast12(captAggMes,"anomes",filters.anoMes),[captAggMes,filters.anoMes]);
+  const captMeses=useMemo(()=>filterLast12(captAggMes,"anomes",effectiveFilters.anoMes),[captAggMes,effectiveFilters.anoMes]);
 
-  const aucMeses=useMemo(()=>filterLast12(aucStackCasa,"anomes",filters.anoMes),[aucStackCasa,filters.anoMes]);
+  const aucMeses=useMemo(()=>filterLast12(aucStackCasa,"anomes",effectiveFilters.anoMes),[aucStackCasa,effectiveFilters.anoMes]);
 
-  const faixaCliMeses=useMemo(()=>filterLast12(faixaCliMes,"anomes",filters.anoMes),[faixaCliMes,filters.anoMes]);
+  const faixaCliMeses=useMemo(()=>filterLast12(faixaCliMes,"anomes",effectiveFilters.anoMes),[faixaCliMes,effectiveFilters.anoMes]);
 
-  const faixaAucMeses=useMemo(()=>filterLast12(faixaAucMes,"anomes",filters.anoMes),[faixaAucMes,filters.anoMes]);
+  const faixaAucMeses=useMemo(()=>filterLast12(faixaAucMes,"anomes",effectiveFilters.anoMes),[faixaAucMes,effectiveFilters.anoMes]);
 
-  const receitaMeses=useMemo(()=>filterLast12(receitaMesCat,"anomes",filters.anoMes),[receitaMesCat,filters.anoMes]);
+  const receitaMeses=useMemo(()=>filterLast12(receitaMesCat,"anomes",effectiveFilters.anoMes),[receitaMesCat,effectiveFilters.anoMes]);
 
   // ─── Derived chart data ───
 
