@@ -1,83 +1,74 @@
 
 
-# Apply 12 visual/UX adjustments to QuantitativoTab
+# Fix Receita Bruta Tailor table showing only one category
 
-## Summary
-Apply all adjustments from the uploaded prompt to `src/components/dashboard/QuantitativoTab.tsx` without changing existing filter/banker logic.
+## Problem
+The `rpc_receita_matriz_rows` RPC returns ~16K grouped rows (categoria + subcategoria + produto + subproduto + anomes). When no month filter is active, Supabase's default 1000-row limit truncates results, returning only the first category alphabetically (Assessoria). With a single month filter, the result set is small enough to fit within the limit.
 
-## Changes (single file: `QuantitativoTab.tsx`)
+## Solution
+Two changes:
 
-### 1. Contas chart — subtitle
-Add `<p className="text-[9px] text-gray-400">Total - Últimos 12 meses</p>` inside the `PbiCard` header for "Contas". *(The 12-month filtering logic via `contasMeses` is already implemented.)*
+### 1. New RPC: `rpc_receita_matriz_rows_cat` (database migration)
+Create a lighter RPC that groups only by `categoria + anomes` (no subcategoria/produto/subproduto). This reduces ~16K rows to ~200, well within limits. The existing `rpc_receita_matriz_rows` stays for expanded drilldown.
 
-### 2. KPI Captação values — dot decimal
-Change `fmtKpi` to use `.` instead of `,` as decimal separator:
-```ts
-if (abs >= 1e6) return `R$ ${(v/1e6).toFixed(2)} Mi`;
+```sql
+CREATE OR REPLACE FUNCTION public.rpc_receita_matriz_rows_cat(
+  p_anomes integer[] DEFAULT NULL,
+  p_banker text[] DEFAULT NULL
+) RETURNS TABLE(categoria text, anomes integer, anomes_nome text, valor numeric)
+LANGUAGE sql STABLE AS $$
+  SELECT
+    categoria,
+    anomes,
+    to_char(to_date(anomes::text,'YYYYMM'),'Mon/YY') AS anomes_nome,
+    SUM(COALESCE(comissao_bruta_tailor, 0)) AS valor
+  FROM comissoes_consolidado_filtrado
+  WHERE (p_anomes IS NULL OR anomes = ANY(p_anomes))
+    AND (p_banker IS NULL OR banker = ANY(p_banker))
+  GROUP BY categoria, anomes
+  ORDER BY categoria, anomes DESC;
+$$;
 ```
 
-### 3. Captação por Mês — 12-month default filter
-Add `captMeses` useMemo (same pattern as `contasMeses`) and feed it into `captacaoPorMes` memo instead of raw `captAggMes`.
+### 2. Update `QuantitativoTab.tsx` — rebuild the matrix table logic
 
-### 4. Treemap "Tipo de Captação" — interactive legend
-Add a `selectedCaptTipo` state. Render a legend below the treemap with colored squares + chevron icons. When clicked, filter `captacaoPorTipo` to that category. Show "all" by default.
+**Replace `buildMatrizTree` usage** with a simpler approach for the table:
+- Use the new `rpc_receita_matriz_rows_cat` hook for the summary table
+- Build a flat category-level matrix: one row per categoria, one column per month, plus Total
+- Add a "Total" row at the top summing all categories per month
+- When a category row is expanded, fetch detailed rows from the existing `rpc_receita_matriz_rows` filtered to that category (or use cached data)
 
-### 5. AuC por Mês — 12-month default filter
-Add `aucMeses` useMemo (same pattern) and feed into `aucPorMes` memo instead of raw `aucStackCasa`.
+**Simpler alternative (no new RPC):** Add a new hook `useReceitaMatrizRowsCat` in `useDashboardData.ts` that calls a new RPC, OR refactor `buildMatrizTree` to work with the category-level RPC.
 
-### 6. AuC por Casa donut
-- Remove "(M0)" from title → `"AuC por Casa"`
-- Change label to show all slices with outer label lines using `labelLine={true}` and an external label renderer showing `name (XX.X%)` for all visible slices (remove `percent < 0.03` filter or lower threshold).
-
-### 7. # de Cliente por Faixa de PL → AreaChart
-- Import `AreaChart, Area` from recharts
-- Replace `BarChart stackOffset="expand"` with `AreaChart` showing real quantities
-- Use specific faixa colors: `Inativo:#1a1a2e, -300k:#e8a838, 300k-500k:#4a90d9, 500k-1M:#c0392b, 1-3M:#27ae60, 3-5M:#16a085, 5-10M:#7f8c8d, +10M:#8e44ad`
-- Add `LabelList` for values, legend on top
-- Add 12-month default filter via `faixaCliMeses` memo
-
-### 8. AuC por Faixa de PL → AreaChart
-- Same transformation as #7: `AreaChart` with real values (R$)
-- Tooltip shows faixa name + R$ value + % of total
-- Same faixa colors, legend on top
-- 12-month default filter via `faixaAucMeses` memo
-
-### 9. KPI Receita Bruta Tailor
-- Already uses `fmtKpi` — will be fixed by the dot-decimal change in #2
-
-### 10. Tabela Receita Bruta Tailor
-- Already shows all categories, all months, total row, expand/collapse — no changes needed per current code review (already matches requirements)
-
-### 11. Receita Bruta stacked bar chart — 12-month filter
-Add `receitaMeses` memo and feed into `receitaPorMes`. Add top-bar total labels (already present). Add specific category colors map.
-
-### 12. Treemap Comissão Bruta — interactive legend
-Same pattern as #4: add `selectedReceitaCat` state, render legend with chevrons for category filtering.
-
-## New imports
-Add `AreaChart, Area` to the recharts import line.
-
-## New constants
+### 3. Add hook in `useDashboardData.ts`
 ```ts
-const FAIXA_COLORS: Record<string,string> = {
-  "Inativo":"#1a1a2e","-300k":"#e8a838","300k-500k":"#4a90d9",
-  "500k-1M":"#c0392b","1-3M":"#27ae60","3-5M":"#16a085",
-  "5-10M":"#7f8c8d","+10M":"#8e44ad",
-};
-const RECEITA_COLORS: Record<string,string> = {
-  "Assessoria":"#1f4e79","Câmbio":"#2980b9","Consórcio":"#e67e22",
-  "Benefícios":"#8e44ad","Garantia":"#e74c3c","Seguro de Vida":"#c0392b",
-  "Offshore":"#16a085","Wealth Solutions":"#27ae60","Demais Ramos":"#95a5a6",
-  "Consultoria":"#f39c12","Corporate & Banking":"#7f8c8d",
-};
+export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
+  const params = buildRpcParamsPbi(filters);
+  return useQuery({
+    queryKey: ["receita-matriz-rows-cat", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_matriz_rows_cat", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
 ```
 
-## New state variables
-- `selectedCaptTipo: string | null` — for treemap #4 legend filter
-- `selectedReceitaCat: string | null` — for treemap #12 legend filter
+### 4. Rebuild matrix table in `QuantitativoTab.tsx`
+- Replace `buildMatrizTree(receitaMatrizRows)` with a new `buildMatrizFlat` that:
+  - Extracts unique months (sorted desc) as columns
+  - Groups rows by categoria, summing valor per month
+  - Computes a Total column per category
+  - Computes a Total row across all categories per month
+- Keep expand/collapse for drilldown using the existing `receitaMatrizRows` (detail RPC) filtered per category on expand
+- No changes to any other chart or section
 
-## Helper: 12-month filter (reusable pattern)
-Create a small helper `filterLast12` used by all the new memos (contas already done, add for captação, AuC, faixa cli, faixa auc, receita).
-
-No other files affected.
+## Files affected
+| File | Change |
+|---|---|
+| New migration SQL | Create `rpc_receita_matriz_rows_cat` |
+| `src/hooks/useDashboardData.ts` | Add `useReceitaMatrizRowsCat` hook |
+| `src/components/dashboard/QuantitativoTab.tsx` | Replace matrix table data source and rebuild logic |
 
