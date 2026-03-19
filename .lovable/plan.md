@@ -1,25 +1,30 @@
 
 
-# Replace QuantitativoTab.tsx with uploaded version
+# Add `contasMeses` filtering logic to QuantitativoTab
 
 ## Summary
-Replace `src/components/dashboard/QuantitativoTab.tsx` (597 lines) with the uploaded version (489 lines).
+Add a `contasMeses` useMemo to `QuantitativoTab.tsx` that filters `contasAgg` data by the selected `anoMes` filter values. When no months are selected, it defaults to the most recent 12 months. This filtered data will then be used by the "Contas" chart instead of raw `contasAgg`.
 
-Key differences:
-- Renamed formatting functions: `fmtBRL` → `fmtMi`, `fmtBRLFull` → `fmtFull`, new `fmtKpi` function
-- Added `Percent100Tooltip` component for stacked 100% bar charts
-- Added `BarTopLabel` component for label rendering on top of stacked bars
-- Added `pivotDesc` helper for descending-sorted pivot transformation
-- Added `MatrizNode` interface and `buildMatrizTree` / `MatrizRow` for hierarchical revenue matrix table
-- New data hooks used: `useFaixaPlClientesMes`, `useFaixaPlAucMes`, `useReceitaTotal`, `useReceitaMesCategoria`, `useReceitaTreemapCategoria`, `useReceitaMatrizRows`
-- New chart sections: Faixa PL clients/AuC, Revenue matrix table, Revenue by month/category charts
-- Removed unused imports (`formatBRL` from `@/lib/format`)
+## Mapping from snippet to existing code
+- `contasData` → `contasAgg` (from `useContasAggMes`)
+- `selectedMonths` → `filters.anoMes` (from the `DashboardFilters` prop)
 
-## Change
+## Changes
 
-| File | Action |
-|---|---|
-| `src/components/dashboard/QuantitativoTab.tsx` | Overwrite with uploaded 489-line file |
+**`src/components/dashboard/QuantitativoTab.tsx`**
+
+1. Add `contasMeses` memo after line 208 (after `contasComTotal`):
+```typescript
+const contasMeses = useMemo(() => {
+  const todosAnomes = [...new Set(contasAgg?.map((d: any) => d.anomes) ?? [])].sort((a, b) => b - a);
+  const anomesFiltrados = filters.anoMes?.length > 0
+    ? todosAnomes.filter(m => filters.anoMes.includes(String(m)))
+    : todosAnomes.slice(0, 12);
+  return (contasAgg ?? []).filter((d: any) => anomesFiltrados.includes(d.anomes));
+}, [contasAgg, filters.anoMes]);
+```
+
+2. Update `contasComTotal` memo to use `contasMeses` instead of `contasAgg` as its data source.
 
 No other files affected.
 
