@@ -541,10 +541,10 @@ export function QuantitativoTab({filters}:Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {matrizTree.length>0&&(()=>{
-                const gt=matrizTree.reduce((s,n)=>s+n.total,0);
+              {matrizRows.length>0&&(()=>{
+                const gt=matrizRows.reduce((s,n)=>s+n.total,0);
                 const mt:Record<string,number>={};
-                matrizTree.forEach(n=>matrizMeses.forEach(m=>{mt[m]=(mt[m]||0)+(n.values[m]||0);}));
+                matrizRows.forEach(n=>matrizMeses.forEach(m=>{mt[m]=(mt[m]||0)+(n.values[m]||0);}));
                 return (
                   <TableRow style={{backgroundColor:"#E8EDF3"}}>
                     <TableCell className="text-[10px] py-1 sticky left-0 font-bold" style={{backgroundColor:"#E8EDF3"}}>Total</TableCell>
@@ -555,9 +555,28 @@ export function QuantitativoTab({filters}:Props) {
                   </TableRow>
                 );
               })()}
-              {matrizTree.map(node=>(
-                <MatrizRow key={node.key} node={node} meses={matrizMeses} expanded={matrizExpanded} toggle={toggleMatriz}/>
-              ))}
+              {matrizRows.map(row=>{
+                const isOpen=matrizExpanded.has(row.categoria);
+                const children=detailChildren.get(row.categoria)??[];
+                return (
+                  <React.Fragment key={row.categoria}>
+                    <TableRow style={{backgroundColor:"#EEF2FF"}}>
+                      <TableCell className="text-[10px] py-0.5 sticky left-0 whitespace-nowrap font-bold" style={{paddingLeft:8,backgroundColor:"#EEF2FF"}}>
+                        <button onClick={()=>toggleMatriz(row.categoria)} className="inline-flex items-center gap-0.5 hover:text-primary">
+                          {isOpen?<ChevronDown className="h-3 w-3"/>:<ChevronRight className="h-3 w-3"/>}{row.categoria}
+                        </button>
+                      </TableCell>
+                      {matrizMeses.map(m=>(
+                        <TableCell key={m} className="text-[10px] py-0.5 text-right">{row.values[m]?fmtFull(row.values[m]):"—"}</TableCell>
+                      ))}
+                      <TableCell className="text-[10px] py-0.5 text-right font-bold">{fmtFull(row.total)}</TableCell>
+                    </TableRow>
+                    {isOpen&&children.map(child=>(
+                      <MatrizRow key={child.key} node={child} meses={matrizMeses} expanded={matrizExpanded} toggle={toggleMatriz}/>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
