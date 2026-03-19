@@ -2048,6 +2048,7 @@ export type Database = {
       }
     }
     Functions: {
+      fix_encoding: { Args: { v: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2288,38 +2289,6 @@ export type Database = {
           ordem_pl: number
         }[]
       }
-      rpc_receita_kpi: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          receita_total: number
-        }[]
-      }
-      rpc_receita_matriz: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          anomes: number
-          anomes_nome: string
-          auc: number
-          casa: string
-          documento: string
-          faixa_pl: string
-          receita: number
-        }[]
-      }
       rpc_receita_matriz_rows: {
         Args: { p_anomes?: number[]; p_banker?: string[] }
         Returns: {
@@ -2332,60 +2301,28 @@ export type Database = {
           valor: number
         }[]
       }
-      rpc_receita_mes_categoria:
-        | {
-            Args: { p_anomes?: number[]; p_banker?: string[] }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              valor: number
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              valor: number
-            }[]
-          }
+      rpc_receita_mes_categoria: {
+        Args: { p_anomes?: number[]; p_banker?: string[] }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          categoria: string
+          valor: number
+        }[]
+      }
       rpc_receita_total: {
         Args: { p_anomes?: number[]; p_banker?: string[] }
         Returns: {
           receita: number
         }[]
       }
-      rpc_receita_treemap_categoria:
-        | {
-            Args: { p_anomes?: number[]; p_banker?: string[] }
-            Returns: {
-              categoria: string
-              valor: number
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              categoria: string
-              valor: number
-            }[]
-          }
+      rpc_receita_treemap_categoria: {
+        Args: { p_anomes?: number[]; p_banker?: string[] }
+        Returns: {
+          categoria: string
+          valor: number
+        }[]
+      }
     }
     Enums: {
       app_role: "ASSESSOR" | "BANKER" | "LIDER" | "FINDER" | "ADMIN"
