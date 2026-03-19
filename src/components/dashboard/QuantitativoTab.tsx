@@ -300,13 +300,13 @@ export function QuantitativoTab({filters}:Props) {
     if(!contasMeses?.length) return [];
     const map=new Map<number,any>();
     contasMeses.forEach((r:any)=>{
-      if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,Ativação:0,Habilitação:0,Migração:0});
+      if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,_anomes:r.anomes,Ativação:0,Habilitação:0,Migração:0});
       const row=map.get(r.anomes)!,t=(r.tipo||"").toLowerCase();
       if(t.includes("ativa"))row.Ativação+=Number(r.qtd)||0;
       else if(t.includes("habilit"))row.Habilitação+=Number(r.qtd)||0;
       else if(t.includes("migra"))row.Migração+=Number(r.qtd)||0;
     });
-    return [...map.entries()].sort((a,b)=>b[0]-a[0]).map(([,v])=>({...v,_total:(v.Ativação||0)+(v.Habilitação||0)+(v.Migração||0)}));
+    return [...map.entries()].sort((a,b)=>b[0]-a[0]).map(([k,v])=>({...v,_anomes:k,_total:(v.Ativação||0)+(v.Habilitação||0)+(v.Migração||0)}));
   },[contasMeses]);
 
   const {totalPorTipo,casasContas}=useMemo(()=>{
