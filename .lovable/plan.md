@@ -1,57 +1,25 @@
 
-# Embed Power BI no Dash Comercial
 
-## Resumo
-Substituir o placeholder atual por um iframe do Power BI com controle de acesso, loading state, timeout e modo tela cheia interno.
+# Replace QuantitativoTab.tsx with uploaded version
 
-## Logica de acesso
+## Summary
+Replace `src/components/dashboard/QuantitativoTab.tsx` (597 lines) with the uploaded version (489 lines).
 
-1. A rota ja esta protegida por `ProtectedRoute` (usuario precisa estar logado).
-2. Apos autenticado, validar se o email do usuario termina com `@tailorpartners.com.br` (dominio usado no projeto conforme contexto de restricao de dominio).
-3. Se o dominio nao bater, exibir mensagem de acesso negado com orientacoes.
+Key differences:
+- Renamed formatting functions: `fmtBRL` → `fmtMi`, `fmtBRLFull` → `fmtFull`, new `fmtKpi` function
+- Added `Percent100Tooltip` component for stacked 100% bar charts
+- Added `BarTopLabel` component for label rendering on top of stacked bars
+- Added `pivotDesc` helper for descending-sorted pivot transformation
+- Added `MatrizNode` interface and `buildMatrizTree` / `MatrizRow` for hierarchical revenue matrix table
+- New data hooks used: `useFaixaPlClientesMes`, `useFaixaPlAucMes`, `useReceitaTotal`, `useReceitaMesCategoria`, `useReceitaTreemapCategoria`, `useReceitaMatrizRows`
+- New chart sections: Faixa PL clients/AuC, Revenue matrix table, Revenue by month/category charts
+- Removed unused imports (`formatBRL` from `@/lib/format`)
 
-## Funcionalidades da pagina
+## Change
 
-### Estados
-- **Acesso negado**: card com icone de alerta e mensagem orientando o usuario a usar email corporativo.
-- **Carregando**: skeleton/loader cobrindo a area do iframe ate o evento `onLoad` disparar.
-- **Timeout (15s)**: se o iframe nao carregar em 15 segundos, exibir aviso com passos para resolver (trocar conta Microsoft, etc).
-- **Carregado**: iframe visivel, loader oculto.
+| File | Action |
+|---|---|
+| `src/components/dashboard/QuantitativoTab.tsx` | Overwrite with uploaded 489-line file |
 
-### Iframe
-- `src`: URL do Secure Embed fornecida
-- `className="w-full"` com altura `calc(100vh - 180px)` para ocupar a area util
-- `allowFullScreen`, `frameBorder="0"`
+No other files affected.
 
-### Tela cheia interna
-- Botao "Tela cheia" (icone `Maximize`) ao lado do titulo
-- Ao clicar, abrir overlay `fixed inset-0 z-50 bg-background` com o mesmo iframe ocupando 100vh/100vw
-- Botao "Fechar" (icone `X`) no canto superior direito do overlay
-- Estado controlado por `useState<boolean>`
-
-## Detalhes tecnicos
-
-### Arquivo modificado: `src/pages/DashComercial.tsx`
-
-- Importar `useAuth` para obter `user` e verificar `user.email`
-- Importar `useState`, `useEffect`, `useCallback` do React
-- Importar icones: `Maximize`, `X`, `AlertTriangle`, `Loader2`
-- Importar componentes UI: `Card`, `CardContent`, `Button`, `Alert`, `Skeleton`
-
-```text
-Fluxo:
-1. const { user } = useAuth()
-2. Verificar user.email?.endsWith("@tailorpartners.com.br")
-3. Se nao: renderizar card de acesso negado
-4. Se sim:
-   a. Estado loading = true, timeout = false, fullscreen = false
-   b. setTimeout de 15s para setar timeout = true
-   c. iframe onLoad -> loading = false, limpar timeout
-   d. Renderizar header + iframe + botao tela cheia
-   e. Se fullscreen: overlay fixed com iframe + botao fechar
-```
-
-### Nenhum outro arquivo sera alterado
-- A rota ja existe e esta protegida
-- O item de menu ja existe
-- Nenhum secret ou token necessario (Secure Embed)
