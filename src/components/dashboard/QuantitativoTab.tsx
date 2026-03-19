@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MetricCard } from "./MetricCard";
 import {
@@ -12,6 +12,7 @@ import {
   useFaixaPlClientesMes, useFaixaPlAucMes,
   useReceitaTotal, useReceitaMesCategoria,
   useReceitaTreemapCategoria, useReceitaMatrizRows,
+  useReceitaMatrizRowsCat,
 } from "@/hooks/useDashboardData";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -163,29 +164,41 @@ function pivotDesc<T extends Record<string,any>>(
 
 interface MatrizNode {key:string;label:string;depth:number;values:Record<string,number>;total:number;children:MatrizNode[];}
 
-function buildMatrizTree(data:any[]):{tree:MatrizNode[];meses:string[]} {
-  const sorted=[...data].sort((a,b)=>(b.anomes||0)-(a.anomes||0));
+/** Build category-level matrix from the lightweight cat RPC */
+function buildMatrizFlat(catData:any[]):{rows:{categoria:string;values:Record<string,number>;total:number}[];meses:string[]} {
   const mesesMap=new Map<number,string>();
-  sorted.forEach(r=>{if(!mesesMap.has(r.anomes))mesesMap.set(r.anomes,r.anomes_nome||String(r.anomes));});
+  catData.forEach(r=>{if(!mesesMap.has(r.anomes))mesesMap.set(r.anomes,r.anomes_nome||String(r.anomes));});
   const meses=[...mesesMap.entries()].sort((a,b)=>b[0]-a[0]).map(([,n])=>n);
-  const catMap=new Map<string,any>();
-  sorted.forEach(r=>{
-    const cat=r.categoria||"N/D",sub=r.subcategoria||"",prod=r.produto||"";
-    const mes=r.anomes_nome||String(r.anomes),val=Number(r.valor)||0;
-    if(!catMap.has(cat))catMap.set(cat,{total:0,values:{},children:new Map()});
+  const catMap=new Map<string,{values:Record<string,number>;total:number}>();
+  catData.forEach(r=>{
+    const cat=r.categoria||"N/D",mes=r.anomes_nome||String(r.anomes),val=Number(r.valor)||0;
+    if(!catMap.has(cat))catMap.set(cat,{values:{},total:0});
     const c=catMap.get(cat)!;c.total+=val;c.values[mes]=(c.values[mes]||0)+val;
-    const sk=`${cat}|${sub}`;
-    if(!c.children.has(sk))c.children.set(sk,{label:sub||"(sem sub)",total:0,values:{},children:new Map()});
-    const s=c.children.get(sk)!;s.total+=val;s.values[mes]=(s.values[mes]||0)+val;
-    const pk=`${sk}|${prod}`;
-    if(!s.children.has(pk))s.children.set(pk,{label:prod||"(sem produto)",total:0,values:{},children:new Map()});
+  });
+  const rows=[...catMap.entries()].map(([cat,v])=>({categoria:cat,...v})).sort((a,b)=>b.total-a.total);
+  return {rows,meses};
+}
+
+/** Build detail tree for a single expanded category from the detail RPC */
+function buildDetailTree(data:any[],categoria:string,meses:string[]):MatrizNode[] {
+  const catRows=data.filter(r=>(r.categoria||"N/D")===categoria);
+  const subMap=new Map<string,any>();
+  catRows.forEach(r=>{
+    const sub=r.subcategoria||"",prod=r.produto||"";
+    const mes=r.anomes_nome||String(r.anomes),val=Number(r.valor)||0;
+    const sk=sub;
+    if(!subMap.has(sk))subMap.set(sk,{label:sub||"(sem sub)",total:0,values:{},children:new Map()});
+    const s=subMap.get(sk)!;s.total+=val;s.values[mes]=(s.values[mes]||0)+val;
+    const pk=`${sub}|${prod}`;
+    if(!s.children.has(pk))s.children.set(pk,{label:prod||"(sem produto)",total:0,values:{}});
     const p=s.children.get(pk)!;p.total+=val;p.values[mes]=(p.values[mes]||0)+val;
   });
-  const toNodes=(map:Map<string,any>,depth:number,prefix=""):MatrizNode[]=>[...map.entries()].map(([k,v])=>({
-    key:prefix+k,label:depth===0?k.split("|").pop()!:v.label,depth,values:v.values,total:v.total,
-    children:v.children?toNodes(v.children,depth+1,k+"|"):[],
+  return [...subMap.entries()].map(([k,v])=>({
+    key:`${categoria}|${k}`,label:v.label,depth:1,values:v.values,total:v.total,
+    children:[...v.children.entries()].map(([pk,pv])=>({
+      key:`${categoria}|${pk}`,label:pv.label,depth:2,values:pv.values,total:pv.total,children:[],
+    })).sort((a,b)=>b.total-a.total),
   })).sort((a,b)=>b.total-a.total);
-  return {tree:toNodes(catMap,0),meses};
 }
 
 function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];expanded:Set<string>;toggle:(k:string)=>void}) {
@@ -232,7 +245,8 @@ export function QuantitativoTab({filters}:Props) {
   const {data:receitaTotalData,isLoading:l11}=useReceitaTotal(filters);
   const {data:receitaMesCat,isLoading:l12}=useReceitaMesCategoria(filters);
   const {data:receitaTreemap,isLoading:l13}=useReceitaTreemapCategoria(filters);
-  const {data:receitaMatrizRows,isLoading:l14}=useReceitaMatrizRows(filters);
+  const {data:receitaMatrizRows}=useReceitaMatrizRows(filters);
+  const {data:receitaMatrizCat,isLoading:l14}=useReceitaMatrizRowsCat(filters);
 
   const loading=[l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14].some(Boolean);
 
@@ -333,13 +347,23 @@ export function QuantitativoTab({filters}:Props) {
   const receitaPorCategoriaAll=useMemo(()=>
     receitaTreemap?.map((r:any)=>({name:r.categoria||"Outros",value:Math.abs(Number(r.valor)||0)}))??[],[receitaTreemap]);
 
-  const {tree:matrizTree,meses:matrizMeses}=useMemo(()=>{
-    if(!receitaMatrizRows?.length) return {tree:[] as MatrizNode[],meses:[] as string[]};
-    return buildMatrizTree(receitaMatrizRows);
-  },[receitaMatrizRows]);
+  const {rows:matrizRows,meses:matrizMeses}=useMemo(()=>{
+    if(!receitaMatrizCat?.length) return {rows:[] as {categoria:string;values:Record<string,number>;total:number}[],meses:[] as string[]};
+    return buildMatrizFlat(receitaMatrizCat);
+  },[receitaMatrizCat]);
 
   const [matrizExpanded,setMatrizExpanded]=useState<Set<string>>(new Set());
   const toggleMatriz=(key:string)=>setMatrizExpanded(prev=>{const n=new Set(prev);n.has(key)?n.delete(key):n.add(key);return n;});
+
+  /** Build detail children lazily when a category is expanded */
+  const detailChildren=useMemo(()=>{
+    if(!receitaMatrizRows?.length) return new Map<string,MatrizNode[]>();
+    const map=new Map<string,MatrizNode[]>();
+    matrizExpanded.forEach(cat=>{
+      map.set(cat,buildDetailTree(receitaMatrizRows,cat,matrizMeses));
+    });
+    return map;
+  },[receitaMatrizRows,matrizExpanded,matrizMeses]);
 
   if(loading) return (
     <div className="space-y-3">
@@ -517,10 +541,10 @@ export function QuantitativoTab({filters}:Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {matrizTree.length>0&&(()=>{
-                const gt=matrizTree.reduce((s,n)=>s+n.total,0);
+              {matrizRows.length>0&&(()=>{
+                const gt=matrizRows.reduce((s,n)=>s+n.total,0);
                 const mt:Record<string,number>={};
-                matrizTree.forEach(n=>matrizMeses.forEach(m=>{mt[m]=(mt[m]||0)+(n.values[m]||0);}));
+                matrizRows.forEach(n=>matrizMeses.forEach(m=>{mt[m]=(mt[m]||0)+(n.values[m]||0);}));
                 return (
                   <TableRow style={{backgroundColor:"#E8EDF3"}}>
                     <TableCell className="text-[10px] py-1 sticky left-0 font-bold" style={{backgroundColor:"#E8EDF3"}}>Total</TableCell>
@@ -531,9 +555,28 @@ export function QuantitativoTab({filters}:Props) {
                   </TableRow>
                 );
               })()}
-              {matrizTree.map(node=>(
-                <MatrizRow key={node.key} node={node} meses={matrizMeses} expanded={matrizExpanded} toggle={toggleMatriz}/>
-              ))}
+              {matrizRows.map(row=>{
+                const isOpen=matrizExpanded.has(row.categoria);
+                const children=detailChildren.get(row.categoria)??[];
+                return (
+                  <React.Fragment key={row.categoria}>
+                    <TableRow style={{backgroundColor:"#EEF2FF"}}>
+                      <TableCell className="text-[10px] py-0.5 sticky left-0 whitespace-nowrap font-bold" style={{paddingLeft:8,backgroundColor:"#EEF2FF"}}>
+                        <button onClick={()=>toggleMatriz(row.categoria)} className="inline-flex items-center gap-0.5 hover:text-primary">
+                          {isOpen?<ChevronDown className="h-3 w-3"/>:<ChevronRight className="h-3 w-3"/>}{row.categoria}
+                        </button>
+                      </TableCell>
+                      {matrizMeses.map(m=>(
+                        <TableCell key={m} className="text-[10px] py-0.5 text-right">{row.values[m]?fmtFull(row.values[m]):"—"}</TableCell>
+                      ))}
+                      <TableCell className="text-[10px] py-0.5 text-right font-bold">{fmtFull(row.total)}</TableCell>
+                    </TableRow>
+                    {isOpen&&children.map(child=>(
+                      <MatrizRow key={child.key} node={child} meses={matrizMeses} expanded={matrizExpanded} toggle={toggleMatriz}/>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

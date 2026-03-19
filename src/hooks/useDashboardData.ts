@@ -280,6 +280,19 @@ export function useReceitaMatrizRows(filters: DashboardFilters) {
   });
 }
 
+export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
+  const params = buildRpcParamsPbi(filters);
+  return useQuery({
+    queryKey: ["receita-matriz-rows-cat", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_matriz_rows_cat", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
 // ─── Existing view-based hooks (kept for other sections) ───
 
 function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) {
