@@ -2301,6 +2301,15 @@ export type Database = {
           valor: number
         }[]
       }
+      rpc_receita_matriz_rows_cat: {
+        Args: { p_anomes?: number[]; p_banker?: string[] }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          categoria: string
+          valor: number
+        }[]
+      }
       rpc_receita_mes_categoria: {
         Args: { p_anomes?: number[]; p_banker?: string[] }
         Returns: {
