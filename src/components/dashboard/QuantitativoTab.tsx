@@ -381,21 +381,35 @@ export function QuantitativoTab({filters}:Props) {
   const [matrizExpanded,setMatrizExpanded]=useState<Set<string>>(new Set());
   const toggleMatriz=(key:string)=>setMatrizExpanded(prev=>{const n=new Set(prev);n.has(key)?n.delete(key):n.add(key);return n;});
 
-  // Drill-down state for receita table
-  const [drillCategory, setDrillCategory] = useState<string|null>(null);
-  useEffect(() => { setDrillCategory(null); }, [clickedMonth, filters.anoMes]);
+  // 4-level drill-down state: [] = categories, [cat] = subcats, [cat,sub] = products, [cat,sub,prod] = clients
+  const [drillPath, setDrillPath] = useState<string[]>([]);
+  useEffect(() => { setDrillPath([]); }, [clickedMonth, filters.anoMes, filters.banker]);
 
-  /** Build detail children lazily when a category is expanded OR drilled */
-  const detailChildren=useMemo(()=>{
-    if(!receitaMatrizRows?.length) return new Map<string,MatrizNode[]>();
-    const map=new Map<string,MatrizNode[]>();
-    const keys = new Set(matrizExpanded);
-    if (drillCategory) keys.add(drillCategory);
-    keys.forEach(cat=>{
-      map.set(cat,buildDetailTree(receitaMatrizRows,cat,matrizMeses));
+  const drillLevel = drillPath.length; // 0=cat, 1=subcat, 2=prod, 3=client
+  const LEVEL_LABELS = ["Categoria", "Subcategoria", "Produto", "Cliente"];
+
+  const { data: drilldownData, isLoading: drillLoading } = useReceitaDrilldown(effectiveFilters, drillPath);
+
+  // Pivot drilldown data into rows + meses (same format as buildMatrizFlat)
+  const { drillRows, drillMeses } = useMemo(() => {
+    if (!drilldownData?.length) return { drillRows: [] as { categoria: string; values: Record<string, number>; total: number }[], drillMeses: [] as string[] };
+    const mesesMap = new Map<number, string>();
+    drilldownData.forEach((r: any) => { if (!mesesMap.has(r.anomes)) mesesMap.set(r.anomes, r.anomes_nome || String(r.anomes)); });
+    const meses = [...mesesMap.entries()].sort((a, b) => b[0] - a[0]).map(([, n]) => n);
+    const catMap = new Map<string, { values: Record<string, number>; total: number }>();
+    drilldownData.forEach((r: any) => {
+      const cat = r.label || "N/D", mes = r.anomes_nome || String(r.anomes), val = Number(r.valor) || 0;
+      if (!catMap.has(cat)) catMap.set(cat, { values: {}, total: 0 });
+      const c = catMap.get(cat)!; c.total += val; c.values[mes] = (c.values[mes] || 0) + val;
     });
-    return map;
-  },[receitaMatrizRows,matrizExpanded,matrizMeses,drillCategory]);
+    const rows = [...catMap.entries()].map(([cat, v]) => ({ categoria: cat, ...v })).sort((a, b) => b.total - a.total);
+    return { drillRows: rows, drillMeses: meses };
+  }, [drilldownData]);
+
+  // Use drill data when path > 0, otherwise existing category data
+  const activeRows = drillLevel > 0 ? drillRows : matrizRows;
+  const activeMeses = drillLevel > 0 ? drillMeses : matrizMeses;
+  const isLastLevel = drillLevel >= 3;
 
   if(loading) return (
     <div className="space-y-3">
