@@ -381,15 +381,21 @@ export function QuantitativoTab({filters}:Props) {
   const [matrizExpanded,setMatrizExpanded]=useState<Set<string>>(new Set());
   const toggleMatriz=(key:string)=>setMatrizExpanded(prev=>{const n=new Set(prev);n.has(key)?n.delete(key):n.add(key);return n;});
 
-  /** Build detail children lazily when a category is expanded */
+  // Drill-down state for receita table
+  const [drillCategory, setDrillCategory] = useState<string|null>(null);
+  useEffect(() => { setDrillCategory(null); }, [clickedMonth, filters.anoMes]);
+
+  /** Build detail children lazily when a category is expanded OR drilled */
   const detailChildren=useMemo(()=>{
     if(!receitaMatrizRows?.length) return new Map<string,MatrizNode[]>();
     const map=new Map<string,MatrizNode[]>();
-    matrizExpanded.forEach(cat=>{
+    const keys = new Set(matrizExpanded);
+    if (drillCategory) keys.add(drillCategory);
+    keys.forEach(cat=>{
       map.set(cat,buildDetailTree(receitaMatrizRows,cat,matrizMeses));
     });
     return map;
-  },[receitaMatrizRows,matrizExpanded,matrizMeses]);
+  },[receitaMatrizRows,matrizExpanded,matrizMeses,drillCategory]);
 
   if(loading) return (
     <div className="space-y-3">
