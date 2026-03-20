@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Info } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import TailorLoader from "@/components/TailorLoader";
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import { useDiversificadorData, useReceitaDetalhadaData, useBaseCrmData, usePositivadorData, useReceitaMensalData } from "@/hooks/useDashboardData";
 import {
@@ -196,11 +196,7 @@ export function QualitativoTab({ filters }: Props) {
   }, [receitaMensal, positivador]);
 
   if (loading) {
-    return (
-      <div className="space-y-3">
-        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 bg-white rounded-lg" />)}
-      </div>
-    );
+    return <TailorLoader overlay={false} />;
   }
 
   return (

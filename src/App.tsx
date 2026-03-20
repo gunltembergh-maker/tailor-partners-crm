@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import TailorLoader from "@/components/TailorLoader";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,15 +31,7 @@ const queryClient = new QueryClient();
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-display font-bold text-primary">Tailor</h1>
-          <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase mt-1">Partners</p>
-          <p className="text-sm text-muted-foreground mt-4">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <TailorLoader />;
   }
   if (!session) return <Navigate to="/auth" replace />;
   return <>{children}</>;

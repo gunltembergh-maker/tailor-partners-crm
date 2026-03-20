@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import TailorLoader from "@/components/TailorLoader";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -219,6 +220,14 @@ export default function Prioridades() {
           </Button>
         )}
       </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <TailorLoader overlay={false} />
+      </AppLayout>
     );
   }
 

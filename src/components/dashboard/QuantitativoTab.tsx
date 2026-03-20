@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import TailorLoader from "@/components/TailorLoader";
 import { MetricCard } from "./MetricCard";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -419,6 +420,8 @@ export function QuantitativoTab({filters}:Props) {
   );
 
   const CM={top:18,right:10,left:0,bottom:5};
+
+  if (loading) return <TailorLoader overlay={false} />;
 
   return (
     <div className="space-y-3">

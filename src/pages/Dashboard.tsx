@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import TailorLoader from "@/components/TailorLoader";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -156,6 +157,14 @@ export default function Dashboard() {
   ];
 
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <TailorLoader overlay={false} />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
