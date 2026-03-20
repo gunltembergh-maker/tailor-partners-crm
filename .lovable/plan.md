@@ -1,25 +1,44 @@
 
 
-# Adjust sidebar menu visibility by role
+# Drill-down na tabela Receita Bruta Tailor por Categoria
 
-## Change: `src/components/AppSidebar.tsx`
+## Resumo
+Renomear o título da tabela e implementar drill-down por categoria. Ao clicar em uma categoria, a tabela mostra subcategorias/produtos daquela categoria usando os dados do `rpc_receita_matriz_rows` já existente. Um botão "← Voltar" retorna à visão de categorias.
 
-Add role-derived booleans and conditionally render menu sections:
+## Mudanças (apenas `QuantitativoTab.tsx`)
 
-```tsx
-const isAdmin = role === "ADMIN";
-const isLider = role === "LIDER";
-const showMainMenu = isAdmin || isLider;
+### 1. Novo estado para drill-down
+```ts
+const [drillCategory, setDrillCategory] = useState<string|null>(null);
+```
+Reset automático quando `clickedMonth` ou `effectiveFilters` mudam:
+```ts
+useEffect(() => { setDrillCategory(null); }, [clickedMonth, filters.anoMes]);
 ```
 
-- **Menu group** (Início, Prioridades, Leads, etc.): wrap with `{showMainMenu && ...}`
-- **Dashboards group** (Comercial): always visible — no change
-- **Admin group** (Importar Bases, Auditoria Comercial): already gated by `role === "ADMIN"` — no change
+### 2. Título dinâmico
+- Sem drill: `"RECEITA BRUTA TAILOR POR CATEGORIA"`
+- Com drill ativo: `"RECEITA BRUTA TAILOR (ESTIMADA) POR CATEGORIA"`
 
-This ensures:
-- **ADMIN**: sees everything (Menu + Dashboards + Admin)
-- **LIDER**: sees Menu + Dashboards (no Admin)
-- **Others** (BANKER, FINDER, ASSESSOR): sees only Dashboards > Comercial
+### 3. Lógica de clique na categoria
+Ao clicar na seta `>` ou no nome da categoria:
+- Se `drillCategory === null` → `setDrillCategory(categoria)` (entra no drill-down)
+- Se `drillCategory === categoria` → `setDrillCategory(null)` (volta, toggle)
 
-No changes to auth, routes, or any other file.
+### 4. Renderização condicional do corpo da tabela
+- **Sem drill** (`drillCategory === null`): mostra a tabela atual com todas as categorias (linha Total + categorias)
+- **Com drill** (`drillCategory !== null`):
+  - Botão "← Voltar" acima da tabela
+  - Usa `buildDetailTree(receitaMatrizRows, drillCategory, matrizMeses)` para gerar subcategorias/produtos
+  - Linha Total mostra apenas os totais daquela categoria
+  - Cada subcategoria é renderizada via `MatrizRow` existente (com expand/collapse já funcional)
+
+### 5. Visual
+- Seta `>` gira para `∨` quando a categoria é a que está em drill-down
+- O botão "← Voltar" fica no canto superior esquerdo do card da tabela
+
+### Sem alterações em
+- Nenhum outro componente
+- Nenhuma RPC (usa `rpc_receita_matriz_rows` já existente)
+- Nenhuma outra seção do dashboard
 
