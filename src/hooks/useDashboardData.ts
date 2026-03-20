@@ -293,6 +293,28 @@ export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
   });
 }
 
+// ─── Receita Drilldown RPC ───
+
+export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string[]) {
+  const params = {
+    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
+    p_banker: filters.banker.length ? filters.banker : null,
+    p_categoria: drillPath[0] ?? null,
+    p_subcategoria: drillPath[1] ?? null,
+    p_produto: drillPath[2] ?? null,
+  };
+  return useQuery({
+    queryKey: ["receita-drilldown", params],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_drilldown", params as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+    enabled: drillPath.length > 0,
+  });
+}
+
 // ─── Existing view-based hooks (kept for other sections) ───
 
 function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) {
