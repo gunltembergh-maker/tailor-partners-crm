@@ -20,7 +20,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Treemap, LabelList,
   AreaChart, Area,
 } from "recharts";
-import { ArrowUpRight, Users, TrendingUp, ChevronRight, ChevronDown, X } from "lucide-react";
+import { ArrowUpRight, Users, TrendingUp, ChevronRight, ChevronDown, X, ArrowLeft } from "lucide-react";
 
 const PBI_COLORS = [
   "#4472C4","#ED7D31","#A5A5A5","#FFC000","#5B9BD5",
