@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import TailorLoader from "@/components/TailorLoader";
 import { MetricCard } from "./MetricCard";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
