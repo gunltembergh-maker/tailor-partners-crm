@@ -223,6 +223,14 @@ export default function Prioridades() {
     );
   }
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <TailorLoader overlay={false} />
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="animate-fade-in">
