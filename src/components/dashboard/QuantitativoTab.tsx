@@ -20,7 +20,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Treemap, LabelList,
   AreaChart, Area,
 } from "recharts";
-import { ArrowUpRight, Users, TrendingUp, ChevronRight, ChevronDown, X } from "lucide-react";
+import { ArrowUpRight, Users, TrendingUp, ChevronRight, ChevronDown, X, ArrowLeft } from "lucide-react";
 
 const PBI_COLORS = [
   "#4472C4","#ED7D31","#A5A5A5","#FFC000","#5B9BD5",
@@ -381,15 +381,21 @@ export function QuantitativoTab({filters}:Props) {
   const [matrizExpanded,setMatrizExpanded]=useState<Set<string>>(new Set());
   const toggleMatriz=(key:string)=>setMatrizExpanded(prev=>{const n=new Set(prev);n.has(key)?n.delete(key):n.add(key);return n;});
 
-  /** Build detail children lazily when a category is expanded */
+  // Drill-down state for receita table
+  const [drillCategory, setDrillCategory] = useState<string|null>(null);
+  useEffect(() => { setDrillCategory(null); }, [clickedMonth, filters.anoMes]);
+
+  /** Build detail children lazily when a category is expanded OR drilled */
   const detailChildren=useMemo(()=>{
     if(!receitaMatrizRows?.length) return new Map<string,MatrizNode[]>();
     const map=new Map<string,MatrizNode[]>();
-    matrizExpanded.forEach(cat=>{
+    const keys = new Set(matrizExpanded);
+    if (drillCategory) keys.add(drillCategory);
+    keys.forEach(cat=>{
       map.set(cat,buildDetailTree(receitaMatrizRows,cat,matrizMeses));
     });
     return map;
-  },[receitaMatrizRows,matrizExpanded,matrizMeses]);
+  },[receitaMatrizRows,matrizExpanded,matrizMeses,drillCategory]);
 
   if(loading) return (
     <div className="space-y-3">
@@ -562,13 +568,21 @@ export function QuantitativoTab({filters}:Props) {
 
       <MetricCard title="Receita Bruta Tailor" value={fmtKpi(receitaTotalData?.receita??0)} icon={TrendingUp}/>
 
-      <PbiCard title="Receita Bruta Tailor (estimada)">
+      <PbiCard title={drillCategory ? `Receita Bruta Tailor (estimada) por Categoria` : "Receita Bruta Tailor por Categoria"}>
+        {drillCategory && (
+          <button
+            onClick={() => setDrillCategory(null)}
+            className="flex items-center gap-1 text-[10px] text-primary hover:underline mb-1 px-1"
+          >
+            <ArrowLeft className="h-3 w-3" /> Voltar
+          </button>
+        )}
         <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
           <Table>
             <TableHeader>
               <TableRow style={{backgroundColor:"#1B2A3D"}}>
                 <TableHead className="text-[10px] py-1.5 sticky left-0 text-white font-bold min-w-[200px]" style={{backgroundColor:"#1B2A3D"}}>
-                  Categoria / Produto
+                  {drillCategory ? `${drillCategory} / Subcategoria / Produto` : "Categoria / Produto"}
                 </TableHead>
                 {matrizMeses.map(m=>(
                   <TableHead key={m} className="text-[10px] py-1.5 text-right text-white font-semibold whitespace-nowrap">{m}</TableHead>
@@ -577,42 +591,68 @@ export function QuantitativoTab({filters}:Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {matrizRows.length>0&&(()=>{
-                const gt=matrizRows.reduce((s,n)=>s+n.total,0);
-                const mt:Record<string,number>={};
-                matrizRows.forEach(n=>matrizMeses.forEach(m=>{mt[m]=(mt[m]||0)+(n.values[m]||0);}));
-                return (
-                  <TableRow style={{backgroundColor:"#E8EDF3"}}>
-                    <TableCell className="text-[10px] py-1 sticky left-0 font-bold" style={{backgroundColor:"#E8EDF3"}}>Total</TableCell>
-                    {matrizMeses.map(m=>(
-                      <TableCell key={m} className="text-[10px] py-1 text-right font-bold">{fmtFull(mt[m]||0)}</TableCell>
-                    ))}
-                    <TableCell className="text-[10px] py-1 text-right font-bold">{fmtFull(gt)}</TableCell>
-                  </TableRow>
-                );
-              })()}
-              {matrizRows.map(row=>{
-                const isOpen=matrizExpanded.has(row.categoria);
-                const children=detailChildren.get(row.categoria)??[];
-                return (
-                  <React.Fragment key={row.categoria}>
-                    <TableRow style={{backgroundColor:"#EEF2FF"}}>
-                      <TableCell className="text-[10px] py-0.5 sticky left-0 whitespace-nowrap font-bold" style={{paddingLeft:8,backgroundColor:"#EEF2FF"}}>
-                        <button onClick={()=>toggleMatriz(row.categoria)} className="inline-flex items-center gap-0.5 hover:text-primary">
-                          {isOpen?<ChevronDown className="h-3 w-3"/>:<ChevronRight className="h-3 w-3"/>}{row.categoria}
-                        </button>
-                      </TableCell>
-                      {matrizMeses.map(m=>(
-                        <TableCell key={m} className="text-[10px] py-0.5 text-right">{row.values[m]?fmtFull(row.values[m]):"—"}</TableCell>
-                      ))}
-                      <TableCell className="text-[10px] py-0.5 text-right font-bold">{fmtFull(row.total)}</TableCell>
-                    </TableRow>
-                    {isOpen&&children.map(child=>(
-                      <MatrizRow key={child.key} node={child} meses={matrizMeses} expanded={matrizExpanded} toggle={toggleMatriz}/>
-                    ))}
-                  </React.Fragment>
-                );
-              })}
+              {drillCategory ? (
+                // ─── Drill-down: show subcategories/products of selected category ───
+                <>
+                  {/* Total row for this category */}
+                  {(()=>{
+                    const catRow = matrizRows.find(r=>r.categoria===drillCategory);
+                    if(!catRow) return null;
+                    return (
+                      <TableRow style={{backgroundColor:"#E8EDF3"}}>
+                        <TableCell className="text-[10px] py-1 sticky left-0 font-bold" style={{backgroundColor:"#E8EDF3"}}>Total {drillCategory}</TableCell>
+                        {matrizMeses.map(m=>(
+                          <TableCell key={m} className="text-[10px] py-1 text-right font-bold">{fmtFull(catRow.values[m]||0)}</TableCell>
+                        ))}
+                        <TableCell className="text-[10px] py-1 text-right font-bold">{fmtFull(catRow.total)}</TableCell>
+                      </TableRow>
+                    );
+                  })()}
+                  {(detailChildren.get(drillCategory)??[]).map(child=>(
+                    <MatrizRow key={child.key} node={child} meses={matrizMeses} expanded={matrizExpanded} toggle={toggleMatriz}/>
+                  ))}
+                </>
+              ) : (
+                // ─── Normal view: all categories ───
+                <>
+                  {matrizRows.length>0&&(()=>{
+                    const gt=matrizRows.reduce((s,n)=>s+n.total,0);
+                    const mt:Record<string,number>={};
+                    matrizRows.forEach(n=>matrizMeses.forEach(m=>{mt[m]=(mt[m]||0)+(n.values[m]||0);}));
+                    return (
+                      <TableRow style={{backgroundColor:"#E8EDF3"}}>
+                        <TableCell className="text-[10px] py-1 sticky left-0 font-bold" style={{backgroundColor:"#E8EDF3"}}>Total</TableCell>
+                        {matrizMeses.map(m=>(
+                          <TableCell key={m} className="text-[10px] py-1 text-right font-bold">{fmtFull(mt[m]||0)}</TableCell>
+                        ))}
+                        <TableCell className="text-[10px] py-1 text-right font-bold">{fmtFull(gt)}</TableCell>
+                      </TableRow>
+                    );
+                  })()}
+                  {matrizRows.map(row=>{
+                    const isOpen=matrizExpanded.has(row.categoria);
+                    const children=detailChildren.get(row.categoria)??[];
+                    return (
+                      <React.Fragment key={row.categoria}>
+                        <TableRow style={{backgroundColor:"#EEF2FF"}}>
+                          <TableCell className="text-[10px] py-0.5 sticky left-0 whitespace-nowrap font-bold" style={{paddingLeft:8,backgroundColor:"#EEF2FF"}}>
+                            <button onClick={()=>setDrillCategory(row.categoria)} className="inline-flex items-center gap-0.5 hover:text-primary">
+                              <ChevronRight className="h-3 w-3"/>{row.categoria}
+                            </button>
+                          </TableCell>
+                          {matrizMeses.map(m=>(
+                            <TableCell key={m} className="text-[10px] py-0.5 text-right">{row.values[m]?fmtFull(row.values[m]):"—"}</TableCell>
+                          ))}
+                          <TableCell className="text-[10px] py-0.5 text-right font-bold">{fmtFull(row.total)}</TableCell>
+                        </TableRow>
+                        {isOpen&&children.map(child=>(
+                          <MatrizRow key={child.key} node={child} meses={matrizMeses} expanded={matrizExpanded} toggle={toggleMatriz}/>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })}
+                </>
+              )}
             </TableBody>
           </Table>
         </div>
