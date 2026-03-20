@@ -158,6 +158,14 @@ export default function Dashboard() {
 
   const toggleSection = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <TailorLoader overlay={false} />
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="animate-fade-in">
