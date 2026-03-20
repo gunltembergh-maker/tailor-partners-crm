@@ -196,11 +196,7 @@ export function QualitativoTab({ filters }: Props) {
   }, [receitaMensal, positivador]);
 
   if (loading) {
-    return (
-      <div className="space-y-3">
-        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 bg-white rounded-lg" />)}
-      </div>
-    );
+    return <TailorLoader overlay={false} />;
   }
 
   return (
