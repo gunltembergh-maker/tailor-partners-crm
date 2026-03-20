@@ -1,99 +1,48 @@
 
 
-# 4-Level Drill-Down for Receita Table
+# TailorLoader — Componente global de loading
 
-## Summary
-Replace the current single-level drill with a 4-level hierarchy (Categoria → Subcategoria → Produto → Cliente/Documento), using a new RPC for data and breadcrumb navigation.
+## 1. Criar `src/components/TailorLoader.tsx`
 
-## Changes
+Overlay semitransparente cobrindo a area de conteúdo (não a tela inteira, para manter o menu visível). Card centralizado com:
+- "Tailor" em `font-display font-bold text-primary` (#1B2A3D) + "Partners" em `text-muted-foreground uppercase tracking-widest`
+- "Carregando..." em cinza claro
+- Spinner animado (border-spin) na cor primária
 
-### 1. New RPC: `rpc_receita_drilldown` (database migration)
+Aceita prop opcional `overlay?: boolean` (default true). Quando `overlay=false`, renderiza inline sem fundo escuro (para uso dentro de cards/tabs).
 
-A single flexible RPC that returns the next level's data based on which parameters are passed:
+## 2. Aplicar nos seguintes pontos
 
-```sql
-CREATE OR REPLACE FUNCTION public.rpc_receita_drilldown(
-  p_anomes integer[] DEFAULT NULL,
-  p_banker text[] DEFAULT NULL,
-  p_categoria text DEFAULT NULL,
-  p_subcategoria text DEFAULT NULL,
-  p_produto text DEFAULT NULL
-) RETURNS TABLE(label text, anomes integer, anomes_nome text, valor numeric)
-LANGUAGE sql STABLE AS $$
-  SELECT
-    CASE
-      WHEN p_produto IS NOT NULL THEN documento
-      WHEN p_subcategoria IS NOT NULL THEN produto
-      WHEN p_categoria IS NOT NULL THEN subcategoria
-      ELSE categoria
-    END AS label,
-    anomes,
-    to_char(to_date(anomes::text,'YYYYMM'),'Mon/YY') AS anomes_nome,
-    SUM(COALESCE(comissao_bruta_tailor, 0)) AS valor
-  FROM comissoes_consolidado_filtrado
-  WHERE (p_anomes IS NULL OR anomes = ANY(p_anomes))
-    AND (p_banker IS NULL OR banker = ANY(p_banker))
-    AND (p_categoria IS NULL OR categoria = p_categoria)
-    AND (p_subcategoria IS NULL OR subcategoria = p_subcategoria)
-    AND (p_produto IS NULL OR produto = p_produto)
-  GROUP BY 1, anomes
-  ORDER BY 1, anomes DESC;
-$$;
-```
+### `src/App.tsx` — ProtectedRoute
+Substituir o loading atual (div com texto "Carregando...") por `<TailorLoader />` com overlay cobrindo tela inteira (neste caso sim, pois não há sidebar ainda).
 
-### 2. Frontend changes (`QuantitativoTab.tsx`)
+### `src/pages/DashboardComercial.tsx`
+Não tem loading próprio — os dados carregam nas tabs. Sem mudança aqui.
 
-**State**: Replace `drillCategory: string|null` with a breadcrumb path array:
-```ts
-const [drillPath, setDrillPath] = useState<string[]>([]); 
-// [] = level 1 (categories), ["Assessoria"] = level 2, 
-// ["Assessoria","XPI"] = level 3, ["Assessoria","XPI","Previdência"] = level 4
-```
+### `src/components/dashboard/QuantitativoTab.tsx`
+Linha 277: `const loading = [l1,...l14].some(Boolean)`. Já há Skeleton loading implícito nos MetricCards. Adicionar um check no topo: se `loading` for true nos primeiros renders, mostrar `<TailorLoader overlay={false} />` no lugar do conteúdo inteiro da tab.
 
-**New hook call**: Add `useDrilldownData` using `useQuery` that calls `rpc_receita_drilldown` with the current path parameters + effectiveFilters. The query re-fetches whenever `drillPath` changes.
+### `src/components/dashboard/QualitativoTab.tsx`
+Linha 198: já tem `if (loading) return <Skeleton ...>`. Substituir o bloco de Skeletons por `<TailorLoader overlay={false} />`.
 
-**Breadcrumb**: Above the table, render path like `Receita > Assessoria > XPI > Previdência` with each segment clickable to navigate back to that level.
+### `src/pages/Dashboard.tsx`
+Linha 42: `loading` state. Substituir o conteúdo de loading por `<TailorLoader overlay={false} />`.
 
-**"← Voltar" button**: Goes up one level (`drillPath.slice(0, -1)`).
+### `src/pages/Prioridades.tsx`
+Tem `loading` state. Aplicar `<TailorLoader overlay={false} />` no loading.
 
-**Column header**: Changes per level — "Categoria" / "Subcategoria" / "Produto" / "Cliente".
+## 3. Não alterar
+- Lógica de dados, rotas, autenticação
+- `ImportarBases.tsx` e `ImportClients.tsx` (loading contextual de upload, não de página)
+- `DashComercial.tsx` (loading de iframe Power BI, diferente)
 
-**Click behavior**: Levels 1-3 rows are clickable (cursor pointer), pushing to `drillPath`. Level 4 rows are not clickable.
-
-**Reset**: `useEffect` clears `drillPath` when `clickedMonth` or `filters.anoMes` changes (same as current).
-
-**Data rendering**: The drilldown RPC returns flat `(label, anomes, valor)` rows. Frontend pivots them into the same month-column matrix format using `buildMatrizFlat`-like logic, keyed by `label` instead of `categoria`.
-
-### 3. New hook in `useDashboardData.ts`
-
-```ts
-export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string[]) {
-  const params = {
-    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
-    p_banker: filters.banker.length ? filters.banker : null,
-    p_categoria: drillPath[0] ?? null,
-    p_subcategoria: drillPath[1] ?? null,
-    p_produto: drillPath[2] ?? null,
-  };
-  return useQuery({
-    queryKey: ["receita-drilldown", params],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_receita_drilldown", params as any);
-      if (error) throw error;
-      return (data as any[]) ?? [];
-    },
-    staleTime: 60_000,
-    enabled: drillPath.length > 0,
-  });
-}
-```
-
-When `drillPath` is empty, use existing `receitaMatrizCat` data (level 1 = categories). When `drillPath.length > 0`, use the drilldown RPC data.
-
-## Files affected
-| File | Change |
+## Arquivos afetados
+| Arquivo | Mudança |
 |---|---|
-| New migration SQL | Create `rpc_receita_drilldown` |
-| `src/hooks/useDashboardData.ts` | Add `useReceitaDrilldown` hook |
-| `src/components/dashboard/QuantitativoTab.tsx` | Replace drill state, add breadcrumb, 4-level table rendering |
+| `src/components/TailorLoader.tsx` | Criar componente |
+| `src/App.tsx` | Substituir loading do ProtectedRoute |
+| `src/components/dashboard/QuantitativoTab.tsx` | Substituir loading |
+| `src/components/dashboard/QualitativoTab.tsx` | Substituir Skeleton loading |
+| `src/pages/Dashboard.tsx` | Substituir loading |
+| `src/pages/Prioridades.tsx` | Substituir loading |
 
