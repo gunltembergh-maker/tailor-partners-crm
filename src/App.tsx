@@ -25,6 +25,7 @@ import AuditoriaComercial from "./pages/AuditoriaComercial";
 import NotFound from "./pages/NotFound";
 import ImportClients from "./pages/ImportClients";
 import ImportarBases from "./pages/ImportarBases";
+import QualitativoPage from "./pages/QualitativoPage";
 
 const queryClient = new QueryClient();
 
