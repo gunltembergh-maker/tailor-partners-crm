@@ -43,6 +43,7 @@ const menuItems = [
 
 const dashboardItems = [
   { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial" },
+  { title: "Qualitativo", icon: BarChart3, path: "/dashboards/qualitativo" },
 ];
 
 const adminMenuItems = [
