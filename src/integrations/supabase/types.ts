@@ -1700,6 +1700,59 @@ export type Database = {
         }
         Relationships: []
       }
+      view_base_crm: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          casa: string | null
+          cidade: string | null
+          cod_cliente: string | null
+          documento: string | null
+          endereco_ajustado: string | null
+          finder: string | null
+          perfil: string | null
+          pl_declarado_ajustado: number | null
+          pl_tailor: number | null
+          primeiro_nome: string | null
+          sow_ajustado: number | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
+      view_diversificador: {
+        Row: {
+          advisor: string | null
+          ativo_ajustado: string | null
+          banker: string | null
+          casa: string | null
+          conta: string | null
+          data_posicao: string | null
+          documento: string | null
+          finder: string | null
+          indexador: string | null
+          net: number | null
+          produto_ajustado: string | null
+          tipo_cliente: string | null
+          vencimento: string | null
+        }
+        Relationships: []
+      }
+      view_positivador_agrupado: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          data_posicao: string | null
+          documento: string | null
+          faixa_pl: string | null
+          finder: string | null
+          net_em_m: number | null
+          pl_declarado_ajustado: number | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
       vw_base_crm: {
         Row: {
           assessor: string | null
@@ -2103,6 +2156,19 @@ export type Database = {
               casa: string
             }[]
           }
+      rpc_auc_faixa_pl_qualitativo: {
+        Args: {
+          p_banker?: string[]
+          p_documento?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          faixa_pl: string
+          net_em_m: number
+          pl_declarado: number
+          qtd_clientes: number
+        }[]
+      }
       rpc_auc_mes: {
         Args: {
           p_advisor?: string[]
@@ -2225,6 +2291,32 @@ export type Database = {
           tipo: string
         }[]
       }
+      rpc_custodia_indexador: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          indexador: string
+          total: number
+        }[]
+      }
+      rpc_custodia_veiculo: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          produto_ajustado: string
+          total: number
+        }[]
+      }
       rpc_faixa_pl_auc: {
         Args: {
           p_advisor?: string[]
@@ -2345,6 +2437,123 @@ export type Database = {
         Returns: {
           categoria: string
           valor: number
+        }[]
+      }
+      rpc_roa_faixa_pl: {
+        Args: { p_banker?: string[]; p_documento?: string[] }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          faixa_pl: string
+          roa: number
+        }[]
+      }
+      rpc_roa_m0_tabela: {
+        Args: { p_banker?: string[]; p_documento?: string[] }
+        Returns: {
+          documento: string
+          faixa_pl: string
+          roa: number
+        }[]
+      }
+      rpc_roa_tipo_cliente: {
+        Args: {
+          p_banker?: string[]
+          p_documento?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          roa: number
+          tipo_cliente: string
+        }[]
+      }
+      rpc_tabela_clientes: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          advisor: string
+          banker: string
+          casa: string
+          cidade: string
+          cod_cliente: string
+          documento: string
+          endereco_ajustado: string
+          finder: string
+          perfil: string
+          pl_declarado_ajustado: number
+          pl_tailor: number
+          primeiro_nome: string
+          sow_ajustado: number
+          tipo_cliente: string
+        }[]
+      }
+      rpc_tabela_vencimentos: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+          p_vencimento_fim?: string
+          p_vencimento_inicio?: string
+        }
+        Returns: {
+          advisor: string
+          ativo_ajustado: string
+          banker: string
+          casa: string
+          documento: string
+          finder: string
+          indexador: string
+          net: number
+          produto_ajustado: string
+          vencimento: string
+        }[]
+      }
+      rpc_todos_ativos: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_limit?: number
+          p_offset?: number
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          advisor: string
+          ativo_ajustado: string
+          banker: string
+          casa: string
+          conta: string
+          documento: string
+          finder: string
+          indexador: string
+          net: number
+          produto_ajustado: string
+          tipo_cliente: string
+          vencimento: string
+        }[]
+      }
+      rpc_vencimentos_grafico: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+          p_vencimento_fim?: string
+          p_vencimento_inicio?: string
+        }
+        Returns: {
+          produto_ajustado: string
+          total: number
         }[]
       }
     }
