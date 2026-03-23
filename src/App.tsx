@@ -25,6 +25,7 @@ import AuditoriaComercial from "./pages/AuditoriaComercial";
 import NotFound from "./pages/NotFound";
 import ImportClients from "./pages/ImportClients";
 import ImportarBases from "./pages/ImportarBases";
+import QualitativoPage from "./pages/QualitativoPage";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ function AppRoutes() {
       <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
       <Route path="/paineis" element={<ProtectedRoute><Paineis /></ProtectedRoute>} />
       <Route path="/dashboards/comercial" element={<ProtectedRoute><DashboardComercial /></ProtectedRoute>} />
+      <Route path="/dashboards/qualitativo" element={<ProtectedRoute><QualitativoPage /></ProtectedRoute>} />
       <Route path="/relatorios/dash-comercial" element={<ProtectedRoute><DashComercial /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
       <Route path="/import-clients" element={<ProtectedRoute><ImportClients /></ProtectedRoute>} />
