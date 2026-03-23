@@ -1,19 +1,20 @@
 
 
-# Create `src/hooks/useQualitativoData.ts`
+# Replace QualitativoTab.tsx content
 
-Copy the uploaded file content directly into `src/hooks/useQualitativoData.ts`. This file contains 10 custom hooks for the Qualitativo tab data fetching via Supabase RPCs:
+## Summary
+Replace the entire content of `src/components/dashboard/QualitativoTab.tsx` with the user-provided file. The new version:
 
-- `useCustodiaIndexador`
-- `useCustodiaVeiculo`
-- `useVencimentosGrafico`
-- `useTodosAtivos`
-- `useTabelaVencimentos`
-- `useTabelaClientes`
-- `useAucFaixaPl`
-- `useRoaTipoCliente`
-- `useRoaFaixaPl`
-- `useRoaM0Tabela`
+- Uses the new hooks from `useQualitativoData.ts` instead of the old `useDashboardData` hooks
+- Adds reusable `DonutChart` and `SortableTable` sub-components
+- Adds ROA por Faixa PL line chart and ROA M0 table
+- Uses `Skeleton` loading instead of `TailorLoader`
+- Improved formatting and tooltip logic
 
-Single file creation, no other changes.
+## File affected
+| File | Change |
+|---|---|
+| `src/components/dashboard/QualitativoTab.tsx` | Full replacement with uploaded content (431 lines) |
+
+No other files changed.
 
