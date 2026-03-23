@@ -1,40 +1,35 @@
 
 
-# Standalone Qualitativo Page
+# Two Fixes: Qualitativo as Tab + Data Loading
 
-## Summary
+## Problem 1 — Qualitativo as separate page
+The Qualitativo page exists at `/dashboards/qualitativo` as a standalone page but should be a tab inside Dashboard Comercial. It's already rendered as a tab in `DashboardComercial.tsx` (lines 91-100), so we just need to clean up the separate route and menu item.
 
-Create a standalone page at `/dashboards/qualitativo` that reuses the existing `QualitativoTab` component from `src/components/dashboard/QualitativoTab.tsx`, wrapped in a page layout with its own filter sidebar. The existing `QualitativoTab` already implements all 7 sections (Custodia donuts, Clientes table, ROA charts, ROA M0 table, AuC Faixa PL combo, Vencimentos, Todos os Ativos) using the hooks from `useQualitativoData.ts`. The page wrapper will add enhanced filters (date range for vencimento, search by nome/documento) and pagination for tables.
+## Problem 2 — Data not loading
+The `useQualitativoData.ts` `buildParams` function passes `p_anomes` to RPCs that don't accept it (custodia, vencimentos, etc.), causing errors. Additionally, `QualitativoTab.tsx` reads `r.net` from custodia/vencimentos RPCs but those RPCs return `total` as the column name.
 
-## Files to change
+## Changes
 
-### 1. Create `src/pages/QualitativoPage.tsx`
-Page wrapper that includes:
-- `AppLayout` for the sidebar navigation
-- Its own `FiltersSidebar` (reusing existing component with `showVencimento=true`)
-- Filter chips display (same pattern as DashboardComercial)
-- Header with "Dashboard Qualitativo" title
-- Renders `<QualitativoTab filters={appliedFilters} />` as the main content
-- Uses `useDashboardFilters` hook for filter state management
+### 1. `src/App.tsx`
+- Remove the import of `QualitativoPage`
+- Remove the route `/dashboards/qualitativo`
 
-### 2. Edit `src/App.tsx`
-- Add import for `QualitativoPage`
-- Add route: `/dashboards/qualitativo` → `<ProtectedRoute><QualitativoPage /></ProtectedRoute>`
+### 2. `src/components/AppSidebar.tsx`
+- Remove `{ title: "Qualitativo", ... }` from `dashboardItems` array — it's accessed as a tab inside Comercial
 
-### 3. Edit `src/components/AppSidebar.tsx`
-- Add `{ title: "Qualitativo", icon: BarChart3, path: "/dashboards/qualitativo" }` to `dashboardItems` array (visible to all roles)
+### 3. `src/hooks/useQualitativoData.ts`
+Fix `buildParams` to only return parameters each RPC actually accepts. Create separate param builders:
+- `buildFilterParams` (no `p_anomes`): for custodia, vencimentos, todos_ativos, tabela_clientes, auc_faixa_pl
+- `buildRoaParams`: for ROA RPCs (only `p_banker`, `p_documento`, `p_tipo_cliente`)
 
-## Architecture notes
+Also fix vencimentos hooks to pass `p_vencimento_inicio`/`p_vencimento_fim` as `null` (the RPCs accept these but hooks don't pass them).
 
-- The existing `QualitativoTab` component already handles all data fetching, charts, and tables via the `useQualitativoData.ts` hooks
-- The existing `FiltersSidebar` already supports vencimento filter when `showVencimento=true`
-- The existing `useDashboardFilters` hook already manages all filter state including vencimento
-- The page follows the exact same pattern as `DashboardComercial.tsx` but renders only the Qualitativo content (no tabs needed)
-- Enhanced features like pagination and search within tables would require modifications to the `QualitativoTab` component itself, which is out of scope per "Não altere nenhum outro componente" — the current `SortableTable` and data display will be preserved as-is
+### 4. `src/components/dashboard/QualitativoTab.tsx`
+Fix field name mappings in `useMemo` blocks:
+- `custIdxChart`: `r.net` → `r.total` (RPC returns `total`)
+- `custVeiChart`: `r.net` → `r.total`
+- `vencGrafChart`: `r.net` → `r.total`
+- `aucFaixaChart`: add `ordem_pl` mapping (uses custom sort order from RPC)
 
-| File | Change |
-|---|---|
-| `src/pages/QualitativoPage.tsx` | Create — page wrapper with filters + QualitativoTab |
-| `src/App.tsx` | Add route `/dashboards/qualitativo` |
-| `src/components/AppSidebar.tsx` | Add "Qualitativo" to dashboardItems |
+No other files changed.
 
