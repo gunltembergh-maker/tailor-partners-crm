@@ -154,15 +154,15 @@ export function QualitativoTab({ filters }: Props) {
   const loading = l1||l2||l3||l4||l5||l6||l7||l8||l9||l10;
 
   const custIdxChart = useMemo(() =>
-    (custIdxData ?? []).map((r: any) => ({ name: r.indexador ?? "Outros", value: Number(r.net) || 0 }))
+    (custIdxData ?? []).map((r: any) => ({ name: r.indexador ?? "Outros", value: Number(r.total) || 0 }))
   , [custIdxData]);
 
   const custVeiChart = useMemo(() =>
-    (custVeiData ?? []).map((r: any) => ({ name: r.produto_ajustado ?? "Outros", value: Number(r.net) || 0 }))
+    (custVeiData ?? []).map((r: any) => ({ name: r.produto_ajustado ?? "Outros", value: Number(r.total) || 0 }))
   , [custVeiData]);
 
   const vencGrafChart = useMemo(() =>
-    (vencGraf ?? []).map((r: any) => ({ produto: r.produto_ajustado ?? "Outros", NET: Number(r.net) || 0 }))
+    (vencGraf ?? []).map((r: any) => ({ produto: r.produto_ajustado ?? "Outros", NET: Number(r.total) || 0 }))
   , [vencGraf]);
 
   const aucFaixaChart = useMemo(() =>
