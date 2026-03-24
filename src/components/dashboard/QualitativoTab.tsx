@@ -175,7 +175,7 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
           />
         </div>
       ) : null}
-      <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: maxH }}>
+      <div className={`overflow-x-auto overflow-y-auto ${fill ? "flex-1" : ""}`} style={fill ? {} : { maxHeight: maxH }}>
         <table className="w-full text-sm border-collapse" style={{ minWidth: columns.length * 140 }}>
           <thead className="sticky top-0 z-10">
             <tr style={{ backgroundColor: "#1B2A3D" }}>
