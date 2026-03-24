@@ -507,9 +507,9 @@ export function QualitativoTab({ filters }: Props) {
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={aucFaixaChart} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="faixa" tick={{ fontSize: 10 }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
+            <XAxis dataKey="faixa" tick={{ fontSize: 11, fill: "#374151" }} />
+            <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
+            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#374151" }} />
             <Tooltip content={<AucTooltip />} />
             <Bar yAxisId="left" dataKey="Net Em M" fill="#1a2e4a" name="NET" radius={[2, 2, 0, 0]}>
               <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `R$ ${Math.round(v / 1e6)} Mi`} style={{ fontSize: 8, fill: "#1a2e4a" }} />
