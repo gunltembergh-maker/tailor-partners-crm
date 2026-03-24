@@ -45,14 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(null);
         setPermissoes(null);
         setBankerName(null);
+        setLoading(false);
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchMeuPerfil(session.user.id);
+        await fetchMeuPerfil(session.user.id);
       }
       setLoading(false);
     });
@@ -64,11 +65,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase.rpc("rpc_meu_perfil");
       if (error || !data) {
-        // Fallback to old method if RPC doesn't exist yet
         await fetchProfileFallback(userId);
         return;
       }
-      const perfil = data as any;
+
+      // rpc_meu_perfil returns a table (array). Handle both array and object.
+      const perfil: any = Array.isArray(data) ? data[0] : data;
+      if (!perfil) {
+        await fetchProfileFallback(userId);
+        return;
+      }
 
       // Check if blocked
       if (perfil.blocked) {
@@ -77,9 +83,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setProfile({
-        full_name: perfil.nome || perfil.email || "",
-        email: perfil.email || "",
+      // Fetch profile name/email from profiles table for display
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("full_name, email, avatar_url")
+        .eq("user_id", userId)
+        .single();
+
+      setProfile(profileRow ?? {
+        full_name: perfil.banker_name || "",
+        email: "",
         avatar_url: null,
       });
       setRole(perfil.role ?? null);
