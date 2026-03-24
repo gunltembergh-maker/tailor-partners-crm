@@ -2241,7 +2241,9 @@ export type Database = {
         Args: {
           p_banker_name?: string
           p_email: string
+          p_empresa?: string
           p_nome: string
+          p_perfil_nome?: string
           p_role: string
         }
         Returns: Json
