@@ -666,7 +666,7 @@ export function QualitativoTab({ filters }: Props) {
               <Tooltip content={<RoaTooltip />} />
               {roaFaixaKeys.map(k => (
                 <Line key={k} type="monotone" dataKey={k} stroke={ROA_FAIXA_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
-                  <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 7, fill: ROA_FAIXA_COLORS[k] || "#999" }} />
+                  <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 11, fill: "#111827", fontWeight: 700 }} />
                 </Line>
               ))}
             </LineChart>
