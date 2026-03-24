@@ -559,8 +559,8 @@ export function QualitativoTab({ filters }: Props) {
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={vencAnoChart} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="ano" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
+            <XAxis dataKey="ano" tick={{ fontSize: 11, fill: "#374151" }} />
+            <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
             <Tooltip content={<VencAnoTooltip />} />
             <Legend wrapperStyle={{ fontSize: 9 }} />
             {vencAnoProducts.map((p, i) => (
