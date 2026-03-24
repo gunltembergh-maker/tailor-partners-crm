@@ -16,6 +16,7 @@ import {
   Shield,
   LogOut,
   UserCircle,
+  UsersRound,
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,20 +47,31 @@ const dashboardItems = [
   { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial" },
 ];
 
-const adminMenuItems = [
-  { title: "Importar Bases", icon: Upload, path: "/admin/importar-bases" },
-  { title: "Auditoria Comercial", icon: ClipboardCheck, path: "/admin/auditoria-comercial" },
-  { title: "Perfis de Acesso", icon: Shield, path: "/admin/perfis" },
-];
-
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, role, signOut } = useAuth();
+  const { profile, role, permissoes, signOut } = useAuth();
 
   const isAdmin = role === "ADMIN";
   const isLider = role === "LIDER";
   const showMainMenu = isAdmin || isLider;
+
+  // Build admin items based on permissoes
+  const adminItems: { title: string; icon: any; path: string }[] = [];
+  if (permissoes?.menu_importar_bases || isAdmin) {
+    adminItems.push({ title: "Importar Bases", icon: Upload, path: "/admin/importar-bases" });
+  }
+  if (permissoes?.menu_auditoria || isAdmin) {
+    adminItems.push({ title: "Auditoria Comercial", icon: ClipboardCheck, path: "/admin/auditoria-comercial" });
+  }
+  if (permissoes?.menu_gestao_usuarios || isAdmin) {
+    adminItems.push({ title: "Usuários", icon: UsersRound, path: "/admin/usuarios" });
+  }
+  if (permissoes?.menu_perfis_acesso || isAdmin) {
+    adminItems.push({ title: "Perfis de Acesso", icon: Shield, path: "/admin/perfis" });
+  }
+
+  const showAdmin = adminItems.length > 0;
 
   return (
     <Sidebar>
@@ -121,14 +133,14 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {role === "ADMIN" && (
+        {showAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
               Admin
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminMenuItems.map((item) => (
+                {adminItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={location.pathname === item.path}

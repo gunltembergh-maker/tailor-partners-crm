@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AuthContextType {
@@ -7,9 +8,11 @@ interface AuthContextType {
   user: User | null;
   profile: { full_name: string; email: string; avatar_url: string | null } | null;
   role: string | null;
+  permissoes: Record<string, boolean> | null;
+  bankerName: string | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, nomeCompleto: string, cpf?: string, empresa?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -20,20 +23,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [permissoes, setPermissoes] = useState<Record<string, boolean> | null>(null);
+  const [bankerName, setBankerName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  let navigate: ReturnType<typeof useNavigate>;
+  try {
+    navigate = useNavigate();
+  } catch {
+    navigate = () => {};
+  }
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => {
-          fetchProfile(session.user.id);
-          fetchRole(session.user.id);
-        }, 0);
+        setTimeout(() => fetchMeuPerfil(session.user.id), 0);
       } else {
         setProfile(null);
         setRole(null);
+        setPermissoes(null);
+        setBankerName(null);
       }
     });
 
@@ -41,8 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
-        fetchRole(session.user.id);
+        fetchMeuPerfil(session.user.id);
       }
       setLoading(false);
     });
@@ -50,22 +60,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function fetchProfile(userId: string) {
-    const { data } = await supabase
+  async function fetchMeuPerfil(userId: string) {
+    try {
+      const { data, error } = await supabase.rpc("rpc_meu_perfil");
+      if (error || !data) {
+        // Fallback to old method if RPC doesn't exist yet
+        await fetchProfileFallback(userId);
+        return;
+      }
+      const perfil = data as any;
+
+      // Check if blocked
+      if (perfil.blocked) {
+        await supabase.auth.signOut();
+        navigate("/auth?blocked=true");
+        return;
+      }
+
+      setProfile({
+        full_name: perfil.nome || perfil.email || "",
+        email: perfil.email || "",
+        avatar_url: null,
+      });
+      setRole(perfil.role ?? null);
+      setPermissoes((perfil.permissoes as Record<string, boolean>) ?? null);
+      setBankerName(perfil.banker_name ?? null);
+    } catch {
+      await fetchProfileFallback(userId);
+    }
+  }
+
+  async function fetchProfileFallback(userId: string) {
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("full_name, email, avatar_url")
       .eq("user_id", userId)
       .single();
-    if (data) setProfile(data);
-  }
+    if (profileData) setProfile(profileData);
 
-  async function fetchRole(userId: string) {
-    const { data } = await supabase
+    const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
-    setRole(data?.role ?? null);
+    setRole(roleData?.role ?? null);
   }
 
   const signIn = async (email: string, password: string) => {
@@ -73,15 +111,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, nomeCompleto: string, cpf?: string, empresa?: string) => {
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: {
+          nome_completo: nomeCompleto,
+          full_name: nomeCompleto,
+          cpf: cpf ?? undefined,
+          empresa: empresa ?? undefined,
+        },
         emailRedirectTo: window.location.origin,
       },
     });
+
+    // After signup, try to update profile with CPF and empresa
+    if (!error && signUpData?.user) {
+      await supabase
+        .from("profiles")
+        .update({
+          nome_completo: nomeCompleto,
+          cpf: cpf ?? null,
+          empresa: empresa ?? null,
+        })
+        .eq("user_id", signUpData.user.id);
+    }
+
     return { error: error as Error | null };
   };
 
@@ -90,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, role, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
