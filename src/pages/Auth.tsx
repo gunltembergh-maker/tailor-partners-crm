@@ -163,10 +163,9 @@ export default function Auth() {
   if (showConfirmation) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md animate-fade-in text-center">
-          <div className="mb-8">
-            <h1 className="text-4xl font-display font-bold text-primary tracking-tight">Tailor</h1>
-            <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase mt-1">Partners</p>
+      <div className="w-full max-w-md animate-fade-in text-center">
+          <div className="mb-8 flex justify-center">
+            <img src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png" alt="Tailor Partners" className="w-40" />
           </div>
 
           <Card className="shadow-lg border-border/50">
@@ -181,7 +180,7 @@ export default function Auth() {
                 Acesse seu e-mail corporativo e clique no link para ativar sua conta.
               </p>
               <p className="text-sm text-muted-foreground">
-                Após confirmar, você poderá acessar o Hub Tailor com suas credenciais.
+                Após confirmar, você poderá acessar o Hub - Grupo Tailor Partners com suas credenciais.
               </p>
               <div className="pt-4 border-t border-border">
                 <p className="text-xs text-muted-foreground mb-2">Não recebeu?</p>
@@ -206,10 +205,8 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md animate-fade-in">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-display font-bold text-primary tracking-tight">Tailor</h1>
-          <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase mt-1">Partners</p>
-          <p className="text-sm text-muted-foreground mt-4">CRM Comercial</p>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <img src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png" alt="Tailor Partners" className="w-40" />
         </div>
 
         {isBlocked && (

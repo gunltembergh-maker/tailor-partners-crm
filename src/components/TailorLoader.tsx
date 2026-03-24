@@ -5,10 +5,7 @@ interface TailorLoaderProps {
 export default function TailorLoader({ overlay = true }: TailorLoaderProps) {
   const content = (
     <div className="flex flex-col items-center gap-4">
-      <div className="text-center">
-        <h1 className="text-2xl font-display font-bold text-primary">Tailor</h1>
-        <p className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">Partners</p>
-      </div>
+      <img src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png" alt="Tailor Partners" className="w-[140px]" />
       <p className="text-sm text-muted-foreground">Carregando...</p>
       <div className="h-8 w-8 rounded-full border-[3px] border-muted border-t-primary animate-spin" />
     </div>
