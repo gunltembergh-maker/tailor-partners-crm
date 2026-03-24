@@ -132,12 +132,13 @@ function DonutChart({ data, title }: { data: { name: string; value: number }[]; 
 }
 
 /* ─── SortableTable — scroll only, NO pagination ─── */
-function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
+function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow, fill }: {
   columns: { key: string; label: string; align?: "left" | "right"; fmt?: (v: any) => string }[];
   rows: Record<string, any>[];
   maxH?: number;
   searchKeys?: string[];
   footerRow?: Record<string, any>;
+  fill?: boolean;
 }) {
   const [sort, setSort] = useState<{ key: string; asc: boolean }>({ key: columns[0]?.key ?? "", asc: true });
   const [search, setSearch] = useState("");
