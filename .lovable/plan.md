@@ -1,40 +1,39 @@
 
-Objetivo: restaurar seu acesso completo de ADMIN corrigindo a leitura de permissões no frontend, sem mexer na lógica de dados do backend.
 
-1. Corrigir `src/hooks/useAuth.tsx`
-- Ajustar a leitura de `rpc_meu_perfil`, porque hoje o código trata o retorno como objeto único, mas o tipo gerado do projeto mostra que a RPC retorna uma lista.
-- Normalizar o retorno para algo como: “se vier array, usar o primeiro item; se vier objeto, usar ele”.
-- A partir disso, preencher corretamente:
-  - `role`
-  - `permissoes`
-  - `bankerName`
-  - `profile`
-- Manter o fallback antigo caso a RPC venha vazia ou com erro.
+# Logo Constants + Correct Usage
 
-2. Corrigir o estado de carregamento
-- Hoje a aplicação pode renderizar antes de concluir a leitura real do perfil/permissões.
-- Vou fazer o `loading` só terminar depois da busca do perfil terminar, para evitar a tela montar com acesso parcial.
-- Isso também evita “flash” de menu incompleto.
+## Files to create
+1. **`src/lib/constants.ts`** — New file with `LOGO_DARK_BG` and `LOGO_LIGHT_BG` constants
 
-3. Garantir compatibilidade com o menu atual
-- O `AppSidebar.tsx` já está preparado para liberar tudo quando `role === "ADMIN"` ou quando as permissões vêm preenchidas.
-- Como seu registro no banco já está correto (perfil ADMIN + permissões completas), a correção no `useAuth` deve restaurar todos os módulos automaticamente:
-  - Menu principal
-  - Importar Bases
-  - Auditoria Comercial
-  - Usuários
-  - Perfis de Acesso
+## Files to edit
+1. **`index.html`** — Add favicon `<link>` using the transparent logo URL
+2. **`src/components/AppSidebar.tsx`** — Import `LOGO_DARK_BG`, replace hardcoded URL, set width to 130px
+3. **`src/pages/Auth.tsx`** — Import `LOGO_DARK_BG`, replace both logo instances (login + confirmation), keep 160px
+4. **`src/components/TailorLoader.tsx`** — Import `LOGO_DARK_BG`, replace hardcoded URL, keep 140px
 
-4. Validar impacto nas outras áreas dependentes de role
-- Confirmar que a mesma correção também reativa corretamente:
-  - `ViewAsContext.tsx`
-  - qualquer trecho que dependa de `role` ou `permissoes`
-- Assim seu comportamento volta ao “como era antes”, não só no sidebar.
+## Details
 
-5. Resultado esperado
-- Após a implementação, ao entrar com `alessandro.oliveira@tailorpartners.com.br`, o app reconhecerá seu perfil ADMIN de forma consistente.
-- Seu acesso deixará de ficar preso apenas na visão de Dashboard.
+### New: `src/lib/constants.ts`
+```typescript
+export const LOGO_DARK_BG = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png";
+export const LOGO_LIGHT_BG = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logo_Tailor_transparente.png";
+```
 
-Detalhe técnico importante
-- Verifiquei seu cadastro no banco: ele já está correto, com `perfil_nome = ADMIN`, `role = ADMIN` e todas as permissões `true`.
-- O problema mais provável está no frontend, especificamente na interpretação incorreta do retorno de `rpc_meu_perfil`, não no seu usuário ou nas permissões salvas.
+### `index.html`
+- Add: `<link rel="icon" type="image/png" href="https://...logo_Tailor_transparente.png" />`
+
+### `AppSidebar.tsx`
+- Import `LOGO_DARK_BG` from constants
+- Replace hardcoded URL with `LOGO_DARK_BG`
+- Change `w-[120px]` → `w-[130px]`
+
+### `Auth.tsx`
+- Import `LOGO_DARK_BG` from constants
+- Replace both hardcoded logo URLs with `LOGO_DARK_BG`
+
+### `TailorLoader.tsx`
+- Import `LOGO_DARK_BG` from constants
+- Replace hardcoded URL with `LOGO_DARK_BG`
+
+No logic, RPC, or auth changes.
+
