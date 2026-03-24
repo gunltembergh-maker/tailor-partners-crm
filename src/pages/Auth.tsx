@@ -205,10 +205,8 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md animate-fade-in">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-display font-bold text-primary tracking-tight">Tailor</h1>
-          <p className="text-xs tracking-[0.3em] text-muted-foreground uppercase mt-1">Partners</p>
-          <p className="text-sm text-muted-foreground mt-4">CRM Comercial</p>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <img src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png" alt="Tailor Partners" className="w-40" />
         </div>
 
         {isBlocked && (

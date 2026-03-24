@@ -77,11 +77,9 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="px-6 py-5">
         <div className="cursor-pointer" onClick={() => navigate("/")}>
-          <h1 className="text-2xl font-display font-bold text-sidebar-primary tracking-tight">
-            Tailor
-          </h1>
-          <p className="text-[10px] tracking-[0.3em] text-sidebar-foreground/60 uppercase">
-            Partners CRM
+          <img src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png" alt="Tailor Partners" className="w-[120px]" />
+          <p className="text-[10px] tracking-[0.2em] text-sidebar-foreground/50 mt-1">
+            Hub - Grupo Tailor Partners
           </p>
         </div>
       </SidebarHeader>
