@@ -499,7 +499,7 @@ export function QualitativoTab({ filters }: Props) {
 
       {/* 2. AuC por Faixa de PL */}
       <PbiCard title="AuC por Faixa de PL">
-        <div className="flex items-center gap-4 px-2 py-1 text-[9px] text-muted-foreground">
+        <div className="flex items-center gap-4 px-2 py-1 text-[12px] text-[#111827] font-medium">
           <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#1a2e4a" }} /> NET</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#6bb8d4" }} /> PL Declarado Ajustado</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-0.5 rounded" style={{ backgroundColor: "#4a90d9" }} />● # Clientes</span>
