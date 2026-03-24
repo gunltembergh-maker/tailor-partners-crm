@@ -40,6 +40,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { session, role, loading } = useAuth();
+  if (loading) return <TailorLoader />;
+  if (!session) return <Navigate to="/auth" replace />;
+  if (!role || !['ADMIN', 'LIDER'].includes(role)) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   const { session, loading } = useAuth();
 
