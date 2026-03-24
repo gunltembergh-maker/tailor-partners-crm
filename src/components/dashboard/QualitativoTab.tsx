@@ -596,7 +596,7 @@ export function QualitativoTab({ filters }: Props) {
       {/* 7. ROA Anualizado Ponderado (por Tipo) + Tabela ROA M0 — side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-2">
         <PbiCard title="ROA Anualizado Ponderado">
-          <div className="flex items-center gap-4 px-2 py-1 text-[9px] text-muted-foreground">
+          <div className="flex items-center gap-4 px-2 py-1 text-[12px] text-[#111827] font-medium">
             {roaTipoKeys.map(k => (
               <span key={k} className="flex items-center gap-1">
                 <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ROA_TIPO_COLORS[k] || "#999" }} />
