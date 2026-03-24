@@ -71,11 +71,11 @@ function AppRoutes() {
       
       <Route path="/relatorios/dash-comercial" element={<ProtectedRoute><DashComercial /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
-      <Route path="/import-clients" element={<ProtectedRoute><ImportClients /></ProtectedRoute>} />
-      <Route path="/admin/importar-bases" element={<ProtectedRoute><ImportarBases /></ProtectedRoute>} />
-      <Route path="/admin/auditoria-comercial" element={<ProtectedRoute><AuditoriaComercial /></ProtectedRoute>} />
-      <Route path="/admin/perfis" element={<ProtectedRoute><GestaoProfiles /></ProtectedRoute>} />
-      <Route path="/admin/usuarios" element={<ProtectedRoute><GestaoUsuarios /></ProtectedRoute>} />
+      <Route path="/import-clients" element={<AdminRoute><ImportClients /></AdminRoute>} />
+      <Route path="/admin/importar-bases" element={<AdminRoute><ImportarBases /></AdminRoute>} />
+      <Route path="/admin/auditoria-comercial" element={<AdminRoute><AuditoriaComercial /></AdminRoute>} />
+      <Route path="/admin/perfis" element={<AdminRoute><GestaoProfiles /></AdminRoute>} />
+      <Route path="/admin/usuarios" element={<AdminRoute><GestaoUsuarios /></AdminRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
