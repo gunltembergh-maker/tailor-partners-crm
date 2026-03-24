@@ -1,4 +1,4 @@
-import { LOGO_DARK_BG } from "@/lib/constants";
+import { LOGO_LIGHT_BG } from "@/lib/constants";
 
 interface TailorLoaderProps {
   overlay?: boolean;
