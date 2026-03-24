@@ -3,12 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { ChevronUp, ChevronDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import {
   useCustodiaIndexador,
   useCustodiaVeiculo,
-  useVencimentosGrafico,
   useTodosAtivos,
   useTabelaVencimentos,
   useTabelaClientes,
@@ -25,15 +23,22 @@ import {
 } from "recharts";
 
 /* ─── Formatação pt-BR ─── */
-const formatPct = (v: number) => `${v.toFixed(2).replace(".", ",")}%`;
-const formatMi = (v: number) => `R$ ${(v / 1e6).toFixed(2).replace(".", ",")} Mi`;
-const formatBRL = (v: number) =>
+const fmtPct = (v: number) => v == null ? "—" : `${v.toFixed(2).replace(".", ",")}%`;
+const fmtMiInt = (v: number) => `R$ ${Math.round(v / 1e6)} Mi`;
+const fmtMi = (v: number) => `R$ ${(v / 1e6).toFixed(2).replace(".", ",")} Mi`;
+const fmtBRL = (v: number) =>
   v == null ? "—" : `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const formatD0 = (v: number) =>
-  v == null ? "—" : v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const formatDate = (v: string | null) => {
+const fmtBRLint = (v: number) =>
+  v == null ? "—" : `R$ ${Math.round(v).toLocaleString("pt-BR")}`;
+const fmtDateShort = (v: string | null) => {
   if (!v) return "—";
-  try { return new Date(v).toLocaleDateString("pt-BR"); } catch { return v; }
+  try {
+    const d = new Date(v);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${dd}/${mm}/${yy}`;
+  } catch { return v; }
 };
 
 /* ─── Colors ─── */
@@ -58,20 +63,17 @@ const VENC_PRODUCT_COLORS: Record<string, string> = {
   "Crédito Privado": "#27ae60",
   "Crédito Privado Global": "#95a5a6",
   "Emissão Bancária": "#2c3e50",
-  "Título Público": "#f39c12",
   "Letra Financeira": "#8e44ad",
   "Nota Estruturada": "#e8a838",
   "Produto Estruturado": "#16a085",
-  "Tesouro Direto": "#3498db",
-  "Previdência": "#1abc9c",
-  "Fundos": "#2980b9",
   "Renda Variável": "#e74c3c",
+  "Tesouro Direto": "#3498db",
+  "Título Público": "#f39c12",
 };
 
 const FAIXA_ORDER = ["Inativo", "-300k", "300k-500k", "500k-1M", "1-3M", "3-5M", "5-10M", "+10M"];
 
 /* ─── Sub-components ─── */
-
 interface Props { filters: DashboardFilters; }
 
 function PbiCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
@@ -85,47 +87,43 @@ function PbiCard({ title, children, className }: { title: string; children: Reac
   );
 }
 
-/* ─── Donut with external labels ─── */
+/* ─── Donut with labels ON slices ─── */
 function DonutChart({ data, title }: { data: { name: string; value: number }[]; title: string }) {
   const total = data.reduce((s, d) => s + d.value, 0);
-  const renderLabel = ({ cx, cy, midAngle, outerRadius, name, value, percent }: any) => {
+
+  const renderLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value, percent }: any) => {
     if (percent < 0.03) return null;
     const RADIAN = Math.PI / 180;
-    const sin = Math.sin(-RADIAN * midAngle);
-    const cos = Math.cos(-RADIAN * midAngle);
-    const mx = cx + (outerRadius + 10) * cos;
-    const my = cy + (outerRadius + 10) * sin;
-    const ex = cx + (outerRadius + 30) * cos;
-    const ey = cy + (outerRadius + 30) * sin;
-    const textAnchor = cos >= 0 ? "start" : "end";
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + (outerRadius + 14) * Math.cos(-RADIAN * midAngle);
+    const y = cy + (outerRadius + 14) * Math.sin(-RADIAN * midAngle);
+    const mi = (value / 1e6).toFixed(0);
+    const pctStr = (percent * 100).toFixed(0);
     return (
-      <g>
-        <path d={`M${cx + outerRadius * cos},${cy + outerRadius * sin}L${mx},${my}L${ex},${ey}`} stroke="#999" fill="none" strokeWidth={0.5} />
-        <text x={ex + (cos >= 0 ? 4 : -4)} y={ey} textAnchor={textAnchor} fill="#333" fontSize={9}>
-          {name} {formatMi(value)} ({(percent * 100).toFixed(0)}%)
-        </text>
-      </g>
+      <text x={x} y={y} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={8} fill="hsl(var(--foreground))">
+        R$ {mi} Mi ({pctStr}%)
+      </text>
     );
   };
+
   return (
     <div className="flex items-center">
       <div className="flex-1">
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={240}>
           <PieChart>
-            <Pie data={data} dataKey="value" nameKey="name" cx="45%" cy="50%" outerRadius={85} innerRadius={50}
+            <Pie data={data} dataKey="value" nameKey="name" cx="45%" cy="50%" outerRadius={80} innerRadius={45}
               label={renderLabel} labelLine={false} isAnimationActive={false}>
               {data.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
             </Pie>
-            <Tooltip formatter={(v: number) => [formatMi(v), ""]} />
+            <Tooltip formatter={(v: number) => [fmtMi(v), ""]} />
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="w-40 space-y-1 pr-2">
+      <div className="w-36 space-y-1 pr-2">
         {data.map((d, i) => (
           <div key={i} className="flex items-center gap-1.5 text-[9px]">
             <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
             <span className="truncate text-foreground">{d.name}</span>
-            <span className="ml-auto text-muted-foreground whitespace-nowrap">{formatMi(d.value)}</span>
           </div>
         ))}
       </div>
@@ -133,17 +131,15 @@ function DonutChart({ data, title }: { data: { name: string; value: number }[]; 
   );
 }
 
-/* ─── SortableTable with pagination, search, footer ─── */
-function SortableTable({ columns, rows, maxH = 400, pageSize = 50, searchKeys, footerRow }: {
+/* ─── SortableTable — scroll only, NO pagination ─── */
+function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
   columns: { key: string; label: string; align?: "left" | "right"; fmt?: (v: any) => string }[];
   rows: Record<string, any>[];
   maxH?: number;
-  pageSize?: number;
   searchKeys?: string[];
   footerRow?: Record<string, any>;
 }) {
   const [sort, setSort] = useState<{ key: string; asc: boolean }>({ key: columns[0]?.key ?? "", asc: true });
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -162,12 +158,8 @@ function SortableTable({ columns, rows, maxH = 400, pageSize = 50, searchKeys, f
     });
   }, [filtered, sort]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const paged = sorted.slice((page - 1) * pageSize, page * pageSize);
-
   const toggle = (key: string) => {
     setSort(prev => prev.key === key ? { key, asc: !prev.asc } : { key, asc: false });
-    setPage(1);
   };
 
   return (
@@ -179,19 +171,19 @@ function SortableTable({ columns, rows, maxH = 400, pageSize = 50, searchKeys, f
             className="h-7 pl-7 text-[10px]"
             placeholder="Buscar..."
             value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
       ) : null}
-      <div className="overflow-x-auto" style={{ maxHeight: maxH }}>
-        <Table>
-          <TableHeader>
-            <TableRow style={{ backgroundColor: "#1B2A3D" }}>
+      <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: maxH }}>
+        <table className="w-full text-sm border-collapse" style={{ minWidth: columns.length * 140 }}>
+          <thead className="sticky top-0 z-10">
+            <tr style={{ backgroundColor: "#1B2A3D" }}>
               {columns.map(c => (
-                <TableHead
+                <th
                   key={c.key}
-                  className={`text-[10px] py-1 cursor-pointer select-none text-white whitespace-nowrap ${c.align === "right" ? "text-right" : ""}`}
-                  style={{ minWidth: 150 }}
+                  className={`text-[10px] py-1.5 px-2 cursor-pointer select-none text-white whitespace-nowrap font-medium ${c.align === "right" ? "text-right" : "text-left"}`}
+                  style={{ minWidth: 140 }}
                   onClick={() => toggle(c.key)}
                 >
                   <span className="inline-flex items-center gap-0.5">
@@ -200,45 +192,36 @@ function SortableTable({ columns, rows, maxH = 400, pageSize = 50, searchKeys, f
                       ? sort.asc ? <ChevronUp className="h-2.5 w-2.5" /> : <ChevronDown className="h-2.5 w-2.5" />
                       : null}
                   </span>
-                </TableHead>
+                </th>
               ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paged.map((row, i) => (
-              <TableRow key={i} style={{ backgroundColor: i % 2 === 0 ? "var(--card)" : "var(--muted)" }}>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((row, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-card" : "bg-muted/40"}>
                 {columns.map(c => (
-                  <TableCell key={c.key} className={`text-[10px] py-1 whitespace-nowrap ${c.align === "right" ? "text-right" : ""}`}
-                    style={{ minWidth: 150 }}>
+                  <td key={c.key} className={`text-[10px] py-1 px-2 whitespace-nowrap ${c.align === "right" ? "text-right" : ""}`}
+                    style={{ minWidth: 140 }}>
                     {c.fmt ? c.fmt(row[c.key]) : (row[c.key] ?? "—")}
-                  </TableCell>
+                  </td>
                 ))}
-              </TableRow>
+              </tr>
             ))}
-          </TableBody>
+          </tbody>
           {footerRow && (
-            <TableFooter>
-              <TableRow className="font-semibold bg-muted/70">
+            <tfoot className="sticky bottom-0 z-10 bg-muted/80 font-semibold border-t border-border">
+              <tr>
                 {columns.map(c => (
-                  <TableCell key={c.key} className={`text-[10px] py-1 ${c.align === "right" ? "text-right" : ""}`}
-                    style={{ minWidth: 150 }}>
+                  <td key={c.key} className={`text-[10px] py-1.5 px-2 ${c.align === "right" ? "text-right" : ""}`}
+                    style={{ minWidth: 140 }}>
                     {footerRow[c.key] != null ? (c.fmt ? c.fmt(footerRow[c.key]) : footerRow[c.key]) : ""}
-                  </TableCell>
+                  </td>
                 ))}
-              </TableRow>
-            </TableFooter>
+              </tr>
+            </tfoot>
           )}
-        </Table>
+        </table>
       </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1">
-          <span>{sorted.length} registros — pág. {page}/{totalPages}</span>
-          <div className="flex gap-1">
-            <Button variant="outline" size="sm" className="h-6 text-[10px] px-2" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Anterior</Button>
-            <Button variant="outline" size="sm" className="h-6 text-[10px] px-2" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Próximo</Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -250,7 +233,7 @@ const RoaTooltip = ({ active, payload, label }: any) => {
     <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-[10px]">
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
       {payload.map((p: any, i: number) => (
-        <p key={i} style={{ color: p.color }}>{p.name}: {formatPct(Number(p.value))}</p>
+        <p key={i} style={{ color: p.color }}>{p.name}: {fmtPct(Number(p.value))}</p>
       ))}
     </div>
   );
@@ -263,7 +246,7 @@ const AucTooltip = ({ active, payload, label }: any) => {
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} style={{ color: p.color }}>
-          {p.name}: {p.name === "# Clientes" ? p.value : formatMi(Number(p.value))}
+          {p.name}: {p.name === "# Clientes" ? p.value : fmtMi(Number(p.value))}
         </p>
       ))}
     </div>
@@ -275,18 +258,30 @@ const VencAnoTooltip = ({ active, payload, label }: any) => {
   return (
     <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-[10px]">
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
-      {payload.map((p: any, i: number) => (
-        <p key={i} style={{ color: p.color }}>{p.name}: {formatMi(Number(p.value))}</p>
+      {payload.filter((p: any) => p.value > 0).map((p: any, i: number) => (
+        <p key={i} style={{ color: p.color }}>{p.name}: {fmtMi(Number(p.value))}</p>
       ))}
     </div>
   );
 };
 
+/* ─── ROA X-axis helper: 6-month ticks, descending order ─── */
+function roaAnomesToLabel(anomes: number) {
+  const y = Math.floor(anomes / 100);
+  const m = anomes % 100;
+  const months = ["", "jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  return `${months[m] || m} ${y}`;
+}
+
+function isJanOrJul(anomes: number) {
+  const m = anomes % 100;
+  return m === 1 || m === 7;
+}
+
 /* ─── Main Component ─── */
 export function QualitativoTab({ filters }: Props) {
   const { data: custIdxData, isLoading: l1 } = useCustodiaIndexador(filters);
   const { data: custVeiData, isLoading: l2 } = useCustodiaVeiculo(filters);
-  const { data: vencGraf, isLoading: l3 } = useVencimentosGrafico(filters);
   const { data: todosAtivos, isLoading: l4 } = useTodosAtivos(filters);
   const { data: tabelaVenc, isLoading: l5 } = useTabelaVencimentos(filters);
   const { data: tabelaCli, isLoading: l6 } = useTabelaClientes(filters);
@@ -296,9 +291,7 @@ export function QualitativoTab({ filters }: Props) {
   const { data: roaM0, isLoading: l10 } = useRoaM0Tabela(filters);
   const { data: vencAnoData, isLoading: l11 } = useVencimentosPorAno(filters);
 
-  const loading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11;
-
-  /* ─── Tabela Clientes data ─── */
+  /* ─── Tabela Clientes ─── */
   const clienteRows = useMemo(() =>
     (tabelaCli ?? []).map((r: any) => ({
       documento: r.documento,
@@ -348,14 +341,14 @@ export function QualitativoTab({ filters }: Props) {
     (custVeiData ?? []).map((r: any) => ({ name: r.produto_ajustado ?? "Outros", value: Number(r.total) || 0 }))
   , [custVeiData]);
 
-  /* ─── ROA por Tipo de Cliente (single chart, 2 lines) ─── */
+  /* ─── ROA por Tipo de Cliente — descending anomes (most recent LEFT) ─── */
   const roaTipoChart = useMemo(() => {
     if (!roaTipo?.length) return [];
-    const sorted = [...(roaTipo as any[])].sort((a, b) => a.anomes - b.anomes);
+    const sorted = [...(roaTipo as any[])].sort((a, b) => b.anomes - a.anomes);
     const meses = [...new Set(sorted.map(r => r.anomes))];
     return meses.map(anomes => {
       const items = sorted.filter(r => r.anomes === anomes);
-      const row: Record<string, any> = { mes: items[0]?.anomes_nome ?? String(anomes) };
+      const row: Record<string, any> = { mes: roaAnomesToLabel(anomes), anomes };
       items.forEach(r => { row[r.tipo_cliente] = Number(r.roa) || 0; });
       return row;
     });
@@ -365,14 +358,14 @@ export function QualitativoTab({ filters }: Props) {
     [...new Set((roaTipo ?? []).map((r: any) => r.tipo_cliente as string))].filter(Boolean)
   , [roaTipo]);
 
-  /* ─── ROA por Faixa PL (single chart, multi lines) ─── */
+  /* ─── ROA por Faixa PL — descending anomes ─── */
   const roaFaixaChart = useMemo(() => {
     if (!roaFaixa?.length) return [];
-    const sorted = [...(roaFaixa as any[])].sort((a, b) => a.anomes - b.anomes);
+    const sorted = [...(roaFaixa as any[])].sort((a, b) => b.anomes - a.anomes);
     const meses = [...new Set(sorted.map(r => r.anomes))];
     return meses.map(anomes => {
       const items = sorted.filter(r => r.anomes === anomes);
-      const row: Record<string, any> = { mes: items[0]?.anomes_nome ?? String(anomes) };
+      const row: Record<string, any> = { mes: roaAnomesToLabel(anomes), anomes };
       items.forEach(r => { row[r.faixa_pl] = Number(r.roa) || 0; });
       return row;
     });
@@ -414,29 +407,63 @@ export function QualitativoTab({ filters }: Props) {
       casa: r.casa,
       banker: r.banker,
       advisor: r.advisor,
-      finder: r.finder,
       tipo: r.tipo_cliente,
-      vencimento: r.vencimento,
     }))
   , [todosAtivos]);
 
   /* ─── Vencimentos Detalhado rows ─── */
   const vencRows = useMemo(() =>
     (tabelaVenc ?? []).map((r: any) => ({
-      produto: r.produto_ajustado,
+      documento: r.documento,
       ativo: r.ativo_ajustado,
+      net: Number(r.net) || 0,
+      vencimento: r.vencimento,
       indexador: r.indexador,
-      casa: r.casa,
+      veiculo: r.produto_ajustado,
       banker: r.banker,
       advisor: r.advisor,
-      finder: r.finder,
-      documento: r.documento,
-      vencimento: r.vencimento,
-      net: Number(r.net) || 0,
     }))
   , [tabelaVenc]);
 
-  if (loading) {
+  const vencFooter = useMemo(() => {
+    const sumNet = vencRows.reduce((s, r) => s + r.net, 0);
+    return { documento: "TOTAL", net: sumNet };
+  }, [vencRows]);
+
+  /* ─── ROA M0 rows + footer ─── */
+  const roaM0Rows = useMemo(() =>
+    (roaM0 ?? []).map((r: any) => ({
+      documento: r.documento,
+      roa: Number(r.roa) || 0,
+      faixa_pl: r.faixa_pl,
+    }))
+  , [roaM0]);
+
+  const roaM0Footer = useMemo(() => {
+    if (!roaM0Rows.length) return undefined;
+    const avg = roaM0Rows.reduce((s, r) => s + r.roa, 0) / roaM0Rows.length;
+    return { documento: "TOTAL", roa: avg };
+  }, [roaM0Rows]);
+
+  /* ─── ROA custom X tick ─── */
+  const Roa6MonthTick = ({ x, y, payload }: any) => {
+    const anomes = payload?.value;
+    // Find the anomes from chart data
+    const dataPoint = roaTipoChart.find(d => d.mes === anomes) || roaFaixaChart.find(d => d.mes === anomes);
+    const actualAnomes = dataPoint?.anomes;
+    if (actualAnomes && !isJanOrJul(actualAnomes)) return null;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text x={0} y={0} dy={12} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize={8}>
+          {anomes}
+        </text>
+      </g>
+    );
+  };
+
+  const anyLoading = l1 || l2 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11;
+
+  if (anyLoading) {
     return (
       <div className="space-y-3">
         {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-64 rounded-lg" />)}
@@ -450,17 +477,16 @@ export function QualitativoTab({ filters }: Props) {
       {/* 1. Tabela CLIENTES */}
       <PbiCard title="Clientes">
         <SortableTable
-          maxH={400}
-          pageSize={50}
+          maxH={300}
           searchKeys={["primeiro_nome", "documento"]}
           columns={[
             { key: "documento", label: "Documento" },
             { key: "cod_cliente", label: "Conta" },
-            { key: "d0", label: "Saldo D0", align: "right", fmt: formatD0 },
+            { key: "d0", label: "Saldo D0", align: "right", fmt: fmtBRL },
             { key: "primeiro_nome", label: "1º Nome" },
-            { key: "pl_tailor", label: "PL Tailor", align: "right", fmt: formatBRL },
-            { key: "pl_declarado_ajustado", label: "PL Declarado", align: "right", fmt: formatBRL },
-            { key: "sow_ajustado", label: "SoW", align: "right", fmt: formatPct },
+            { key: "pl_tailor", label: "PL Tailor", align: "right", fmt: fmtBRL },
+            { key: "pl_declarado_ajustado", label: "PL Declarado", align: "right", fmt: fmtBRL },
+            { key: "sow_ajustado", label: "SoW", align: "right", fmt: fmtPct },
             { key: "endereco", label: "Endereço" },
             { key: "banker", label: "Banker" },
             { key: "advisor", label: "Advisor" },
@@ -482,14 +508,14 @@ export function QualitativoTab({ filters }: Props) {
           <ComposedChart data={aucFaixaChart} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="faixa" tick={{ fontSize: 10 }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => formatMi(v)} />
+            <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
             <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
             <Tooltip content={<AucTooltip />} />
             <Bar yAxisId="left" dataKey="Net Em M" fill="#1a2e4a" name="NET" radius={[2, 2, 0, 0]}>
-              <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => formatMi(v)} style={{ fontSize: 8, fill: "#1a2e4a" }} />
+              <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `R$ ${Math.round(v / 1e6)} Mi`} style={{ fontSize: 8, fill: "#1a2e4a" }} />
             </Bar>
             <Bar yAxisId="left" dataKey="PL Declarado" fill="#6bb8d4" name="PL Declarado Ajustado" radius={[2, 2, 0, 0]}>
-              <LabelList dataKey="PL Declarado" position="top" formatter={(v: number) => formatMi(v)} style={{ fontSize: 8, fill: "#6bb8d4" }} />
+              <LabelList dataKey="PL Declarado" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 8, fill: "#6bb8d4" }} />
             </Bar>
             <Line yAxisId="right" type="monotone" dataKey="# Clientes" stroke="#4a90d9" strokeWidth={2} dot={{ r: 4, fill: "#4a90d9" }} name="# Clientes">
               <LabelList dataKey="# Clientes" position="top" style={{ fontSize: 9, fill: "#4a90d9" }} />
@@ -508,32 +534,115 @@ export function QualitativoTab({ filters }: Props) {
         </PbiCard>
       </div>
 
-      {/* 4. ROA por Tipo de Cliente */}
-      <PbiCard title="ROA Anualizado Ponderado">
-        <div className="flex items-center gap-4 px-2 py-1 text-[9px] text-muted-foreground">
-          {roaTipoKeys.map(k => (
-            <span key={k} className="flex items-center gap-1">
-              <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ROA_TIPO_COLORS[k] || "#999" }} />
-              {k}
-            </span>
-          ))}
-        </div>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={roaTipoChart} margin={{ top: 15, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical />
-            <XAxis dataKey="mes" tick={{ fontSize: 9 }} />
-            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => formatPct(v)} />
-            <Tooltip content={<RoaTooltip />} />
-            {roaTipoKeys.map(k => (
-              <Line key={k} type="monotone" dataKey={k} stroke={ROA_TIPO_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
-                <LabelList dataKey={k} position="top" formatter={(v: number) => formatPct(v)} style={{ fontSize: 8, fill: ROA_TIPO_COLORS[k] || "#999" }} />
-              </Line>
+      {/* 4. Todos os Ativos */}
+      <PbiCard title="Todos os Ativos">
+        <SortableTable
+          maxH={300}
+          columns={[
+            { key: "documento", label: "Documento" },
+            { key: "conta", label: "Conta" },
+            { key: "ativo", label: "Ativo Ajustado" },
+            { key: "net", label: "NET", align: "right", fmt: fmtBRLint },
+            { key: "indexador", label: "Indexador" },
+            { key: "veiculo", label: "Veículo" },
+            { key: "casa", label: "Casa" },
+            { key: "banker", label: "Banker" },
+            { key: "advisor", label: "Advisor" },
+            { key: "tipo", label: "Tipo" },
+          ]}
+          rows={ativosRows}
+        />
+      </PbiCard>
+
+      {/* 5. Vencimentos (stacked bar by year) */}
+      <PbiCard title="Vencimentos">
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={vencAnoChart} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="ano" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
+            <Tooltip content={<VencAnoTooltip />} />
+            <Legend wrapperStyle={{ fontSize: 9 }} />
+            {vencAnoProducts.map((p, i) => (
+              <Bar key={p} dataKey={p} stackId="a" fill={VENC_PRODUCT_COLORS[p] || DONUT_COLORS[i % DONUT_COLORS.length]} name={p}>
+                {i === vencAnoProducts.length - 1 && (
+                  <LabelList dataKey="_total" position="top" formatter={(v: number) => fmtMiInt(v)} style={{ fontSize: 8, fill: "hsl(var(--foreground))" }} />
+                )}
+              </Bar>
             ))}
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
       </PbiCard>
 
-      {/* 5. ROA por Faixa de PL */}
+      {/* 6. Vencimentos Detalhado */}
+      <PbiCard title="Vencimentos">
+        <SortableTable
+          maxH={300}
+          columns={[
+            { key: "documento", label: "Documento" },
+            { key: "ativo", label: "Ativo" },
+            { key: "net", label: "NET", align: "right", fmt: fmtBRL },
+            { key: "vencimento", label: "Vencimento", fmt: fmtDateShort },
+            { key: "indexador", label: "Indexador" },
+            { key: "veiculo", label: "Veículo" },
+            { key: "banker", label: "Banker" },
+            { key: "advisor", label: "Advisor" },
+          ]}
+          rows={vencRows}
+          footerRow={vencFooter}
+        />
+      </PbiCard>
+
+      {/* 7. ROA Anualizado Ponderado (por Tipo) + Tabela ROA M0 — side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-2">
+        <PbiCard title="ROA Anualizado Ponderado">
+          <div className="flex items-center gap-4 px-2 py-1 text-[9px] text-muted-foreground">
+            {roaTipoKeys.map(k => (
+              <span key={k} className="flex items-center gap-1">
+                <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ROA_TIPO_COLORS[k] || "#999" }} />
+                {k}
+              </span>
+            ))}
+          </div>
+          <div className="bg-white rounded p-1">
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={roaTipoChart} margin={{ top: 15, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical horizontal={false} />
+                {/* Vertical dashed grid at 6-month intervals */}
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
+                <XAxis dataKey="mes" tick={{ fontSize: 8, fill: "#666" }} interval={0}
+                  tickFormatter={(val) => {
+                    const dp = roaTipoChart.find(d => d.mes === val);
+                    return dp && isJanOrJul(dp.anomes) ? val : "";
+                  }}
+                />
+                <YAxis tick={{ fontSize: 9, fill: "#666" }} tickFormatter={(v) => fmtPct(v)} />
+                <Tooltip content={<RoaTooltip />} />
+                {roaTipoKeys.map(k => (
+                  <Line key={k} type="monotone" dataKey={k} stroke={ROA_TIPO_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
+                    <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 7, fill: ROA_TIPO_COLORS[k] || "#999" }} />
+                  </Line>
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </PbiCard>
+
+        <PbiCard title="ROA Anualizado Ponderado M0">
+          <SortableTable
+            maxH={200}
+            columns={[
+              { key: "documento", label: "Documento" },
+              { key: "roa", label: "ROA Anualizado Ponderado", align: "right", fmt: fmtPct },
+              { key: "faixa_pl", label: "Faixa PL" },
+            ]}
+            rows={roaM0Rows}
+            footerRow={roaM0Footer}
+          />
+        </PbiCard>
+      </div>
+
+      {/* 8. ROA por Faixa de PL (full width) */}
       <PbiCard title="ROA Anualizado Ponderado">
         <div className="flex items-center gap-3 flex-wrap px-2 py-1 text-[9px] text-muted-foreground">
           {roaFaixaKeys.map(k => (
@@ -543,98 +652,26 @@ export function QualitativoTab({ filters }: Props) {
             </span>
           ))}
         </div>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={roaFaixaChart} margin={{ top: 15, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical />
-            <XAxis dataKey="mes" tick={{ fontSize: 9 }} />
-            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => formatPct(v)} />
-            <Tooltip content={<RoaTooltip />} />
-            {roaFaixaKeys.map(k => (
-              <Line key={k} type="monotone" dataKey={k} stroke={ROA_FAIXA_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
-                <LabelList dataKey={k} position="top" formatter={(v: number) => formatPct(v)} style={{ fontSize: 7, fill: ROA_FAIXA_COLORS[k] || "#999" }} />
-              </Line>
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </PbiCard>
-
-      {/* 6. ROA M0 Tabela */}
-      <PbiCard title="ROA Anualizado Ponderado M0">
-        <SortableTable
-          maxH={300}
-          columns={[
-            { key: "documento", label: "Documento" },
-            { key: "faixa_pl", label: "Faixa PL" },
-            { key: "roa", label: "ROA", align: "right", fmt: formatPct },
-          ]}
-          rows={(roaM0 ?? []).map((r: any) => ({
-            documento: r.documento,
-            faixa_pl: r.faixa_pl,
-            roa: Number(r.roa) || 0,
-          }))}
-        />
-      </PbiCard>
-
-      {/* 7. Vencimentos por Ano (stacked) */}
-      <PbiCard title="Vencimentos por Ano">
-        <ResponsiveContainer width="100%" height={320}>
-          <BarChart data={vencAnoChart} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="ano" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => formatMi(v)} />
-            <Tooltip content={<VencAnoTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 9 }} />
-            {vencAnoProducts.map((p, i) => (
-              <Bar key={p} dataKey={p} stackId="a" fill={VENC_PRODUCT_COLORS[p] || DONUT_COLORS[i % DONUT_COLORS.length]} name={p}>
-                {i === vencAnoProducts.length - 1 && (
-                  <LabelList dataKey="_total" position="top" formatter={(v: number) => formatMi(v)} style={{ fontSize: 8, fill: "#333" }} />
-                )}
-              </Bar>
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-      </PbiCard>
-
-      {/* 8. Todos os Ativos */}
-      <PbiCard title="Todos os Ativos">
-        <SortableTable
-          maxH={400}
-          columns={[
-            { key: "documento", label: "Documento" },
-            { key: "conta", label: "Conta" },
-            { key: "ativo", label: "Ativo Ajustado" },
-            { key: "net", label: "NET", align: "right", fmt: formatBRL },
-            { key: "indexador", label: "Indexador" },
-            { key: "veiculo", label: "Veículo" },
-            { key: "casa", label: "Casa" },
-            { key: "banker", label: "Banker" },
-            { key: "advisor", label: "Advisor" },
-            { key: "finder", label: "Finder" },
-            { key: "tipo", label: "Tipo" },
-            { key: "vencimento", label: "Vencimento", fmt: formatDate },
-          ]}
-          rows={ativosRows}
-        />
-      </PbiCard>
-
-      {/* 9. Vencimentos Detalhado */}
-      <PbiCard title="Vencimentos — Detalhado">
-        <SortableTable
-          maxH={400}
-          columns={[
-            { key: "produto", label: "Produto" },
-            { key: "ativo", label: "Ativo" },
-            { key: "indexador", label: "Indexador" },
-            { key: "casa", label: "Casa" },
-            { key: "banker", label: "Banker" },
-            { key: "advisor", label: "Advisor" },
-            { key: "finder", label: "Finder" },
-            { key: "documento", label: "Documento" },
-            { key: "vencimento", label: "Vencimento", fmt: formatDate },
-            { key: "net", label: "NET", align: "right", fmt: formatBRL },
-          ]}
-          rows={vencRows}
-        />
+        <div className="bg-white rounded p-1">
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={roaFaixaChart} margin={{ top: 15, right: 20, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
+              <XAxis dataKey="mes" tick={{ fontSize: 8, fill: "#666" }} interval={0}
+                tickFormatter={(val) => {
+                  const dp = roaFaixaChart.find(d => d.mes === val);
+                  return dp && isJanOrJul(dp.anomes) ? val : "";
+                }}
+              />
+              <YAxis tick={{ fontSize: 9, fill: "#666" }} tickFormatter={(v) => fmtPct(v)} />
+              <Tooltip content={<RoaTooltip />} />
+              {roaFaixaKeys.map(k => (
+                <Line key={k} type="monotone" dataKey={k} stroke={ROA_FAIXA_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
+                  <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 7, fill: ROA_FAIXA_COLORS[k] || "#999" }} />
+                </Line>
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </PbiCard>
 
     </div>
