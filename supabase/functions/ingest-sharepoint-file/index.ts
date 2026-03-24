@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as XLSX from "npm:xlsx@0.18.5";
+import ExcelJS from "npm:exceljs@4.4.0";
 
 declare const EdgeRuntime: { waitUntil(p: Promise<void>): void };
 
@@ -66,11 +66,58 @@ function decodeURIComponentSafe(v: string | null) {
   }
 }
 
-function findSheet(workbook: XLSX.WorkBook, sheetName: string): string | undefined {
+function getCellValue(cell: any): unknown {
+  if (!cell || cell.value === null || cell.value === undefined) return null;
+  const v = cell.value;
+  if (typeof v === "object" && v !== null && "richText" in v) {
+    return (v.richText as { text: string }[]).map((r: any) => r.text).join("");
+  }
+  if (typeof v === "object" && v !== null && "result" in v) {
+    return v.result ?? null;
+  }
+  if (typeof v === "object" && v !== null && "text" in v && "hyperlink" in v) {
+    return v.text;
+  }
+  if (typeof v === "object" && v !== null && "error" in v) {
+    return null;
+  }
+  if (v instanceof Date) {
+    return v.toISOString().split("T")[0];
+  }
+  return v;
+}
+
+function worksheetToJson(ws: any): Record<string, unknown>[] {
+  const rows: Record<string, unknown>[] = [];
+  let headers: string[] = [];
+
+  ws.eachRow((row: any, rowNumber: number) => {
+    if (rowNumber === 1) {
+      headers = row.values
+        ? (row.values as any[]).slice(1).map((v: any) => (v != null ? String(v).trim() : `col_${rowNumber}`))
+        : [];
+      return;
+    }
+
+    const obj: Record<string, unknown> = {};
+    let hasValue = false;
+    for (let i = 0; i < headers.length; i++) {
+      const cell = row.getCell(i + 1);
+      const val = getCellValue(cell);
+      obj[headers[i]] = val;
+      if (val !== null && val !== undefined && val !== "") hasValue = true;
+    }
+    if (hasValue) rows.push(obj);
+  });
+
+  return rows;
+}
+
+function findWorksheet(workbook: any, sheetName: string): any | undefined {
   return (
-    workbook.SheetNames.find((s) => s === sheetName) ||
-    workbook.SheetNames.find((s) => s.toLowerCase() === sheetName.toLowerCase()) ||
-    workbook.SheetNames.find((s) => s.toLowerCase().includes(sheetName.toLowerCase()))
+    workbook.worksheets.find((ws: any) => ws.name === sheetName) ||
+    workbook.worksheets.find((ws: any) => ws.name.toLowerCase() === sheetName.toLowerCase()) ||
+    workbook.worksheets.find((ws: any) => ws.name.toLowerCase().includes(sheetName.toLowerCase()))
   );
 }
 
@@ -85,20 +132,21 @@ async function processFileJob(
   const mapping = SOURCE_MAP[sourceKey];
 
   try {
-    const workbook = XLSX.read(fileBytes, { type: "array" });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(fileBytes.buffer);
 
     let totalRows = 0;
     const errors: string[] = [];
 
     for (const [sheetName, tableName] of Object.entries(mapping.sheets)) {
-      const actualSheetName = findSheet(workbook, sheetName);
-      if (!actualSheetName) {
-        errors.push(`Sheet "${sheetName}" not found. Available: ${workbook.SheetNames.join(", ")}`);
+      const ws = findWorksheet(workbook, sheetName);
+      if (!ws) {
+        const available = workbook.worksheets.map((w: any) => w.name).join(", ");
+        errors.push(`Sheet "${sheetName}" not found. Available: ${available}`);
         continue;
       }
 
-      const sheet = workbook.Sheets[actualSheetName];
-      const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      const rows = worksheetToJson(ws);
       if (rows.length === 0) continue;
 
       const { error: delError } = await supabase.from(tableName).delete().gte("id", 0);
@@ -146,41 +194,33 @@ Deno.serve(async (req) => {
   const headers = { ...corsHeaders, "Content-Type": "application/json" };
 
   try {
-    // Auth por ingest-key
     const ingestKey = req.headers.get("x-ingest-key");
     const expectedKey = Deno.env.get("INGEST_KEY");
     if (!ingestKey || !expectedKey || ingestKey !== expectedKey) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
     }
 
-    // BINÁRIO-ONLY: exige x-source-key
     const sourceKey = req.headers.get("x-source-key");
     const fileName = decodeURIComponentSafe(req.headers.get("x-file-name"));
     const sourcePath = decodeURIComponentSafe(req.headers.get("x-source-path"));
 
     if (!sourceKey) {
       return new Response(
-        JSON.stringify({
-          error: "Missing header x-source-key (Power Automate must send it).",
-        }),
+        JSON.stringify({ error: "Missing header x-source-key (Power Automate must send it)." }),
         { status: 400, headers },
       );
     }
 
     if (!SOURCE_MAP[sourceKey]) {
       return new Response(
-        JSON.stringify({
-          error: `Unknown sourceKey: ${sourceKey}. Valid: ${Object.keys(SOURCE_MAP).join(", ")}`,
-        }),
+        JSON.stringify({ error: `Unknown sourceKey: ${sourceKey}. Valid: ${Object.keys(SOURCE_MAP).join(", ")}` }),
         { status: 400, headers },
       );
     }
 
-    // Lê binário
     const ab = await req.arrayBuffer();
     const fileBytes = new Uint8Array(ab);
 
-    // Log “received”
     const supabase = getSupabaseClient();
     const { data: logRow, error: logError } = await supabase
       .from("sync_logs")
@@ -201,10 +241,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Background job
     EdgeRuntime.waitUntil(processFileJob(logRow.id, sourceKey, fileBytes, fileName || null, sourcePath || null));
 
-    // Power Automate precisa 200 OK
     return new Response(
       JSON.stringify({
         ok: true,
