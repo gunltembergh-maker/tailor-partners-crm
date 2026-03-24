@@ -610,7 +610,7 @@ export function QualitativoTab({ filters }: Props) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical horizontal={false} />
                 {/* Vertical dashed grid at 6-month intervals */}
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 8, fill: "#666" }} interval={0}
+                <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#374151" }} interval={0}
                   tickFormatter={(val) => {
                     const dp = roaTipoChart.find(d => d.mes === val);
                     return dp && isJanOrJul(dp.anomes) ? val : "";
