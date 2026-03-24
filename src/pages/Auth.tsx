@@ -207,7 +207,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8 flex flex-col items-center">
-          <img src={LOGO_DARK_BG} alt="Tailor Partners" className="w-40" />
+          <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-40" />
         </div>
 
         {isBlocked && (
