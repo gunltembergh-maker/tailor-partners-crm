@@ -7,7 +7,7 @@ interface TailorLoaderProps {
 export default function TailorLoader({ overlay = true }: TailorLoaderProps) {
   const content = (
     <div className="flex flex-col items-center gap-4">
-      <img src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png" alt="Tailor Partners" className="w-[140px]" />
+      <img src={LOGO_DARK_BG} alt="Tailor Partners" className="w-[140px]" />
       <p className="text-sm text-muted-foreground">Carregando...</p>
       <div className="h-8 w-8 rounded-full border-[3px] border-muted border-t-primary animate-spin" />
     </div>
