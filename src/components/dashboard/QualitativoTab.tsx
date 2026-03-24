@@ -121,9 +121,9 @@ function DonutChart({ data, title }: { data: { name: string; value: number }[]; 
       </div>
       <div className="w-36 space-y-1 pr-2">
         {data.map((d, i) => (
-          <div key={i} className="flex items-center gap-1.5 text-[9px]">
+          <div key={i} className="flex items-center gap-1.5 text-[12px]">
             <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-            <span className="truncate text-foreground">{d.name}</span>
+            <span className="truncate text-[#111827] font-medium">{d.name}</span>
           </div>
         ))}
       </div>
