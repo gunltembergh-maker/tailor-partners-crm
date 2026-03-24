@@ -616,7 +616,7 @@ export function QualitativoTab({ filters }: Props) {
                     return dp && isJanOrJul(dp.anomes) ? val : "";
                   }}
                 />
-                <YAxis tick={{ fontSize: 9, fill: "#666" }} tickFormatter={(v) => fmtPct(v)} />
+                <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => fmtPct(v)} />
                 <Tooltip content={<RoaTooltip />} />
                 {roaTipoKeys.map(k => (
                   <Line key={k} type="monotone" dataKey={k} stroke={ROA_TIPO_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
