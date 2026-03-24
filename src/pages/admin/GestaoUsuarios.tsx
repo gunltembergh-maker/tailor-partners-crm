@@ -213,7 +213,7 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_remover_precadastro", {
+      const { data, error } = await supabase.rpc("rpc_admin_remover_precadastro" as any, {
         p_email: deleteUser.email,
       });
       if (error) throw error;
