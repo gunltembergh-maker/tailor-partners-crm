@@ -101,7 +101,7 @@ export default function GestaoUsuarios() {
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_admin_lista_usuarios");
+      const { data, error } = await supabase.rpc("rpc_admin_lista_usuarios" as any);
       if (error) throw error;
       return data as unknown as Usuario[];
     },

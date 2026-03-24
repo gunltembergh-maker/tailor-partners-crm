@@ -67,6 +67,7 @@ function AppRoutes() {
       <Route path="/admin/importar-bases" element={<ProtectedRoute><ImportarBases /></ProtectedRoute>} />
       <Route path="/admin/auditoria-comercial" element={<ProtectedRoute><AuditoriaComercial /></ProtectedRoute>} />
       <Route path="/admin/perfis" element={<ProtectedRoute><GestaoProfiles /></ProtectedRoute>} />
+      <Route path="/admin/usuarios" element={<ProtectedRoute><GestaoUsuarios /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
