@@ -336,10 +336,13 @@ export type Database = {
         Row: {
           active: boolean
           avatar_url: string | null
+          banker_name: string | null
+          blocked: boolean | null
           created_at: string
           email: string
           full_name: string
           id: string
+          nome: string | null
           phone: string | null
           updated_at: string
           user_id: string
@@ -347,10 +350,13 @@ export type Database = {
         Insert: {
           active?: boolean
           avatar_url?: string | null
+          banker_name?: string | null
+          blocked?: boolean | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          nome?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -358,10 +364,13 @@ export type Database = {
         Update: {
           active?: boolean
           avatar_url?: string | null
+          banker_name?: string | null
+          blocked?: boolean | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          nome?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -958,29 +967,38 @@ export type Database = {
       }
       team_reference: {
         Row: {
+          banker_name: string | null
+          blocked: boolean | null
           codigo_xp: string | null
           created_at: string
           email: string | null
           full_name: string
           id: string
+          nome: string | null
           short_name: string
           unit: string
         }
         Insert: {
+          banker_name?: string | null
+          blocked?: boolean | null
           codigo_xp?: string | null
           created_at?: string
           email?: string | null
           full_name: string
           id?: string
+          nome?: string | null
           short_name: string
           unit: string
         }
         Update: {
+          banker_name?: string | null
+          blocked?: boolean | null
           codigo_xp?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
           id?: string
+          nome?: string | null
           short_name?: string
           unit?: string
         }
@@ -1719,6 +1737,25 @@ export type Database = {
         }
         Relationships: []
       }
+      view_depara: {
+        Row: {
+          codigo_assessor: string | null
+          email: string | null
+          log_hub: string | null
+          nome_completo: string | null
+          nome_encurtado: string | null
+          unidade_negocio: string | null
+        }
+        Relationships: []
+      }
+      view_desligados: {
+        Row: {
+          nome_completo: string | null
+          nome_encurtado: string | null
+          nome_normalizado: string | null
+        }
+        Relationships: []
+      }
       view_diversificador: {
         Row: {
           advisor: string | null
@@ -2123,8 +2160,26 @@ export type Database = {
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
       norm_txt: { Args: { v: string }; Returns: string }
+      normalize_banker: { Args: { v: string }; Returns: string }
       parse_num: { Args: { v: string }; Returns: number }
       parse_num_any: { Args: { v: string }; Returns: number }
+      rpc_admin_bloquear_usuario: {
+        Args: { p_blocked: boolean; p_email: string }
+        Returns: Json
+      }
+      rpc_admin_remover_precadastro: {
+        Args: { p_email: string }
+        Returns: Json
+      }
+      rpc_admin_salvar_usuario: {
+        Args: {
+          p_banker_name?: string
+          p_email: string
+          p_nome: string
+          p_role: string
+        }
+        Returns: Json
+      }
       rpc_auc_casa: {
         Args: {
           p_advisor?: string[]
@@ -2390,6 +2445,25 @@ export type Database = {
           clientes: number
           faixa_pl: string
           ordem_pl: number
+        }[]
+      }
+      rpc_filtro_anomes: {
+        Args: never
+        Returns: {
+          anomes: number
+          anomes_nome: string
+        }[]
+      }
+      rpc_filtro_financial_advisors: {
+        Args: { p_role?: string }
+        Returns: {
+          banker: string
+        }[]
+      }
+      rpc_filtro_finders: {
+        Args: never
+        Returns: {
+          finder: string
         }[]
       }
       rpc_receita_drilldown: {

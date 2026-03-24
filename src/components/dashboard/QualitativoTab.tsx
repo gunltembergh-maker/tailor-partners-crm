@@ -513,7 +513,7 @@ export function QualitativoTab({ filters }: Props) {
             <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#374151" }} />
             <Tooltip content={<AucTooltip />} />
             <Bar yAxisId="left" dataKey="Net Em M" fill="#1a2e4a" name="NET" radius={[2, 2, 0, 0]}>
-              <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `R$ ${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
+              <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
             </Bar>
             <Bar yAxisId="left" dataKey="PL Declarado" fill="#6bb8d4" name="PL Declarado Ajustado" radius={[2, 2, 0, 0]}>
               <LabelList dataKey="PL Declarado" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
@@ -567,7 +567,7 @@ export function QualitativoTab({ filters }: Props) {
             {vencAnoProducts.map((p, i) => (
               <Bar key={p} dataKey={p} stackId="a" fill={VENC_PRODUCT_COLORS[p] || DONUT_COLORS[i % DONUT_COLORS.length]} name={p}>
                 {i === vencAnoProducts.length - 1 && (
-                  <LabelList dataKey="_total" position="top" formatter={(v: number) => fmtMiInt(v)} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
+                  <LabelList dataKey="_total" position="top" formatter={(v: number) => `${Math.round(v / 1e6)}MI`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
                 )}
               </Bar>
             ))}
@@ -629,9 +629,9 @@ export function QualitativoTab({ filters }: Props) {
           </div>
         </PbiCard>
 
-        <PbiCard title="ROA Anualizado Ponderado M0" fill>
+        <PbiCard title="ROA Anualizado Ponderado M0">
           <SortableTable
-            fill
+            maxH={300}
             columns={[
               { key: "documento", label: "Documento" },
               { key: "roa", label: "ROA Anualizado Ponderado", align: "right", fmt: fmtPct },
