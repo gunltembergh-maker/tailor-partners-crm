@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,19 +15,19 @@ import { cn } from "@/lib/utils";
 // ──────────────────────────────────────────────────────────────────────────────
 
 type SheetMapping = {
-  sheet: string;          // nome exato da aba no Excel
-  table: string;          // nome da tabela no Supabase (schema public)
-  label: string;          // label amigável para o usuário
-  required: boolean;      // se é obrigatória para o dashboard funcionar
+  sheet: string;
+  table: string;
+  label: string;
+  required: boolean;
 };
 
 type BaseConfig = {
   id: string;
-  label: string;          // nome exibido no card
-  description: string;    // dica para o usuário
-  acceptedFiles: string[]; // nomes de arquivo aceitos (sem extensão, lowercase)
+  label: string;
+  description: string;
+  acceptedFiles: string[];
   sheets: SheetMapping[];
-  color: string;          // cor do card
+  color: string;
 };
 
 const BASES: BaseConfig[] = [
@@ -38,18 +38,8 @@ const BASES: BaseConfig[] = [
     acceptedFiles: ["base_receita", "basereceita"],
     color: "#4472C4",
     sheets: [
-      {
-        sheet: "Comissões",
-        table: "raw_comissoes_m0",
-        label: "Comissões (mês atual)",
-        required: true,
-      },
-      {
-        sheet: "Comissões Histórico",
-        table: "raw_comissoes_historico",
-        label: "Comissões Histórico",
-        required: true,
-      },
+      { sheet: "Comissões", table: "raw_comissoes_m0", label: "Comissões (mês atual)", required: true },
+      { sheet: "Comissões Histórico", table: "raw_comissoes_historico", label: "Comissões Histórico", required: true },
     ],
   },
   {
@@ -59,18 +49,8 @@ const BASES: BaseConfig[] = [
     acceptedFiles: ["captacao", "captação"],
     color: "#ED7D31",
     sheets: [
-      {
-        sheet: "Captação Total",
-        table: "raw_captacao_total",
-        label: "Captação Total (mês atual)",
-        required: true,
-      },
-      {
-        sheet: "Captação Histórico",
-        table: "raw_captacao_historico",
-        label: "Captação Histórico",
-        required: true,
-      },
+      { sheet: "Captação Total", table: "raw_captacao_total", label: "Captação Total (mês atual)", required: true },
+      { sheet: "Captação Histórico", table: "raw_captacao_historico", label: "Captação Histórico", required: true },
     ],
   },
   {
@@ -80,12 +60,7 @@ const BASES: BaseConfig[] = [
     acceptedFiles: ["base_contas", "basecontas"],
     color: "#A5A5A5",
     sheets: [
-      {
-        sheet: "Contas Total",
-        table: "raw_contas_total",
-        label: "Contas Total",
-        required: true,
-      },
+      { sheet: "Contas Total", table: "raw_contas_total", label: "Contas Total", required: true },
     ],
   },
   {
@@ -95,30 +70,10 @@ const BASES: BaseConfig[] = [
     acceptedFiles: ["positivador"],
     color: "#5B9BD5",
     sheets: [
-      {
-        sheet: "Positivador Total Agrupado",
-        table: "raw_positivador_total_agrupado",
-        label: "Total Agrupado (Faixa PL)",
-        required: true,
-      },
-      {
-        sheet: "Positivador Total Desagrupado",
-        table: "raw_positivador_total_desagrupado",
-        label: "Total Desagrupado (AuC por Casa)",
-        required: true,
-      },
-      {
-        sheet: "Positivador M0 Desagrupado",
-        table: "raw_positivador_m0_desagrupado",
-        label: "M0 Desagrupado (donut)",
-        required: true,
-      },
-      {
-        sheet: "Positivador M0 Agrupado",
-        table: "raw_positivador_m0_agrupado",
-        label: "M0 Agrupado",
-        required: false,
-      },
+      { sheet: "Positivador Total Agrupado", table: "raw_positivador_total_agrupado", label: "Total Agrupado (Faixa PL)", required: true },
+      { sheet: "Positivador Total Desagrupado", table: "raw_positivador_total_desagrupado", label: "Total Desagrupado (AuC por Casa)", required: true },
+      { sheet: "Positivador M0 Desagrupado", table: "raw_positivador_m0_desagrupado", label: "M0 Desagrupado (donut)", required: true },
+      { sheet: "Positivador M0 Agrupado", table: "raw_positivador_m0_agrupado", label: "M0 Agrupado", required: false },
     ],
   },
   {
@@ -128,12 +83,7 @@ const BASES: BaseConfig[] = [
     acceptedFiles: ["diversificador"],
     color: "#70AD47",
     sheets: [
-      {
-        sheet: "Diversificador Consolidado",
-        table: "raw_diversificador_consolidado",
-        label: "Diversificador Consolidado",
-        required: true,
-      },
+      { sheet: "Diversificador Consolidado", table: "raw_diversificador_consolidado", label: "Diversificador Consolidado", required: true },
     ],
   },
   {
@@ -143,18 +93,8 @@ const BASES: BaseConfig[] = [
     acceptedFiles: ["depara"],
     color: "#264478",
     sheets: [
-      {
-        sheet: "Base CRM",
-        table: "raw_base_crm",
-        label: "Base CRM",
-        required: true,
-      },
-      {
-        sheet: "DePara",
-        table: "raw_depara",
-        label: "DePara (assessores)",
-        required: true,
-      },
+      { sheet: "Base CRM", table: "raw_base_crm", label: "Base CRM", required: true },
+      { sheet: "DePara", table: "raw_depara", label: "DePara (assessores)", required: true },
     ],
   },
 ];
@@ -181,10 +121,7 @@ type BaseResult = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function normalizeFileName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/\.[^.]+$/, "")  // remove extensão
-    .replace(/[\s_-]/g, "");
+  return name.toLowerCase().replace(/\.[^.]+$/, "").replace(/[\s_-]/g, "");
 }
 
 function detectBase(filename: string): BaseConfig | null {
@@ -196,22 +133,18 @@ async function truncateAndInsert(
   table: string,
   rows: Record<string, unknown>[]
 ): Promise<{ ok: boolean; error?: string }> {
-  // 1. Truncar
   const { error: delErr } = await supabase.from(table as any).delete().neq("id", 0);
-  // fallback: se não tiver coluna id, tenta delete sem filtro
   if (delErr) {
     const { error: delErr2 } = await (supabase.from(table as any) as any)
       .delete()
       .gte("created_at", "1970-01-01");
     if (delErr2) {
-      // última tentativa: rpc truncate
       await supabase.rpc("truncate_table" as any, { tbl: table });
     }
   }
 
   if (rows.length === 0) return { ok: true };
 
-  // 2. Inserir em lotes de 500
   const BATCH = 500;
   for (let i = 0; i < rows.length; i += BATCH) {
     const batch = rows.slice(i, i + BATCH).map(row => ({ data: row }));
@@ -221,59 +154,73 @@ async function truncateAndInsert(
   return { ok: true };
 }
 
-function excelDateToISO(serial: number): string {
-  // Converte número serial do Excel para data ISO (YYYY-MM-DD)
-  const utc_days = Math.floor(serial - 25569);
-  const utc_value = utc_days * 86400;
-  const date = new Date(utc_value * 1000);
-  return date.toISOString().split("T")[0];
+function getCellValue(cell: ExcelJS.Cell): unknown {
+  if (!cell || cell.value === null || cell.value === undefined) return null;
+  const v = cell.value;
+  // ExcelJS rich text
+  if (typeof v === "object" && v !== null && "richText" in (v as any)) {
+    return ((v as any).richText as { text: string }[]).map(r => r.text).join("");
+  }
+  // ExcelJS formula result
+  if (typeof v === "object" && v !== null && "result" in (v as any)) {
+    return (v as any).result ?? null;
+  }
+  // ExcelJS hyperlink
+  if (typeof v === "object" && v !== null && "text" in (v as any) && "hyperlink" in (v as any)) {
+    return (v as any).text;
+  }
+  // ExcelJS error
+  if (typeof v === "object" && v !== null && "error" in (v as any)) {
+    return null;
+  }
+  if (v instanceof Date) {
+    return v.toISOString().split("T")[0];
+  }
+  return v;
+}
+
+function worksheetToJson(ws: ExcelJS.Worksheet): Record<string, unknown>[] {
+  const rows: Record<string, unknown>[] = [];
+  let headers: string[] = [];
+
+  ws.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) {
+      headers = row.values
+        ? (row.values as any[]).slice(1).map((v: any) => (v != null ? String(v).trim() : `col_${rowNumber}`))
+        : [];
+      return;
+    }
+
+    const obj: Record<string, unknown> = {};
+    const vals = row.values ? (row.values as any[]).slice(1) : [];
+    let hasValue = false;
+    for (let i = 0; i < headers.length; i++) {
+      const cell = row.getCell(i + 1);
+      const val = getCellValue(cell);
+      obj[headers[i]] = val;
+      if (val !== null && val !== undefined && val !== "") hasValue = true;
+    }
+    if (hasValue) rows.push(obj);
+  });
+
+  return rows;
 }
 
 function readSheet(
-  workbook: XLSX.WorkBook,
+  workbook: ExcelJS.Workbook,
   sheetName: string
 ): Record<string, unknown>[] | null {
-  const ws = workbook.Sheets[sheetName];
+  let ws = workbook.getWorksheet(sheetName);
+  if (!ws) {
+    // fallback: case-insensitive or partial match
+    ws = workbook.worksheets.find(
+      w => w.name.toLowerCase() === sheetName.toLowerCase()
+    ) || workbook.worksheets.find(
+      w => w.name.toLowerCase().includes(sheetName.toLowerCase())
+    );
+  }
   if (!ws) return null;
-
-  // raw: true → preserva números como number (evita "270,000.00")
-  // cellDates: true → converte datas automaticamente
-  // defval: null → células vazias viram null
-  const rows = XLSX.utils.sheet_to_json(ws, {
-    defval: null,
-    raw: false,
-    cellDates: true,
-  } as any);
-
-  // Normalizar valores: datas para string ISO, números ficam como number
-  return (rows as Record<string, unknown>[]).map((row) => {
-    const normalized: Record<string, unknown> = {};
-    for (const [key, val] of Object.entries(row)) {
-      if (val instanceof Date) {
-        // Formata como "YYYY-MM-DD" para o Postgres
-        normalized[key] = val.toISOString().split("T")[0];
-      } else if (typeof val === "number") {
-        // Verificar se é número serial de data do Excel (entre 1 e 50000)
-        // Só converte se a coluna se chamar algo relacionado a data
-        const keyLower = key.toLowerCase();
-        if (
-          (keyLower.includes("data") ||
-            keyLower.includes("date") ||
-            keyLower.includes("dt_") ||
-            keyLower.includes("nascimento") ||
-            keyLower.includes("vencimento")) &&
-          val > 1000 && val < 55000
-        ) {
-          normalized[key] = excelDateToISO(val);
-        } else {
-          normalized[key] = val;
-        }
-      } else {
-        normalized[key] = val;
-      }
-    }
-    return normalized;
-  });
+  return worksheetToJson(ws);
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -283,7 +230,6 @@ export default function ImportarBases() {
   const [processing, setProcessing] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  // ─── Processar arquivo drop ───────────────────────────────────────────────
   const processFile = useCallback(async (file: File) => {
     const base = detectBase(file.name);
     if (!base) {
@@ -295,17 +241,12 @@ export default function ImportarBases() {
 
     const resultId = base.id;
     const sheetResults: SheetResult[] = base.sheets.map(s => ({
-      sheet: s.sheet,
-      table: s.table,
-      label: s.label,
-      status: "reading" as SheetStatus,
-      rows: 0,
+      sheet: s.sheet, table: s.table, label: s.label,
+      status: "reading" as SheetStatus, rows: 0,
     }));
 
-    // Adiciona/atualiza o resultado
     const newResult: BaseResult = {
-      baseId: base.id,
-      label: base.label,
+      baseId: base.id, label: base.label,
       timestamp: new Date().toLocaleString("pt-BR"),
       sheets: sheetResults,
     };
@@ -315,35 +256,26 @@ export default function ImportarBases() {
     });
     setExpanded(prev => new Set(prev).add(resultId));
 
-    // Ler o arquivo Excel
     const buffer = await file.arrayBuffer();
-    let workbook: XLSX.WorkBook;
+    let workbook: ExcelJS.Workbook;
     try {
-      workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+      workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(buffer);
     } catch (e) {
       setResults(prev =>
         prev.map(r =>
           r.baseId === resultId
-            ? {
-                ...r,
-                sheets: r.sheets.map(s => ({
-                  ...s,
-                  status: "error" as SheetStatus,
-                  error: "Erro ao ler o arquivo Excel",
-                })),
-              }
+            ? { ...r, sheets: r.sheets.map(s => ({ ...s, status: "error" as SheetStatus, error: "Erro ao ler o arquivo Excel" })) }
             : r
         )
       );
       return;
     }
 
-    // Processar cada aba
     for (const sheetDef of base.sheets) {
       const rows = readSheet(workbook, sheetDef.sheet);
 
       if (rows === null) {
-        // Aba não encontrada
         setResults(prev =>
           prev.map(r =>
             r.baseId === resultId
@@ -351,13 +283,7 @@ export default function ImportarBases() {
                   ...r,
                   sheets: r.sheets.map(s =>
                     s.sheet === sheetDef.sheet
-                      ? {
-                          ...s,
-                          status: "not_found" as SheetStatus,
-                          error: sheetDef.required
-                            ? `Aba "${sheetDef.sheet}" não encontrada no arquivo`
-                            : `Aba "${sheetDef.sheet}" não encontrada (opcional)`,
-                        }
+                      ? { ...s, status: "not_found" as SheetStatus, error: sheetDef.required ? `Aba "${sheetDef.sheet}" não encontrada no arquivo` : `Aba "${sheetDef.sheet}" não encontrada (opcional)` }
                       : s
                   ),
                 }
@@ -367,41 +293,20 @@ export default function ImportarBases() {
         continue;
       }
 
-      // Atualizar status para uploading
       setResults(prev =>
         prev.map(r =>
           r.baseId === resultId
-            ? {
-                ...r,
-                sheets: r.sheets.map(s =>
-                  s.sheet === sheetDef.sheet
-                    ? { ...s, status: "uploading" as SheetStatus, rows: rows.length }
-                    : s
-                ),
-              }
+            ? { ...r, sheets: r.sheets.map(s => s.sheet === sheetDef.sheet ? { ...s, status: "uploading" as SheetStatus, rows: rows.length } : s) }
             : r
         )
       );
 
-      // Upload para Supabase
       const { ok, error } = await truncateAndInsert(sheetDef.table, rows);
 
       setResults(prev =>
         prev.map(r =>
           r.baseId === resultId
-            ? {
-                ...r,
-                sheets: r.sheets.map(s =>
-                  s.sheet === sheetDef.sheet
-                    ? {
-                        ...s,
-                        status: ok ? ("done" as SheetStatus) : ("error" as SheetStatus),
-                        rows: rows.length,
-                        error: error,
-                      }
-                    : s
-                ),
-              }
+            ? { ...r, sheets: r.sheets.map(s => s.sheet === sheetDef.sheet ? { ...s, status: ok ? ("done" as SheetStatus) : ("error" as SheetStatus), rows: rows.length, error } : s) }
             : r
         )
       );
@@ -438,7 +343,6 @@ export default function ImportarBases() {
     });
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <AppLayout>
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
@@ -449,14 +353,11 @@ export default function ImportarBases() {
         </p>
       </div>
 
-      {/* Drop zone */}
       <div
         {...getRootProps()}
         className={cn(
           "border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors",
-          isDragActive
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+          isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50 hover:bg-gray-100"
         )}
       >
         <input {...getInputProps()} />
@@ -465,12 +366,8 @@ export default function ImportarBases() {
           <p className="text-blue-600 font-medium">Solte os arquivos aqui…</p>
         ) : (
           <>
-            <p className="font-medium text-gray-700">
-              Arraste arquivos aqui ou clique para selecionar
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              .xlsm, .xlsx — Base Receita, Captação, Base Contas, Positivador, Diversificador, DePara
-            </p>
+            <p className="font-medium text-gray-700">Arraste arquivos aqui ou clique para selecionar</p>
+            <p className="text-xs text-gray-400 mt-1">.xlsm, .xlsx — Base Receita, Captação, Base Contas, Positivador, Diversificador, DePara</p>
           </>
         )}
         {processing && (
@@ -481,22 +378,16 @@ export default function ImportarBases() {
         )}
       </div>
 
-      {/* Mapa de bases esperadas */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
           <Info size={14} className="text-gray-400" />
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Abas importadas por arquivo
-          </span>
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Abas importadas por arquivo</span>
         </div>
         <div className="divide-y divide-gray-100">
           {BASES.map(base => (
             <div key={base.id} className="px-4 py-2.5">
               <div className="flex items-start gap-3">
-                <div
-                  className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
-                  style={{ background: base.color }}
-                />
+                <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: base.color }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800">{base.label}</p>
                   <p className="text-xs text-gray-400">{base.description}</p>
@@ -506,15 +397,11 @@ export default function ImportarBases() {
                         key={s.sheet}
                         className={cn(
                           "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                          s.required
-                            ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : "bg-gray-100 text-gray-500 border border-gray-200"
+                          s.required ? "bg-blue-50 text-blue-700 border border-blue-200" : "bg-gray-100 text-gray-500 border border-gray-200"
                         )}
                       >
                         {s.label}
-                        {!s.required && (
-                          <span className="text-gray-400">(opcional)</span>
-                        )}
+                        {!s.required && <span className="text-gray-400">(opcional)</span>}
                       </span>
                     ))}
                   </div>
@@ -525,57 +412,28 @@ export default function ImportarBases() {
         </div>
       </div>
 
-      {/* Resultados */}
       {results.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            Última Importação por Base
-          </h2>
+          <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Última Importação por Base</h2>
           {results.map(result => {
-            const allDone = result.sheets.every(
-              s => s.status === "done" || s.status === "not_found"
-            );
+            const allDone = result.sheets.every(s => s.status === "done" || s.status === "not_found");
             const hasError = result.sheets.some(s => s.status === "error");
-            const isLoading = result.sheets.some(
-              s => s.status === "reading" || s.status === "uploading"
-            );
+            const isLoading = result.sheets.some(s => s.status === "reading" || s.status === "uploading");
             const isOpen = expanded.has(result.baseId);
             const totalRows = result.sheets.reduce((acc, s) => acc + s.rows, 0);
 
             return (
-              <div
-                key={result.baseId}
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden"
-              >
-                {/* Header do card */}
-                <button
-                  onClick={() => toggleExpand(result.baseId)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
-                >
-                  <StatusIcon
-                    done={allDone && !hasError}
-                    error={hasError}
-                    loading={isLoading}
-                  />
+              <div key={result.baseId} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <button onClick={() => toggleExpand(result.baseId)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                  <StatusIcon done={allDone && !hasError} error={hasError} loading={isLoading} />
                   <div className="flex-1 text-left">
                     <p className="text-sm font-semibold text-gray-800">{result.label}</p>
                     <p className="text-xs text-gray-400">{result.timestamp}</p>
                   </div>
-                  {!isLoading && (
-                    <span className="text-xs text-gray-500 font-medium">
-                      {totalRows.toLocaleString("pt-BR")} linhas
-                    </span>
-                  )}
-                  {isLoading ? (
-                    <Loader2 size={14} className="text-blue-500 animate-spin ml-2" />
-                  ) : isOpen ? (
-                    <ChevronDown size={14} className="text-gray-400 ml-2" />
-                  ) : (
-                    <ChevronRight size={14} className="text-gray-400 ml-2" />
-                  )}
+                  {!isLoading && <span className="text-xs text-gray-500 font-medium">{totalRows.toLocaleString("pt-BR")} linhas</span>}
+                  {isLoading ? <Loader2 size={14} className="text-blue-500 animate-spin ml-2" /> : isOpen ? <ChevronDown size={14} className="text-gray-400 ml-2" /> : <ChevronRight size={14} className="text-gray-400 ml-2" />}
                 </button>
 
-                {/* Detalhes das abas */}
                 {isOpen && (
                   <div className="border-t border-gray-100">
                     <table className="w-full text-xs">
@@ -592,12 +450,8 @@ export default function ImportarBases() {
                           <tr key={s.sheet} className="hover:bg-gray-50">
                             <td className="px-4 py-2.5 font-medium text-gray-700">{s.label}</td>
                             <td className="px-4 py-2.5 font-mono text-gray-400">{s.table}</td>
-                            <td className="px-4 py-2.5 text-right text-gray-600">
-                              {s.rows > 0 ? s.rows.toLocaleString("pt-BR") : "—"}
-                            </td>
-                            <td className="px-4 py-2.5 text-center">
-                              <SheetStatusBadge status={s.status} error={s.error} />
-                            </td>
+                            <td className="px-4 py-2.5 text-right text-gray-600">{s.rows > 0 ? s.rows.toLocaleString("pt-BR") : "—"}</td>
+                            <td className="px-4 py-2.5 text-center"><SheetStatusBadge status={s.status} error={s.error} /></td>
                           </tr>
                         ))}
                       </tbody>
@@ -616,65 +470,26 @@ export default function ImportarBases() {
 
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
 
-function StatusIcon({
-  done,
-  error,
-  loading,
-}: {
-  done: boolean;
-  error: boolean;
-  loading: boolean;
-}) {
+function StatusIcon({ done, error, loading }: { done: boolean; error: boolean; loading: boolean }) {
   if (loading) return <Loader2 size={18} className="text-blue-500 animate-spin flex-shrink-0" />;
   if (error) return <XCircle size={18} className="text-red-500 flex-shrink-0" />;
   if (done) return <CheckCircle size={18} className="text-green-500 flex-shrink-0" />;
   return <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />;
 }
 
-function SheetStatusBadge({
-  status,
-  error,
-}: {
-  status: SheetStatus;
-  error?: string;
-}) {
+function SheetStatusBadge({ status, error }: { status: SheetStatus; error?: string }) {
   switch (status) {
     case "done":
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[10px] font-semibold">
-          <CheckCircle size={10} /> success
-        </span>
-      );
+      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[10px] font-semibold"><CheckCircle size={10} /> success</span>;
     case "error":
-      return (
-        <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[10px] font-semibold"
-          title={error}
-        >
-          <XCircle size={10} /> erro
-        </span>
-      );
+      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[10px] font-semibold" title={error}><XCircle size={10} /> erro</span>;
     case "not_found":
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-[10px] font-semibold">
-          ⚠ não encontrada
-        </span>
-      );
+      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-[10px] font-semibold">⚠ não encontrada</span>;
     case "reading":
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-semibold">
-          <Loader2 size={10} className="animate-spin" /> lendo…
-        </span>
-      );
+      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-semibold"><Loader2 size={10} className="animate-spin" /> lendo…</span>;
     case "uploading":
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-semibold">
-          <Loader2 size={10} className="animate-spin" /> enviando…
-        </span>
-      );
+      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-semibold"><Loader2 size={10} className="animate-spin" /> enviando…</span>;
     default:
-      return (
-        <span className="text-gray-400 text-[10px]">aguardando</span>
-      );
+      return <span className="text-gray-400 text-[10px]">aguardando</span>;
   }
 }
