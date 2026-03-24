@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { LOGO_DARK_BG } from "@/lib/constants";
 
 // CPF mask helper
 function maskCpf(value: string): string {
