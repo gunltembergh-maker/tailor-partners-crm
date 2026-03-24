@@ -566,7 +566,7 @@ export function QualitativoTab({ filters }: Props) {
             {vencAnoProducts.map((p, i) => (
               <Bar key={p} dataKey={p} stackId="a" fill={VENC_PRODUCT_COLORS[p] || DONUT_COLORS[i % DONUT_COLORS.length]} name={p}>
                 {i === vencAnoProducts.length - 1 && (
-                  <LabelList dataKey="_total" position="top" formatter={(v: number) => fmtMiInt(v)} style={{ fontSize: 8, fill: "hsl(var(--foreground))" }} />
+                  <LabelList dataKey="_total" position="top" formatter={(v: number) => fmtMiInt(v)} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
                 )}
               </Bar>
             ))}
