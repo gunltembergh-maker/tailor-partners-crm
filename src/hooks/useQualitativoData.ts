@@ -186,3 +186,21 @@ export function useRoaM0Tabela(filters: DashboardFilters) {
     staleTime: 60_000,
   });
 }
+
+// Vencimentos por Ano (stacked bar)
+export function useVencimentosPorAno(filters: DashboardFilters) {
+  const p = buildFilterParams(filters);
+  return useQuery({
+    queryKey: ["vencimentos-por-ano", p],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_vencimentos_por_ano", {
+        p_vencimento_inicio: null,
+        p_vencimento_fim: null,
+        ...p,
+      } as any);
+      if (error) throw error;
+      return (data as any[]) ?? [];
+    },
+    staleTime: 60_000,
+  });
+}

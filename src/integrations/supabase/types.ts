@@ -1753,6 +1753,17 @@ export type Database = {
         }
         Relationships: []
       }
+      view_receita_mensal: {
+        Row: {
+          anomes: number | null
+          documento: string | null
+          faixa_pl: string | null
+          net_em_m: number | null
+          receita_total: number | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
       vw_base_crm: {
         Row: {
           assessor: string | null
@@ -2448,6 +2459,17 @@ export type Database = {
           roa: number
         }[]
       }
+      rpc_roa_geral: {
+        Args: {
+          p_banker?: string[]
+          p_documento?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          qtd_meses: number
+          roa_anualizado_pct: number
+        }[]
+      }
       rpc_roa_m0_tabela: {
         Args: { p_banker?: string[]; p_documento?: string[] }
         Returns: {
@@ -2552,6 +2574,22 @@ export type Database = {
           p_vencimento_inicio?: string
         }
         Returns: {
+          produto_ajustado: string
+          total: number
+        }[]
+      }
+      rpc_vencimentos_por_ano: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+          p_vencimento_fim?: string
+          p_vencimento_inicio?: string
+        }
+        Returns: {
+          ano: number
           produto_ajustado: string
           total: number
         }[]
