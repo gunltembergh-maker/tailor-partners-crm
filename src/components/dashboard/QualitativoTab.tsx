@@ -562,7 +562,7 @@ export function QualitativoTab({ filters }: Props) {
             <XAxis dataKey="ano" tick={{ fontSize: 11, fill: "#374151" }} />
             <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
             <Tooltip content={<VencAnoTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 9 }} />
+            <Legend wrapperStyle={{ fontSize: 12, color: "#111827", fontWeight: 500 }} />
             {vencAnoProducts.map((p, i) => (
               <Bar key={p} dataKey={p} stackId="a" fill={VENC_PRODUCT_COLORS[p] || DONUT_COLORS[i % DONUT_COLORS.length]} name={p}>
                 {i === vencAnoProducts.length - 1 && (
