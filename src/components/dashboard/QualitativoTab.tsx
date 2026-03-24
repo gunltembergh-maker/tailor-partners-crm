@@ -180,9 +180,9 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
           <thead className="sticky top-0 z-10">
             <tr style={{ backgroundColor: "#1B2A3D" }}>
               {columns.map(c => (
-                <th
-                  key={c.key}
-                  className={`text-[10px] py-1.5 px-2 cursor-pointer select-none text-white whitespace-nowrap font-medium ${c.align === "right" ? "text-right" : "text-left"}`}
+                  <th
+                    key={c.key}
+                    className={`text-[13px] py-1.5 px-2 cursor-pointer select-none text-white whitespace-nowrap font-bold ${c.align === "right" ? "text-right" : "text-left"}`}
                   style={{ minWidth: 140 }}
                   onClick={() => toggle(c.key)}
                 >
