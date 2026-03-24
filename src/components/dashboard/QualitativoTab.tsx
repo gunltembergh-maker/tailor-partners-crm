@@ -76,13 +76,13 @@ const FAIXA_ORDER = ["Inativo", "-300k", "300k-500k", "500k-1M", "1-3M", "3-5M",
 /* ─── Sub-components ─── */
 interface Props { filters: DashboardFilters; }
 
-function PbiCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+function PbiCard({ title, children, className, fill }: { title: string; children: React.ReactNode; className?: string; fill?: boolean }) {
   return (
-    <div className={`bg-card border border-border rounded-lg shadow-sm overflow-hidden ${className ?? ""}`}>
+    <div className={`bg-card border border-border rounded-lg shadow-sm overflow-hidden ${fill ? "flex flex-col h-full" : ""} ${className ?? ""}`}>
       <div className="px-3 py-1.5 border-b border-border">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground">{title}</p>
       </div>
-      <div className="p-2">{children}</div>
+      <div className={`p-2 ${fill ? "flex-1 flex flex-col" : ""}`}>{children}</div>
     </div>
   );
 }
@@ -100,7 +100,7 @@ function DonutChart({ data, title }: { data: { name: string; value: number }[]; 
     const mi = (value / 1e6).toFixed(0);
     const pctStr = (percent * 100).toFixed(0);
     return (
-      <text x={x} y={y} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={8} fill="hsl(var(--foreground))">
+      <text x={x} y={y} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={11} fill="#111827" fontWeight={600}>
         R$ {mi} Mi ({pctStr}%)
       </text>
     );
@@ -121,9 +121,9 @@ function DonutChart({ data, title }: { data: { name: string; value: number }[]; 
       </div>
       <div className="w-36 space-y-1 pr-2">
         {data.map((d, i) => (
-          <div key={i} className="flex items-center gap-1.5 text-[9px]">
+          <div key={i} className="flex items-center gap-1.5 text-[12px]">
             <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }} />
-            <span className="truncate text-foreground">{d.name}</span>
+            <span className="truncate text-[#111827] font-medium">{d.name}</span>
           </div>
         ))}
       </div>
@@ -132,12 +132,13 @@ function DonutChart({ data, title }: { data: { name: string; value: number }[]; 
 }
 
 /* ─── SortableTable — scroll only, NO pagination ─── */
-function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
+function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow, fill }: {
   columns: { key: string; label: string; align?: "left" | "right"; fmt?: (v: any) => string }[];
   rows: Record<string, any>[];
   maxH?: number;
   searchKeys?: string[];
   footerRow?: Record<string, any>;
+  fill?: boolean;
 }) {
   const [sort, setSort] = useState<{ key: string; asc: boolean }>({ key: columns[0]?.key ?? "", asc: true });
   const [search, setSearch] = useState("");
@@ -175,14 +176,14 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
           />
         </div>
       ) : null}
-      <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: maxH }}>
+      <div className={`overflow-x-auto overflow-y-auto ${fill ? "flex-1" : ""}`} style={fill ? {} : { maxHeight: maxH }}>
         <table className="w-full text-sm border-collapse" style={{ minWidth: columns.length * 140 }}>
           <thead className="sticky top-0 z-10">
             <tr style={{ backgroundColor: "#1B2A3D" }}>
               {columns.map(c => (
-                <th
-                  key={c.key}
-                  className={`text-[10px] py-1.5 px-2 cursor-pointer select-none text-white whitespace-nowrap font-medium ${c.align === "right" ? "text-right" : "text-left"}`}
+                  <th
+                    key={c.key}
+                    className={`text-[13px] py-1.5 px-2 cursor-pointer select-none text-white whitespace-nowrap font-bold ${c.align === "right" ? "text-right" : "text-left"}`}
                   style={{ minWidth: 140 }}
                   onClick={() => toggle(c.key)}
                 >
@@ -200,7 +201,7 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
             {sorted.map((row, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-card" : "bg-muted/40"}>
                 {columns.map(c => (
-                  <td key={c.key} className={`text-[10px] py-1 px-2 whitespace-nowrap ${c.align === "right" ? "text-right" : ""}`}
+                  <td key={c.key} className={`text-[13px] py-1 px-2 whitespace-nowrap text-[#111827] ${c.align === "right" ? "text-right font-semibold" : "font-medium"}`}
                     style={{ minWidth: 140 }}>
                     {c.fmt ? c.fmt(row[c.key]) : (row[c.key] ?? "—")}
                   </td>
@@ -209,10 +210,10 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
             ))}
           </tbody>
           {footerRow && (
-            <tfoot className="sticky bottom-0 z-10 bg-muted/80 font-semibold border-t border-border">
+            <tfoot className="sticky bottom-0 z-10 bg-muted/80 font-bold border-t border-border">
               <tr>
                 {columns.map(c => (
-                  <td key={c.key} className={`text-[10px] py-1.5 px-2 ${c.align === "right" ? "text-right" : ""}`}
+                  <td key={c.key} className={`text-[13px] py-1.5 px-2 text-[#111827] font-bold ${c.align === "right" ? "text-right" : ""}`}
                     style={{ minWidth: 140 }}>
                     {footerRow[c.key] != null ? (c.fmt ? c.fmt(footerRow[c.key]) : footerRow[c.key]) : ""}
                   </td>
@@ -499,7 +500,7 @@ export function QualitativoTab({ filters }: Props) {
 
       {/* 2. AuC por Faixa de PL */}
       <PbiCard title="AuC por Faixa de PL">
-        <div className="flex items-center gap-4 px-2 py-1 text-[9px] text-muted-foreground">
+        <div className="flex items-center gap-4 px-2 py-1 text-[12px] text-[#111827] font-medium">
           <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#1a2e4a" }} /> NET</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#6bb8d4" }} /> PL Declarado Ajustado</span>
           <span className="flex items-center gap-1"><span className="inline-block w-2 h-0.5 rounded" style={{ backgroundColor: "#4a90d9" }} />● # Clientes</span>
@@ -507,18 +508,18 @@ export function QualitativoTab({ filters }: Props) {
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={aucFaixaChart} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="faixa" tick={{ fontSize: 10 }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
+            <XAxis dataKey="faixa" tick={{ fontSize: 11, fill: "#374151" }} />
+            <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
+            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#374151" }} />
             <Tooltip content={<AucTooltip />} />
             <Bar yAxisId="left" dataKey="Net Em M" fill="#1a2e4a" name="NET" radius={[2, 2, 0, 0]}>
-              <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `R$ ${Math.round(v / 1e6)} Mi`} style={{ fontSize: 8, fill: "#1a2e4a" }} />
+              <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `R$ ${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
             </Bar>
             <Bar yAxisId="left" dataKey="PL Declarado" fill="#6bb8d4" name="PL Declarado Ajustado" radius={[2, 2, 0, 0]}>
-              <LabelList dataKey="PL Declarado" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 8, fill: "#6bb8d4" }} />
+              <LabelList dataKey="PL Declarado" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
             </Bar>
             <Line yAxisId="right" type="monotone" dataKey="# Clientes" stroke="#4a90d9" strokeWidth={2} dot={{ r: 4, fill: "#4a90d9" }} name="# Clientes">
-              <LabelList dataKey="# Clientes" position="top" style={{ fontSize: 9, fill: "#4a90d9" }} />
+              <LabelList dataKey="# Clientes" position="top" style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
             </Line>
           </ComposedChart>
         </ResponsiveContainer>
@@ -559,14 +560,14 @@ export function QualitativoTab({ filters }: Props) {
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={vencAnoChart} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="ano" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
+            <XAxis dataKey="ano" tick={{ fontSize: 11, fill: "#374151" }} />
+            <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
             <Tooltip content={<VencAnoTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 9 }} />
+            <Legend wrapperStyle={{ fontSize: 12, color: "#111827", fontWeight: 500 }} />
             {vencAnoProducts.map((p, i) => (
               <Bar key={p} dataKey={p} stackId="a" fill={VENC_PRODUCT_COLORS[p] || DONUT_COLORS[i % DONUT_COLORS.length]} name={p}>
                 {i === vencAnoProducts.length - 1 && (
-                  <LabelList dataKey="_total" position="top" formatter={(v: number) => fmtMiInt(v)} style={{ fontSize: 8, fill: "hsl(var(--foreground))" }} />
+                  <LabelList dataKey="_total" position="top" formatter={(v: number) => fmtMiInt(v)} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
                 )}
               </Bar>
             ))}
@@ -596,7 +597,7 @@ export function QualitativoTab({ filters }: Props) {
       {/* 7. ROA Anualizado Ponderado (por Tipo) + Tabela ROA M0 — side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-2">
         <PbiCard title="ROA Anualizado Ponderado">
-          <div className="flex items-center gap-4 px-2 py-1 text-[9px] text-muted-foreground">
+          <div className="flex items-center gap-4 px-2 py-1 text-[12px] text-[#111827] font-medium">
             {roaTipoKeys.map(k => (
               <span key={k} className="flex items-center gap-1">
                 <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ROA_TIPO_COLORS[k] || "#999" }} />
@@ -610,17 +611,17 @@ export function QualitativoTab({ filters }: Props) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical horizontal={false} />
                 {/* Vertical dashed grid at 6-month intervals */}
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 8, fill: "#666" }} interval={0}
+                <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#374151" }} interval={0}
                   tickFormatter={(val) => {
                     const dp = roaTipoChart.find(d => d.mes === val);
                     return dp && isJanOrJul(dp.anomes) ? val : "";
                   }}
                 />
-                <YAxis tick={{ fontSize: 9, fill: "#666" }} tickFormatter={(v) => fmtPct(v)} />
+                <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => fmtPct(v)} />
                 <Tooltip content={<RoaTooltip />} />
                 {roaTipoKeys.map(k => (
                   <Line key={k} type="monotone" dataKey={k} stroke={ROA_TIPO_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
-                    <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 7, fill: ROA_TIPO_COLORS[k] || "#999" }} />
+                    <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 11, fill: "#111827", fontWeight: 700 }} />
                   </Line>
                 ))}
               </LineChart>
@@ -628,9 +629,9 @@ export function QualitativoTab({ filters }: Props) {
           </div>
         </PbiCard>
 
-        <PbiCard title="ROA Anualizado Ponderado M0">
+        <PbiCard title="ROA Anualizado Ponderado M0" fill>
           <SortableTable
-            maxH={200}
+            fill
             columns={[
               { key: "documento", label: "Documento" },
               { key: "roa", label: "ROA Anualizado Ponderado", align: "right", fmt: fmtPct },
@@ -644,7 +645,7 @@ export function QualitativoTab({ filters }: Props) {
 
       {/* 8. ROA por Faixa de PL (full width) */}
       <PbiCard title="ROA Anualizado Ponderado">
-        <div className="flex items-center gap-3 flex-wrap px-2 py-1 text-[9px] text-muted-foreground">
+        <div className="flex items-center gap-3 flex-wrap px-2 py-1 text-[12px] text-[#111827] font-medium">
           {roaFaixaKeys.map(k => (
             <span key={k} className="flex items-center gap-1">
               <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ROA_FAIXA_COLORS[k] || "#999" }} />
@@ -656,17 +657,17 @@ export function QualitativoTab({ filters }: Props) {
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={roaFaixaChart} margin={{ top: 15, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
-              <XAxis dataKey="mes" tick={{ fontSize: 8, fill: "#666" }} interval={0}
+              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#374151" }} interval={0}
                 tickFormatter={(val) => {
                   const dp = roaFaixaChart.find(d => d.mes === val);
                   return dp && isJanOrJul(dp.anomes) ? val : "";
                 }}
               />
-              <YAxis tick={{ fontSize: 9, fill: "#666" }} tickFormatter={(v) => fmtPct(v)} />
+              <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => fmtPct(v)} />
               <Tooltip content={<RoaTooltip />} />
               {roaFaixaKeys.map(k => (
                 <Line key={k} type="monotone" dataKey={k} stroke={ROA_FAIXA_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
-                  <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 7, fill: ROA_FAIXA_COLORS[k] || "#999" }} />
+                  <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 11, fill: "#111827", fontWeight: 700 }} />
                 </Line>
               ))}
             </LineChart>
