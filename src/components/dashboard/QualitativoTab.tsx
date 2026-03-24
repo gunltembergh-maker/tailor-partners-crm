@@ -644,7 +644,7 @@ export function QualitativoTab({ filters }: Props) {
 
       {/* 8. ROA por Faixa de PL (full width) */}
       <PbiCard title="ROA Anualizado Ponderado">
-        <div className="flex items-center gap-3 flex-wrap px-2 py-1 text-[9px] text-muted-foreground">
+        <div className="flex items-center gap-3 flex-wrap px-2 py-1 text-[12px] text-[#111827] font-medium">
           {roaFaixaKeys.map(k => (
             <span key={k} className="flex items-center gap-1">
               <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ROA_FAIXA_COLORS[k] || "#999" }} />
