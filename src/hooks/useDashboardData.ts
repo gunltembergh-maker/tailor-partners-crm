@@ -27,15 +27,19 @@ export function useFilterOptions() {
     queryKey: ["dashboard-filter-options"],
     queryFn: async () => {
       const [anoMesRes, bankerRes, advisorRes, finderRes, tipoClienteRes] = await Promise.all([
-        supabase.from("vw_dim_anomes_all").select("anomes, anomes_nome").order("anomes", { ascending: false }),
-        supabase.from("vw_dim_banker").select("banker"),
+        supabase.rpc("rpc_filtro_anomes" as any),
+        supabase.rpc("rpc_filtro_financial_advisors" as any),
         supabase.from("vw_dim_advisor").select("advisor"),
-        supabase.from("vw_dim_finder").select("finder"),
+        supabase.rpc("rpc_filtro_finders" as any),
         supabase.from("vw_dim_tipo_cliente").select("tipo_cliente"),
       ]);
 
       return {
         anoMeses: (anoMesRes.data ?? []).map((r: any) => String(r.anomes)).filter(Boolean),
+        anoMesesNomes: (anoMesRes.data ?? []).reduce((acc: Record<string, string>, r: any) => {
+          acc[String(r.anomes)] = r.anomes_nome;
+          return acc;
+        }, {} as Record<string, string>),
         bankers: (bankerRes.data ?? []).map((r: any) => r.banker as string).filter(Boolean).sort(),
         advisors: (advisorRes.data ?? []).map((r: any) => r.advisor as string).filter(Boolean).sort(),
         finders: (finderRes.data ?? []).map((r: any) => r.finder as string).filter(Boolean).sort(),

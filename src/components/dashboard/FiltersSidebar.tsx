@@ -84,19 +84,19 @@ export function FiltersSidebar({
             onClearAll={() => updatePendingFilter("anoMes", [])}
           />
 
-          {/* Financial Advisor / Finder */}
+          {/* Financial Advisor */}
           <PbiMultiSelect
             label="Financial Advisor"
-            values={pendingFilters.finder}
-            options={options?.finders ?? []}
-            onToggle={(v) => toggleMulti("finder", v)}
+            values={pendingFilters.banker}
+            options={options?.bankers ?? []}
+            onToggle={(v) => toggleMulti("banker", v)}
           />
 
-          {/* Documento */}
+          {/* Documento / Código do Cliente */}
           <div className="space-y-1">
-            <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Documento</label>
+            <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Documento / Código do Cliente</label>
             <Input
-              placeholder="CPF/CNPJ..."
+              placeholder="CPF/CNPJ/Código..."
               value={pendingFilters.documento}
               onChange={(e) => updatePendingFilter("documento", e.target.value)}
               className="text-[10px] h-7 bg-white/10 border-white/20 text-white placeholder:text-white/40"
@@ -111,14 +111,6 @@ export function FiltersSidebar({
             onToggle={(v) => toggleMulti("advisor", v)}
           />
 
-          {/* Banker */}
-          <PbiMultiSelect
-            label="Banker"
-            values={pendingFilters.banker}
-            options={options?.bankers ?? []}
-            onToggle={(v) => toggleMulti("banker", v)}
-          />
-
           {/* Tipo Cliente */}
           <PbiMultiSelect
             label="Tipo de Cliente"
@@ -129,6 +121,27 @@ export function FiltersSidebar({
             }}
             singleSelect
           />
+
+          {/* Finder */}
+          <PbiMultiSelect
+            label="Finder"
+            values={pendingFilters.finder}
+            options={options?.finders ?? []}
+            onToggle={(v) => toggleMulti("finder", v)}
+          />
+
+          {/* Vencimento (only qualitativo) */}
+          {showVencimento && (
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Vencimento</label>
+              <Input
+                placeholder="Ex: 2025"
+                value={pendingFilters.vencimento}
+                onChange={(e) => updatePendingFilter("vencimento", e.target.value)}
+                className="text-[10px] h-7 bg-white/10 border-white/20 text-white placeholder:text-white/40"
+              />
+            </div>
+          )}
 
           {/* Action buttons */}
           <div className="flex gap-2 pt-1">
@@ -151,19 +164,6 @@ export function FiltersSidebar({
               Limpar
             </Button>
           </div>
-
-          {/* Vencimento (only qualitativo) */}
-          {showVencimento && (
-            <div className="space-y-1">
-              <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Vencimento</label>
-              <Input
-                placeholder="Ex: 2025"
-                value={pendingFilters.vencimento}
-                onChange={(e) => updatePendingFilter("vencimento", e.target.value)}
-                className="text-[10px] h-7 bg-white/10 border-white/20 text-white placeholder:text-white/40"
-              />
-            </div>
-          )}
         </div>
       </ScrollArea>
 

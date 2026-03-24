@@ -513,7 +513,7 @@ export function QualitativoTab({ filters }: Props) {
             <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#374151" }} />
             <Tooltip content={<AucTooltip />} />
             <Bar yAxisId="left" dataKey="Net Em M" fill="#1a2e4a" name="NET" radius={[2, 2, 0, 0]}>
-              <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `R$ ${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
+              <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
             </Bar>
             <Bar yAxisId="left" dataKey="PL Declarado" fill="#6bb8d4" name="PL Declarado Ajustado" radius={[2, 2, 0, 0]}>
               <LabelList dataKey="PL Declarado" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
