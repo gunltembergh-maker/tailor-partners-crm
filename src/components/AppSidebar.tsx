@@ -13,6 +13,7 @@ import {
   FileText,
   Upload,
   ClipboardCheck,
+  Shield,
   LogOut,
   UserCircle,
 } from "lucide-react";
