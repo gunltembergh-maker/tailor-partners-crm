@@ -1,52 +1,35 @@
 
 
-# Migrar de `xlsx` para `exceljs`
+# Atualização de Dependências com Vulnerabilidades
 
-## Contexto
-O pacote `xlsx@0.18.5` (SheetJS CE) possui vulnerabilidades conhecidas de Prototype Pollution e ReDoS. Será substituído pelo `exceljs`, que é mantido ativamente.
+## Análise
 
-## Arquivos afetados
+O scan de segurança do projeto não inclui auditoria de dependências npm — ele cobre apenas problemas de RLS, edge functions e rotas (todos já corrigidos).
 
-### 1. `package.json`
-- Remover `xlsx` das dependencies
-- Adicionar `exceljs`
+Porém, analisando o `package.json`, há duas dependências conhecidas por terem vulnerabilidades de alta severidade:
 
-### 2. `src/pages/ImportarBases.tsx` (maior impacto)
-- Trocar `import * as XLSX from "xlsx"` por `import ExcelJS from "exceljs"`
-- Substituir `XLSX.read(buffer)` por `new ExcelJS.Workbook().xlsx.load(buffer)`
-- Substituir `XLSX.utils.sheet_to_json()` por iteração manual das rows do ExcelJS (`.eachRow()`)
-- A função `readSheet()` será reescrita para converter rows do ExcelJS em `Record<string, unknown>[]` usando o header da primeira linha como chaves
-- Manter toda a lógica de normalização de datas e valores existente
+1. **`xlsx@0.18.5`** — O SheetJS Community Edition tem vulnerabilidades conhecidas de prototype pollution e arbitrary code execution. Esta é a principal preocupação.
+2. **`jsdom@20.0.3`** (devDependency) — Versão antiga com vulnerabilidades transitivas conhecidas.
 
-### 3. `src/pages/ImportClients.tsx`
-- Mesma troca de imports
-- Substituir `XLSX.read` + `sheet_to_json` pela API do ExcelJS
-- Lógica de mapeamento de colunas permanece igual
+## Plano de Correção
 
-### 4. `supabase/functions/ingest-sharepoint-file/index.ts`
-- Trocar `import * as XLSX from "npm:xlsx@0.18.5"` por `import ExcelJS from "npm:exceljs"`
-- Adaptar `XLSX.read(fileBytes)` para `new ExcelJS.Workbook().xlsx.load(buffer)`
-- Adaptar `sheet_to_json` para iteração manual de rows
-- Adaptar `findSheet()` para usar `workbook.worksheets` e `worksheet.name`
+### 1. Atualizar `jsdom` (devDependency)
+- Atualizar de `^20.0.3` para `^25.0.1` (última versão estável)
+- Impacto: apenas ambiente de teste, risco zero para produção
 
-## Diferenças de API principais
+### 2. Avaliar `xlsx`
+- O pacote `xlsx` (SheetJS CE) parou de receber patches de segurança na versão gratuita. A versão 0.18.5 é a última disponível no npm.
+- **Opções**:
+  - **A) Manter como está** — o pacote só é usado no client-side (`ImportClients.tsx`) e no edge function (`ingest-sharepoint-file`), ambos processando arquivos internos confiáveis
+  - **B) Migrar para alternativa** como `exceljs` — requer refatoração significativa
 
-```text
-xlsx (antes)                          exceljs (depois)
-─────────────────────────────────────────────────────────
-XLSX.read(buf, {type:"array"})     →  wb.xlsx.load(buf)
-workbook.SheetNames                →  wb.worksheets.map(ws => ws.name)
-workbook.Sheets[name]              →  wb.getWorksheet(name)
-XLSX.utils.sheet_to_json(ws)       →  iteração manual com ws.eachRow()
-```
+### 3. Atualizar outras dependências menores
+- Bump geral de patches/minor para todas as dependências via atualização do `package.json`
 
-## Helper `sheetToJson` (novo)
-Será criada uma função utilitária que replica o comportamento de `sheet_to_json`:
-- Primeira row = headers (chaves do objeto)
-- Demais rows = valores mapeados por coluna
-- Células vazias → `null`
+## Recomendação
 
-## Risco
-- Baixo: a API do ExcelJS é bem documentada e amplamente usada
-- A lógica de negócio (mapeamento de colunas, truncate-and-insert, batching) não muda
+Atualizar `jsdom` para v25 e fazer bump geral de patches. Para o `xlsx`, manter a versão atual dado que os inputs são controlados (arquivos internos da empresa), e a migração para `exceljs` seria um esforço separado maior.
+
+## Arquivos a editar
+- `package.json` — bump `jsdom` e demais dependências
 

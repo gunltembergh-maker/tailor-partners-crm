@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import ExcelJS from "exceljs";
+import * as XLSX from "xlsx";
 
 export default function ImportClients() {
   const [status, setStatus] = useState("");
@@ -15,34 +15,9 @@ export default function ImportClients() {
     try {
       const res = await fetch("/Base_CRM.xlsx");
       const buf = await res.arrayBuffer();
-
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(buf);
-      const ws = workbook.worksheets[0];
-
-      // Convert worksheet to array of objects using first row as headers
-      const headers: string[] = [];
-      const rows: Record<string, any>[] = [];
-
-      ws.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) {
-          (row.values as any[]).slice(1).forEach((v: any) => {
-            headers.push(v != null ? String(v).trim() : `col_${headers.length}`);
-          });
-          return;
-        }
-        const obj: Record<string, any> = {};
-        const vals = row.values ? (row.values as any[]).slice(1) : [];
-        for (let i = 0; i < headers.length; i++) {
-          const cell = row.getCell(i + 1);
-          let val = cell.value;
-          if (val && typeof val === "object" && "result" in val) val = val.result;
-          if (val && typeof val === "object" && "richText" in (val as any)) val = ((val as any).richText as { text: string }[]).map(r => r.text).join("");
-          if (val && typeof val === "object" && "text" in (val as any) && "hyperlink" in (val as any)) val = (val as any).text;
-          obj[headers[i]] = val ?? null;
-        }
-        rows.push(obj);
-      });
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws);
 
       setStatus(`Parseados ${rows.length} registros. Enviando...`);
 
@@ -69,6 +44,7 @@ export default function ImportClients() {
         casa: r["Casa"] || null,
       }));
 
+      // Send in batches of 200, first batch clears existing data
       const batchSize = 200;
       let totalInserted = 0;
       for (let i = 0; i < clients.length; i += batchSize) {
