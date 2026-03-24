@@ -100,7 +100,7 @@ function DonutChart({ data, title }: { data: { name: string; value: number }[]; 
     const mi = (value / 1e6).toFixed(0);
     const pctStr = (percent * 100).toFixed(0);
     return (
-      <text x={x} y={y} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={8} fill="hsl(var(--foreground))">
+      <text x={x} y={y} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={11} fill="#111827" fontWeight={600}>
         R$ {mi} Mi ({pctStr}%)
       </text>
     );
