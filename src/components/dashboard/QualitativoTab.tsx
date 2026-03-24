@@ -200,7 +200,7 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
             {sorted.map((row, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-card" : "bg-muted/40"}>
                 {columns.map(c => (
-                  <td key={c.key} className={`text-[10px] py-1 px-2 whitespace-nowrap ${c.align === "right" ? "text-right" : ""}`}
+                  <td key={c.key} className={`text-[13px] py-1 px-2 whitespace-nowrap text-[#111827] ${c.align === "right" ? "text-right font-semibold" : "font-medium"}`}
                     style={{ minWidth: 140 }}>
                     {c.fmt ? c.fmt(row[c.key]) : (row[c.key] ?? "—")}
                   </td>
