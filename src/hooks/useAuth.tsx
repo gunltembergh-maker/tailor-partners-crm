@@ -45,14 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(null);
         setPermissoes(null);
         setBankerName(null);
+        setLoading(false);
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchMeuPerfil(session.user.id);
+        await fetchMeuPerfil(session.user.id);
       }
       setLoading(false);
     });
