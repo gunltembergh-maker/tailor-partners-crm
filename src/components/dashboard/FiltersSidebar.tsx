@@ -77,7 +77,7 @@ export function FiltersSidebar({
             values={pendingFilters.anoMes}
             options={options?.anoMeses ?? []}
             onToggle={(v) => toggleMulti("anoMes", v)}
-            formatLabel={formatAnoMes}
+            formatLabel={(v) => options?.anoMesesNomes?.[v] ?? formatAnoMes(v)}
             placeholder="Todos os meses"
             showSelectAll
             onSelectAll={() => updatePendingFilter("anoMes", options?.anoMeses ?? [])}
