@@ -1,63 +1,57 @@
 
 
-# Rewrite QualitativoTab.tsx — PBI-Identical Layout
+# Fix Text Visibility + ROA M0 Table Height in QualitativoTab.tsx
 
-## Summary
-Full rewrite of `src/components/dashboard/QualitativoTab.tsx` to match the Power BI PDF layout exactly. No other files changed.
+Only file changed: `src/components/dashboard/QualitativoTab.tsx`
 
-## Key Changes
+## AJUSTE 1 — Text Visibility
 
-### Formatting helpers
-Replace current helpers with:
-- `fmtPct(v)` → `"0,13%"` (comma)
-- `fmtMiInt(v)` → `"R$ 41 Mi"` (integer, no decimals)
-- `fmtMi(v)` → `"R$ 897,89 Mi"` (2 decimals, comma)
-- `fmtBRL(v)` → `"R$ 1.248.820,00"` (full currency)
-- `fmtBRLint(v)` → `"R$ 1.248.820"` (no decimals)
+### SortableTable
+- **Header (thead th)**: Already has white text on dark bg — keep as-is (it's readable)
+- **Body cells (td)**: Change `text-[10px]` to `text-[13px]` and add `text-[#111827] font-medium` (fontWeight 500). For numeric columns the `fmt` function handles display; add `font-semibold` (600) for right-aligned numeric cells
+- **Footer (tfoot td)**: Add `text-[13px] text-[#111827] font-bold` (700)
+- Remove any `text-muted-foreground` or light gray classes from cell content
 
-### SortableTable overhaul
-- Remove pagination buttons entirely — use fixed height + `overflow-y: auto` scroll
-- Add sticky header via `position: sticky; top: 0; z-index: 10` on `<thead>`
-- Keep horizontal scroll (`overflow-x: auto`) with min-width 140px per column
-- Keep search box and sort functionality
-- Support optional footer row for totals
+### Chart Labels & Axes
+- **AuC bar labels** (lines 515, 518, 521): Change `fontSize: 8`/`9` and fill colors to `fontSize: 12, fill: "#111827", fontWeight: 700`
+- **Vencimentos stacked bar label** (line 569): Change `fontSize: 8` to `fontSize: 12, fill: "#111827", fontWeight: 700`
+- **ROA line labels** (lines 623, 669): Change `fontSize: 7` to `fontSize: 11, fill: "#111827", fontWeight: 700`
+- **Donut labels** (line 103): Change `fontSize={8}` to `fontSize={11}`, `fill="#111827"`, add `fontWeight={600}`
+- **XAxis/YAxis ticks** across all charts: Change `fontSize: 8`/`9`/`10` and `fill: "#666"` to `fontSize: 11, fill: "#374151"`
+- **Legend text** in manual legend divs (lines 502-506, 599-605, 647-653): Change `text-[9px] text-muted-foreground` to `text-[12px] text-[#111827] font-medium`
+- **Tooltip text**: Already readable, but ensure `text-foreground` class is present
 
-### Section order (top to bottom)
-1. **Tabela CLIENTES** — columns: Documento | Conta | Saldo D0 | 1º Nome | PL Tailor | PL Declarado | SoW | Endereço | Banker | Advisor | Tipo. Footer: sum PL Tailor, sum PL Declarado, avg SoW. Height ~300px scroll. No pagination.
-2. **AuC por Faixa de PL** — grouped bars + line. Bar labels: `fmtMiInt` (no decimals). Line labels: integer. Legend top-left.
-3. **Custódia** — 2-col grid. Donut labels INSIDE/ON fatia (not external with connectors). Format: `"R$ XXX Mi (XX%)"`. Legend right side with colored squares.
-4. **Todos os Ativos** — columns: Documento | Conta | Ativo Ajustado | NET | Indexador | Veículo | Casa | Banker | Advisor | Tipo. NET as `fmtBRLint` (no decimals). Height ~300px scroll.
-5. **Vencimentos** (stacked bar by year) — total label on top as `fmtMiInt` (integer). Product colors as specified. Legend top.
-6. **Vencimentos Detalhado** — columns: Documento | Ativo | NET | Vencimento | Indexador | Veículo | Banker | Advisor. Footer: sum NET. Date: DD/MM/AA. Height ~300px scroll.
-7. **ROA + ROA M0 side by side** — ROA Tipo Cliente line chart (65%) + ROA M0 table (35%). ROA chart: X axis labels every 6 months (`jan 2026`, `jul 2025`), most recent on LEFT (descending order). Labels on each point. White background. Dashed vertical grid. ROA M0 table: Documento | ROA | Faixa PL. Footer: weighted ROA total.
-8. **ROA Faixa PL** (full width) — same chart style as ROA Tipo. 6-month X ticks, descending order, labels on points.
+### Donut legend
+- Line 124-127: Change `text-[9px]` to `text-[12px]` and add `text-[#111827] font-medium`
 
-### Donut changes
-- Remove external labels with connector lines
-- Use Recharts `label` prop with custom render to place text ON or near each slice: `"R$ XXX Mi (XX%)"`
-- Keep right-side legend with colored squares
+## AJUSTE 2 — ROA M0 Table Fill Card
 
-### ROA chart X-axis logic
-- Sort data by `anomes` descending (most recent first = left)
-- Show tick labels only for Jan and Jul: format `"jan AAAA"`, `"jul AAAA"`
-- Use `interval={0}` with custom tick filter to skip non-Jan/Jul months
-- Dashed vertical grid lines at 6-month intervals
-- White/light background inside chart area
+- **PbiCard** (line 79-88): The ROA M0 card wrapper needs `className="flex flex-col h-full"` on the outer div, and `className="p-2 flex-1 flex flex-col"` on the content div
+- Add a variant or prop to PbiCard: `fill?: boolean` — when true, outer div gets `flex flex-col h-full` and inner content div gets `flex-1 flex flex-col`
+- **SortableTable** for ROA M0 (line 632-641): Remove `maxH={200}` (set to undefined or a large value), wrap the table scroll div with `flex-1` so it grows to fill the card
+- The parent grid row (line 597) already uses `grid-cols-[65%_35%]` which sets equal height — the card just needs to stretch internally
+- Add `className="h-full"` to the ROA M0 PbiCard usage (line 631)
 
-### Vencimentos stacked bar
-- Use `fmtMiInt` for total label on top (integer, e.g. "R$ 41 Mi")
-- Only render years that have data
-- Product colors as specified (remove Previdência/Fundos from palette, keep only 9 products listed)
+### Implementation detail for PbiCard
+Add optional `fill` prop:
+```tsx
+function PbiCard({ title, children, className, fill }: { title: string; children: React.ReactNode; className?: string; fill?: boolean }) {
+  return (
+    <div className={`bg-card border border-border rounded-lg shadow-sm overflow-hidden ${fill ? "flex flex-col h-full" : ""} ${className ?? ""}`}>
+      <div className="px-3 py-1.5 border-b border-border">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground">{title}</p>
+      </div>
+      <div className={`p-2 ${fill ? "flex-1 flex flex-col" : ""}`}>{children}</div>
+    </div>
+  );
+}
+```
 
-### Vencimentos Detalhado table
-- Different column set from current: Documento | Ativo | NET | Vencimento | Indexador | Veículo | Banker | Advisor
-- Footer row with NET sum
-- Date format: DD/MM/AA (2-digit year)
+For SortableTable, add a `fill` prop that replaces the fixed `maxHeight` with `flex: 1`:
+```tsx
+// When fill=true, the scroll container uses flex-1 instead of maxHeight
+<div className={`overflow-x-auto overflow-y-auto ${fill ? "flex-1" : ""}`} style={fill ? {} : { maxHeight: maxH }}>
+```
 
-| Section | Height | Pagination | Footer |
-|---|---|---|---|
-| Clientes | 300px | No | Sum PL, avg SoW |
-| Todos os Ativos | 300px | No | No |
-| Vencimentos Det. | 300px | No | Sum NET |
-| ROA M0 | 200px | No | Weighted ROA |
+Use `<PbiCard title="ROA Anualizado Ponderado M0" fill>` and `<SortableTable fill ... />` for the ROA M0 section.
 
