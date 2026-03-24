@@ -25,6 +25,7 @@ import AuditoriaComercial from "./pages/AuditoriaComercial";
 import NotFound from "./pages/NotFound";
 import ImportClients from "./pages/ImportClients";
 import ImportarBases from "./pages/ImportarBases";
+import GestaoProfiles from "./pages/admin/GestaoProfiles";
 
 
 const queryClient = new QueryClient();
@@ -64,6 +65,7 @@ function AppRoutes() {
       <Route path="/import-clients" element={<ProtectedRoute><ImportClients /></ProtectedRoute>} />
       <Route path="/admin/importar-bases" element={<ProtectedRoute><ImportarBases /></ProtectedRoute>} />
       <Route path="/admin/auditoria-comercial" element={<ProtectedRoute><AuditoriaComercial /></ProtectedRoute>} />
+      <Route path="/admin/perfis" element={<ProtectedRoute><GestaoProfiles /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -332,18 +332,50 @@ export type Database = {
           },
         ]
       }
+      perfis_acesso: {
+        Row: {
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          permissoes: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          permissoes?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          permissoes?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
           avatar_url: string | null
           banker_name: string | null
           blocked: boolean | null
+          cpf: string | null
           created_at: string
           email: string
+          empresa: string | null
           full_name: string
           id: string
           nome: string | null
+          nome_completo: string | null
+          perfil_id: string | null
           phone: string | null
+          ultimo_acesso: string | null
           updated_at: string
           user_id: string
         }
@@ -352,12 +384,17 @@ export type Database = {
           avatar_url?: string | null
           banker_name?: string | null
           blocked?: boolean | null
+          cpf?: string | null
           created_at?: string
           email?: string
+          empresa?: string | null
           full_name?: string
           id?: string
           nome?: string | null
+          nome_completo?: string | null
+          perfil_id?: string | null
           phone?: string | null
+          ultimo_acesso?: string | null
           updated_at?: string
           user_id: string
         }
@@ -366,12 +403,17 @@ export type Database = {
           avatar_url?: string | null
           banker_name?: string | null
           blocked?: boolean | null
+          cpf?: string | null
           created_at?: string
           email?: string
+          empresa?: string | null
           full_name?: string
           id?: string
           nome?: string | null
+          nome_completo?: string | null
+          perfil_id?: string | null
           phone?: string | null
+          ultimo_acesso?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2167,8 +2209,32 @@ export type Database = {
         Args: { p_blocked: boolean; p_email: string }
         Returns: Json
       }
+      rpc_admin_criar_perfil: {
+        Args: { p_descricao?: string; p_nome: string }
+        Returns: Json
+      }
+      rpc_admin_deletar_perfil: { Args: { p_id: string }; Returns: Json }
+      rpc_admin_lista_perfis: {
+        Args: never
+        Returns: {
+          created_at: string
+          descricao: string
+          id: string
+          nome: string
+          permissoes: Json
+        }[]
+      }
       rpc_admin_remover_precadastro: {
         Args: { p_email: string }
+        Returns: Json
+      }
+      rpc_admin_salvar_perfil: {
+        Args: {
+          p_descricao: string
+          p_id: string
+          p_nome: string
+          p_permissoes: Json
+        }
         Returns: Json
       }
       rpc_admin_salvar_usuario: {
@@ -2464,6 +2530,15 @@ export type Database = {
         Args: never
         Returns: {
           finder: string
+        }[]
+      }
+      rpc_meu_perfil: {
+        Args: never
+        Returns: {
+          banker_name: string
+          blocked: boolean
+          permissoes: Json
+          role: string
         }[]
       }
       rpc_receita_drilldown: {
