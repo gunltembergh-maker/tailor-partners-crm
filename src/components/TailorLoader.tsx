@@ -1,4 +1,4 @@
-import { LOGO_DARK_BG } from "@/lib/constants";
+import { LOGO_LIGHT_BG } from "@/lib/constants";
 
 interface TailorLoaderProps {
   overlay?: boolean;
@@ -7,7 +7,7 @@ interface TailorLoaderProps {
 export default function TailorLoader({ overlay = true }: TailorLoaderProps) {
   const content = (
     <div className="flex flex-col items-center gap-4">
-      <img src={LOGO_DARK_BG} alt="Tailor Partners" className="w-[140px]" />
+      <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-[140px]" />
       <p className="text-sm text-muted-foreground">Carregando...</p>
       <div className="h-8 w-8 rounded-full border-[3px] border-muted border-t-primary animate-spin" />
     </div>
