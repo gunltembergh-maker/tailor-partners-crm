@@ -209,10 +209,10 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow }: {
             ))}
           </tbody>
           {footerRow && (
-            <tfoot className="sticky bottom-0 z-10 bg-muted/80 font-semibold border-t border-border">
+            <tfoot className="sticky bottom-0 z-10 bg-muted/80 font-bold border-t border-border">
               <tr>
                 {columns.map(c => (
-                  <td key={c.key} className={`text-[10px] py-1.5 px-2 ${c.align === "right" ? "text-right" : ""}`}
+                  <td key={c.key} className={`text-[13px] py-1.5 px-2 text-[#111827] font-bold ${c.align === "right" ? "text-right" : ""}`}
                     style={{ minWidth: 140 }}>
                     {footerRow[c.key] != null ? (c.fmt ? c.fmt(footerRow[c.key]) : footerRow[c.key]) : ""}
                   </td>
