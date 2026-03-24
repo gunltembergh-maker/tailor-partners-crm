@@ -26,6 +26,7 @@ import NotFound from "./pages/NotFound";
 import ImportClients from "./pages/ImportClients";
 import ImportarBases from "./pages/ImportarBases";
 import GestaoProfiles from "./pages/admin/GestaoProfiles";
+import GestaoUsuarios from "./pages/admin/GestaoUsuarios";
 
 
 const queryClient = new QueryClient();
