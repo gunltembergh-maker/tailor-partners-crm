@@ -656,13 +656,13 @@ export function QualitativoTab({ filters }: Props) {
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={roaFaixaChart} margin={{ top: 15, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
-              <XAxis dataKey="mes" tick={{ fontSize: 8, fill: "#666" }} interval={0}
+              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#374151" }} interval={0}
                 tickFormatter={(val) => {
                   const dp = roaFaixaChart.find(d => d.mes === val);
                   return dp && isJanOrJul(dp.anomes) ? val : "";
                 }}
               />
-              <YAxis tick={{ fontSize: 9, fill: "#666" }} tickFormatter={(v) => fmtPct(v)} />
+              <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => fmtPct(v)} />
               <Tooltip content={<RoaTooltip />} />
               {roaFaixaKeys.map(k => (
                 <Line key={k} type="monotone" dataKey={k} stroke={ROA_FAIXA_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
