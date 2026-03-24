@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { LOGO_DARK_BG } from "@/lib/constants";
 
 // CPF mask helper
 function maskCpf(value: string): string {
@@ -165,7 +166,7 @@ export default function Auth() {
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md animate-fade-in text-center">
           <div className="mb-8 flex justify-center">
-            <img src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png" alt="Tailor Partners" className="w-40" />
+            <img src={LOGO_DARK_BG} alt="Tailor Partners" className="w-40" />
           </div>
 
           <Card className="shadow-lg border-border/50">
@@ -206,7 +207,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8 flex flex-col items-center">
-          <img src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png" alt="Tailor Partners" className="w-40" />
+          <img src={LOGO_DARK_BG} alt="Tailor Partners" className="w-40" />
         </div>
 
         {isBlocked && (
