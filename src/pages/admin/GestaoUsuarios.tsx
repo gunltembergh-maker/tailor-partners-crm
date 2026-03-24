@@ -170,7 +170,7 @@ export default function GestaoUsuarios() {
     if (!modalEmail.trim()) return;
     setModalSaving(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_salvar_usuario", {
+      const { data, error } = await supabase.rpc("rpc_admin_salvar_usuario" as any, {
         p_email: modalEmail,
         p_nome: modalNome,
         p_role: modalPerfil,
