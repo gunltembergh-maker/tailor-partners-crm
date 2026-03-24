@@ -180,7 +180,7 @@ export default function Auth() {
                 Acesse seu e-mail corporativo e clique no link para ativar sua conta.
               </p>
               <p className="text-sm text-muted-foreground">
-                Após confirmar, você poderá acessar o Hub Tailor com suas credenciais.
+                Após confirmar, você poderá acessar o Hub - Grupo Tailor Partners com suas credenciais.
               </p>
               <div className="pt-4 border-t border-border">
                 <p className="text-xs text-muted-foreground mb-2">Não recebeu?</p>
