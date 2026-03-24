@@ -1,75 +1,53 @@
 
 
-# Ajustes Visuais + Novos Filtros — QualitativoTab & QuantitativoTab
+# Create Gestão de Perfis de Acesso Page
 
-## Important Note
-The filter UI lives in `FiltersSidebar.tsx` and filter options come from `useDashboardData.ts`. To implement PARTE 2 (filter changes), these files also need edits. The plan includes them.
+## Files to change
+1. **Create** `src/pages/admin/GestaoProfiles.tsx`
+2. **Edit** `src/App.tsx` — add route `/admin/perfis`
+3. **Edit** `src/components/AppSidebar.tsx` — add "Perfis de Acesso" menu item
 
-**Files changed:** `QualitativoTab.tsx`, `QuantitativoTab.tsx`, `FiltersSidebar.tsx`, `useDashboardData.ts`
+## App.tsx changes
+- Import `GestaoProfiles` from `./pages/admin/GestaoProfiles`
+- Add route: `<Route path="/admin/perfis" element={<ProtectedRoute><GestaoProfiles /></ProtectedRoute>} />`
 
----
+## AppSidebar.tsx changes
+- Import `Shield` icon from lucide-react
+- Add `{ title: "Perfis de Acesso", icon: Shield, path: "/admin/perfis" }` to `adminMenuItems` array
+- The Admin section already shows only for `role === "ADMIN"` which is sufficient; the `permissoes.menu_perfis_acesso` check would require fetching permissoes in the sidebar — since useAuth doesn't expose permissoes, we keep the existing ADMIN-only gate
 
-## PARTE 1 — Visual Fixes (QualitativoTab.tsx only)
+## GestaoProfiles.tsx — new page
 
-### 1A. ROA M0 Table — revert to simple scroll
-- Line 632: Remove `fill` prop from `<PbiCard>`
-- Line 633-634: Remove `fill` prop from `<SortableTable>`, set `maxH={300}`
+### Structure
+- Wrapped in `<AppLayout>`
+- Header with title "Perfis de Acesso", subtitle, and "+ Novo Perfil" button (top right)
+- Grid of profile cards (2 cols desktop, 1 col mobile)
+- Uses `TailorLoader` while loading
 
-### 1B. Vencimentos bar labels — no "R$"
-- Line 570: Change formatter from `fmtMiInt(v)` to `` `${Math.round(v/1e6)}MI` ``
+### Data fetching
+- `supabase.rpc('rpc_admin_lista_perfis')` via `useQuery`
+- Returns `{ id, nome, descricao, permissoes, created_at }`
 
-### 1C. AuC bar labels — no "R$"
-- Line 516: Change from `` `R$ ${Math.round(v/1e6)} Mi` `` to `` `${Math.round(v/1e6)} Mi` ``
-- Line 519: Already shows `${Math.round(v/1e6)} Mi` — keep as-is
+### Profile Card
+Each card tracks local state for `descricao` and `permissoes` toggles. A `modified` flag highlights card border yellow when changes exist.
 
-### 1D. Move Aplicar/Limpar below Vencimento
-This requires editing `FiltersSidebar.tsx`:
-- Move the action buttons div (lines 133-153) to AFTER the Vencimento section (after line 166)
-- Result order: Ano Mês → Financial Advisor → Documento → Advisor → Tipo de Cliente → Finder → Vencimento → Buttons
+**Header**: Badge with profile name (color mapped by name: ADMIN=red, LIDER=purple, BANKER=blue, DIRETORIA=orange, RH=green, JURIDICO=gray, MARKETING=pink, default=slate). Editable description input. Trash icon for non-default profiles.
 
----
+**Section "Menus e Páginas"**: 7 Switch toggles for menu permissions (menu_dashboard_comercial, menu_quantitativo, menu_qualitativo, menu_importar_bases, menu_auditoria, menu_gestao_usuarios, menu_perfis_acesso).
 
-## PARTE 2 — Filter Changes (FiltersSidebar.tsx + useDashboardData.ts)
+**Section "Dados e Visualização"**: 3 Switch toggles (dados_ver_todos_bankers, dados_filtro_banker, dados_exportar).
 
-### 2A. Ano Mês — use RPC `rpc_filtro_anomes()`
-- In `useDashboardData.ts`, update `useFilterOptions` to call `supabase.rpc('rpc_filtro_anomes')` instead of querying `vw_dim_anomes_all`
-- Return both `anomes` (int) and `anomes_nome` (text) for display
+**Footer**: "Salvar alterações" button (highlighted when modified). Last update timestamp formatted DD/MM/AAAA HH:MM.
 
-### 2C. Rename "Documento" → "Documento / Código do Cliente"
-- In `FiltersSidebar.tsx`, update label text
-- The search field remains a text input; the backend RPC already handles matching
+### Actions
+- **Save**: `supabase.rpc('rpc_admin_salvar_perfil', { p_id, p_nome, p_descricao, p_permissoes })` → toast success/error, refetch list
+- **Create**: Dialog with name (uppercase) + description fields → `supabase.rpc('rpc_admin_criar_perfil', { p_nome, p_descricao })` → refetch
+- **Delete**: AlertDialog confirmation → `supabase.rpc('rpc_admin_deletar_perfil', { p_id })` → handle `success: false` with error toast → refetch
+- Default profiles (ADMIN, LIDER, BANKER, DIRETORIA) hide delete icon
 
-### 2D. Advisor — use RPC `rpc_filtro_advisors()`
-- In `useFilterOptions`, call `supabase.rpc('rpc_filtro_advisors')` instead of querying `vw_dim_advisor`
-
-### 2E. Remove Banker filter
-- In `FiltersSidebar.tsx`, remove the "Banker" `<PbiMultiSelect>` section (lines 114-120)
-- "Financial Advisor" already filters by `banker` column via the `finder` filter key — need to verify this mapping is correct. Currently "Financial Advisor" maps to `pendingFilters.finder` / `p_finder` param. This needs review to ensure it maps to `p_banker`.
-
-### 2F. Finder — use RPC `rpc_filtro_finders()`
-- Already exists in filter options, just switch to RPC call
-
-### 2G. Tipo de Cliente — use RPC `rpc_filtro_tipo_cliente()`
-- Switch to RPC call in `useFilterOptions`
-
----
-
-## PARTE 4 — Filter Relationships
-
-The current architecture already passes all filters to all RPCs via `buildFilterParams` / `buildRpcParams`. When the user clicks "Aplicar", `appliedFilters` updates and all hooks re-fetch with the new params. This already works correctly.
-
-No additional changes needed — the "Aplicar" button triggers `setAppliedFilters` which cascades to all `useQuery` hooks via their `queryKey` dependencies.
-
-The "Limpar" button already resets all filters to defaults and triggers re-fetch.
-
----
-
-## Summary of edits per file
-
-| File | Changes |
-|---|---|
-| `QualitativoTab.tsx` | Remove fill from ROA M0, fix bar label formats |
-| `QuantitativoTab.tsx` | No changes needed (filter flow already works) |
-| `FiltersSidebar.tsx` | Remove Banker, rename Documento label, move buttons below Vencimento, add Finder filter if missing |
-| `useDashboardData.ts` | Switch filter option queries to RPCs |
+### Visual
+- Dark theme consistent with Hub
+- Cards: `bg-card border border-border` with `border-yellow-500/50` when modified
+- Switches: green when checked via existing Switch component styling
+- Toast via `useToast` for success (green) and error (destructive)
 
