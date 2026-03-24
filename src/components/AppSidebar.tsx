@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { LOGO_DARK_BG } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/lib/format";
 import {
