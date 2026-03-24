@@ -515,7 +515,7 @@ export function QualitativoTab({ filters }: Props) {
               <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `R$ ${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
             </Bar>
             <Bar yAxisId="left" dataKey="PL Declarado" fill="#6bb8d4" name="PL Declarado Ajustado" radius={[2, 2, 0, 0]}>
-              <LabelList dataKey="PL Declarado" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 8, fill: "#6bb8d4" }} />
+              <LabelList dataKey="PL Declarado" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
             </Bar>
             <Line yAxisId="right" type="monotone" dataKey="# Clientes" stroke="#4a90d9" strokeWidth={2} dot={{ r: 4, fill: "#4a90d9" }} name="# Clientes">
               <LabelList dataKey="# Clientes" position="top" style={{ fontSize: 9, fill: "#4a90d9" }} />
