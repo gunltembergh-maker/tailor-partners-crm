@@ -76,13 +76,13 @@ const FAIXA_ORDER = ["Inativo", "-300k", "300k-500k", "500k-1M", "1-3M", "3-5M",
 /* ─── Sub-components ─── */
 interface Props { filters: DashboardFilters; }
 
-function PbiCard({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+function PbiCard({ title, children, className, fill }: { title: string; children: React.ReactNode; className?: string; fill?: boolean }) {
   return (
-    <div className={`bg-card border border-border rounded-lg shadow-sm overflow-hidden ${className ?? ""}`}>
+    <div className={`bg-card border border-border rounded-lg shadow-sm overflow-hidden ${fill ? "flex flex-col h-full" : ""} ${className ?? ""}`}>
       <div className="px-3 py-1.5 border-b border-border">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground">{title}</p>
       </div>
-      <div className="p-2">{children}</div>
+      <div className={`p-2 ${fill ? "flex-1 flex flex-col" : ""}`}>{children}</div>
     </div>
   );
 }
