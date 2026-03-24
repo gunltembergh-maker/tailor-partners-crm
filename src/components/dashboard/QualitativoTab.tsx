@@ -629,9 +629,9 @@ export function QualitativoTab({ filters }: Props) {
           </div>
         </PbiCard>
 
-        <PbiCard title="ROA Anualizado Ponderado M0" fill>
+        <PbiCard title="ROA Anualizado Ponderado M0">
           <SortableTable
-            fill
+            maxH={300}
             columns={[
               { key: "documento", label: "Documento" },
               { key: "roa", label: "ROA Anualizado Ponderado", align: "right", fmt: fmtPct },
