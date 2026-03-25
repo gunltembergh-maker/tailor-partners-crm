@@ -94,11 +94,11 @@ export function useDashboardFilters() {
   }, [rawAppliedFilters, isLockedBanker, isLockedFinder, isLockedAssessor, bankerName]);
 
   const updatePendingFilter = useCallback(<K extends keyof DashboardFilters>(key: K, value: DashboardFilters[K]) => {
-    // Prevent BANKER from changing banker filter, FINDER from changing finder filter
     if (key === "banker" && isLockedBanker) return;
     if (key === "finder" && isLockedFinder) return;
+    if (key === "advisor" && isLockedAssessor) return;
     setPendingFilters((prev) => ({ ...prev, [key]: value }));
-  }, [isLockedBanker, isLockedFinder]);
+  }, [isLockedBanker, isLockedFinder, isLockedAssessor]);
 
   const applyFilters = useCallback(() => {
     setAppliedFilters({ ...pendingFilters });
@@ -143,9 +143,9 @@ export function useDashboardFilters() {
   }, [appliedFilters]);
 
   const removeChip = useCallback((key: keyof DashboardFilters, value: string) => {
-    // Prevent removing locked filters
     if (key === "banker" && isLockedBanker) return;
     if (key === "finder" && isLockedFinder) return;
+    if (key === "advisor" && isLockedAssessor) return;
     setAppliedFilters(prev => {
       const next = { ...prev };
       if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes") {
