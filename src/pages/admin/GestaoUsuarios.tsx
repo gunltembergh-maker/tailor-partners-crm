@@ -186,6 +186,8 @@ export default function GestaoUsuarios() {
         p_perfil_nome: modalPerfil,
         p_banker_name: modalPerfil === "BANKER" ? modalBanker : null,
         p_empresa: modalEmpresa,
+        p_finder_name: null,
+        p_advisor_name: null,
       });
       if (error) throw error;
       const result = data as any;
