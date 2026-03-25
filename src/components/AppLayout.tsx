@@ -49,6 +49,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   </Select>
                 </div>
               )}
+              {role === "ADMIN" && <AdminNotifications />}
               <span className="text-sm text-muted-foreground">
                 Olá, <span className="font-medium text-foreground">{firstName}</span>
               </span>
