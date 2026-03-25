@@ -16,7 +16,7 @@ export default function DashComercial() {
   const [timeout, setTimeout_] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
-  const allowed = user?.email?.endsWith("@tailorpartners.com.br") ?? false;
+  const allowed = ALLOWED_DOMAINS.some(d => user?.email?.endsWith(d)) ?? false;
 
   const handleLoad = useCallback(() => {
     setLoading(false);
