@@ -99,6 +99,7 @@ export default function GestaoUsuarios() {
   // Block/Delete dialogs
   const [blockUser, setBlockUser] = useState<Usuario | null>(null);
   const [deleteUser, setDeleteUser] = useState<Usuario | null>(null);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
 
   // Approve dialog
   const [approveTarget, setApproveTarget] = useState<Usuario | null>(null);
