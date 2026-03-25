@@ -28,6 +28,7 @@ export default function AuditoriaComercial() {
   const {
     pendingFilters, appliedFilters, updatePendingFilter,
     applyFilters, resetFilters, hasChanges, activeChips, removeChip,
+    isLockedBanker, isLockedFinder,
   } = useDashboardFilters();
 
   const { data: captacao } = useCaptacaoData(appliedFilters);
@@ -116,6 +117,8 @@ export default function AuditoriaComercial() {
             hasChanges={hasChanges}
             open={true}
             onClose={() => {}}
+            isLockedBanker={isLockedBanker}
+            isLockedFinder={isLockedFinder}
           />
 
           <div className="flex-1 min-w-0 p-4">

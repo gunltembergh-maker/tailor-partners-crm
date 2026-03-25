@@ -19,6 +19,8 @@ export default function QualitativoPage() {
     hasChanges,
     activeChips,
     removeChip,
+    isLockedBanker,
+    isLockedFinder,
   } = useDashboardFilters();
   const { lastUpdatedAt, isRefreshing } = useDashboardRefresh();
 
@@ -41,6 +43,8 @@ export default function QualitativoPage() {
             open={true}
             onClose={() => {}}
             showVencimento={true}
+            isLockedBanker={isLockedBanker}
+            isLockedFinder={isLockedFinder}
           />
 
           <div className="flex-1 min-w-0 p-4">
