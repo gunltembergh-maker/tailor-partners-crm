@@ -34,6 +34,9 @@ const defaultFilters: DashboardFilters = {
 export function useDashboardFilters() {
   const { role, bankerName } = useAuth();
 
+  const isLockedBanker = role === "BANKER" && !!bankerName;
+  const isLockedFinder = role === "FINDER" && !!bankerName;
+
   // Compute role-locked initial filters
   const roleLockedFilters = useMemo(() => {
     const filters = { ...defaultFilters };
@@ -48,7 +51,7 @@ export function useDashboardFilters() {
   }, [role, bankerName]);
 
   const [pendingFilters, setPendingFilters] = useState<DashboardFilters>(roleLockedFilters);
-  const [appliedFilters, setAppliedFilters] = useState<DashboardFilters>(roleLockedFilters);
+  const [rawAppliedFilters, setAppliedFilters] = useState<DashboardFilters>(roleLockedFilters);
 
   // Sync when role/bankerName load (they start null)
   useEffect(() => {
@@ -64,8 +67,18 @@ export function useDashboardFilters() {
     }
   }, [role, bankerName]);
 
-  const isLockedBanker = role === "BANKER" && !!bankerName;
-  const isLockedFinder = role === "FINDER" && !!bankerName;
+  // CRITICAL: Always enforce role-based filter on appliedFilters
+  // This guarantees the lock even if useEffect hasn't fired yet
+  const appliedFilters = useMemo<DashboardFilters>(() => {
+    const f = { ...rawAppliedFilters };
+    if (isLockedBanker && bankerName && !f.banker.includes(bankerName)) {
+      f.banker = [bankerName];
+    }
+    if (isLockedFinder && bankerName && !f.finder.includes(bankerName)) {
+      f.finder = [bankerName];
+    }
+    return f;
+  }, [rawAppliedFilters, isLockedBanker, isLockedFinder, bankerName]);
 
   const updatePendingFilter = useCallback(<K extends keyof DashboardFilters>(key: K, value: DashboardFilters[K]) => {
     // Prevent BANKER from changing banker filter, FINDER from changing finder filter
