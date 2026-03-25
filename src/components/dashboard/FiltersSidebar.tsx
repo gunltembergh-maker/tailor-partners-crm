@@ -122,12 +122,24 @@ export function FiltersSidebar({
           </div>
 
           {/* Advisor */}
-          <PbiMultiSelect
-            label="Advisor"
-            values={pendingFilters.advisor}
-            options={options?.advisors ?? []}
-            onToggle={(v) => toggleMulti("advisor", v)}
-          />
+          {isLockedAssessor ? (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1">
+                <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Advisor</label>
+                <Lock className="h-2.5 w-2.5 opacity-50" />
+              </div>
+              <Badge className="text-[8px] h-4 px-1.5 bg-white/20 text-white border-0">
+                {pendingFilters.advisor[0]}
+              </Badge>
+            </div>
+          ) : (
+            <PbiMultiSelect
+              label="Advisor"
+              values={pendingFilters.advisor}
+              options={options?.advisors ?? []}
+              onToggle={(v) => toggleMulti("advisor", v)}
+            />
+          )}
 
           {/* Tipo Cliente */}
           <PbiMultiSelect
