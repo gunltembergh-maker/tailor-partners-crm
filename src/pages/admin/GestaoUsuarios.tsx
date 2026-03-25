@@ -99,6 +99,12 @@ export default function GestaoUsuarios() {
   const [blockUser, setBlockUser] = useState<Usuario | null>(null);
   const [deleteUser, setDeleteUser] = useState<Usuario | null>(null);
 
+  // Approve dialog
+  const [approveTarget, setApproveTarget] = useState<Usuario | null>(null);
+  const [approveRole, setApproveRole] = useState("");
+  const [approveSaving, setApproveSaving] = useState(false);
+  const { approve: approveNotif, unreadNotifications } = useAdminNotifications();
+
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
     queryFn: async () => {
@@ -282,6 +288,44 @@ export default function GestaoUsuarios() {
               </Card>
             ))}
           </div>
+
+          {/* Aguardando Aprovação */}
+          {(() => {
+            const pendentes = (usuarios || []).filter((u) => u.status === "Aguardando" && u.blocked);
+            if (pendentes.length === 0) return null;
+            return (
+              <div className="space-y-3">
+                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-400" />
+                  Aguardando Aprovação ({pendentes.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {pendentes.map((u) => (
+                    <Card key={u.email} className="border-orange-500/30">
+                      <CardContent className="pt-4 pb-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-foreground text-sm truncate">{u.nome || u.email}</p>
+                          <Badge variant="outline" className="bg-orange-500/10 text-orange-400 text-[10px]">Pendente</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Cadastro: {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full h-7 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10"
+                          onClick={() => { setApproveTarget(u); setApproveRole(""); }}
+                        >
+                          <Check className="h-3 w-3 mr-1" /> Aprovar Acesso
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3">
