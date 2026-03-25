@@ -23,7 +23,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, Check, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, Check, AlertTriangle, Mail } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 
 const BADGE_COLORS: Record<string, string> = {
@@ -99,6 +99,7 @@ export default function GestaoUsuarios() {
   // Block/Delete dialogs
   const [blockUser, setBlockUser] = useState<Usuario | null>(null);
   const [deleteUser, setDeleteUser] = useState<Usuario | null>(null);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
 
   // Approve dialog
   const [approveTarget, setApproveTarget] = useState<Usuario | null>(null);
@@ -238,6 +239,23 @@ export default function GestaoUsuarios() {
     }
   };
 
+  const handleResendConfirmation = async (email: string) => {
+    setResendingEmail(email);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email });
+      if (error) {
+        toast({ title: "Erro ao reenviar", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "E-mail reenviado!", description: `Confirmação reenviada para ${email}` });
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setResendingEmail(null);
+    }
+  };
+
+
   const toggleCpf = (email: string) => {
     setRevealedCpfs((prev) => {
       const next = new Set(prev);
@@ -312,14 +330,27 @@ export default function GestaoUsuarios() {
                         <p className="text-[10px] text-muted-foreground">
                           Cadastro: {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
                         </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full h-7 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10"
-                          onClick={() => { setApproveTarget(u); setApproveRole(""); }}
-                        >
-                          <Check className="h-3 w-3 mr-1" /> Aprovar Acesso
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 h-7 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10"
+                            onClick={() => { setApproveTarget(u); setApproveRole(""); }}
+                          >
+                            <Check className="h-3 w-3 mr-1" /> Aprovar
+                          </Button>
+                          {u.user_id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              disabled={resendingEmail === u.email}
+                              onClick={() => handleResendConfirmation(u.email)}
+                            >
+                              <Mail className="h-3 w-3 mr-1" /> {resendingEmail === u.email ? "Enviando..." : "Reenviar e-mail"}
+                            </Button>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -410,14 +441,26 @@ export default function GestaoUsuarios() {
                         {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
+                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
                             {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
                           </Button>
-                          {u.status === "Aguardando" && (
+                          {u.user_id && u.status !== "Ativo" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              disabled={resendingEmail === u.email}
+                              onClick={() => handleResendConfirmation(u.email)}
+                              title="Reenviar e-mail de confirmação"
+                            >
+                              <Mail className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                          )}
+                          {u.status === "Aguardando" && !u.user_id && (
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteUser(u)}>
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
