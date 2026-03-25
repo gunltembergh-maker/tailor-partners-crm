@@ -239,7 +239,23 @@ export default function GestaoUsuarios() {
     }
   };
 
-  const toggleCpf = (email: string) => {
+  const handleResendConfirmation = async (email: string) => {
+    setResendingEmail(email);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email });
+      if (error) {
+        toast({ title: "Erro ao reenviar", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "E-mail reenviado!", description: `Confirmação reenviada para ${email}` });
+      }
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setResendingEmail(null);
+    }
+  };
+
+
     setRevealedCpfs((prev) => {
       const next = new Set(prev);
       if (next.has(email)) next.delete(email);
