@@ -329,14 +329,27 @@ export default function GestaoUsuarios() {
                         <p className="text-[10px] text-muted-foreground">
                           Cadastro: {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
                         </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full h-7 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10"
-                          onClick={() => { setApproveTarget(u); setApproveRole(""); }}
-                        >
-                          <Check className="h-3 w-3 mr-1" /> Aprovar Acesso
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 h-7 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10"
+                            onClick={() => { setApproveTarget(u); setApproveRole(""); }}
+                          >
+                            <Check className="h-3 w-3 mr-1" /> Aprovar
+                          </Button>
+                          {u.user_id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs"
+                              disabled={resendingEmail === u.email}
+                              onClick={() => handleResendConfirmation(u.email)}
+                            >
+                              <Mail className="h-3 w-3 mr-1" /> {resendingEmail === u.email ? "Enviando..." : "Reenviar e-mail"}
+                            </Button>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
