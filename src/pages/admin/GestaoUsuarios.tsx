@@ -256,6 +256,7 @@ export default function GestaoUsuarios() {
   };
 
 
+  const toggleCpf = (email: string) => {
     setRevealedCpfs((prev) => {
       const next = new Set(prev);
       if (next.has(email)) next.delete(email);
