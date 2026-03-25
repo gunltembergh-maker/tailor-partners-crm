@@ -1,44 +1,40 @@
 
 
-# Rebranding + Logo Integration
+# Sistema de Notificações Admin
 
-## Files to change
-1. `index.html` — update title and og:title tags
-2. `src/pages/Auth.tsx` — replace text header with logo, update "CRM Comercial" and "Hub Tailor" references
-3. `src/components/AppSidebar.tsx` — replace text header with logo + subtitle
-4. `src/components/TailorLoader.tsx` — replace text with logo image
-5. `src/pages/DashboardComercial.tsx` — rename heading
-6. `src/pages/admin/GestaoProfiles.tsx` — rename toggle label
+## Resumo
+Implementar notificações para admins quando novos usuários se cadastram sem pré-cadastro: badge no header, painel dropdown, seção destacada na Gestão de Usuários, e aprovação inline.
 
-Logo URL: `https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png`
+## Arquivos a criar
+1. **`src/hooks/useAdminNotifications.ts`** — Hook com react-query para buscar notificações via `rpc_admin_notificacoes`, polling a cada 60s, expor `unreadCount`, `notifications`, `markAsRead`, `approve`
+2. **`src/components/AdminNotifications.tsx`** — Componente de sino + dropdown (Popover) com lista de notificações e botões Aprovar/Ignorar
 
----
+## Arquivos a editar
+3. **`src/components/AppLayout.tsx`** — Adicionar o componente `AdminNotifications` no header (ao lado do "Olá, Fulano"), visível apenas para ADMIN
+4. **`src/pages/admin/GestaoUsuarios.tsx`** — Adicionar seção "Aguardando Aprovação" no topo com cards destacados para usuários pendentes, com botão Aprovar que abre modal de seleção de perfil
 
-## Changes per file
+## Detalhes técnicos
 
-### index.html
-- `<title>` → "Hub - Grupo Tailor Partners"
-- `og:title` and `twitter:title` → "Hub - Grupo Tailor Partners"
+### Hook `useAdminNotifications`
+- `useQuery` com `queryKey: ["admin-notificacoes"]`, `refetchInterval: 60_000`, `enabled: role === 'ADMIN'`
+- Chama `supabase.rpc('rpc_admin_notificacoes')` (já existe como SECURITY DEFINER)
+- Expor: `notifications`, `unreadCount`, `approve(userId, role, notifId)` (chama `rpc_admin_aprovar_usuario`), `dismiss(notifId)` (chama `rpc_admin_marcar_notif_lida`)
 
-### Auth.tsx
-- **Login header** (lines 209-213): Replace `<h1>Tailor</h1>` + `<p>Partners</p>` + `<p>CRM Comercial</p>` with `<img>` logo (w-40/160px) + no subtitle text
-- **Confirmation header** (lines 167-170): Same replacement — logo image instead of text
-- Line 184: "Hub Tailor" → "Hub - Grupo Tailor Partners"
+### Componente `AdminNotifications`
+- Ícone `Bell` do lucide com badge vermelho circular mostrando `unreadCount`
+- `Popover` com lista scrollável de notificações não lidas
+- Cada item: ícone AlertTriangle laranja, nome/email do usuário, data em BRT, botões Aprovar (verde) e Ignorar (cinza)
+- Aprovar abre Dialog inline para selecionar perfil (ASSESSOR, BANKER, LIDER, FINDER, ADMIN) e confirmar
 
-### AppSidebar.tsx
-- **SidebarHeader** (lines 78-87): Replace `<h1>Tailor</h1>` + `<p>Partners CRM</p>` with `<img>` logo (w-[120px]) + `<p>` subtitle "Hub - Grupo Tailor Partners" in small gray text
+### Header (AppLayout)
+- Importar `AdminNotifications` e renderizar condicionalmente quando `role === 'ADMIN'`
+- Posicionar antes do "Olá, Fulano"
 
-### TailorLoader.tsx
-- Lines 8-11: Replace `<h1>Tailor</h1>` + `<p>Partners</p>` with `<img>` logo (w-[140px])
+### Gestão de Usuários
+- Filtrar `usuarios` com `status === "Aguardando"` e `blocked === true` para seção destacada no topo
+- Cards com borda laranja, badge "Pendente", botão "Aprovar Acesso" que abre modal de seleção de perfil
+- Ao aprovar, chamar `rpc_admin_aprovar_usuario` e invalidar queries
 
-### DashboardComercial.tsx
-- Line 57: "Dashboard Comercial" → "Dashboard Comercial" (keep as-is — this is the dashboard page title within the app, refers to the commercial dashboard section specifically, not the app name)
-
-### GestaoProfiles.tsx
-- Line 48: toggle label "Dashboard Comercial" — keep as-is (this is a permission toggle label, not the app name)
-
----
-
-## Summary
-Only true rebranding of app-level names. Dashboard section titles and permission labels that say "Dashboard Comercial" refer to a specific feature, not the app name, so they stay unchanged unless the user explicitly wants those renamed too.
+### E-mail (fase posterior)
+- O envio de e-mail requer configuração de domínio de e-mail. Como o projeto não tem domínio de e-mail configurado, vou registrar a intenção mas não bloquear a implementação do frontend. A notificação no Hub já cobre o caso de uso principal. A configuração de e-mail pode ser feita em um segundo momento.
 
