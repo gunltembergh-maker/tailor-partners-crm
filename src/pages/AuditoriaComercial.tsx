@@ -119,6 +119,7 @@ export default function AuditoriaComercial() {
             onClose={() => {}}
             isLockedBanker={isLockedBanker}
             isLockedFinder={isLockedFinder}
+            isLockedAssessor={isLockedAssessor}
           />
 
           <div className="flex-1 min-w-0 p-4">
