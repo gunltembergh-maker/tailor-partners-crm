@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, AlertTriangle, Eye, EyeOff } from "lucide-react";
-import { LOGO_LIGHT_BG } from "@/lib/constants";
+import { LOGO_LIGHT_BG, ALLOWED_DOMAINS, DOMAIN_EMPRESA_MAP, EMPRESAS_GRUPO } from "@/lib/constants";
 
 // CPF mask helper
 function maskCpf(value: string): string {
@@ -50,6 +51,17 @@ function getPasswordStrength(pw: string): { label: string; color: string; width:
   return { label: "Fraca", color: "bg-red-500", width: "33%" };
 }
 
+function isAllowedDomain(email: string): boolean {
+  return ALLOWED_DOMAINS.some(domain => email.endsWith(domain));
+}
+
+function getEmpresaFromEmail(email: string): string {
+  for (const [domain, empresa] of Object.entries(DOMAIN_EMPRESA_MAP)) {
+    if (email.endsWith(domain)) return empresa;
+  }
+  return "Tailor Partners";
+}
+
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -57,7 +69,7 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [cpf, setCpf] = useState("");
-  const [empresa, setEmpresa] = useState("Tailor Partners");
+  const [empresa, setEmpresa] = useState("");
   const [loading, setLoading] = useState(false);
   const [cpfError, setCpfError] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -73,6 +85,17 @@ export default function Auth() {
   const isBlocked = searchParams.get("blocked") === "true";
 
   const strength = getPasswordStrength(password);
+
+  // Auto-detect empresa from email domain
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (!isLogin) {
+      const detected = getEmpresaFromEmail(value);
+      if (isAllowedDomain(value)) {
+        setEmpresa(detected);
+      }
+    }
+  };
 
   const handleCpfBlur = async () => {
     const digits = cpf.replace(/\D/g, "");
@@ -92,10 +115,10 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email.endsWith("@tailorpartners.com.br")) {
+    if (!isAllowedDomain(email)) {
       toast({
         title: "Domínio não autorizado",
-        description: "Acesso restrito a colaboradores Tailor Partners. Use seu e-mail corporativo.",
+        description: "Acesso restrito a colaboradores do Grupo Tailor Partners. Use seu e-mail corporativo.",
         variant: "destructive",
       });
       return;
@@ -111,7 +134,6 @@ export default function Auth() {
         navigate("/");
       }
     } else {
-      // Validate signup fields
       if (fullName.trim().length < 3) {
         toast({ title: "Nome muito curto", description: "Informe pelo menos 3 caracteres.", variant: "destructive" });
         setLoading(false);
@@ -125,6 +147,11 @@ export default function Auth() {
       }
       if (cpfError) {
         toast({ title: "CPF já cadastrado", description: cpfError, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+      if (!empresa) {
+        toast({ title: "Empresa obrigatória", description: "Selecione a empresa do Grupo Tailor Partners.", variant: "destructive" });
         setLoading(false);
         return;
       }
@@ -164,7 +191,7 @@ export default function Auth() {
   if (showConfirmation) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md animate-fade-in text-center">
+        <div className="w-full max-w-md animate-fade-in text-center">
           <div className="mb-8 flex justify-center">
             <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-40" />
           </div>
@@ -233,19 +260,17 @@ export default function Auth() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Nome Completo</Label>
-                    <Input
-                      id="fullName"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Seu nome completo"
-                      required
-                      minLength={3}
-                    />
-                  </div>
-                </>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Seu nome completo"
+                    required
+                    minLength={3}
+                  />
+                </div>
               )}
 
               <div className="space-y-2">
@@ -254,7 +279,7 @@ export default function Auth() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   placeholder="nome@tailorpartners.com.br"
                   required
                 />
@@ -278,13 +303,18 @@ export default function Auth() {
 
                   <div className="space-y-2">
                     <Label htmlFor="empresa">Empresa</Label>
-                    <Input
-                      id="empresa"
-                      value={empresa}
-                      onChange={(e) => setEmpresa(e.target.value)}
-                      placeholder="Tailor Partners"
-                      required
-                    />
+                    <Select value={empresa} onValueChange={setEmpresa}>
+                      <SelectTrigger id="empresa">
+                        <SelectValue placeholder="Selecione a empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EMPRESAS_GRUPO.map((emp) => (
+                          <SelectItem key={emp} value={emp}>
+                            {emp}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </>
               )}

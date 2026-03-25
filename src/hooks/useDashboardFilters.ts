@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface DashboardFilters {
   periodoInicio: string;
@@ -31,21 +32,56 @@ const defaultFilters: DashboardFilters = {
 };
 
 export function useDashboardFilters() {
-  const [pendingFilters, setPendingFilters] = useState<DashboardFilters>(defaultFilters);
-  const [appliedFilters, setAppliedFilters] = useState<DashboardFilters>(defaultFilters);
+  const { role, bankerName } = useAuth();
+
+  // Compute role-locked initial filters
+  const roleLockedFilters = useMemo(() => {
+    const filters = { ...defaultFilters };
+    if (bankerName) {
+      if (role === "BANKER") {
+        filters.banker = [bankerName];
+      } else if (role === "FINDER") {
+        filters.finder = [bankerName];
+      }
+    }
+    return filters;
+  }, [role, bankerName]);
+
+  const [pendingFilters, setPendingFilters] = useState<DashboardFilters>(roleLockedFilters);
+  const [appliedFilters, setAppliedFilters] = useState<DashboardFilters>(roleLockedFilters);
+
+  // Sync when role/bankerName load (they start null)
+  useEffect(() => {
+    if (bankerName && (role === "BANKER" || role === "FINDER")) {
+      setPendingFilters(prev => ({
+        ...prev,
+        ...(role === "BANKER" ? { banker: [bankerName] } : { finder: [bankerName] }),
+      }));
+      setAppliedFilters(prev => ({
+        ...prev,
+        ...(role === "BANKER" ? { banker: [bankerName] } : { finder: [bankerName] }),
+      }));
+    }
+  }, [role, bankerName]);
+
+  const isLockedBanker = role === "BANKER" && !!bankerName;
+  const isLockedFinder = role === "FINDER" && !!bankerName;
 
   const updatePendingFilter = useCallback(<K extends keyof DashboardFilters>(key: K, value: DashboardFilters[K]) => {
+    // Prevent BANKER from changing banker filter, FINDER from changing finder filter
+    if (key === "banker" && isLockedBanker) return;
+    if (key === "finder" && isLockedFinder) return;
     setPendingFilters((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  }, [isLockedBanker, isLockedFinder]);
 
   const applyFilters = useCallback(() => {
     setAppliedFilters({ ...pendingFilters });
   }, [pendingFilters]);
 
   const resetFilters = useCallback(() => {
-    setPendingFilters(defaultFilters);
-    setAppliedFilters(defaultFilters);
-  }, []);
+    setPendingFilters(roleLockedFilters);
+    setAppliedFilters(roleLockedFilters);
+  }, [roleLockedFilters]);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(pendingFilters) !== JSON.stringify(appliedFilters);
@@ -81,6 +117,9 @@ export function useDashboardFilters() {
   }, [appliedFilters]);
 
   const removeChip = useCallback((key: keyof DashboardFilters, value: string) => {
+    // Prevent removing locked filters
+    if (key === "banker" && isLockedBanker) return;
+    if (key === "finder" && isLockedFinder) return;
     setAppliedFilters(prev => {
       const next = { ...prev };
       if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes") {
@@ -99,7 +138,7 @@ export function useDashboardFilters() {
       }
       return next;
     });
-  }, []);
+  }, [isLockedBanker, isLockedFinder]);
 
   return {
     pendingFilters,
@@ -110,5 +149,7 @@ export function useDashboardFilters() {
     hasChanges,
     activeChips,
     removeChip,
+    isLockedBanker,
+    isLockedFinder,
   };
 }
