@@ -10,6 +10,8 @@ interface AuthContextType {
   role: string | null;
   permissoes: Record<string, boolean> | null;
   bankerName: string | null;
+  advisorName: string | null;
+  finderName: string | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, nomeCompleto: string, cpf?: string, empresa?: string) => Promise<{ error: Error | null }>;
@@ -25,6 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
   const [permissoes, setPermissoes] = useState<Record<string, boolean> | null>(null);
   const [bankerName, setBankerName] = useState<string | null>(null);
+  const [advisorName, setAdvisorName] = useState<string | null>(null);
+  const [finderName, setFinderName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   let navigate: ReturnType<typeof useNavigate>;
@@ -39,12 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        setLoading(true);
         setTimeout(() => fetchMeuPerfil(session.user.id), 0);
       } else {
         setProfile(null);
         setRole(null);
         setPermissoes(null);
         setBankerName(null);
+        setAdvisorName(null);
+        setFinderName(null);
         setLoading(false);
       }
     });
@@ -54,8 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchMeuPerfil(session.user.id);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -86,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fetch profile name/email from profiles table for display
       const { data: profileRow } = await supabase
         .from("profiles")
-        .select("full_name, email, avatar_url")
+        .select("full_name, email, avatar_url, banker_name, advisor_name, finder_name")
         .eq("user_id", userId)
         .single();
 
@@ -97,19 +105,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setRole(perfil.role ?? null);
       setPermissoes((perfil.permissoes as Record<string, boolean>) ?? null);
-      setBankerName(perfil.banker_name ?? null);
+      setBankerName(perfil.banker_name ?? profileRow?.banker_name ?? null);
+      setAdvisorName(perfil.advisor_name ?? profileRow?.advisor_name ?? null);
+      setFinderName(perfil.finder_name ?? profileRow?.finder_name ?? null);
     } catch {
       await fetchProfileFallback(userId);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function fetchProfileFallback(userId: string) {
     const { data: profileData } = await supabase
       .from("profiles")
-      .select("full_name, email, avatar_url")
+      .select("full_name, email, avatar_url, banker_name, advisor_name, finder_name")
       .eq("user_id", userId)
       .single();
     if (profileData) setProfile(profileData);
+    setBankerName(profileData?.banker_name ?? null);
+    setAdvisorName(profileData?.advisor_name ?? null);
+    setFinderName(profileData?.finder_name ?? null);
 
     const { data: roleData } = await supabase
       .from("user_roles")
@@ -159,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, advisorName, finderName, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

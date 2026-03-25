@@ -11,17 +11,21 @@ import type { DashboardFilters } from "./useDashboardFilters";
  * For ADMIN/LIDER, the UI filters are used as-is (null = no filter = see everything).
  */
 export function useScopedDashboardParams(filters: DashboardFilters) {
-  const { role, bankerName, loading: authLoading } = useAuth();
+  const { role, bankerName, advisorName, finderName, loading: authLoading } = useAuth();
 
   const isLockedBanker = role === "BANKER" && !!bankerName;
-  const isLockedFinder = role === "FINDER" && !!bankerName;
-  const isLockedAssessor = role === "ASSESSOR" && !!bankerName;
+  const isLockedFinder = role === "FINDER" && !!finderName;
+  const isLockedAssessor = role === "ASSESSOR" && !!advisorName;
 
   // Profile is ready when auth is done AND any role that needs a name has it
   const ready = !authLoading && (
-    (role === "BANKER" || role === "FINDER" || role === "ASSESSOR")
+    role === "BANKER"
       ? !!bankerName
-      : true
+      : role === "FINDER"
+        ? !!finderName
+        : role === "ASSESSOR"
+          ? !!advisorName
+          : true
   );
 
   const effectiveParams = useMemo(() => {
@@ -31,11 +35,11 @@ export function useScopedDashboardParams(filters: DashboardFilters) {
       : filters.banker.length ? filters.banker : null;
 
     const p_advisor = isLockedAssessor
-      ? [bankerName!] // rpc_meu_perfil stores the name in banker_name for all roles
+      ? [advisorName!]
       : filters.advisor.length ? filters.advisor : null;
 
     const p_finder = isLockedFinder
-      ? [bankerName!]
+      ? [finderName!]
       : filters.finder.length ? filters.finder : null;
 
     return {
@@ -46,7 +50,7 @@ export function useScopedDashboardParams(filters: DashboardFilters) {
       p_finder,
       p_tipo_cliente: filters.tipoCliente ? [filters.tipoCliente] : null,
     };
-  }, [filters, isLockedBanker, isLockedFinder, isLockedAssessor, bankerName]);
+  }, [filters, isLockedBanker, isLockedFinder, isLockedAssessor, bankerName, advisorName, finderName]);
 
   // Subset for RPCs that only accept banker + documento (receita, ROA)
   const effectiveParamsPbi = useMemo(() => ({
