@@ -23,7 +23,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, Check, AlertTriangle } from "lucide-react";
+import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
@@ -97,6 +98,12 @@ export default function GestaoUsuarios() {
   // Block/Delete dialogs
   const [blockUser, setBlockUser] = useState<Usuario | null>(null);
   const [deleteUser, setDeleteUser] = useState<Usuario | null>(null);
+
+  // Approve dialog
+  const [approveTarget, setApproveTarget] = useState<Usuario | null>(null);
+  const [approveRole, setApproveRole] = useState("");
+  const [approveSaving, setApproveSaving] = useState(false);
+  const { approve: approveNotif, unreadNotifications } = useAdminNotifications();
 
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
@@ -281,6 +288,44 @@ export default function GestaoUsuarios() {
               </Card>
             ))}
           </div>
+
+          {/* Aguardando Aprovação */}
+          {(() => {
+            const pendentes = (usuarios || []).filter((u) => u.status === "Aguardando" && u.blocked);
+            if (pendentes.length === 0) return null;
+            return (
+              <div className="space-y-3">
+                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-400" />
+                  Aguardando Aprovação ({pendentes.length})
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {pendentes.map((u) => (
+                    <Card key={u.email} className="border-orange-500/30">
+                      <CardContent className="pt-4 pb-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-foreground text-sm truncate">{u.nome || u.email}</p>
+                          <Badge variant="outline" className="bg-orange-500/10 text-orange-400 text-[10px]">Pendente</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Cadastro: {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full h-7 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10"
+                          onClick={() => { setApproveTarget(u); setApproveRole(""); }}
+                        >
+                          <Check className="h-3 w-3 mr-1" /> Aprovar Acesso
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3">
@@ -496,6 +541,65 @@ export default function GestaoUsuarios() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Approve Access Dialog */}
+      <Dialog open={!!approveTarget} onOpenChange={() => { setApproveTarget(null); setApproveRole(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aprovar acesso de {approveTarget?.nome || approveTarget?.email}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">Selecione o perfil de acesso:</p>
+            <Select value={approveRole} onValueChange={setApproveRole}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o perfil..." />
+              </SelectTrigger>
+              <SelectContent>
+                {["ASSESSOR", "BANKER", "LIDER", "FINDER", "ADMIN"].map((r) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button
+              disabled={!approveRole || approveSaving}
+              onClick={async () => {
+                if (!approveTarget) return;
+                setApproveSaving(true);
+                // Find matching notification
+                const notif = unreadNotifications.find(
+                  (n) => n.dados?.email === approveTarget.email
+                );
+                if (notif) {
+                  await approveNotif(notif.dados?.user_id || "", approveRole, notif.id);
+                } else {
+                  // Fallback: call RPC directly
+                  const { error } = await supabase.rpc("rpc_admin_aprovar_usuario" as any, {
+                    p_user_id: "",
+                    p_role: approveRole,
+                    p_notif_id: "",
+                  });
+                  if (error) {
+                    toast({ title: "Erro", description: error.message, variant: "destructive" });
+                  } else {
+                    toast({ title: `Acesso liberado para ${approveTarget.nome || approveTarget.email}!` });
+                    refetch();
+                  }
+                }
+                setApproveSaving(false);
+                setApproveTarget(null);
+                setApproveRole("");
+              }}
+            >
+              {approveSaving ? "Aprovando..." : "Aprovar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

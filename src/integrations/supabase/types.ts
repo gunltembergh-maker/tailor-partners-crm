@@ -266,6 +266,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notificacoes_admin: {
+        Row: {
+          created_at: string | null
+          dados: Json | null
+          id: string
+          lida: boolean | null
+          mensagem: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string | null
+          dados?: Json | null
+          id?: string
+          lida?: boolean | null
+          mensagem: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string | null
+          dados?: Json | null
+          id?: string
+          lida?: boolean | null
+          mensagem?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       opportunities: {
         Row: {
           client_id: string | null
@@ -1014,9 +1044,12 @@ export type Database = {
           codigo_xp: string | null
           created_at: string
           email: string | null
+          empresa: string | null
           full_name: string
           id: string
           nome: string | null
+          perfil_nome: string | null
+          role: string | null
           short_name: string
           unit: string
         }
@@ -1026,9 +1059,12 @@ export type Database = {
           codigo_xp?: string | null
           created_at?: string
           email?: string | null
+          empresa?: string | null
           full_name: string
           id?: string
           nome?: string | null
+          perfil_nome?: string | null
+          role?: string | null
           short_name: string
           unit: string
         }
@@ -1038,9 +1074,12 @@ export type Database = {
           codigo_xp?: string | null
           created_at?: string
           email?: string | null
+          empresa?: string | null
           full_name?: string
           id?: string
           nome?: string | null
+          perfil_nome?: string | null
+          role?: string | null
           short_name?: string
           unit?: string
         }
@@ -2205,6 +2244,10 @@ export type Database = {
       normalize_banker: { Args: { v: string }; Returns: string }
       parse_num: { Args: { v: string }; Returns: number }
       parse_num_any: { Args: { v: string }; Returns: number }
+      rpc_admin_aprovar_usuario: {
+        Args: { p_notif_id?: string; p_role: string; p_user_id: string }
+        Returns: Json
+      }
       rpc_admin_bloquear_usuario: {
         Args: { p_blocked: boolean; p_email: string }
         Returns: Json
@@ -2222,6 +2265,19 @@ export type Database = {
           id: string
           nome: string
           permissoes: Json
+        }[]
+      }
+      rpc_admin_marcar_notif_lida: { Args: { p_id: string }; Returns: Json }
+      rpc_admin_notificacoes: {
+        Args: never
+        Returns: {
+          created_at: string
+          dados: Json
+          id: string
+          lida: boolean
+          mensagem: string
+          tipo: string
+          titulo: string
         }[]
       }
       rpc_admin_remover_precadastro: {
