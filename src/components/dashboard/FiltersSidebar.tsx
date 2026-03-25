@@ -89,12 +89,24 @@ export function FiltersSidebar({
           />
 
           {/* Financial Advisor */}
-          <PbiMultiSelect
-            label="Financial Advisor"
-            values={pendingFilters.banker}
-            options={options?.bankers ?? []}
-            onToggle={(v) => toggleMulti("banker", v)}
-          />
+          {isLockedBanker ? (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1">
+                <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Financial Advisor</label>
+                <Lock className="h-2.5 w-2.5 opacity-50" />
+              </div>
+              <Badge className="text-[8px] h-4 px-1.5 bg-white/20 text-white border-0">
+                {pendingFilters.banker[0]}
+              </Badge>
+            </div>
+          ) : (
+            <PbiMultiSelect
+              label="Financial Advisor"
+              values={pendingFilters.banker}
+              options={options?.bankers ?? []}
+              onToggle={(v) => toggleMulti("banker", v)}
+            />
+          )}
 
           {/* Documento / Código do Cliente */}
           <div className="space-y-1">
@@ -127,12 +139,24 @@ export function FiltersSidebar({
           />
 
           {/* Finder */}
-          <PbiMultiSelect
-            label="Finder"
-            values={pendingFilters.finder}
-            options={options?.finders ?? []}
-            onToggle={(v) => toggleMulti("finder", v)}
-          />
+          {isLockedFinder ? (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1">
+                <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Finder</label>
+                <Lock className="h-2.5 w-2.5 opacity-50" />
+              </div>
+              <Badge className="text-[8px] h-4 px-1.5 bg-white/20 text-white border-0">
+                {pendingFilters.finder[0]}
+              </Badge>
+            </div>
+          ) : (
+            <PbiMultiSelect
+              label="Finder"
+              values={pendingFilters.finder}
+              options={options?.finders ?? []}
+              onToggle={(v) => toggleMulti("finder", v)}
+            />
+          )}
 
           {/* Vencimento (only qualitativo) */}
           {showVencimento && (
