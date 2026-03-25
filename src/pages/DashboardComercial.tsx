@@ -24,6 +24,8 @@ export default function DashboardComercial() {
     removeChip,
     isLockedBanker,
     isLockedFinder,
+    isLockedAssessor,
+    profileReady,
   } = useDashboardFilters();
   const [activeTab, setActiveTab] = useState("quantitativo");
   const { lastUpdatedAt, isRefreshing } = useDashboardRefresh();
@@ -51,6 +53,7 @@ export default function DashboardComercial() {
             showVencimento={activeTab === "qualitativo"}
             isLockedBanker={isLockedBanker}
             isLockedFinder={isLockedFinder}
+            isLockedAssessor={isLockedAssessor}
           />
 
           {/* Main content */}

@@ -28,7 +28,7 @@ export default function AuditoriaComercial() {
   const {
     pendingFilters, appliedFilters, updatePendingFilter,
     applyFilters, resetFilters, hasChanges, activeChips, removeChip,
-    isLockedBanker, isLockedFinder,
+    isLockedBanker, isLockedFinder, isLockedAssessor,
   } = useDashboardFilters();
 
   const { data: captacao } = useCaptacaoData(appliedFilters);
