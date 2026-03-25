@@ -23,7 +23,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, Check, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, Check, AlertTriangle, Mail } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 
 const BADGE_COLORS: Record<string, string> = {
