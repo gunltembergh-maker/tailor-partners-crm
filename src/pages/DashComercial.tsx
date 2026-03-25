@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Maximize, X, AlertTriangle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { ALLOWED_DOMAINS } from "@/lib/constants";
 
 const POWERBI_URL =
   "https://app.powerbi.com/reportEmbed?reportId=b727e014-fd47-4c15-9917-01f41619fc61&autoAuth=true&ctid=3332cd4c-5c72-4dfa-8bde-4dad53c24a2f";
