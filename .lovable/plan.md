@@ -1,35 +1,44 @@
 
 
-# Atualização de Dependências com Vulnerabilidades
+# Rebranding + Logo Integration
 
-## Análise
+## Files to change
+1. `index.html` — update title and og:title tags
+2. `src/pages/Auth.tsx` — replace text header with logo, update "CRM Comercial" and "Hub Tailor" references
+3. `src/components/AppSidebar.tsx` — replace text header with logo + subtitle
+4. `src/components/TailorLoader.tsx` — replace text with logo image
+5. `src/pages/DashboardComercial.tsx` — rename heading
+6. `src/pages/admin/GestaoProfiles.tsx` — rename toggle label
 
-O scan de segurança do projeto não inclui auditoria de dependências npm — ele cobre apenas problemas de RLS, edge functions e rotas (todos já corrigidos).
+Logo URL: `https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png`
 
-Porém, analisando o `package.json`, há duas dependências conhecidas por terem vulnerabilidades de alta severidade:
+---
 
-1. **`xlsx@0.18.5`** — O SheetJS Community Edition tem vulnerabilidades conhecidas de prototype pollution e arbitrary code execution. Esta é a principal preocupação.
-2. **`jsdom@20.0.3`** (devDependency) — Versão antiga com vulnerabilidades transitivas conhecidas.
+## Changes per file
 
-## Plano de Correção
+### index.html
+- `<title>` → "Hub - Grupo Tailor Partners"
+- `og:title` and `twitter:title` → "Hub - Grupo Tailor Partners"
 
-### 1. Atualizar `jsdom` (devDependency)
-- Atualizar de `^20.0.3` para `^25.0.1` (última versão estável)
-- Impacto: apenas ambiente de teste, risco zero para produção
+### Auth.tsx
+- **Login header** (lines 209-213): Replace `<h1>Tailor</h1>` + `<p>Partners</p>` + `<p>CRM Comercial</p>` with `<img>` logo (w-40/160px) + no subtitle text
+- **Confirmation header** (lines 167-170): Same replacement — logo image instead of text
+- Line 184: "Hub Tailor" → "Hub - Grupo Tailor Partners"
 
-### 2. Avaliar `xlsx`
-- O pacote `xlsx` (SheetJS CE) parou de receber patches de segurança na versão gratuita. A versão 0.18.5 é a última disponível no npm.
-- **Opções**:
-  - **A) Manter como está** — o pacote só é usado no client-side (`ImportClients.tsx`) e no edge function (`ingest-sharepoint-file`), ambos processando arquivos internos confiáveis
-  - **B) Migrar para alternativa** como `exceljs` — requer refatoração significativa
+### AppSidebar.tsx
+- **SidebarHeader** (lines 78-87): Replace `<h1>Tailor</h1>` + `<p>Partners CRM</p>` with `<img>` logo (w-[120px]) + `<p>` subtitle "Hub - Grupo Tailor Partners" in small gray text
 
-### 3. Atualizar outras dependências menores
-- Bump geral de patches/minor para todas as dependências via atualização do `package.json`
+### TailorLoader.tsx
+- Lines 8-11: Replace `<h1>Tailor</h1>` + `<p>Partners</p>` with `<img>` logo (w-[140px])
 
-## Recomendação
+### DashboardComercial.tsx
+- Line 57: "Dashboard Comercial" → "Dashboard Comercial" (keep as-is — this is the dashboard page title within the app, refers to the commercial dashboard section specifically, not the app name)
 
-Atualizar `jsdom` para v25 e fazer bump geral de patches. Para o `xlsx`, manter a versão atual dado que os inputs são controlados (arquivos internos da empresa), e a migração para `exceljs` seria um esforço separado maior.
+### GestaoProfiles.tsx
+- Line 48: toggle label "Dashboard Comercial" — keep as-is (this is a permission toggle label, not the app name)
 
-## Arquivos a editar
-- `package.json` — bump `jsdom` e demais dependências
+---
+
+## Summary
+Only true rebranding of app-level names. Dashboard section titles and permission labels that say "Dashboard Comercial" refer to a specific feature, not the app name, so they stay unchanged unless the user explicitly wants those renamed too.
 
