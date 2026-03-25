@@ -541,6 +541,65 @@ export default function GestaoUsuarios() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Approve Access Dialog */}
+      <Dialog open={!!approveTarget} onOpenChange={() => { setApproveTarget(null); setApproveRole(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aprovar acesso de {approveTarget?.nome || approveTarget?.email}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">Selecione o perfil de acesso:</p>
+            <Select value={approveRole} onValueChange={setApproveRole}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o perfil..." />
+              </SelectTrigger>
+              <SelectContent>
+                {["ASSESSOR", "BANKER", "LIDER", "FINDER", "ADMIN"].map((r) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button
+              disabled={!approveRole || approveSaving}
+              onClick={async () => {
+                if (!approveTarget) return;
+                setApproveSaving(true);
+                // Find matching notification
+                const notif = unreadNotifications.find(
+                  (n) => n.dados?.email === approveTarget.email
+                );
+                if (notif) {
+                  await approveNotif(notif.dados?.user_id || "", approveRole, notif.id);
+                } else {
+                  // Fallback: call RPC directly
+                  const { error } = await supabase.rpc("rpc_admin_aprovar_usuario" as any, {
+                    p_user_id: "",
+                    p_role: approveRole,
+                    p_notif_id: "",
+                  });
+                  if (error) {
+                    toast({ title: "Erro", description: error.message, variant: "destructive" });
+                  } else {
+                    toast({ title: `Acesso liberado para ${approveTarget.nome || approveTarget.email}!` });
+                    refetch();
+                  }
+                }
+                setApproveSaving(false);
+                setApproveTarget(null);
+                setApproveRole("");
+              }}
+            >
+              {approveSaving ? "Aprovando..." : "Aprovar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
