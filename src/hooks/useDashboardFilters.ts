@@ -164,7 +164,7 @@ export function useDashboardFilters() {
       }
       return next;
     });
-  }, [isLockedBanker, isLockedFinder]);
+  }, [isLockedBanker, isLockedFinder, isLockedAssessor]);
 
   return {
     pendingFilters,
