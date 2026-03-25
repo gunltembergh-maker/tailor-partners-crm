@@ -392,6 +392,7 @@ export type Database = {
       profiles: {
         Row: {
           active: boolean
+          advisor_name: string | null
           avatar_url: string | null
           banker_name: string | null
           blocked: boolean | null
@@ -399,6 +400,7 @@ export type Database = {
           created_at: string
           email: string
           empresa: string | null
+          finder_name: string | null
           full_name: string
           id: string
           nome: string | null
@@ -411,6 +413,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          advisor_name?: string | null
           avatar_url?: string | null
           banker_name?: string | null
           blocked?: boolean | null
@@ -418,6 +421,7 @@ export type Database = {
           created_at?: string
           email?: string
           empresa?: string | null
+          finder_name?: string | null
           full_name?: string
           id?: string
           nome?: string | null
@@ -430,6 +434,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          advisor_name?: string | null
           avatar_url?: string | null
           banker_name?: string | null
           blocked?: boolean | null
@@ -437,6 +442,7 @@ export type Database = {
           created_at?: string
           email?: string
           empresa?: string | null
+          finder_name?: string | null
           full_name?: string
           id?: string
           nome?: string | null
@@ -1039,12 +1045,14 @@ export type Database = {
       }
       team_reference: {
         Row: {
+          advisor_name: string | null
           banker_name: string | null
           blocked: boolean | null
           codigo_xp: string | null
           created_at: string
           email: string | null
           empresa: string | null
+          finder_name: string | null
           full_name: string
           id: string
           nome: string | null
@@ -1054,12 +1062,14 @@ export type Database = {
           unit: string
         }
         Insert: {
+          advisor_name?: string | null
           banker_name?: string | null
           blocked?: boolean | null
           codigo_xp?: string | null
           created_at?: string
           email?: string | null
           empresa?: string | null
+          finder_name?: string | null
           full_name: string
           id?: string
           nome?: string | null
@@ -1069,12 +1079,14 @@ export type Database = {
           unit: string
         }
         Update: {
+          advisor_name?: string | null
           banker_name?: string | null
           blocked?: boolean | null
           codigo_xp?: string | null
           created_at?: string
           email?: string | null
           empresa?: string | null
+          finder_name?: string | null
           full_name?: string
           id?: string
           nome?: string | null
@@ -2231,6 +2243,9 @@ export type Database = {
     }
     Functions: {
       fix_encoding: { Args: { v: string }; Returns: string }
+      get_user_advisor_filter: { Args: never; Returns: string[] }
+      get_user_banker_filter: { Args: never; Returns: string[] }
+      get_user_finder_filter: { Args: never; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2309,17 +2324,31 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_admin_salvar_usuario: {
-        Args: {
-          p_banker_name?: string
-          p_email: string
-          p_empresa?: string
-          p_nome: string
-          p_perfil_nome?: string
-          p_role: string
-        }
-        Returns: Json
-      }
+      rpc_admin_salvar_usuario:
+        | {
+            Args: {
+              p_banker_name?: string
+              p_email: string
+              p_empresa?: string
+              p_nome: string
+              p_perfil_nome?: string
+              p_role: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_advisor_name?: string
+              p_banker_name?: string
+              p_email: string
+              p_empresa?: string
+              p_finder_name?: string
+              p_nome: string
+              p_perfil_nome?: string
+              p_role: string
+            }
+            Returns: Json
+          }
       rpc_auc_casa: {
         Args: {
           p_advisor?: string[]
@@ -2559,7 +2588,6 @@ export type Database = {
           anomes_nome: string
           auc: number
           faixa_pl: string
-          ordem_pl: number
         }[]
       }
       rpc_faixa_pl_clientes: {
@@ -2591,7 +2619,6 @@ export type Database = {
           anomes_nome: string
           clientes: number
           faixa_pl: string
-          ordem_pl: number
         }[]
       }
       rpc_filtro_anomes: {
@@ -2616,8 +2643,10 @@ export type Database = {
       rpc_meu_perfil: {
         Args: never
         Returns: {
+          advisor_name: string
           banker_name: string
           blocked: boolean
+          finder_name: string
           permissoes: Json
           role: string
         }[]
