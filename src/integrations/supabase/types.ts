@@ -2267,6 +2267,22 @@ export type Database = {
           permissoes: Json
         }[]
       }
+      rpc_admin_lista_usuarios: {
+        Args: never
+        Returns: {
+          banker_name: string
+          blocked: boolean
+          cpf: string
+          created_at: string
+          email: string
+          empresa: string
+          nome: string
+          perfil_nome: string
+          status: string
+          ultimo_acesso: string
+          user_id: string
+        }[]
+      }
       rpc_admin_marcar_notif_lida: { Args: { p_id: string }; Returns: Json }
       rpc_admin_notificacoes: {
         Args: never

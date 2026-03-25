@@ -53,6 +53,7 @@ interface Usuario {
   ultimo_acesso: string | null;
   created_at: string | null;
   status: string;
+  user_id: string | null;
 }
 
 function maskCpf(cpf: string | null): string {
