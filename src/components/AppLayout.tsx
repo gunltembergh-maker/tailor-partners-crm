@@ -22,8 +22,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-3">
               <SidebarTrigger />
               <div className="hidden sm:flex items-baseline gap-1.5">
-                <span className="text-lg font-display font-bold text-primary">Tailor</span>
-                <span className="text-xs font-medium tracking-widest text-muted-foreground uppercase">CRM</span>
+                <span className="text-lg font-display font-bold text-primary">Hub Tailor</span>
+                <span className="text-xs font-medium tracking-widest text-muted-foreground uppercase">Partners</span>
               </div>
             </div>
 

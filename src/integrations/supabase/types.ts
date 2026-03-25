@@ -2451,6 +2451,13 @@ export type Database = {
           total: number
         }[]
       }
+      rpc_dashboard_timestamps: {
+        Args: never
+        Returns: {
+          atualizado_em: string
+          dados_ate: string
+        }[]
+      }
       rpc_faixa_pl_auc: {
         Args: {
           p_advisor?: string[]
@@ -2525,7 +2532,7 @@ export type Database = {
       rpc_filtro_financial_advisors: {
         Args: { p_role?: string }
         Returns: {
-          banker: string
+          advisor: string
         }[]
       }
       rpc_filtro_finders: {
