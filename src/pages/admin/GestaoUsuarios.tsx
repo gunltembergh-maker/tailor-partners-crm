@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, Check, AlertTriangle, Mail } from "lucide-react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
+import { useFilterOptions } from "@/hooks/useDashboardData";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
@@ -36,12 +37,6 @@ const BADGE_COLORS: Record<string, string> = {
   MARKETING: "bg-pink-500 text-white hover:bg-pink-500",
 };
 
-const BANKER_LIST = [
-  "Adonias Noronha", "Caroline Vlavianos", "Felipe Steiman", "Gestora",
-  "Legado", "Leonardo Burle", "Raphael Farias", "Raphael Pereira",
-  "Sem Advisor", "Thayane Freitas",
-];
-
 interface Usuario {
   email: string;
   nome: string | null;
@@ -49,6 +44,8 @@ interface Usuario {
   empresa: string | null;
   perfil_nome: string | null;
   banker_name: string | null;
+  finder_name?: string | null;
+  advisor_name?: string | null;
   blocked: boolean;
   ultimo_acesso: string | null;
   created_at: string | null;
@@ -93,6 +90,8 @@ export default function GestaoUsuarios() {
   const [modalEmail, setModalEmail] = useState("");
   const [modalPerfil, setModalPerfil] = useState("");
   const [modalBanker, setModalBanker] = useState("");
+  const [modalFinder, setModalFinder] = useState("");
+  const [modalAdvisor, setModalAdvisor] = useState("");
   const [modalEmpresa, setModalEmpresa] = useState("Tailor Partners");
   const [modalSaving, setModalSaving] = useState(false);
 
@@ -106,6 +105,7 @@ export default function GestaoUsuarios() {
   const [approveRole, setApproveRole] = useState("");
   const [approveSaving, setApproveSaving] = useState(false);
   const { approve: approveNotif, unreadNotifications } = useAdminNotifications();
+  const { data: filterOptions } = useFilterOptions();
 
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
@@ -161,6 +161,8 @@ export default function GestaoUsuarios() {
     setModalEmail("");
     setModalPerfil("");
     setModalBanker("");
+    setModalFinder("");
+    setModalAdvisor("");
     setModalEmpresa("Tailor Partners");
     setModalOpen(true);
   };
@@ -171,8 +173,38 @@ export default function GestaoUsuarios() {
     setModalEmail(u.email);
     setModalPerfil(u.perfil_nome || "");
     setModalBanker(u.banker_name || "");
+    setModalFinder(u.finder_name || "");
+    setModalAdvisor(u.advisor_name || "");
     setModalEmpresa(u.empresa || "Tailor Partners");
     setModalOpen(true);
+  };
+
+  const linkedAccessLabel = useMemo(() => {
+    if (modalPerfil === "BANKER") return "Banker Vinculado";
+    if (modalPerfil === "FINDER") return "Finder Vinculado";
+    if (modalPerfil === "ASSESSOR") return "Advisor Vinculado";
+    return "";
+  }, [modalPerfil]);
+
+  const linkedAccessValue = modalPerfil === "BANKER"
+    ? modalBanker
+    : modalPerfil === "FINDER"
+      ? modalFinder
+      : modalPerfil === "ASSESSOR"
+        ? modalAdvisor
+        : "";
+
+  const linkedAccessOptions = useMemo(() => {
+    if (modalPerfil === "BANKER") return filterOptions?.bankers ?? [];
+    if (modalPerfil === "FINDER") return filterOptions?.finders ?? [];
+    if (modalPerfil === "ASSESSOR") return filterOptions?.advisors ?? [];
+    return [] as string[];
+  }, [modalPerfil, filterOptions]);
+
+  const handleLinkedAccessChange = (value: string) => {
+    if (modalPerfil === "BANKER") setModalBanker(value);
+    if (modalPerfil === "FINDER") setModalFinder(value);
+    if (modalPerfil === "ASSESSOR") setModalAdvisor(value);
   };
 
   const handleSaveUser = async () => {
@@ -186,8 +218,8 @@ export default function GestaoUsuarios() {
         p_perfil_nome: modalPerfil,
         p_banker_name: modalPerfil === "BANKER" ? modalBanker : null,
         p_empresa: modalEmpresa,
-        p_finder_name: null,
-        p_advisor_name: null,
+          p_finder_name: modalPerfil === "FINDER" ? modalFinder : null,
+          p_advisor_name: modalPerfil === "ASSESSOR" ? modalAdvisor : null,
       });
       if (error) throw error;
       const result = data as any;
@@ -506,7 +538,12 @@ export default function GestaoUsuarios() {
             </div>
             <div className="space-y-1">
               <Label>Perfil de Acesso</Label>
-              <Select value={modalPerfil} onValueChange={setModalPerfil}>
+              <Select value={modalPerfil} onValueChange={(value) => {
+                setModalPerfil(value);
+                setModalBanker("");
+                setModalFinder("");
+                setModalAdvisor("");
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
@@ -517,16 +554,16 @@ export default function GestaoUsuarios() {
                 </SelectContent>
               </Select>
             </div>
-            {modalPerfil === "BANKER" && (
+            {(modalPerfil === "BANKER" || modalPerfil === "FINDER" || modalPerfil === "ASSESSOR") && (
               <div className="space-y-1">
-                <Label>Banker Vinculado</Label>
-                <Select value={modalBanker} onValueChange={setModalBanker}>
+                <Label>{linkedAccessLabel}</Label>
+                <Select value={linkedAccessValue} onValueChange={handleLinkedAccessChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {BANKER_LIST.map((b) => (
-                      <SelectItem key={b} value={b}>{b}</SelectItem>
+                    {linkedAccessOptions.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
