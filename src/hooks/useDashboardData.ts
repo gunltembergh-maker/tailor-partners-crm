@@ -1,24 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DashboardFilters } from "./useDashboardFilters";
-
-function anoMesRange(inicio: string, fim: string) {
-  const s = inicio.replace(/-/g, "").slice(0, 6);
-  const e = fim.replace(/-/g, "").slice(0, 6);
-  return { s, e };
-}
-
-/** Convert DashboardFilters → RPC params (null when empty) */
-function buildRpcParams(filters: DashboardFilters) {
-  return {
-    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
-    p_banker: filters.banker.length ? filters.banker : null,
-    p_documento: filters.documento ? [filters.documento] : null,
-    p_advisor: filters.advisor.length ? filters.advisor : null,
-    p_finder: filters.finder.length ? filters.finder : null,
-    p_tipo_cliente: filters.tipoCliente ? [filters.tipoCliente] : null,
-  };
-}
+import { useScopedDashboardParams } from "./useScopedDashboardParams";
 
 // ─── Filter options from dimension views ───
 
@@ -44,7 +27,7 @@ export function useFilterOptions() {
         advisors: (advisorRes.data ?? []).map((r: any) => r.advisor as string).filter(Boolean).sort(),
         finders: (finderRes.data ?? []).map((r: any) => r.finder as string).filter(Boolean).sort(),
         tiposCliente: (tipoClienteRes.data ?? []).map((r: any) => r.tipo_cliente as string).filter(Boolean).sort(),
-        casas: [] as string[], // kept for compat
+        casas: [] as string[],
       };
     },
     staleTime: 5 * 60_000,
@@ -75,7 +58,7 @@ export function useSyncLogs() {
 // ─── Contas RPCs ───
 
 export function useContasKpis(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["contas-kpis", params],
     queryFn: async () => {
@@ -89,11 +72,12 @@ export function useContasKpis(filters: DashboardFilters) {
       };
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useContasAggMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["contas-agg-mes", params],
     queryFn: async () => {
@@ -102,11 +86,12 @@ export function useContasAggMes(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useContasTotalPorTipo(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["contas-total-por-tipo", params],
     queryFn: async () => {
@@ -115,13 +100,14 @@ export function useContasTotalPorTipo(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 // ─── Captação RPCs ───
 
 export function useCaptacaoKpis(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["captacao-kpis", params],
     queryFn: async () => {
@@ -135,11 +121,12 @@ export function useCaptacaoKpis(filters: DashboardFilters) {
       };
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useCaptacaoAggMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["captacao-agg-mes", params],
     queryFn: async () => {
@@ -148,11 +135,12 @@ export function useCaptacaoAggMes(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useCaptacaoTreemap(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["captacao-treemap", params],
     queryFn: async () => {
@@ -161,22 +149,14 @@ export function useCaptacaoTreemap(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
-// ─── PBI-only params (AnoMes + Banker) ───
-
-function buildRpcParamsPbi(filters: DashboardFilters) {
-  return {
-    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
-    p_banker: filters.banker.length ? filters.banker : null,
-  };
-}
-
-// ─── AuC RPCs (PBIX) ───
+// ─── AuC RPCs ───
 
 export function useAucMesStackCasa(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["auc-mes-stack-casa", params],
     queryFn: async () => {
@@ -185,11 +165,12 @@ export function useAucMesStackCasa(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useAucCasaM0(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["auc-casa-m0", params],
     queryFn: async () => {
@@ -198,13 +179,14 @@ export function useAucCasaM0(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
-// ─── Faixa PL RPCs (PBIX — por mês) ───
+// ─── Faixa PL RPCs ───
 
 export function useFaixaPlClientesMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["faixa-pl-clientes-mes", params],
     queryFn: async () => {
@@ -213,11 +195,12 @@ export function useFaixaPlClientesMes(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useFaixaPlAucMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const { effectiveParams: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["faixa-pl-auc-mes", params],
     queryFn: async () => {
@@ -226,13 +209,14 @@ export function useFaixaPlAucMes(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
-// ─── Receita RPCs (PBIX) ───
+// ─── Receita RPCs ───
 
 export function useReceitaTotal(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const { effectiveParamsPbi: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["receita-total-pbi", params],
     queryFn: async () => {
@@ -242,11 +226,12 @@ export function useReceitaTotal(filters: DashboardFilters) {
       return { receita: Number(row.receita) || 0 };
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useReceitaMesCategoria(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const { effectiveParamsPbi: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["receita-mes-categoria-pbi", params],
     queryFn: async () => {
@@ -255,11 +240,12 @@ export function useReceitaMesCategoria(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useReceitaTreemapCategoria(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const { effectiveParamsPbi: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["receita-treemap-categoria-pbi", params],
     queryFn: async () => {
@@ -268,11 +254,12 @@ export function useReceitaTreemapCategoria(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useReceitaMatrizRows(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const { effectiveParamsPbi: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["receita-matriz-rows-pbi", params],
     queryFn: async () => {
@@ -281,11 +268,12 @@ export function useReceitaMatrizRows(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const { effectiveParamsPbi: params, ready } = useScopedDashboardParams(filters);
   return useQuery({
     queryKey: ["receita-matriz-rows-cat", params],
     queryFn: async () => {
@@ -294,15 +282,16 @@ export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
+    enabled: ready,
   });
 }
 
 // ─── Receita Drilldown RPC ───
 
 export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string[]) {
+  const { effectiveParamsPbi, ready } = useScopedDashboardParams(filters);
   const params = {
-    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
-    p_banker: filters.banker.length ? filters.banker : null,
+    ...effectiveParamsPbi,
     p_categoria: drillPath[0] ?? null,
     p_subcategoria: drillPath[1] ?? null,
     p_produto: drillPath[2] ?? null,
@@ -315,11 +304,17 @@ export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string
       return (data as any[]) ?? [];
     },
     staleTime: 60_000,
-    enabled: drillPath.length > 0,
+    enabled: ready && drillPath.length > 0,
   });
 }
 
 // ─── Existing view-based hooks (kept for other sections) ───
+
+function anoMesRange(inicio: string, fim: string) {
+  const s = inicio.replace(/-/g, "").slice(0, 6);
+  const e = fim.replace(/-/g, "").slice(0, 6);
+  return { s, e };
+}
 
 function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) {
   if (filters.anoMes.length) {
