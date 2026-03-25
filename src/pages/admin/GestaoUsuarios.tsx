@@ -440,14 +440,26 @@ export default function GestaoUsuarios() {
                         {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
+                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
                             {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
                           </Button>
-                          {u.status === "Aguardando" && (
+                          {u.user_id && u.status !== "Ativo" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              disabled={resendingEmail === u.email}
+                              onClick={() => handleResendConfirmation(u.email)}
+                              title="Reenviar e-mail de confirmação"
+                            >
+                              <Mail className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                          )}
+                          {u.status === "Aguardando" && !u.user_id && (
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteUser(u)}>
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
