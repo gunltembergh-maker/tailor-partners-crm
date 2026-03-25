@@ -74,13 +74,8 @@ export function useDashboardFilters() {
       setAppliedFilters(prev => ({ ...prev, ...patch }));
     }
   }, [role, bankerName]);
-      }));
-      setAppliedFilters(prev => ({
-        ...prev,
-        ...(role === "BANKER" ? { banker: [bankerName] } : { finder: [bankerName] }),
-      }));
-    }
-  }, [role, bankerName]);
+
+
 
   // CRITICAL: Always enforce role-based filter on appliedFilters
   // This guarantees the lock even if useEffect hasn't fired yet
