@@ -54,6 +54,8 @@ export function useDashboardFilters() {
         filters.banker = [bankerName];
       } else if (role === "FINDER") {
         filters.finder = [bankerName];
+      } else if (role === "ASSESSOR") {
+        filters.advisor = [bankerName];
       }
     }
     return filters;
@@ -64,10 +66,14 @@ export function useDashboardFilters() {
 
   // Sync when role/bankerName load (they start null)
   useEffect(() => {
-    if (bankerName && (role === "BANKER" || role === "FINDER")) {
-      setPendingFilters(prev => ({
-        ...prev,
-        ...(role === "BANKER" ? { banker: [bankerName] } : { finder: [bankerName] }),
+    if (bankerName && (role === "BANKER" || role === "FINDER" || role === "ASSESSOR")) {
+      const patch = role === "BANKER" ? { banker: [bankerName] }
+        : role === "FINDER" ? { finder: [bankerName] }
+        : { advisor: [bankerName] };
+      setPendingFilters(prev => ({ ...prev, ...patch }));
+      setAppliedFilters(prev => ({ ...prev, ...patch }));
+    }
+  }, [role, bankerName]);
       }));
       setAppliedFilters(prev => ({
         ...prev,
