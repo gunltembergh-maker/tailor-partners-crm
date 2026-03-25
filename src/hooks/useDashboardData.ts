@@ -40,7 +40,7 @@ export function useFilterOptions() {
           acc[String(r.anomes)] = r.anomes_nome;
           return acc;
         }, {} as Record<string, string>),
-        bankers: (bankerRes.data ?? []).map((r: any) => r.banker as string).filter(Boolean).sort(),
+        bankers: (bankerRes.data ?? []).map((r: any) => (r.advisor ?? r.banker) as string).filter(Boolean).sort(),
         advisors: (advisorRes.data ?? []).map((r: any) => r.advisor as string).filter(Boolean).sort(),
         finders: (finderRes.data ?? []).map((r: any) => r.finder as string).filter(Boolean).sort(),
         tiposCliente: (tipoClienteRes.data ?? []).map((r: any) => r.tipo_cliente as string).filter(Boolean).sort(),
