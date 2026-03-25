@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { X, Search, Check, RotateCcw } from "lucide-react";
+import { X, Search, Check, RotateCcw, Lock } from "lucide-react";
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import { useFilterOptions } from "@/hooks/useDashboardData";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +26,8 @@ interface FiltersSidebarProps {
   open: boolean;
   onClose: () => void;
   showVencimento?: boolean;
+  isLockedBanker?: boolean;
+  isLockedFinder?: boolean;
 }
 
 export function FiltersSidebar({
@@ -37,6 +39,8 @@ export function FiltersSidebar({
   open,
   onClose,
   showVencimento = false,
+  isLockedBanker = false,
+  isLockedFinder = false,
 }: FiltersSidebarProps) {
   const { data: options } = useFilterOptions();
 
