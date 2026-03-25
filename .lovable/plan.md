@@ -1,40 +1,28 @@
 
 
-# Sistema de Notificações Admin
+# Fix: Perfil não persiste + botão cancelar pré-cadastro
 
-## Resumo
-Implementar notificações para admins quando novos usuários se cadastram sem pré-cadastro: badge no header, painel dropdown, seção destacada na Gestão de Usuários, e aprovação inline.
+## Problema 1 — Perfil não fica salvo
 
-## Arquivos a criar
-1. **`src/hooks/useAdminNotifications.ts`** — Hook com react-query para buscar notificações via `rpc_admin_notificacoes`, polling a cada 60s, expor `unreadCount`, `notifications`, `markAsRead`, `approve`
-2. **`src/components/AdminNotifications.tsx`** — Componente de sino + dropdown (Popover) com lista de notificações e botões Aprovar/Ignorar
+**Causa raiz**: A RPC `rpc_admin_salvar_usuario` grava `perfil_nome` na `team_reference`, mas para usuários já cadastrados (que existem na tabela `profiles`), ela **nunca atualiza `profiles.perfil_id`**. A listagem (`rpc_admin_lista_usuarios`) lê `perfis_acesso.nome` via `profiles.perfil_id` — como esse campo não é atualizado, o perfil aparece vazio.
 
-## Arquivos a editar
-3. **`src/components/AppLayout.tsx`** — Adicionar o componente `AdminNotifications` no header (ao lado do "Olá, Fulano"), visível apenas para ADMIN
-4. **`src/pages/admin/GestaoUsuarios.tsx`** — Adicionar seção "Aguardando Aprovação" no topo com cards destacados para usuários pendentes, com botão Aprovar que abre modal de seleção de perfil
+**Correção**: Adicionar ao final da RPC um UPDATE que resolve o `perfil_id` a partir do nome do perfil:
 
-## Detalhes técnicos
+```sql
+UPDATE profiles SET
+  perfil_id = (SELECT id FROM perfis_acesso WHERE nome = p_perfil_nome LIMIT 1),
+  ...
+WHERE LOWER(TRIM(email)) = LOWER(TRIM(p_email));
+```
 
-### Hook `useAdminNotifications`
-- `useQuery` com `queryKey: ["admin-notificacoes"]`, `refetchInterval: 60_000`, `enabled: role === 'ADMIN'`
-- Chama `supabase.rpc('rpc_admin_notificacoes')` (já existe como SECURITY DEFINER)
-- Expor: `notifications`, `unreadCount`, `approve(userId, role, notifId)` (chama `rpc_admin_aprovar_usuario`), `dismiss(notifId)` (chama `rpc_admin_marcar_notif_lida`)
+## Problema 2 — Botão de excluir/cancelar pré-cadastro
 
-### Componente `AdminNotifications`
-- Ícone `Bell` do lucide com badge vermelho circular mostrando `unreadCount`
-- `Popover` com lista scrollável de notificações não lidas
-- Cada item: ícone AlertTriangle laranja, nome/email do usuário, data em BRT, botões Aprovar (verde) e Ignorar (cinza)
-- Aprovar abre Dialog inline para selecionar perfil (ASSESSOR, BANKER, LIDER, FINDER, ADMIN) e confirmar
+Atualmente o botão Trash (excluir) só aparece para `status === "Aguardando" && !user_id`. O usuário quer poder excluir qualquer pré-cadastro da `team_reference`, incluindo os que já se cadastraram.
 
-### Header (AppLayout)
-- Importar `AdminNotifications` e renderizar condicionalmente quando `role === 'ADMIN'`
-- Posicionar antes do "Olá, Fulano"
+**Correção no frontend**: Mostrar o botão de excluir para todos os registros na tabela (exceto possivelmente o próprio admin). Ao clicar, chamar `rpc_admin_remover_precadastro` que já existe e remove da `team_reference`.
 
-### Gestão de Usuários
-- Filtrar `usuarios` com `status === "Aguardando"` e `blocked === true` para seção destacada no topo
-- Cards com borda laranja, badge "Pendente", botão "Aprovar Acesso" que abre modal de seleção de perfil
-- Ao aprovar, chamar `rpc_admin_aprovar_usuario` e invalidar queries
+## Arquivos alterados
 
-### E-mail (fase posterior)
-- O envio de e-mail requer configuração de domínio de e-mail. Como o projeto não tem domínio de e-mail configurado, vou registrar a intenção mas não bloquear a implementação do frontend. A notificação no Hub já cobre o caso de uso principal. A configuração de e-mail pode ser feita em um segundo momento.
+1. **Migration SQL** — Recriar `rpc_admin_salvar_usuario` incluindo `UPDATE profiles SET perfil_id = ...`
+2. **`src/pages/admin/GestaoUsuarios.tsx`** — Expandir condição do botão de excluir para aparecer em mais cenários
 
