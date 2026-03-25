@@ -6,9 +6,10 @@ import { useViewAs } from "@/contexts/ViewAsContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { roleLabels } from "@/lib/format";
 import { Eye } from "lucide-react";
+import { AdminNotifications } from "@/components/AdminNotifications";
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { viewAsUserId, setViewAs, teamMembers, isLider } = useViewAs();
   const firstName = profile?.full_name?.split(" ")[0] || "Usuário";
 
