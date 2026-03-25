@@ -21,6 +21,8 @@ export default function QualitativoPage() {
     removeChip,
     isLockedBanker,
     isLockedFinder,
+    isLockedAssessor,
+    profileReady,
   } = useDashboardFilters();
   const { lastUpdatedAt, isRefreshing } = useDashboardRefresh();
 

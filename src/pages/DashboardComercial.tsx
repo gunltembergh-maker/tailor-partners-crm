@@ -100,10 +100,10 @@ export default function DashboardComercial() {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="quantitativo">
-                <QuantitativoTab filters={appliedFilters} />
+                {profileReady ? <QuantitativoTab filters={appliedFilters} /> : <div className="p-8 text-center text-sm" style={{ color: "#9CA3AF" }}>Carregando perfil…</div>}
               </TabsContent>
               <TabsContent value="qualitativo">
-                <QualitativoTab filters={appliedFilters} />
+                {profileReady ? <QualitativoTab filters={appliedFilters} /> : <div className="p-8 text-center text-sm" style={{ color: "#9CA3AF" }}>Carregando perfil…</div>}
               </TabsContent>
             </Tabs>
           </div>

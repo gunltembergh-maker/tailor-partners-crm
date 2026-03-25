@@ -28,6 +28,7 @@ interface FiltersSidebarProps {
   showVencimento?: boolean;
   isLockedBanker?: boolean;
   isLockedFinder?: boolean;
+  isLockedAssessor?: boolean;
 }
 
 export function FiltersSidebar({
@@ -41,6 +42,7 @@ export function FiltersSidebar({
   showVencimento = false,
   isLockedBanker = false,
   isLockedFinder = false,
+  isLockedAssessor = false,
 }: FiltersSidebarProps) {
   const { data: options } = useFilterOptions();
 
