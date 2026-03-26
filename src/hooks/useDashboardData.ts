@@ -240,7 +240,7 @@ export function useFaixaPlAucMes(filters: DashboardFilters) {
 // ─── Receita RPCs (PBIX) ───
 
 export function useReceitaTotal(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-total-pbi", params],
     queryFn: async () => {
@@ -254,7 +254,7 @@ export function useReceitaTotal(filters: DashboardFilters) {
 }
 
 export function useReceitaMesCategoria(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-mes-categoria-pbi", params],
     queryFn: async () => {
@@ -267,7 +267,7 @@ export function useReceitaMesCategoria(filters: DashboardFilters) {
 }
 
 export function useReceitaTreemapCategoria(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-treemap-categoria-pbi", params],
     queryFn: async () => {
@@ -280,7 +280,7 @@ export function useReceitaTreemapCategoria(filters: DashboardFilters) {
 }
 
 export function useReceitaMatrizRows(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-matriz-rows-pbi", params],
     queryFn: async () => {
@@ -293,7 +293,7 @@ export function useReceitaMatrizRows(filters: DashboardFilters) {
 }
 
 export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-matriz-rows-cat", params],
     queryFn: async () => {
@@ -308,9 +308,10 @@ export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
 // ─── Receita Drilldown RPC ───
 
 export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string[]) {
+  const scopedPbi = useScopedRpcParamsPbi(filters);
   const params = {
-    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
-    p_banker: filters.banker.length ? filters.banker : null,
+    p_anomes: scopedPbi.p_anomes,
+    p_banker: scopedPbi.p_banker,
     p_categoria: drillPath[0] ?? null,
     p_subcategoria: drillPath[1] ?? null,
     p_produto: drillPath[2] ?? null,
