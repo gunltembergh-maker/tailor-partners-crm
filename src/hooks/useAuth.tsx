@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(null);
         setPermissoes(null);
         setBankerName(null);
+        setIsBlocked(false);
         setLoading(false);
       }
     });
@@ -78,10 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Check if blocked
+      // Check if blocked — show waiting screen instead of signing out
       if (perfil.blocked) {
-        await supabase.auth.signOut();
-        navigate("/auth?blocked=true");
+        setIsBlocked(true);
+        setProfile({ full_name: perfil.banker_name || "", email: "", avatar_url: null });
+        setLoading(false);
         return;
       }
 
@@ -161,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, isBlocked, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
