@@ -159,15 +159,26 @@ export function useRoaM0Tabela(filters: DashboardFilters) {
   });
 }
 
-// Vencimentos por Ano (stacked bar)
+// Vencimentos por Ano (stacked bar) — uses rpc_vencimentos_grafico aggregated by year+product
 export function useVencimentosPorAno(filters: DashboardFilters) {
   const p = buildVencParams(filters);
   return useQuery({
     queryKey: ["vencimentos-por-ano", p],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_vencimentos_por_ano", p as any);
+      const { data, error } = await supabase.rpc("rpc_vencimentos_grafico", p as any);
       if (error) throw error;
-      return (data as any[]) ?? [];
+      // Aggregate by year + produto_ajustado
+      const map = new Map<string, { ano: number; produto_ajustado: string; net: number }>();
+      for (const r of (data as any[]) ?? []) {
+        const key = `${r.ano}-${r.produto_ajustado}`;
+        const existing = map.get(key);
+        if (existing) {
+          existing.net += Number(r.net) || 0;
+        } else {
+          map.set(key, { ano: r.ano, produto_ajustado: r.produto_ajustado, net: Number(r.net) || 0 });
+        }
+      }
+      return Array.from(map.values());
     },
     staleTime: 60_000,
   });
