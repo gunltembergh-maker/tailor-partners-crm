@@ -385,8 +385,9 @@ export function QualitativoTab({ filters }: Props) {
       const row: Record<string, any> = { ano: String(ano) };
       let yearTotal = 0;
       products.forEach(p => {
-        const match = (vencAnoData as any[]).find(r => Number(r.ano) === ano && r.produto_ajustado === p);
-        const val = Number(match?.total) || 0;
+        const val = (vencAnoData as any[])
+          .filter(r => Number(r.ano) === ano && r.produto_ajustado === p)
+          .reduce((sum, r) => sum + (Number(r.net) || 0), 0);
         row[p] = val;
         yearTotal += val;
       });

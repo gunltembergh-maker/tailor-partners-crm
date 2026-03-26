@@ -14,16 +14,9 @@ function buildFullParams(filters: DashboardFilters) {
   };
 }
 
+/** Vencimentos RPCs now use the same 6-param signature as all others */
 function buildVencParams(filters: DashboardFilters) {
-  return {
-    p_vencimento_inicio: null,
-    p_vencimento_fim: null,
-    p_banker: filters.banker.length ? filters.banker : null,
-    p_advisor: filters.advisor.length ? filters.advisor : null,
-    p_finder: filters.finder.length ? filters.finder : null,
-    p_documento: filters.documento ? [filters.documento] : null,
-    p_tipo_cliente: filters.tipoCliente ? [filters.tipoCliente] : null,
-  };
+  return buildFullParams(filters);
 }
 
 // Custódia por Indexador (donut)
@@ -166,15 +159,26 @@ export function useRoaM0Tabela(filters: DashboardFilters) {
   });
 }
 
-// Vencimentos por Ano (stacked bar)
+// Vencimentos por Ano (stacked bar) — uses rpc_vencimentos_grafico aggregated by year+product
 export function useVencimentosPorAno(filters: DashboardFilters) {
   const p = buildVencParams(filters);
   return useQuery({
     queryKey: ["vencimentos-por-ano", p],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_vencimentos_por_ano", p as any);
+      const { data, error } = await supabase.rpc("rpc_vencimentos_grafico", p as any);
       if (error) throw error;
-      return (data as any[]) ?? [];
+      // Aggregate by year + produto_ajustado
+      const map = new Map<string, { ano: number; produto_ajustado: string; net: number }>();
+      for (const r of (data as any[]) ?? []) {
+        const key = `${r.ano}-${r.produto_ajustado}`;
+        const existing = map.get(key);
+        if (existing) {
+          existing.net += Number(r.net) || 0;
+        } else {
+          map.set(key, { ano: r.ano, produto_ajustado: r.produto_ajustado, net: Number(r.net) || 0 });
+        }
+      }
+      return Array.from(map.values());
     },
     staleTime: 60_000,
   });
