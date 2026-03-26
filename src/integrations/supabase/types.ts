@@ -2611,7 +2611,7 @@ export type Database = {
       rpc_filtro_financial_advisors: {
         Args: { p_role?: string }
         Returns: {
-          advisor: string
+          banker: string
         }[]
       }
       rpc_filtro_finders: {
