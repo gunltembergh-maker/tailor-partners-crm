@@ -6,6 +6,7 @@ import { useViewAs } from "@/contexts/ViewAsContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { roleLabels } from "@/lib/format";
 import { Eye } from "lucide-react";
+import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
