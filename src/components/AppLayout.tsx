@@ -6,10 +6,9 @@ import { useViewAs } from "@/contexts/ViewAsContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { roleLabels } from "@/lib/format";
 import { Eye } from "lucide-react";
-import { AdminNotifications } from "@/components/AdminNotifications";
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { profile, role } = useAuth();
+  const { profile } = useAuth();
   const { viewAsUserId, setViewAs, teamMembers, isLider } = useViewAs();
   const firstName = profile?.full_name?.split(" ")[0] || "Usuário";
 
@@ -23,8 +22,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-3">
               <SidebarTrigger />
               <div className="hidden sm:flex items-baseline gap-1.5">
-                <span className="text-lg font-display font-bold text-primary">Hub Tailor</span>
-                <span className="text-xs font-medium tracking-widest text-muted-foreground uppercase">Partners</span>
+                <span className="text-lg font-display font-bold text-primary">Tailor</span>
+                <span className="text-xs font-medium tracking-widest text-muted-foreground uppercase">CRM</span>
               </div>
             </div>
 
@@ -50,7 +49,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   </Select>
                 </div>
               )}
-              {role === "ADMIN" && <AdminNotifications />}
               <span className="text-sm text-muted-foreground">
                 Olá, <span className="font-medium text-foreground">{firstName}</span>
               </span>

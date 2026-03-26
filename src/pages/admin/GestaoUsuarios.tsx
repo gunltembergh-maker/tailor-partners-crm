@@ -23,9 +23,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, Check, AlertTriangle, Mail } from "lucide-react";
-import { useAdminNotifications } from "@/hooks/useAdminNotifications";
-import { useFilterOptions } from "@/hooks/useDashboardData";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff } from "lucide-react";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
@@ -37,6 +35,12 @@ const BADGE_COLORS: Record<string, string> = {
   MARKETING: "bg-pink-500 text-white hover:bg-pink-500",
 };
 
+const BANKER_LIST = [
+  "Adonias Noronha", "Caroline Vlavianos", "Felipe Steiman", "Gestora",
+  "Legado", "Leonardo Burle", "Raphael Farias", "Raphael Pereira",
+  "Sem Advisor", "Thayane Freitas",
+];
+
 interface Usuario {
   email: string;
   nome: string | null;
@@ -44,13 +48,10 @@ interface Usuario {
   empresa: string | null;
   perfil_nome: string | null;
   banker_name: string | null;
-  finder_name?: string | null;
-  advisor_name?: string | null;
   blocked: boolean;
   ultimo_acesso: string | null;
   created_at: string | null;
   status: string;
-  user_id: string | null;
 }
 
 function maskCpf(cpf: string | null): string {
@@ -90,22 +91,12 @@ export default function GestaoUsuarios() {
   const [modalEmail, setModalEmail] = useState("");
   const [modalPerfil, setModalPerfil] = useState("");
   const [modalBanker, setModalBanker] = useState("");
-  const [modalFinder, setModalFinder] = useState("");
-  const [modalAdvisor, setModalAdvisor] = useState("");
   const [modalEmpresa, setModalEmpresa] = useState("Tailor Partners");
   const [modalSaving, setModalSaving] = useState(false);
 
   // Block/Delete dialogs
   const [blockUser, setBlockUser] = useState<Usuario | null>(null);
   const [deleteUser, setDeleteUser] = useState<Usuario | null>(null);
-  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
-
-  // Approve dialog
-  const [approveTarget, setApproveTarget] = useState<Usuario | null>(null);
-  const [approveRole, setApproveRole] = useState("");
-  const [approveSaving, setApproveSaving] = useState(false);
-  const { approve: approveNotif, unreadNotifications } = useAdminNotifications();
-  const { data: filterOptions } = useFilterOptions();
 
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
@@ -161,8 +152,6 @@ export default function GestaoUsuarios() {
     setModalEmail("");
     setModalPerfil("");
     setModalBanker("");
-    setModalFinder("");
-    setModalAdvisor("");
     setModalEmpresa("Tailor Partners");
     setModalOpen(true);
   };
@@ -173,38 +162,8 @@ export default function GestaoUsuarios() {
     setModalEmail(u.email);
     setModalPerfil(u.perfil_nome || "");
     setModalBanker(u.banker_name || "");
-    setModalFinder(u.finder_name || "");
-    setModalAdvisor(u.advisor_name || "");
     setModalEmpresa(u.empresa || "Tailor Partners");
     setModalOpen(true);
-  };
-
-  const linkedAccessLabel = useMemo(() => {
-    if (modalPerfil === "BANKER") return "Banker Vinculado";
-    if (modalPerfil === "FINDER") return "Finder Vinculado";
-    if (modalPerfil === "ASSESSOR") return "Advisor Vinculado";
-    return "";
-  }, [modalPerfil]);
-
-  const linkedAccessValue = modalPerfil === "BANKER"
-    ? modalBanker
-    : modalPerfil === "FINDER"
-      ? modalFinder
-      : modalPerfil === "ASSESSOR"
-        ? modalAdvisor
-        : "";
-
-  const linkedAccessOptions = useMemo(() => {
-    if (modalPerfil === "BANKER") return filterOptions?.bankers ?? [];
-    if (modalPerfil === "FINDER") return filterOptions?.finders ?? [];
-    if (modalPerfil === "ASSESSOR") return filterOptions?.advisors ?? [];
-    return [] as string[];
-  }, [modalPerfil, filterOptions]);
-
-  const handleLinkedAccessChange = (value: string) => {
-    if (modalPerfil === "BANKER") setModalBanker(value);
-    if (modalPerfil === "FINDER") setModalFinder(value);
-    if (modalPerfil === "ASSESSOR") setModalAdvisor(value);
   };
 
   const handleSaveUser = async () => {
@@ -218,8 +177,6 @@ export default function GestaoUsuarios() {
         p_perfil_nome: modalPerfil,
         p_banker_name: modalPerfil === "BANKER" ? modalBanker : null,
         p_empresa: modalEmpresa,
-          p_finder_name: modalPerfil === "FINDER" ? modalFinder : null,
-          p_advisor_name: modalPerfil === "ASSESSOR" ? modalAdvisor : null,
       });
       if (error) throw error;
       const result = data as any;
@@ -273,23 +230,6 @@ export default function GestaoUsuarios() {
     }
   };
 
-  const handleResendConfirmation = async (email: string) => {
-    setResendingEmail(email);
-    try {
-      const { error } = await supabase.auth.resend({ type: "signup", email });
-      if (error) {
-        toast({ title: "Erro ao reenviar", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "E-mail reenviado!", description: `Confirmação reenviada para ${email}` });
-      }
-    } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
-    } finally {
-      setResendingEmail(null);
-    }
-  };
-
-
   const toggleCpf = (email: string) => {
     setRevealedCpfs((prev) => {
       const next = new Set(prev);
@@ -341,57 +281,6 @@ export default function GestaoUsuarios() {
               </Card>
             ))}
           </div>
-
-          {/* Aguardando Aprovação */}
-          {(() => {
-            const pendentes = (usuarios || []).filter((u) => u.status === "Aguardando" && u.blocked);
-            if (pendentes.length === 0) return null;
-            return (
-              <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-400" />
-                  Aguardando Aprovação ({pendentes.length})
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {pendentes.map((u) => (
-                    <Card key={u.email} className="border-orange-500/30">
-                      <CardContent className="pt-4 pb-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-foreground text-sm truncate">{u.nome || u.email}</p>
-                          <Badge variant="outline" className="bg-orange-500/10 text-orange-400 text-[10px]">Pendente</Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          Cadastro: {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
-                        </p>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 h-7 text-xs border-green-500/50 text-green-500 hover:bg-green-500/10"
-                            onClick={() => { setApproveTarget(u); setApproveRole(""); }}
-                          >
-                            <Check className="h-3 w-3 mr-1" /> Aprovar
-                          </Button>
-                          {u.user_id && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs"
-                              disabled={resendingEmail === u.email}
-                              onClick={() => handleResendConfirmation(u.email)}
-                            >
-                              <Mail className="h-3 w-3 mr-1" /> {resendingEmail === u.email ? "Enviando..." : "Reenviar e-mail"}
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3">
@@ -475,28 +364,18 @@ export default function GestaoUsuarios() {
                         {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
                       </TableCell>
                       <TableCell>
-                         <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
                             {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
                           </Button>
-                          {u.user_id && u.status !== "Ativo" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              disabled={resendingEmail === u.email}
-                              onClick={() => handleResendConfirmation(u.email)}
-                              title="Reenviar e-mail de confirmação"
-                            >
-                              <Mail className="h-3.5 w-3.5 text-primary" />
+                          {u.status === "Aguardando" && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteUser(u)}>
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteUser(u)} title="Cancelar pré-cadastro">
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -538,12 +417,7 @@ export default function GestaoUsuarios() {
             </div>
             <div className="space-y-1">
               <Label>Perfil de Acesso</Label>
-              <Select value={modalPerfil} onValueChange={(value) => {
-                setModalPerfil(value);
-                setModalBanker("");
-                setModalFinder("");
-                setModalAdvisor("");
-              }}>
+              <Select value={modalPerfil} onValueChange={setModalPerfil}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
@@ -554,16 +428,16 @@ export default function GestaoUsuarios() {
                 </SelectContent>
               </Select>
             </div>
-            {(modalPerfil === "BANKER" || modalPerfil === "FINDER" || modalPerfil === "ASSESSOR") && (
+            {modalPerfil === "BANKER" && (
               <div className="space-y-1">
-                <Label>{linkedAccessLabel}</Label>
-                <Select value={linkedAccessValue} onValueChange={handleLinkedAccessChange}>
+                <Label>Banker Vinculado</Label>
+                <Select value={modalBanker} onValueChange={setModalBanker}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {linkedAccessOptions.map((option) => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    {BANKER_LIST.map((b) => (
+                      <SelectItem key={b} value={b}>{b}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -622,65 +496,6 @@ export default function GestaoUsuarios() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Approve Access Dialog */}
-      <Dialog open={!!approveTarget} onOpenChange={() => { setApproveTarget(null); setApproveRole(""); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Aprovar acesso de {approveTarget?.nome || approveTarget?.email}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-sm text-muted-foreground">Selecione o perfil de acesso:</p>
-            <Select value={approveRole} onValueChange={setApproveRole}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o perfil..." />
-              </SelectTrigger>
-              <SelectContent>
-                {["ASSESSOR", "BANKER", "LIDER", "FINDER", "ADMIN"].map((r) => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
-            <Button
-              disabled={!approveRole || approveSaving}
-              onClick={async () => {
-                if (!approveTarget) return;
-                setApproveSaving(true);
-                // Find matching notification
-                const notif = unreadNotifications.find(
-                  (n) => n.dados?.email === approveTarget.email
-                );
-                if (notif) {
-                  await approveNotif(notif.dados?.user_id || "", approveRole, notif.id);
-                } else {
-                  // Fallback: call RPC directly
-                  const { error } = await supabase.rpc("rpc_admin_aprovar_usuario" as any, {
-                    p_user_id: "",
-                    p_role: approveRole,
-                    p_notif_id: "",
-                  });
-                  if (error) {
-                    toast({ title: "Erro", description: error.message, variant: "destructive" });
-                  } else {
-                    toast({ title: `Acesso liberado para ${approveTarget.nome || approveTarget.email}!` });
-                    refetch();
-                  }
-                }
-                setApproveSaving(false);
-                setApproveTarget(null);
-                setApproveRole("");
-              }}
-            >
-              {approveSaving ? "Aprovando..." : "Aprovar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   );
 }

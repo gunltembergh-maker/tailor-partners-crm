@@ -19,10 +19,6 @@ export default function QualitativoPage() {
     hasChanges,
     activeChips,
     removeChip,
-    isLockedBanker,
-    isLockedFinder,
-    isLockedAssessor,
-    profileReady,
   } = useDashboardFilters();
   const { lastUpdatedAt, isRefreshing } = useDashboardRefresh();
 
@@ -45,9 +41,6 @@ export default function QualitativoPage() {
             open={true}
             onClose={() => {}}
             showVencimento={true}
-            isLockedBanker={isLockedBanker}
-            isLockedFinder={isLockedFinder}
-            isLockedAssessor={isLockedAssessor}
           />
 
           <div className="flex-1 min-w-0 p-4">
@@ -80,7 +73,7 @@ export default function QualitativoPage() {
               </div>
             )}
 
-            {profileReady ? <QualitativoTab filters={appliedFilters} /> : <div className="p-8 text-center text-sm text-muted-foreground">Carregando perfil…</div>}
+            <QualitativoTab filters={appliedFilters} />
           </div>
         </div>
       </div>

@@ -22,10 +22,6 @@ export default function DashboardComercial() {
     hasChanges,
     activeChips,
     removeChip,
-    isLockedBanker,
-    isLockedFinder,
-    isLockedAssessor,
-    profileReady,
   } = useDashboardFilters();
   const [activeTab, setActiveTab] = useState("quantitativo");
   const { lastUpdatedAt, isRefreshing } = useDashboardRefresh();
@@ -51,9 +47,6 @@ export default function DashboardComercial() {
             open={true}
             onClose={() => {}}
             showVencimento={activeTab === "qualitativo"}
-            isLockedBanker={isLockedBanker}
-            isLockedFinder={isLockedFinder}
-            isLockedAssessor={isLockedAssessor}
           />
 
           {/* Main content */}
@@ -100,10 +93,10 @@ export default function DashboardComercial() {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="quantitativo">
-                {profileReady ? <QuantitativoTab filters={appliedFilters} /> : <div className="p-8 text-center text-sm" style={{ color: "#9CA3AF" }}>Carregando perfil…</div>}
+                <QuantitativoTab filters={appliedFilters} />
               </TabsContent>
               <TabsContent value="qualitativo">
-                {profileReady ? <QualitativoTab filters={appliedFilters} /> : <div className="p-8 text-center text-sm" style={{ color: "#9CA3AF" }}>Carregando perfil…</div>}
+                <QualitativoTab filters={appliedFilters} />
               </TabsContent>
             </Tabs>
           </div>

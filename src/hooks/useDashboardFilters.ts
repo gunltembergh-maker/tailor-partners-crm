@@ -1,5 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useCallback, useMemo } from "react";
 
 export interface DashboardFilters {
   periodoInicio: string;
@@ -32,91 +31,21 @@ const defaultFilters: DashboardFilters = {
 };
 
 export function useDashboardFilters() {
-  const { role, bankerName, advisorName, finderName, loading: authLoading } = useAuth();
-
-  const isLockedBanker = role === "BANKER" && !!bankerName;
-  const isLockedFinder = role === "FINDER" && !!finderName;
-  const isLockedAssessor = role === "ASSESSOR" && !!advisorName;
-
-  // Profile is "ready" when auth finished loading AND any role-lock has resolved
-  const profileReady = !authLoading && (
-    role === "BANKER"
-      ? !!bankerName
-      : role === "FINDER"
-        ? !!finderName
-        : role === "ASSESSOR"
-          ? !!advisorName
-          : true
-  );
-
-  // Compute role-locked initial filters
-  const roleLockedFilters = useMemo(() => {
-    const filters = { ...defaultFilters };
-    if (role === "BANKER" && bankerName) {
-      filters.banker = [bankerName];
-    } else if (role === "FINDER" && finderName) {
-      filters.finder = [finderName];
-    } else if (role === "ASSESSOR" && advisorName) {
-      filters.advisor = [advisorName];
-    }
-    return filters;
-  }, [role, bankerName, advisorName, finderName]);
-
-  const [pendingFilters, setPendingFilters] = useState<DashboardFilters>(roleLockedFilters);
-  const [rawAppliedFilters, setAppliedFilters] = useState<DashboardFilters>(roleLockedFilters);
-
-  // Sync when the resolved role scope loads (it starts null)
-  useEffect(() => {
-    const resolvedScope = role === "BANKER"
-      ? bankerName
-      : role === "FINDER"
-        ? finderName
-        : role === "ASSESSOR"
-          ? advisorName
-          : null;
-
-    if (resolvedScope && (role === "BANKER" || role === "FINDER" || role === "ASSESSOR")) {
-      const patch = role === "BANKER" ? { banker: [resolvedScope] }
-        : role === "FINDER" ? { finder: [resolvedScope] }
-        : { advisor: [resolvedScope] };
-      setPendingFilters(prev => ({ ...prev, ...patch }));
-      setAppliedFilters(prev => ({ ...prev, ...patch }));
-    }
-  }, [role, bankerName, advisorName, finderName]);
-
-
-
-  // CRITICAL: Always enforce role-based filter on appliedFilters
-  // This guarantees the lock even if useEffect hasn't fired yet
-  const appliedFilters = useMemo<DashboardFilters>(() => {
-    const f = { ...rawAppliedFilters };
-    if (isLockedBanker && bankerName) {
-      f.banker = [bankerName];
-    }
-    if (isLockedFinder && finderName) {
-      f.finder = [finderName];
-    }
-    if (isLockedAssessor && advisorName) {
-      f.advisor = [advisorName];
-    }
-    return f;
-  }, [rawAppliedFilters, isLockedBanker, isLockedFinder, isLockedAssessor, bankerName, advisorName, finderName]);
+  const [pendingFilters, setPendingFilters] = useState<DashboardFilters>(defaultFilters);
+  const [appliedFilters, setAppliedFilters] = useState<DashboardFilters>(defaultFilters);
 
   const updatePendingFilter = useCallback(<K extends keyof DashboardFilters>(key: K, value: DashboardFilters[K]) => {
-    if (key === "banker" && isLockedBanker) return;
-    if (key === "finder" && isLockedFinder) return;
-    if (key === "advisor" && isLockedAssessor) return;
     setPendingFilters((prev) => ({ ...prev, [key]: value }));
-  }, [isLockedBanker, isLockedFinder, isLockedAssessor]);
+  }, []);
 
   const applyFilters = useCallback(() => {
     setAppliedFilters({ ...pendingFilters });
   }, [pendingFilters]);
 
   const resetFilters = useCallback(() => {
-    setPendingFilters(roleLockedFilters);
-    setAppliedFilters(roleLockedFilters);
-  }, [roleLockedFilters]);
+    setPendingFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
+  }, []);
 
   const hasChanges = useMemo(() => {
     return JSON.stringify(pendingFilters) !== JSON.stringify(appliedFilters);
@@ -152,9 +81,6 @@ export function useDashboardFilters() {
   }, [appliedFilters]);
 
   const removeChip = useCallback((key: keyof DashboardFilters, value: string) => {
-    if (key === "banker" && isLockedBanker) return;
-    if (key === "finder" && isLockedFinder) return;
-    if (key === "advisor" && isLockedAssessor) return;
     setAppliedFilters(prev => {
       const next = { ...prev };
       if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes") {
@@ -173,7 +99,7 @@ export function useDashboardFilters() {
       }
       return next;
     });
-  }, [isLockedBanker, isLockedFinder, isLockedAssessor]);
+  }, []);
 
   return {
     pendingFilters,
@@ -184,9 +110,5 @@ export function useDashboardFilters() {
     hasChanges,
     activeChips,
     removeChip,
-    isLockedBanker,
-    isLockedFinder,
-    isLockedAssessor,
-    profileReady,
   };
 }
