@@ -327,9 +327,9 @@ export function QualitativoTab({ filters }: Props) {
       })
       .map((r: any) => ({
         faixa: r.faixa_pl ?? "N/D",
-        "Net Em M": Number(r.net_em_m) || 0,
+        "Net Em M": Number(r.auc) || 0,
         "PL Declarado": Number(r.pl_declarado) || 0,
-        "# Clientes": Number(r.qtd_clientes) || 0,
+        "# Clientes": Number(r.clientes) || 0,
       }))
   , [aucFaixaData]);
 
