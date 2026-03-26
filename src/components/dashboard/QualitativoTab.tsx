@@ -327,19 +327,19 @@ export function QualitativoTab({ filters }: Props) {
       })
       .map((r: any) => ({
         faixa: r.faixa_pl ?? "N/D",
-        "Net Em M": Number(r.net_em_m) || 0,
+        "Net Em M": Number(r.auc) || 0,
         "PL Declarado": Number(r.pl_declarado) || 0,
-        "# Clientes": Number(r.qtd_clientes) || 0,
+        "# Clientes": Number(r.clientes) || 0,
       }))
   , [aucFaixaData]);
 
   /* ─── Custódia donuts ─── */
   const custIdxChart = useMemo(() =>
-    (custIdxData ?? []).map((r: any) => ({ name: r.indexador ?? "Outros", value: Number(r.total) || 0 }))
+    (custIdxData ?? []).map((r: any) => ({ name: r.indexador ?? "Outros", value: Number(r.net) || 0 }))
   , [custIdxData]);
 
   const custVeiChart = useMemo(() =>
-    (custVeiData ?? []).map((r: any) => ({ name: r.produto_ajustado ?? "Outros", value: Number(r.total) || 0 }))
+    (custVeiData ?? []).map((r: any) => ({ name: r.produto_ajustado ?? "Outros", value: Number(r.net) || 0 }))
   , [custVeiData]);
 
   /* ─── ROA por Tipo de Cliente — descending anomes (most recent LEFT) ─── */
