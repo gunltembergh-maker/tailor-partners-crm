@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DashboardFilters } from "./useDashboardFilters";
 import { expandTipoCliente, expandAdvisor } from "@/components/dashboard/FiltersSidebar";
+import { useScopedRpcParams, useScopedRpcParamsPbi } from "./useScopedFilters";
 
 function anoMesRange(inicio: string, fim: string) {
   const s = inicio.replace(/-/g, "").slice(0, 6);
@@ -9,18 +10,14 @@ function anoMesRange(inicio: string, fim: string) {
   return { s, e };
 }
 
-/** Convert DashboardFilters → RPC params (null when empty) */
+/** Convert DashboardFilters → RPC params (null when empty) — used only by non-hook callers */
 function buildRpcParams(filters: DashboardFilters) {
-  // Expand advisor selections (João Fontes → ["João Fontes","João S"], Legado → all others)
   const expandedAdvisor = filters.advisor.length
     ? filters.advisor.flatMap((a) => expandAdvisor(a, []))
     : null;
-
-  // Expand tipo_cliente to cover DB variations
   const expandedTipoCliente = filters.tipoCliente
     ? expandTipoCliente(filters.tipoCliente)
     : null;
-
   return {
     p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
     p_banker: filters.banker.length ? filters.banker : null,
