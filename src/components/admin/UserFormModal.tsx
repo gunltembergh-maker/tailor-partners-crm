@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
   const [banker, setBanker] = useState("");
   const [finder, setFinder] = useState("");
   const [empresa, setEmpresa] = useState("Tailor Partners");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
       setBanker(initialData?.banker || "");
       setFinder(initialData?.finder || "");
       setEmpresa(initialData?.empresa || "Tailor Partners");
+      setEmailError(null);
     }
   }, [open, initialData]);
 
@@ -85,8 +87,43 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
     enabled: open,
   });
 
+  const validateEmail = useCallback(async (emailValue: string) => {
+    if (!emailValue || !emailValue.includes("@")) {
+      setEmailError(null);
+      setEmpresa("Tailor Partners");
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc("rpc_validar_dominio" as any, { p_email: emailValue });
+      if (error) throw error;
+      const result = data as any;
+      if (result?.autorizado === false) {
+        setEmailError("Domínio não autorizado. Apenas e-mails @tailorpartners.com.br e @lavoroseguros.com.br são permitidos.");
+        setEmpresa("");
+      } else {
+        setEmailError(null);
+        setEmpresa(result?.empresa || "Tailor Partners");
+      }
+    } catch {
+      // Fallback: check domain locally from dominio_empresa table
+      const dominio = emailValue.split("@")[1];
+      const { data: domData } = await supabase
+        .from("dominio_empresa")
+        .select("empresa")
+        .eq("dominio", dominio)
+        .maybeSingle();
+      if (domData) {
+        setEmailError(null);
+        setEmpresa(domData.empresa);
+      } else {
+        setEmailError("Domínio não autorizado. Apenas e-mails @tailorpartners.com.br e @lavoroseguros.com.br são permitidos.");
+        setEmpresa("");
+      }
+    }
+  }, []);
+
   const handleSave = async () => {
-    if (!email.trim() || !nome.trim()) return;
+    if (!email.trim() || !nome.trim() || emailError) return;
     setSaving(true);
     try {
       const { data, error } = await supabase.rpc("rpc_admin_salvar_usuario" as any, {
@@ -116,6 +153,8 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
     }
   };
 
+  const isFormValid = email.trim() && nome.trim() && !emailError && empresa;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -132,10 +171,18 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
             <Input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailError) setEmailError(null);
+              }}
+              onBlur={() => !isEdit && validateEmail(email)}
               placeholder="nome@tailorpartners.com.br"
               disabled={isEdit}
+              className={emailError ? "border-destructive" : ""}
             />
+            {emailError && (
+              <p className="text-xs text-destructive mt-1">{emailError}</p>
+            )}
           </div>
           <div className="space-y-1">
             <Label>CPF</Label>
@@ -191,14 +238,14 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
           )}
           <div className="space-y-1">
             <Label>Empresa</Label>
-            <Input value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Tailor Partners" />
+            <Input value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Tailor Partners" readOnly={!isEdit && !!empresa && !emailError} />
           </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">Cancelar</Button>
           </DialogClose>
-          <Button onClick={handleSave} disabled={!email.trim() || !nome.trim() || saving}>
+          <Button onClick={handleSave} disabled={!isFormValid || saving}>
             {saving ? "Salvando..." : isEdit ? "Salvar" : "Pré-cadastrar"}
           </Button>
         </DialogFooter>

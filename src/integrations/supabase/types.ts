@@ -173,6 +173,21 @@ export type Database = {
         }
         Relationships: []
       }
+      dominio_empresa: {
+        Row: {
+          dominio: string
+          empresa: string
+        }
+        Insert: {
+          dominio: string
+          empresa: string
+        }
+        Update: {
+          dominio?: string
+          empresa?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           assessor_id: string | null
@@ -2292,7 +2307,9 @@ export type Database = {
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
       norm_txt: { Args: { v: string }; Returns: string }
+      normalize_advisor: { Args: { p_advisor: string }; Returns: string }
       normalize_banker: { Args: { v: string }; Returns: string }
+      normalize_tipo_cliente: { Args: { p_tipo: string }; Returns: string }
       parse_num: { Args: { v: string }; Returns: number }
       parse_num_any: { Args: { v: string }; Returns: number }
       rpc_admin_aprovar_usuario: {
@@ -2593,6 +2610,7 @@ export type Database = {
           dados_ate: string
         }[]
       }
+      rpc_empresa_por_dominio: { Args: { p_email: string }; Returns: string }
       rpc_faixa_pl_auc: {
         Args: {
           p_advisor?: string[]
@@ -2655,6 +2673,19 @@ export type Database = {
           faixa_pl: string
         }[]
       }
+      rpc_filtro_advisor_slicer: {
+        Args: never
+        Returns: {
+          advisor: string
+        }[]
+      }
+      rpc_filtro_advisors: {
+        Args: never
+        Returns: {
+          advisor: string
+          display_name: string
+        }[]
+      }
       rpc_filtro_anomes: {
         Args: never
         Returns: {
@@ -2672,6 +2703,12 @@ export type Database = {
         Args: never
         Returns: {
           finder: string
+        }[]
+      }
+      rpc_filtro_tipo_cliente: {
+        Args: never
+        Returns: {
+          tipo_cliente: string
         }[]
       }
       rpc_lista_finders: {
@@ -2882,6 +2919,7 @@ export type Database = {
           vencimento: string
         }[]
       }
+      rpc_validar_dominio: { Args: { p_email: string }; Returns: Json }
       rpc_vencimentos_grafico: {
         Args: {
           p_advisor?: string[]
@@ -2912,6 +2950,7 @@ export type Database = {
           net: number
         }[]
       }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       app_role:
