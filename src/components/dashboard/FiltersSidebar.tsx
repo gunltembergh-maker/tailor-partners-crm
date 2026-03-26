@@ -147,10 +147,10 @@ export function FiltersSidebar({
                 </TooltipProvider>
               )}
             </div>
-            {isBanker && bankerName ? (
+            {isBanker && effectiveBankerName ? (
               <div className="flex flex-wrap gap-1">
                 <Badge className="text-[8px] h-4 gap-0.5 px-1.5 bg-white/20 text-white border-0">
-                  {bankerName}
+                  {effectiveBankerName}
                   <Lock className="h-2 w-2 opacity-50" />
                 </Badge>
               </div>
@@ -206,7 +206,7 @@ export function FiltersSidebar({
             {isFinder ? (
               <div className="flex flex-wrap gap-1">
               <Badge className="text-[8px] h-4 gap-0.5 px-1.5 bg-white/20 text-white border-0">
-                  {finderName || "Seu perfil"}
+                  {effectiveFinderName || "Seu perfil"}
                   <Lock className="h-2 w-2 opacity-50" />
                 </Badge>
               </div>
