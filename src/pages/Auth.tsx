@@ -60,6 +60,7 @@ export default function Auth() {
   const [empresa, setEmpresa] = useState("Tailor Partners");
   const [loading, setLoading] = useState(false);
   const [cpfError, setCpfError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [resending, setResending] = useState(false);
@@ -73,6 +74,27 @@ export default function Auth() {
   const isBlocked = searchParams.get("blocked") === "true";
 
   const strength = getPasswordStrength(password);
+
+  const validateCorporateEmail = async (emailValue: string) => {
+    const normalizedEmail = emailValue.trim().toLowerCase();
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      setEmailError("");
+      return { autorizado: false, empresa: null, skip: true };
+    }
+
+    const { data, error } = await supabase.rpc("rpc_validar_dominio" as any, { p_email: normalizedEmail });
+    if (error) throw error;
+
+    const result = data as { autorizado?: boolean; empresa?: string | null } | null;
+    if (!result?.autorizado) {
+      setEmailError("Domínio não autorizado. Apenas e-mails corporativos liberados são permitidos.");
+      return { autorizado: false, empresa: null, skip: false };
+    }
+
+    setEmailError("");
+    if (!isLogin && result.empresa) setEmpresa(result.empresa);
+    return { autorizado: true, empresa: result.empresa ?? null, skip: false };
+  };
 
   const handleCpfBlur = async () => {
     const digits = cpf.replace(/\D/g, "");
@@ -91,62 +113,71 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!email.endsWith("@tailorpartners.com.br")) {
-      toast({
-        title: "Domínio não autorizado",
-        description: "Acesso restrito a colaboradores Tailor Partners. Use seu e-mail corporativo.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
-    if (isLogin) {
-      const { error } = await signIn(email, password);
-      if (error) {
-        toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
-      } else {
-        navigate("/");
-      }
-    } else {
-      // Validate signup fields
-      if (fullName.trim().length < 3) {
-        toast({ title: "Nome muito curto", description: "Informe pelo menos 3 caracteres.", variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      const cpfDigits = cpf.replace(/\D/g, "");
-      if (!isValidCpf(cpf)) {
-        toast({ title: "CPF inválido", description: "Verifique os dígitos do CPF.", variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      if (cpfError) {
-        toast({ title: "CPF já cadastrado", description: cpfError, variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      if (password.length < 8) {
-        toast({ title: "Senha fraca", description: "A senha deve ter pelo menos 8 caracteres.", variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      if (password !== confirmPassword) {
-        toast({ title: "Senhas não conferem", description: "A confirmação de senha deve ser igual.", variant: "destructive" });
+    try {
+      const domainValidation = await validateCorporateEmail(email);
+      if (!domainValidation.autorizado && !domainValidation.skip) {
+        toast({
+          title: "Domínio não autorizado",
+          description: "Use um e-mail corporativo com domínio liberado para a plataforma.",
+          variant: "destructive",
+        });
         setLoading(false);
         return;
       }
 
-      const { error } = await signUp(email, password, fullName, cpfDigits, empresa);
-      if (error) {
-        toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
+      if (isLogin) {
+        const { error } = await signIn(email.trim().toLowerCase(), password);
+        if (error) {
+          toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
+        } else {
+          navigate("/");
+        }
       } else {
-        setConfirmedEmail(email);
-        setShowConfirmation(true);
+        if (fullName.trim().length < 3) {
+          toast({ title: "Nome muito curto", description: "Informe pelo menos 3 caracteres.", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        const cpfDigits = cpf.replace(/\D/g, "");
+        if (!isValidCpf(cpf)) {
+          toast({ title: "CPF inválido", description: "Verifique os dígitos do CPF.", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        if (cpfError) {
+          toast({ title: "CPF já cadastrado", description: cpfError, variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        if (password.length < 8) {
+          toast({ title: "Senha fraca", description: "A senha deve ter pelo menos 8 caracteres.", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        if (password !== confirmPassword) {
+          toast({ title: "Senhas não conferem", description: "A confirmação de senha deve ser igual.", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await signUp(email.trim().toLowerCase(), password, fullName, cpfDigits, domainValidation.empresa ?? empresa);
+        if (error) {
+          toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
+        } else {
+          setConfirmedEmail(email.trim().toLowerCase());
+          setShowConfirmation(true);
+        }
       }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao validar domínio",
+        description: error?.message ?? "Não foi possível validar o e-mail corporativo.",
+        variant: "destructive",
+      });
     }
+
     setLoading(false);
   };
 
@@ -254,10 +285,15 @@ export default function Auth() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nome@tailorpartners.com.br"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  onBlur={() => void validateCorporateEmail(email)}
+                  placeholder="nome@empresa.com.br"
                   required
                 />
+                {emailError && <p className="text-xs text-destructive">{emailError}</p>}
               </div>
 
               {!isLogin && (
