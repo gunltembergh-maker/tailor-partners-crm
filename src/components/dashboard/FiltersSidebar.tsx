@@ -2,11 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { X, Search, Check, RotateCcw } from "lucide-react";
+import { X, Search, Check, RotateCcw, Lock } from "lucide-react";
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
 import { useFilterOptions } from "@/hooks/useDashboardData";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -15,6 +19,29 @@ function formatAnoMes(v: string): string {
   const m = parseInt(v.slice(4, 6), 10);
   const y = v.slice(0, 4);
   return `${MESES[m - 1] || "?"}/${y}`;
+}
+
+/** Expand "PESSOA FÍSICA" to cover all DB variations */
+function expandTipoCliente(value: string): string[] {
+  if (value.toUpperCase().includes("FÍSICA") || value.toUpperCase().includes("FISICA")) {
+    return ["PESSOA FÍSICA", "PESSOA FISICA", "Pessoa Física", "Pessoa Fisica"];
+  }
+  if (value.toUpperCase().includes("JURÍDICA") || value.toUpperCase().includes("JURIDICA")) {
+    return ["PESSOA JURÍDICA", "PESSOA JURIDICA", "Pessoa Jurídica", "Pessoa Juridica"];
+  }
+  return [value];
+}
+
+/** Expand advisor selection to handle João Fontes / Legado grouping */
+function expandAdvisor(value: string, allAdvisors: string[]): string[] {
+  if (value === "João Fontes") {
+    return ["João Fontes", "João S"];
+  }
+  if (value === "Legado") {
+    const known = ["Victor Queiroz", "Sem Advisor", "João Fontes", "João S"];
+    return allAdvisors.filter((a) => !known.includes(a));
+  }
+  return [value];
 }
 
 interface FiltersSidebarProps {
@@ -39,13 +66,31 @@ export function FiltersSidebar({
   showVencimento = false,
 }: FiltersSidebarProps) {
   const { data: options } = useFilterOptions();
+  const { role, bankerName } = useAuth();
+
+  // Resolve role-based locks
+  const isBanker = role === "BANKER";
+  const isFinder = role === "FINDER";
+  const finderName = useAuth().profile?.full_name; // fallback
+
+  // Get finder_name from auth context
+  const { user } = useAuth();
 
   if (!open) return null;
 
   const toggleMulti = (key: "banker" | "advisor" | "finder" | "anoMes", val: string) => {
+    // Don't allow toggling locked filters
+    if (key === "banker" && isBanker) return;
+    if (key === "finder" && isFinder) return;
     const arr = pendingFilters[key];
     updatePendingFilter(key, arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val]);
   };
+
+  // Normalized advisor options: Victor Queiroz, Sem Advisor, João Fontes, Legado
+  const normalizedAdvisors = ["Victor Queiroz", "Sem Advisor", "João Fontes", "Legado"];
+
+  // Normalized tipo cliente options
+  const normalizedTiposCliente = ["PESSOA FÍSICA", "PESSOA JURÍDICA"];
 
   return (
     <div
@@ -84,13 +129,40 @@ export function FiltersSidebar({
             onClearAll={() => updatePendingFilter("anoMes", [])}
           />
 
-          {/* Financial Advisor */}
-          <PbiMultiSelect
-            label="Financial Advisor"
-            values={pendingFilters.banker}
-            options={options?.bankers ?? []}
-            onToggle={(v) => toggleMulti("banker", v)}
-          />
+          {/* Financial Advisor (Banker) */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Financial Advisor</label>
+              {isBanker && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Lock className="h-3 w-3 opacity-50" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Visualizando dados do seu perfil</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+            {isBanker && bankerName ? (
+              <div className="flex flex-wrap gap-1">
+                <Badge className="text-[8px] h-4 gap-0.5 px-1.5 bg-white/20 text-white border-0">
+                  {bankerName}
+                  <Lock className="h-2 w-2 opacity-50" />
+                </Badge>
+              </div>
+            ) : (
+              <PbiMultiSelect
+                label=""
+                values={pendingFilters.banker}
+                options={options?.bankers ?? []}
+                onToggle={(v) => toggleMulti("banker", v)}
+                hideLabel
+              />
+            )}
+          </div>
 
           {/* Documento / Código do Cliente */}
           <div className="space-y-1">
@@ -107,7 +179,7 @@ export function FiltersSidebar({
           <PbiMultiSelect
             label="Advisor"
             values={pendingFilters.advisor}
-            options={options?.advisors ?? []}
+            options={normalizedAdvisors}
             onToggle={(v) => toggleMulti("advisor", v)}
           />
 
@@ -115,7 +187,7 @@ export function FiltersSidebar({
           <PbiMultiSelect
             label="Tipo de Cliente"
             values={pendingFilters.tipoCliente ? [pendingFilters.tipoCliente] : []}
-            options={options?.tiposCliente ?? []}
+            options={normalizedTiposCliente}
             onToggle={(v) => {
               updatePendingFilter("tipoCliente", pendingFilters.tipoCliente === v ? "" : v);
             }}
@@ -123,12 +195,30 @@ export function FiltersSidebar({
           />
 
           {/* Finder */}
-          <PbiMultiSelect
-            label="Finder"
-            values={pendingFilters.finder}
-            options={options?.finders ?? []}
-            onToggle={(v) => toggleMulti("finder", v)}
-          />
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">Finder</label>
+              {isFinder && (
+                <Lock className="h-3 w-3 opacity-50" />
+              )}
+            </div>
+            {isFinder ? (
+              <div className="flex flex-wrap gap-1">
+                <Badge className="text-[8px] h-4 gap-0.5 px-1.5 bg-white/20 text-white border-0">
+                  {bankerName || finderName || "Seu perfil"}
+                  <Lock className="h-2 w-2 opacity-50" />
+                </Badge>
+              </div>
+            ) : (
+              <PbiMultiSelect
+                label=""
+                values={pendingFilters.finder}
+                options={options?.finders ?? []}
+                onToggle={(v) => toggleMulti("finder", v)}
+                hideLabel
+              />
+            )}
+          </div>
 
           {/* Vencimento (only qualitativo) */}
           {showVencimento && (
@@ -171,6 +261,9 @@ export function FiltersSidebar({
   );
 }
 
+// Export helpers for use in data layer
+export { expandTipoCliente, expandAdvisor };
+
 function PbiMultiSelect({
   label,
   values,
@@ -182,6 +275,7 @@ function PbiMultiSelect({
   showSelectAll = false,
   onSelectAll,
   onClearAll,
+  hideLabel = false,
 }: {
   label: string;
   values: string[];
@@ -193,6 +287,7 @@ function PbiMultiSelect({
   showSelectAll?: boolean;
   onSelectAll?: () => void;
   onClearAll?: () => void;
+  hideLabel?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -205,17 +300,19 @@ function PbiMultiSelect({
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">{label}</label>
-        {showSelectAll && !singleSelect && (
-          <button
-            className="text-[8px] opacity-50 hover:opacity-80"
-            onClick={() => allSelected ? onClearAll?.() : onSelectAll?.()}
-          >
-            {allSelected ? "Limpar" : "Selecionar tudo"}
-          </button>
-        )}
-      </div>
+      {!hideLabel && (
+        <div className="flex items-center justify-between">
+          <label className="text-[9px] uppercase tracking-wider font-semibold opacity-70">{label}</label>
+          {showSelectAll && !singleSelect && (
+            <button
+              className="text-[8px] opacity-50 hover:opacity-80"
+              onClick={() => allSelected ? onClearAll?.() : onSelectAll?.()}
+            >
+              {allSelected ? "Limpar" : "Selecionar tudo"}
+            </button>
+          )}
+        </div>
+      )}
       {values.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {values.map((v) => (
