@@ -115,13 +115,14 @@ export function AppSidebar() {
         </SidebarGroup>
         )}
 
+        {visibleDashboardItems.length > 0 && (
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
             Dashboards
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {dashboardItems.map((item) => (
+              {visibleDashboardItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     isActive={location.pathname === item.path}
@@ -136,6 +137,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         {showAdmin && (
           <SidebarGroup>
