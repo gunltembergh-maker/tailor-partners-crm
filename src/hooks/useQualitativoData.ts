@@ -14,16 +14,9 @@ function buildFullParams(filters: DashboardFilters) {
   };
 }
 
+/** Vencimentos RPCs now use the same 6-param signature as all others */
 function buildVencParams(filters: DashboardFilters) {
-  return {
-    p_vencimento_inicio: null,
-    p_vencimento_fim: null,
-    p_banker: filters.banker.length ? filters.banker : null,
-    p_advisor: filters.advisor.length ? filters.advisor : null,
-    p_finder: filters.finder.length ? filters.finder : null,
-    p_documento: filters.documento ? [filters.documento] : null,
-    p_tipo_cliente: filters.tipoCliente ? [filters.tipoCliente] : null,
-  };
+  return buildFullParams(filters);
 }
 
 // Custódia por Indexador (donut)
