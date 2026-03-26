@@ -285,10 +285,15 @@ export default function Auth() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nome@tailorpartners.com.br"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  onBlur={() => void validateCorporateEmail(email)}
+                  placeholder="nome@empresa.com.br"
                   required
                 />
+                {emailError && <p className="text-xs text-destructive">{emailError}</p>}
               </div>
 
               {!isLogin && (
