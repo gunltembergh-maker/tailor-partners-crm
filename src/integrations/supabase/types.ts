@@ -2324,31 +2324,19 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_admin_salvar_usuario:
-        | {
-            Args: {
-              p_banker_name?: string
-              p_email: string
-              p_empresa?: string
-              p_nome: string
-              p_perfil_nome?: string
-              p_role: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_advisor_name?: string
-              p_banker_name?: string
-              p_email: string
-              p_empresa?: string
-              p_finder_name?: string
-              p_nome: string
-              p_perfil_nome?: string
-              p_role: string
-            }
-            Returns: Json
-          }
+      rpc_admin_salvar_usuario: {
+        Args: {
+          p_advisor_name?: string
+          p_banker_name?: string
+          p_email: string
+          p_empresa?: string
+          p_finder_name?: string
+          p_nome: string
+          p_perfil_nome?: string
+          p_role: string
+        }
+        Returns: Json
+      }
       rpc_auc_casa: {
         Args: {
           p_advisor?: string[]
@@ -2363,65 +2351,37 @@ export type Database = {
           casa: string
         }[]
       }
-      rpc_auc_casa_m0:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              auc: number
-              casa: string
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              auc: number
-              casa: string
-            }[]
-          }
-      rpc_auc_faixa_pl_qualitativo:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              auc: number
-              clientes: number
-              faixa_pl: string
-              ordem_pl: number
-              pl_declarado: number
-            }[]
-          }
-        | {
-            Args: {
-              p_banker?: string[]
-              p_documento?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              faixa_pl: string
-              net_em_m: number
-              pl_declarado: number
-              qtd_clientes: number
-            }[]
-          }
+      rpc_auc_casa_m0: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          auc: number
+          casa: string
+        }[]
+      }
+      rpc_auc_faixa_pl_qualitativo: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          auc: number
+          clientes: number
+          faixa_pl: string
+          ordem_pl: number
+          pl_declarado: number
+        }[]
+      }
       rpc_auc_mes: {
         Args: {
           p_advisor?: string[]
@@ -2544,62 +2504,34 @@ export type Database = {
           tipo: string
         }[]
       }
-      rpc_custodia_indexador:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              indexador: string
-              net: number
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              indexador: string
-              total: number
-            }[]
-          }
-      rpc_custodia_veiculo:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              net: number
-              produto_ajustado: string
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              produto_ajustado: string
-              total: number
-            }[]
-          }
+      rpc_custodia_indexador: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          indexador: string
+          net: number
+        }[]
+      }
+      rpc_custodia_veiculo: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          net: number
+          produto_ajustado: string
+        }[]
+      }
       rpc_dashboard_timestamps: {
         Args: never
         Returns: {
@@ -2760,319 +2692,166 @@ export type Database = {
           valor: number
         }[]
       }
-      rpc_roa_faixa_pl:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              faixa_pl: string
-              roa: number
-            }[]
-          }
-        | {
-            Args: { p_banker?: string[]; p_documento?: string[] }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              faixa_pl: string
-              roa: number
-            }[]
-          }
-      rpc_roa_geral:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              roa: number
-            }[]
-          }
-        | {
-            Args: {
-              p_banker?: string[]
-              p_documento?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              qtd_meses: number
-              roa_anualizado_pct: number
-            }[]
-          }
-      rpc_roa_m0_tabela:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              documento: string
-              faixa_pl: string
-              roa: number
-            }[]
-          }
-        | {
-            Args: { p_banker?: string[]; p_documento?: string[] }
-            Returns: {
-              documento: string
-              faixa_pl: string
-              roa: number
-            }[]
-          }
-      rpc_roa_tipo_cliente:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              roa: number
-              tipo_cliente: string
-            }[]
-          }
-        | {
-            Args: {
-              p_banker?: string[]
-              p_documento?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              roa: number
-              tipo_cliente: string
-            }[]
-          }
-      rpc_tabela_clientes:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              advisor: string
-              banker: string
-              cod_cliente: string
-              documento: string
-              endereco_ajustado: string
-              pl_declarado_ajustado: number
-              pl_tailor: number
-              primeiro_nome: string
-              sow_ajustado: number
-              tipo_cliente: string
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              advisor: string
-              banker: string
-              casa: string
-              cidade: string
-              cod_cliente: string
-              documento: string
-              endereco_ajustado: string
-              finder: string
-              perfil: string
-              pl_declarado_ajustado: number
-              pl_tailor: number
-              primeiro_nome: string
-              sow_ajustado: number
-              tipo_cliente: string
-            }[]
-          }
-      rpc_tabela_vencimentos:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              advisor: string
-              ativo_ajustado: string
-              banker: string
-              casa: string
-              documento: string
-              finder: string
-              indexador: string
-              net: number
-              produto_ajustado: string
-              vencimento: string
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-              p_vencimento_fim?: string
-              p_vencimento_inicio?: string
-            }
-            Returns: {
-              advisor: string
-              ativo_ajustado: string
-              banker: string
-              casa: string
-              documento: string
-              finder: string
-              indexador: string
-              net: number
-              produto_ajustado: string
-              vencimento: string
-            }[]
-          }
-      rpc_todos_ativos:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              advisor: string
-              ativo_ajustado: string
-              banker: string
-              casa: string
-              conta: string
-              documento: string
-              finder: string
-              indexador: string
-              net: number
-              produto_ajustado: string
-              tipo_cliente: string
-              vencimento: string
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_limit?: number
-              p_offset?: number
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              advisor: string
-              ativo_ajustado: string
-              banker: string
-              casa: string
-              conta: string
-              documento: string
-              finder: string
-              indexador: string
-              net: number
-              produto_ajustado: string
-              tipo_cliente: string
-              vencimento: string
-            }[]
-          }
-      rpc_vencimentos_grafico:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              ano: number
-              mes: number
-              net: number
-              produto_ajustado: string
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-              p_vencimento_fim?: string
-              p_vencimento_inicio?: string
-            }
-            Returns: {
-              produto_ajustado: string
-              total: number
-            }[]
-          }
-      rpc_vencimentos_por_ano:
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-            }
-            Returns: {
-              ano: number
-              net: number
-            }[]
-          }
-        | {
-            Args: {
-              p_advisor?: string[]
-              p_banker?: string[]
-              p_documento?: string[]
-              p_finder?: string[]
-              p_tipo_cliente?: string[]
-              p_vencimento_fim?: string
-              p_vencimento_inicio?: string
-            }
-            Returns: {
-              ano: number
-              produto_ajustado: string
-              total: number
-            }[]
-          }
+      rpc_roa_faixa_pl: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          faixa_pl: string
+          roa: number
+        }[]
+      }
+      rpc_roa_geral: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          roa: number
+        }[]
+      }
+      rpc_roa_m0_tabela: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          documento: string
+          faixa_pl: string
+          roa: number
+        }[]
+      }
+      rpc_roa_tipo_cliente: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          roa: number
+          tipo_cliente: string
+        }[]
+      }
+      rpc_tabela_clientes: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          advisor: string
+          banker: string
+          cod_cliente: string
+          documento: string
+          endereco_ajustado: string
+          pl_declarado_ajustado: number
+          pl_tailor: number
+          primeiro_nome: string
+          sow_ajustado: number
+          tipo_cliente: string
+        }[]
+      }
+      rpc_tabela_vencimentos: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          advisor: string
+          ativo_ajustado: string
+          banker: string
+          casa: string
+          documento: string
+          finder: string
+          indexador: string
+          net: number
+          produto_ajustado: string
+          vencimento: string
+        }[]
+      }
+      rpc_todos_ativos: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          advisor: string
+          ativo_ajustado: string
+          banker: string
+          casa: string
+          conta: string
+          documento: string
+          finder: string
+          indexador: string
+          net: number
+          produto_ajustado: string
+          tipo_cliente: string
+          vencimento: string
+        }[]
+      }
+      rpc_vencimentos_grafico: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          ano: number
+          mes: number
+          net: number
+          produto_ajustado: string
+        }[]
+      }
+      rpc_vencimentos_por_ano: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_documento?: string[]
+          p_finder?: string[]
+          p_tipo_cliente?: string[]
+        }
+        Returns: {
+          ano: number
+          net: number
+        }[]
+      }
     }
     Enums: {
       app_role: "ASSESSOR" | "BANKER" | "LIDER" | "FINDER" | "ADMIN"
