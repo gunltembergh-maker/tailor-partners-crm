@@ -57,8 +57,8 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/auth" element={session ? <Navigate to="/" replace /> : <Auth />} />
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/auth" element={session ? <Navigate to="/dashboards/comercial" replace /> : <Auth />} />
+      <Route path="/" element={<ProtectedRoute><Navigate to="/dashboards/comercial" replace /></ProtectedRoute>} />
       <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
       <Route path="/leads/:id" element={<ProtectedRoute><LeadDetalhe /></ProtectedRoute>} />
       <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />

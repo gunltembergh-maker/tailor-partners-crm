@@ -33,13 +33,12 @@ function expandTipoCliente(value: string): string[] {
 }
 
 /** Expand advisor selection to handle João Fontes / Legado grouping */
-function expandAdvisor(value: string, allAdvisors: string[]): string[] {
+function expandAdvisor(value: string, _allAdvisors?: string[]): string[] {
   if (value === "João Fontes") {
     return ["João Fontes", "João S"];
   }
   if (value === "Legado") {
-    const known = ["Victor Queiroz", "Sem Advisor", "João Fontes", "João S"];
-    return allAdvisors.filter((a) => !known.includes(a));
+    return ["Adonias Noronha", "Rafael Guidi", "Raphael Pereira", "Sem Farmer", "NA"];
   }
   return [value];
 }
@@ -200,8 +199,8 @@ export function FiltersSidebar({
             </div>
             {isFinder ? (
               <div className="flex flex-wrap gap-1">
-                <Badge className="text-[8px] h-4 gap-0.5 px-1.5 bg-white/20 text-white border-0">
-                  {bankerName || finderName || "Seu perfil"}
+              <Badge className="text-[8px] h-4 gap-0.5 px-1.5 bg-white/20 text-white border-0">
+                  {finderName || "Seu perfil"}
                   <Lock className="h-2 w-2 opacity-50" />
                 </Badge>
               </div>
