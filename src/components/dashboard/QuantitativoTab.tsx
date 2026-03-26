@@ -326,19 +326,19 @@ export function QuantitativoTab({filters}:Props) {
     captMeses.forEach((r:any)=>{
       const tipo=r.tipo_captacao||"Outros";tipos.add(tipo);
       if(!map.has(r.anomes))map.set(r.anomes,{_cat:r.anomes_nome,_anomes:r.anomes,_total:0});
-      const row=map.get(r.anomes)!;row[tipo]=(row[tipo]||0)+(Number(r.valor)||0);row._total=(row._total||0)+(Number(r.valor)||0);
+      const row=map.get(r.anomes)!;row[tipo]=(row[tipo]||0)+(Number(r.captacao)||0);row._total=(row._total||0)+(Number(r.captacao)||0);
     });
     return {captacaoPorMes:[...map.entries()].sort((a,b)=>b[0]-a[0]).map(([k,v])=>({...v,_anomes:k})),captacaoTipos:[...tipos].sort()};
   },[captMeses]);
 
   const captacaoPorTipo=useMemo(()=>{
-    const all = captTreemap?.map((r:any)=>({name:r.tipo_captacao||"Outros",value:Math.abs(Number(r.valor)||0)}))??[];
+    const all = captTreemap?.map((r:any)=>({name:r.tipo_captacao||"Outros",value:Math.abs(Number(r.captacao)||0)}))??[];
     if (selectedCaptTipo) return all.filter(d=>d.name===selectedCaptTipo);
     return all;
   },[captTreemap,selectedCaptTipo]);
 
   const captacaoPorTipoAll=useMemo(()=>
-    captTreemap?.map((r:any)=>({name:r.tipo_captacao||"Outros",value:Math.abs(Number(r.valor)||0)}))??[],[captTreemap]);
+    captTreemap?.map((r:any)=>({name:r.tipo_captacao||"Outros",value:Math.abs(Number(r.captacao)||0)}))??[],[captTreemap]);
 
   const {aucPorMes,aucCasas}=useMemo(()=>{
     if(!aucMeses?.length) return {aucPorMes:[],aucCasas:[] as string[]};
