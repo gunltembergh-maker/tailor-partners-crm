@@ -66,15 +66,11 @@ export function FiltersSidebar({
   showVencimento = false,
 }: FiltersSidebarProps) {
   const { data: options } = useFilterOptions();
-  const { role, bankerName } = useAuth();
+  const { role, bankerName, finderName } = useAuth();
 
   // Resolve role-based locks
   const isBanker = role === "BANKER";
   const isFinder = role === "FINDER";
-  const finderName = useAuth().profile?.full_name; // fallback
-
-  // Get finder_name from auth context
-  const { user } = useAuth();
 
   if (!open) return null;
 
