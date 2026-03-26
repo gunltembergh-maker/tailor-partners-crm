@@ -49,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(null);
         setPermissoes(null);
         setBankerName(null);
+        setFinderName(null);
         setIsBlocked(false);
         setLoading(false);
       }
@@ -104,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(perfil.role ?? null);
       setPermissoes((perfil.permissoes as Record<string, boolean>) ?? null);
       setBankerName(perfil.banker_name ?? null);
+      setFinderName(perfil.finder_name ?? null);
     } catch {
       await fetchProfileFallback(userId);
     }
@@ -165,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, isBlocked, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, finderName, isBlocked, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
