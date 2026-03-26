@@ -172,14 +172,7 @@ export function useCaptacaoTreemap(filters: DashboardFilters) {
   });
 }
 
-// ─── PBI-only params (AnoMes + Banker) ───
-
-function buildRpcParamsPbi(filters: DashboardFilters) {
-  return {
-    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
-    p_banker: filters.banker.length ? filters.banker : null,
-  };
-}
+// (buildRpcParamsPbi removed — now handled by useScopedRpcParamsPbi)
 
 // ─── AuC RPCs (PBIX) ───
 
