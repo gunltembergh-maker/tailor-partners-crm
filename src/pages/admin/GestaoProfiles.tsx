@@ -44,20 +44,47 @@ const BADGE_COLORS: Record<string, string> = {
 
 const DEFAULT_PROFILES = ["ADMIN", "LIDER", "BANKER", "DIRETORIA"];
 
-const MENU_TOGGLES = [
-  { key: "menu_dashboard_comercial", label: "Dashboard Comercial", desc: "Acesso à página principal de dashboards" },
-  { key: "menu_quantitativo", label: "Dashboard Quantitativo", desc: "Aba com KPIs de captação, AuC e receita" },
-  { key: "menu_qualitativo", label: "Dashboard Qualitativo", desc: "Aba com custódia, ROA e vencimentos" },
-  { key: "menu_importar_bases", label: "Importar Bases", desc: "Página de upload de arquivos" },
-  { key: "menu_auditoria", label: "Auditoria Comercial", desc: "Relatórios de auditoria" },
-  { key: "menu_gestao_usuarios", label: "Gestão de Usuários", desc: "Administrar usuários do Hub" },
-  { key: "menu_perfis_acesso", label: "Perfis de Acesso", desc: "Esta tela — gerenciar perfis" },
-];
-
-const DATA_TOGGLES = [
-  { key: "dados_ver_todos_bankers", label: "Ver todos os Bankers", desc: "Visualiza dados de toda a equipe" },
-  { key: "dados_filtro_banker", label: "Usar filtro de Banker", desc: "Pode filtrar por Financial Advisor" },
-  { key: "dados_exportar", label: "Exportar dados", desc: "Pode exportar tabelas e relatórios" },
+const PERMISSION_GROUPS = [
+  {
+    title: "Menu Principal (CRM)",
+    items: [
+      { key: "menu_inicio", label: "Início", desc: "Página inicial com resumo do CRM" },
+      { key: "menu_prioridades", label: "Prioridades", desc: "Clientes prioritários" },
+      { key: "menu_leads", label: "Leads", desc: "Gestão de leads" },
+      { key: "menu_contas", label: "Contas", desc: "Clientes e contas" },
+      { key: "menu_tarefas", label: "Tarefas", desc: "Gestão de tarefas" },
+      { key: "menu_calendario", label: "Calendário", desc: "Agenda e compromissos" },
+      { key: "menu_oportunidades", label: "Oportunidades", desc: "Pipeline de oportunidades" },
+      { key: "menu_paineis", label: "Painéis", desc: "Painéis analíticos" },
+      { key: "menu_relatorios", label: "Relatórios", desc: "Relatórios gerenciais" },
+    ],
+  },
+  {
+    title: "Dashboards",
+    items: [
+      { key: "menu_dashboard_comercial", label: "Dashboard Comercial", desc: "Acesso à página principal de dashboards" },
+      { key: "menu_quantitativo", label: "Dashboard Quantitativo", desc: "Aba com KPIs de captação, AuC e receita" },
+      { key: "menu_qualitativo", label: "Dashboard Qualitativo", desc: "Aba com custódia, ROA e vencimentos" },
+    ],
+  },
+  {
+    title: "Admin",
+    items: [
+      { key: "menu_importar_bases", label: "Importar Bases", desc: "Página de upload de arquivos" },
+      { key: "menu_auditoria", label: "Auditoria Comercial", desc: "Relatórios de auditoria" },
+      { key: "menu_gestao_usuarios", label: "Gestão de Usuários", desc: "Administrar usuários do Hub" },
+      { key: "menu_perfis_acesso", label: "Perfis de Acesso", desc: "Esta tela — gerenciar perfis" },
+    ],
+  },
+  {
+    title: "Dados e Visualização",
+    items: [
+      { key: "dados_ver_todos_bankers", label: "Ver todos os Bankers", desc: "Visualiza dados de toda a equipe" },
+      { key: "dados_filtro_banker", label: "Usar filtro de Banker", desc: "Pode filtrar por Financial Advisor" },
+      { key: "dados_filtro_finder", label: "Usar filtro de Finder", desc: "Pode filtrar por Finder" },
+      { key: "dados_exportar", label: "Exportar dados", desc: "Pode exportar tabelas e relatórios" },
+    ],
+  },
 ];
 
 interface Perfil {
@@ -272,6 +299,7 @@ export default function GestaoProfiles() {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Perfis de Acesso</h1>
               <p className="text-sm text-muted-foreground">Defina o que cada perfil pode visualizar no Hub</p>
+              <p className="text-xs text-amber-600 mt-1">⚠ Itens desabilitados ficam ocultos no menu do usuário. O ADMIN sempre tem acesso total.</p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
