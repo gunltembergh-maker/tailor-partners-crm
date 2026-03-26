@@ -83,7 +83,7 @@ export function useSyncLogs() {
 // ─── Contas RPCs ───
 
 export function useContasKpis(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["contas-kpis", params],
     queryFn: async () => {
@@ -101,7 +101,7 @@ export function useContasKpis(filters: DashboardFilters) {
 }
 
 export function useContasAggMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["contas-agg-mes", params],
     queryFn: async () => {
@@ -114,7 +114,7 @@ export function useContasAggMes(filters: DashboardFilters) {
 }
 
 export function useContasTotalPorTipo(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["contas-total-por-tipo", params],
     queryFn: async () => {
@@ -129,7 +129,7 @@ export function useContasTotalPorTipo(filters: DashboardFilters) {
 // ─── Captação RPCs ───
 
 export function useCaptacaoKpis(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["captacao-kpis", params],
     queryFn: async () => {
@@ -147,7 +147,7 @@ export function useCaptacaoKpis(filters: DashboardFilters) {
 }
 
 export function useCaptacaoAggMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["captacao-agg-mes", params],
     queryFn: async () => {
@@ -160,7 +160,7 @@ export function useCaptacaoAggMes(filters: DashboardFilters) {
 }
 
 export function useCaptacaoTreemap(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["captacao-treemap", params],
     queryFn: async () => {
@@ -184,7 +184,7 @@ function buildRpcParamsPbi(filters: DashboardFilters) {
 // ─── AuC RPCs (PBIX) ───
 
 export function useAucMesStackCasa(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["auc-mes-stack-casa", params],
     queryFn: async () => {
@@ -197,7 +197,7 @@ export function useAucMesStackCasa(filters: DashboardFilters) {
 }
 
 export function useAucCasaM0(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["auc-casa-m0", params],
     queryFn: async () => {
@@ -212,7 +212,7 @@ export function useAucCasaM0(filters: DashboardFilters) {
 // ─── Faixa PL RPCs (PBIX — por mês) ───
 
 export function useFaixaPlClientesMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["faixa-pl-clientes-mes", params],
     queryFn: async () => {
@@ -225,7 +225,7 @@ export function useFaixaPlClientesMes(filters: DashboardFilters) {
 }
 
 export function useFaixaPlAucMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["faixa-pl-auc-mes", params],
     queryFn: async () => {
