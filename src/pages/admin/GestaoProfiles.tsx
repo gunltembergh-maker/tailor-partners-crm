@@ -196,43 +196,25 @@ function ProfileCard({ perfil, onRefetch }: { perfil: Perfil; onRefetch: () => v
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Menus e Páginas */}
-        <div>
-          <h4 className="text-sm font-semibold text-foreground mb-3">Menus e Páginas</h4>
-          <div className="space-y-3">
-            {MENU_TOGGLES.map((t) => (
-              <div key={t.key} className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <Label className="text-sm">{t.label}</Label>
-                  <p className="text-xs text-muted-foreground truncate">{t.desc}</p>
+        {PERMISSION_GROUPS.map((group) => (
+          <div key={group.title}>
+            <h4 className="text-sm font-semibold text-foreground mb-3">{group.title}</h4>
+            <div className="space-y-3">
+              {group.items.map((t) => (
+                <div key={t.key} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <Label className="text-sm">{t.label}</Label>
+                    <p className="text-xs text-muted-foreground truncate">{t.desc}</p>
+                  </div>
+                  <Switch
+                    checked={!!permissoes[t.key]}
+                    onCheckedChange={(v) => handleToggle(t.key, v)}
+                  />
                 </div>
-                <Switch
-                  checked={!!permissoes[t.key]}
-                  onCheckedChange={(v) => handleToggle(t.key, v)}
-                />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Dados e Visualização */}
-        <div>
-          <h4 className="text-sm font-semibold text-foreground mb-3">Dados e Visualização</h4>
-          <div className="space-y-3">
-            {DATA_TOGGLES.map((t) => (
-              <div key={t.key} className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <Label className="text-sm">{t.label}</Label>
-                  <p className="text-xs text-muted-foreground truncate">{t.desc}</p>
-                </div>
-                <Switch
-                  checked={!!permissoes[t.key]}
-                  onCheckedChange={(v) => handleToggle(t.key, v)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </CardContent>
 
       <CardFooter className="flex items-center justify-between gap-2">
