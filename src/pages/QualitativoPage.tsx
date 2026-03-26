@@ -1,13 +1,12 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
-import { X, RefreshCw } from "lucide-react";
-import { LastUpdateBadges } from "@/components/dashboard/LastUpdateBadges";
+import { Button } from "@/components/ui/button";
+import { X, RefreshCw, Clock } from "lucide-react";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { QualitativoTab } from "@/components/dashboard/QualitativoTab";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
 import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
 import { Progress } from "@/components/ui/progress";
-import { format } from "date-fns";
 
 export default function QualitativoPage() {
   const {
@@ -20,7 +19,13 @@ export default function QualitativoPage() {
     activeChips,
     removeChip,
   } = useDashboardFilters();
-  const { lastUpdatedAt, isRefreshing } = useDashboardRefresh();
+  const {
+    isRefreshing,
+    isManualRefreshing,
+    manualRefresh,
+    atualizadoEmFormatted,
+    dadosAteFormatted,
+  } = useDashboardRefresh();
 
   return (
     <AppLayout>
@@ -47,13 +52,24 @@ export default function QualitativoPage() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
                 <h1 className="text-base font-semibold" style={{ color: "#1B2A3D" }}>Dashboard Qualitativo</h1>
-                <LastUpdateBadges />
-                {lastUpdatedAt && (
-                  <span className="text-[10px] flex items-center gap-1" style={{ color: "#9CA3AF" }}>
-                    <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
-                    Dados: {format(new Date(lastUpdatedAt), "dd/MM HH:mm")}
-                  </span>
-                )}
+                <span className="text-[10px] flex items-center gap-1" style={{ color: "#9CA3AF" }}>
+                  <Clock className="h-3 w-3" />
+                  Atualizado {atualizadoEmFormatted}
+                </span>
+                <span className="text-[10px] flex items-center gap-1" style={{ color: "#9CA3AF" }}>
+                  <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+                  Dados: {dadosAteFormatted}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] gap-1"
+                  onClick={manualRefresh}
+                  disabled={isManualRefreshing}
+                >
+                  <RefreshCw className={`h-3 w-3 ${isManualRefreshing ? "animate-spin" : ""}`} />
+                  Atualizar Dados
+                </Button>
               </div>
             </div>
 
