@@ -33,19 +33,19 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Início", icon: Home, path: "/" },
-  { title: "Prioridades", icon: Star, path: "/prioridades" },
-  { title: "Leads", icon: Target, path: "/leads" },
-  { title: "Contas", icon: Users, path: "/clientes" },
-  { title: "Tarefas", icon: CheckSquare, path: "/tarefas" },
-  { title: "Calendário", icon: CalendarDays, path: "/calendario" },
-  { title: "Oportunidades", icon: Briefcase, path: "/oportunidades" },
-  { title: "Painéis", icon: BarChart3, path: "/paineis" },
-  { title: "Relatórios", icon: FileText, path: "/relatorios" },
+  { title: "Início", icon: Home, path: "/", key: "menu_inicio" },
+  { title: "Prioridades", icon: Star, path: "/prioridades", key: "menu_prioridades" },
+  { title: "Leads", icon: Target, path: "/leads", key: "menu_leads" },
+  { title: "Contas", icon: Users, path: "/clientes", key: "menu_contas" },
+  { title: "Tarefas", icon: CheckSquare, path: "/tarefas", key: "menu_tarefas" },
+  { title: "Calendário", icon: CalendarDays, path: "/calendario", key: "menu_calendario" },
+  { title: "Oportunidades", icon: Briefcase, path: "/oportunidades", key: "menu_oportunidades" },
+  { title: "Painéis", icon: BarChart3, path: "/paineis", key: "menu_paineis" },
+  { title: "Relatórios", icon: FileText, path: "/relatorios", key: "menu_relatorios" },
 ];
 
 const dashboardItems = [
-  { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial" },
+  { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial", key: "menu_dashboard_comercial" },
 ];
 
 export function AppSidebar() {
@@ -54,8 +54,13 @@ export function AppSidebar() {
   const { profile, role, permissoes, signOut } = useAuth();
 
   const isAdmin = role === "ADMIN";
-  const isLider = role === "LIDER";
-  const showMainMenu = isAdmin || isLider;
+
+  const canSee = (key: string) => isAdmin || permissoes?.[key] === true;
+
+  // Filter menu items based on permissions
+  const visibleMenuItems = menuItems.filter((item) => canSee(item.key));
+  const visibleDashboardItems = dashboardItems.filter((item) => canSee(item.key));
+  const showMainMenu = visibleMenuItems.length > 0;
 
   // Build admin items based on permissoes
   const adminItems: { title: string; icon: any; path: string }[] = [];
@@ -93,7 +98,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     isActive={location.pathname === item.path}
