@@ -40,9 +40,9 @@ export function useFilterOptions() {
       const [anoMesRes, bankerRes, advisorRes, finderRes, tipoClienteRes] = await Promise.all([
         supabase.rpc("rpc_filtro_anomes" as any),
         supabase.rpc("rpc_filtro_financial_advisors" as any),
-        supabase.from("vw_dim_advisor").select("advisor"),
+        supabase.rpc("rpc_filtro_advisor_slicer" as any),
         supabase.rpc("rpc_filtro_finders" as any),
-        supabase.from("vw_dim_tipo_cliente").select("tipo_cliente"),
+        supabase.rpc("rpc_filtro_tipo_cliente" as any),
       ]);
 
       return {
@@ -55,7 +55,7 @@ export function useFilterOptions() {
         advisors: (advisorRes.data ?? []).map((r: any) => r.advisor as string).filter(Boolean).sort(),
         finders: (finderRes.data ?? []).map((r: any) => r.finder as string).filter(Boolean).sort(),
         tiposCliente: (tipoClienteRes.data ?? []).map((r: any) => r.tipo_cliente as string).filter(Boolean).sort(),
-        casas: [] as string[], // kept for compat
+        casas: [] as string[],
       };
     },
     staleTime: 5 * 60_000,
