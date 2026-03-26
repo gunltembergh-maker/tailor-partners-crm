@@ -27,16 +27,18 @@ import ImportClients from "./pages/ImportClients";
 import ImportarBases from "./pages/ImportarBases";
 import GestaoProfiles from "./pages/admin/GestaoProfiles";
 import GestaoUsuarios from "./pages/admin/GestaoUsuarios";
+import { BlockedUserScreen } from "@/components/admin/BlockedUserScreen";
 
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, isBlocked } = useAuth();
   if (loading) {
     return <TailorLoader />;
   }
   if (!session) return <Navigate to="/auth" replace />;
+  if (isBlocked) return <BlockedUserScreen />;
   return <>{children}</>;
 }
 

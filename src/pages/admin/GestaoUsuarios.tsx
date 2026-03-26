@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -7,15 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
-  DialogClose,
-} from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -23,7 +18,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle } from "lucide-react";
+import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
+import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
@@ -33,25 +30,26 @@ const BADGE_COLORS: Record<string, string> = {
   RH: "bg-green-600 text-white hover:bg-green-600",
   JURIDICO: "bg-gray-500 text-white hover:bg-gray-500",
   MARKETING: "bg-pink-500 text-white hover:bg-pink-500",
+  FINDER: "bg-teal-600 text-white hover:bg-teal-600",
+  ASSESSOR: "bg-indigo-600 text-white hover:bg-indigo-600",
+  OPERACOES: "bg-amber-600 text-white hover:bg-amber-600",
 };
 
-const BANKER_LIST = [
-  "Adonias Noronha", "Caroline Vlavianos", "Felipe Steiman", "Gestora",
-  "Legado", "Leonardo Burle", "Raphael Farias", "Raphael Pereira",
-  "Sem Advisor", "Thayane Freitas",
-];
-
 interface Usuario {
+  user_id: string;
   email: string;
-  nome: string | null;
+  full_name: string;
   cpf: string | null;
   empresa: string | null;
-  perfil_nome: string | null;
+  role: string;
   banker_name: string | null;
+  finder_name: string | null;
+  advisor_name: string | null;
   blocked: boolean;
+  active: boolean;
   ultimo_acesso: string | null;
   created_at: string | null;
-  status: string;
+  pre_cadastrado: boolean;
 }
 
 function maskCpf(cpf: string | null): string {
@@ -76,6 +74,21 @@ function relativeTime(dateStr: string | null): string {
   return `Há ${diffDays} dias`;
 }
 
+function getStatusDisplay(u: Usuario) {
+  if (u.blocked) return { label: "Bloqueado", className: "bg-red-500/10 text-red-400" };
+  if (!u.pre_cadastrado && !u.active) return { label: "Sem Pré-cadastro", className: "bg-orange-500/10 text-orange-400" };
+  if (!u.active && !u.role) return { label: "Aguardando Cadastro", className: "bg-yellow-500/10 text-yellow-400" };
+  return { label: "Ativo", className: "bg-green-500/10 text-green-400" };
+}
+
+function getBankerFinderDisplay(u: Usuario): string {
+  if (u.role === "BANKER" && u.banker_name) return u.banker_name;
+  if (u.role === "FINDER" && u.finder_name) return u.finder_name;
+  return "-";
+}
+
+const PERFIS_FILTER = ["Todos", "ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
+
 export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -84,19 +97,20 @@ export default function GestaoUsuarios() {
   const [perfilFilter, setPerfilFilter] = useState("Todos");
   const [revealedCpfs, setRevealedCpfs] = useState<Set<string>>(new Set());
 
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
-  const [modalNome, setModalNome] = useState("");
-  const [modalEmail, setModalEmail] = useState("");
-  const [modalPerfil, setModalPerfil] = useState("");
-  const [modalBanker, setModalBanker] = useState("");
-  const [modalEmpresa, setModalEmpresa] = useState("Tailor Partners");
-  const [modalSaving, setModalSaving] = useState(false);
+  // Modals
+  const [formOpen, setFormOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<UserFormData> | null>(null);
+  const [detailUser, setDetailUser] = useState<Usuario | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   // Block/Delete dialogs
   const [blockUser, setBlockUser] = useState<Usuario | null>(null);
   const [deleteUser, setDeleteUser] = useState<Usuario | null>(null);
+
+  // Approve dialog for sem pré-cadastro
+  const [approveUser, setApproveUser] = useState<Usuario | null>(null);
+  const [approveRole, setApproveRole] = useState("");
+  const [approving, setApproving] = useState(false);
 
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
@@ -107,16 +121,9 @@ export default function GestaoUsuarios() {
     },
   });
 
-  const { data: perfis } = useQuery({
-    queryKey: ["admin-perfis"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_admin_lista_perfis");
-      if (error) throw error;
-      return data as unknown as { id: string; nome: string }[];
-    },
-  });
-
-  const refetch = () => queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+  }, [queryClient]);
 
   // Metrics
   const metrics = useMemo(() => {
@@ -126,9 +133,15 @@ export default function GestaoUsuarios() {
     return {
       total: usuarios.length,
       active: usuarios.filter((u) => u.ultimo_acesso && new Date(u.ultimo_acesso) >= thirtyDaysAgo).length,
-      awaiting: usuarios.filter((u) => u.status === "Aguardando").length,
+      awaiting: usuarios.filter((u) => (!u.active && !u.role) || (!u.pre_cadastrado && u.blocked)).length,
       blocked: usuarios.filter((u) => u.blocked).length,
     };
+  }, [usuarios]);
+
+  // Awaiting approval (sem pré-cadastro + blocked)
+  const awaitingApproval = useMemo(() => {
+    if (!usuarios) return [];
+    return usuarios.filter((u) => !u.pre_cadastrado && u.blocked);
   }, [usuarios]);
 
   // Filtered list
@@ -136,68 +149,44 @@ export default function GestaoUsuarios() {
     if (!usuarios) return [];
     return usuarios.filter((u) => {
       const searchLower = search.toLowerCase();
-      const matchSearch = !search || (u.nome?.toLowerCase().includes(searchLower) || u.email?.toLowerCase().includes(searchLower) || u.cpf?.includes(search.replace(/\D/g, "")));
+      const matchSearch = !search || (u.full_name?.toLowerCase().includes(searchLower) || u.email?.toLowerCase().includes(searchLower) || u.cpf?.includes(search.replace(/\D/g, "")));
       const matchStatus = statusFilter === "Todos" ||
-        (statusFilter === "Ativo" && u.status === "Ativo") ||
-        (statusFilter === "Aguardando" && u.status === "Aguardando") ||
+        (statusFilter === "Ativo" && u.active && !u.blocked) ||
+        (statusFilter === "Aguardando" && ((!u.active && !u.role) || (!u.pre_cadastrado && u.blocked))) ||
         (statusFilter === "Bloqueado" && u.blocked);
-      const matchPerfil = perfilFilter === "Todos" || u.perfil_nome === perfilFilter;
+      const matchPerfil = perfilFilter === "Todos" || u.role === perfilFilter;
       return matchSearch && matchStatus && matchPerfil;
     });
   }, [usuarios, search, statusFilter, perfilFilter]);
 
-  const openCreateModal = () => {
-    setEditingUser(null);
-    setModalNome("");
-    setModalEmail("");
-    setModalPerfil("");
-    setModalBanker("");
-    setModalEmpresa("Tailor Partners");
-    setModalOpen(true);
-  };
+  const openCreateModal = useCallback(() => {
+    setFormData(null);
+    setFormOpen(true);
+  }, []);
 
-  const openEditModal = (u: Usuario) => {
-    setEditingUser(u);
-    setModalNome(u.nome || "");
-    setModalEmail(u.email);
-    setModalPerfil(u.perfil_nome || "");
-    setModalBanker(u.banker_name || "");
-    setModalEmpresa(u.empresa || "Tailor Partners");
-    setModalOpen(true);
-  };
+  const openEditModal = useCallback((u: Usuario) => {
+    setFormData({
+      email: u.email,
+      nome: u.full_name,
+      cpf: u.cpf || "",
+      perfil: u.role,
+      banker: u.banker_name || "",
+      finder: u.finder_name || "",
+      empresa: u.empresa || "Tailor Partners",
+      isEdit: true,
+    });
+    setFormOpen(true);
+  }, []);
 
-  const handleSaveUser = async () => {
-    if (!modalEmail.trim()) return;
-    setModalSaving(true);
-    try {
-      const { data, error } = await supabase.rpc("rpc_admin_salvar_usuario" as any, {
-        p_email: modalEmail,
-        p_nome: modalNome,
-        p_role: modalPerfil,
-        p_perfil_nome: modalPerfil,
-        p_banker_name: modalPerfil === "BANKER" ? modalBanker : null,
-        p_empresa: modalEmpresa,
-      });
-      if (error) throw error;
-      const result = data as any;
-      if (result?.success === false) {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      } else {
-        toast({ title: editingUser ? "Usuário atualizado!" : "Pré-cadastro criado!" });
-        setModalOpen(false);
-        refetch();
-      }
-    } catch (e: any) {
-      toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
-    } finally {
-      setModalSaving(false);
-    }
-  };
+  const openDetail = useCallback((u: Usuario) => {
+    setDetailUser(u);
+    setDetailOpen(true);
+  }, []);
 
   const handleBlock = async () => {
     if (!blockUser) return;
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_bloquear_usuario", {
+      const { error } = await supabase.rpc("rpc_admin_bloquear_usuario", {
         p_email: blockUser.email,
         p_blocked: !blockUser.blocked,
       });
@@ -230,27 +219,41 @@ export default function GestaoUsuarios() {
     }
   };
 
-  const toggleCpf = (email: string) => {
+  const handleApprove = async () => {
+    if (!approveUser || !approveRole) return;
+    setApproving(true);
+    try {
+      const { error } = await supabase.rpc("rpc_admin_aprovar_usuario", {
+        p_user_id: approveUser.user_id,
+        p_role: approveRole,
+      });
+      if (error) throw error;
+      toast({ title: "Usuário aprovado!" });
+      setApproveUser(null);
+      setApproveRole("");
+      refetch();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const toggleCpf = useCallback((email: string) => {
     setRevealedCpfs((prev) => {
       const next = new Set(prev);
       if (next.has(email)) next.delete(email);
       else next.add(email);
       return next;
     });
-  };
+  }, []);
 
-  const getStatusDisplay = (u: Usuario) => {
-    if (u.blocked) return { label: "Bloqueado", className: "bg-red-500/10 text-red-400" };
-    if (u.status === "Aguardando") return { label: "Aguardando cadastro", className: "bg-yellow-500/10 text-yellow-400" };
-    return { label: "Ativo", className: "bg-green-500/10 text-green-400" };
-  };
-
-  const metricCards = [
+  const metricCards = useMemo(() => [
     { label: "Total Cadastrados", value: metrics.total, icon: Users, color: "text-primary" },
     { label: "Ativos (30 dias)", value: metrics.active, icon: UserCheck, color: "text-green-400" },
-    { label: "Aguardando Cadastro", value: metrics.awaiting, icon: Clock, color: "text-yellow-400" },
+    { label: "Aguardando", value: metrics.awaiting, icon: Clock, color: "text-yellow-400" },
     { label: "Bloqueados", value: metrics.blocked, icon: ShieldOff, color: "text-red-400" },
-  ];
+  ], [metrics]);
 
   return (
     <AppLayout>
@@ -282,6 +285,30 @@ export default function GestaoUsuarios() {
             ))}
           </div>
 
+          {/* Awaiting Approval Section */}
+          {awaitingApproval.length > 0 && (
+            <Card className="border-orange-500/30">
+              <CardContent className="pt-4 pb-4">
+                <h3 className="text-sm font-semibold text-orange-400 mb-3 flex items-center gap-2">
+                  <UserX className="h-4 w-4" /> Aguardando Aprovação ({awaitingApproval.length})
+                </h3>
+                <div className="space-y-2">
+                  {awaitingApproval.map((u) => (
+                    <div key={u.email} className="flex items-center justify-between rounded-lg border border-border p-3">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{u.full_name || u.email}</p>
+                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                      </div>
+                      <Button size="sm" onClick={() => { setApproveUser(u); setApproveRole(""); }}>
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Aprovar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3">
             <Input
@@ -306,9 +333,8 @@ export default function GestaoUsuarios() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Todos">Todos os Perfis</SelectItem>
-                {perfis?.map((p) => (
-                  <SelectItem key={p.nome} value={p.nome}>{p.nome}</SelectItem>
+                {PERFIS_FILTER.map((p) => (
+                  <SelectItem key={p} value={p}>{p === "Todos" ? "Todos os Perfis" : p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -322,9 +348,8 @@ export default function GestaoUsuarios() {
                   <TableHead>Nome</TableHead>
                   <TableHead>E-mail</TableHead>
                   <TableHead>CPF</TableHead>
-                  <TableHead>Empresa</TableHead>
                   <TableHead>Perfil</TableHead>
-                  <TableHead>Banker</TableHead>
+                  <TableHead>Banker/Finder</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Último Acesso</TableHead>
                   <TableHead>Cadastrado em</TableHead>
@@ -334,12 +359,12 @@ export default function GestaoUsuarios() {
               <TableBody>
                 {filtered.map((u) => {
                   const status = getStatusDisplay(u);
-                  const badgeClass = BADGE_COLORS[u.perfil_nome || ""] ?? "bg-slate-500 text-white hover:bg-slate-500";
+                  const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
                   return (
-                    <TableRow key={u.email}>
-                      <TableCell className="font-medium">{u.nome || "-"}</TableCell>
+                    <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
+                      <TableCell className="font-medium">{u.full_name || "-"}</TableCell>
                       <TableCell className="text-sm">{u.email}</TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <span className="text-sm font-mono">
                             {revealedCpfs.has(u.email) ? formatCpfFull(u.cpf) : maskCpf(u.cpf)}
@@ -351,11 +376,10 @@ export default function GestaoUsuarios() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">{u.empresa || "-"}</TableCell>
                       <TableCell>
-                        {u.perfil_nome ? <Badge className={badgeClass}>{u.perfil_nome}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
+                        {u.role ? <Badge className={badgeClass}>{u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
                       </TableCell>
-                      <TableCell className="text-sm">{u.banker_name || "-"}</TableCell>
+                      <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={status.className}>{status.label}</Badge>
                       </TableCell>
@@ -363,7 +387,7 @@ export default function GestaoUsuarios() {
                       <TableCell className="text-sm text-muted-foreground">
                         {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
@@ -371,7 +395,12 @@ export default function GestaoUsuarios() {
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
                             {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
                           </Button>
-                          {u.status === "Aguardando" && (
+                          {!u.pre_cadastrado && u.blocked && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setApproveUser(u); setApproveRole(""); }}>
+                              <CheckCircle className="h-3.5 w-3.5 text-green-400" />
+                            </Button>
+                          )}
+                          {!u.active && u.pre_cadastrado && (
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteUser(u)}>
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
@@ -383,7 +412,7 @@ export default function GestaoUsuarios() {
                 })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       Nenhum usuário encontrado
                     </TableCell>
                   </TableRow>
@@ -395,69 +424,19 @@ export default function GestaoUsuarios() {
       )}
 
       {/* Create/Edit Modal */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingUser ? "Editar Usuário" : "Pré-cadastrar Usuário"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1">
-              <Label>Nome Completo</Label>
-              <Input value={modalNome} onChange={(e) => setModalNome(e.target.value)} placeholder="Nome do colaborador" />
-            </div>
-            <div className="space-y-1">
-              <Label>E-mail Corporativo</Label>
-              <Input
-                type="email"
-                value={modalEmail}
-                onChange={(e) => setModalEmail(e.target.value)}
-                placeholder="nome@tailorpartners.com.br"
-                disabled={!!editingUser}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Perfil de Acesso</Label>
-              <Select value={modalPerfil} onValueChange={setModalPerfil}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {perfis?.map((p) => (
-                    <SelectItem key={p.nome} value={p.nome}>{p.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {modalPerfil === "BANKER" && (
-              <div className="space-y-1">
-                <Label>Banker Vinculado</Label>
-                <Select value={modalBanker} onValueChange={setModalBanker}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BANKER_LIST.map((b) => (
-                      <SelectItem key={b} value={b}>{b}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className="space-y-1">
-              <Label>Empresa</Label>
-              <Input value={modalEmpresa} onChange={(e) => setModalEmpresa(e.target.value)} placeholder="Tailor Partners" />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
-            <Button onClick={handleSaveUser} disabled={!modalEmail.trim() || modalSaving}>
-              {modalSaving ? "Salvando..." : editingUser ? "Salvar" : "Pré-cadastrar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UserFormModal
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initialData={formData}
+        onSaved={refetch}
+      />
+
+      {/* Detail Sheet */}
+      <UserDetailSheet
+        user={detailUser}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
 
       {/* Block/Unblock AlertDialog */}
       <AlertDialog open={!!blockUser} onOpenChange={() => setBlockUser(null)}>
@@ -466,8 +445,8 @@ export default function GestaoUsuarios() {
             <AlertDialogTitle>{blockUser?.blocked ? "Desbloquear usuário" : "Bloquear usuário"}</AlertDialogTitle>
             <AlertDialogDescription>
               {blockUser?.blocked
-                ? `Reativar acesso de ${blockUser?.nome || blockUser?.email}?`
-                : `Bloquear ${blockUser?.nome || blockUser?.email}? O usuário perderá acesso imediatamente ao tentar logar.`}
+                ? `Reativar acesso de ${blockUser?.full_name || blockUser?.email}?`
+                : `Bloquear ${blockUser?.full_name || blockUser?.email}? O usuário perderá acesso imediatamente.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -492,6 +471,34 @@ export default function GestaoUsuarios() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/80">
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Approve AlertDialog */}
+      <AlertDialog open={!!approveUser} onOpenChange={() => setApproveUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aprovar Usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione o perfil de acesso para {approveUser?.full_name || approveUser?.email}:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Select value={approveRole} onValueChange={setApproveRole}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o perfil..." />
+            </SelectTrigger>
+            <SelectContent>
+              {["ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"].map((p) => (
+                <SelectItem key={p} value={p}>{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApprove} disabled={!approveRole || approving}>
+              {approving ? "Aprovando..." : "Aprovar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

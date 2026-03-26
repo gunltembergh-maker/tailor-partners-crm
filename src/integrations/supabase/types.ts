@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_logs: {
+        Row: {
+          duration_minutes: number | null
+          email: string | null
+          id: string
+          ip_address: string | null
+          logged_in_at: string | null
+          logged_out_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          duration_minutes?: number | null
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          logged_in_at?: string | null
+          logged_out_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          duration_minutes?: number | null
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          logged_in_at?: string | null
+          logged_out_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           advisor_name: string | null
@@ -1049,6 +1082,7 @@ export type Database = {
           banker_name: string | null
           blocked: boolean | null
           codigo_xp: string | null
+          cpf: string | null
           created_at: string
           email: string | null
           empresa: string | null
@@ -1066,6 +1100,7 @@ export type Database = {
           banker_name?: string | null
           blocked?: boolean | null
           codigo_xp?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
           empresa?: string | null
@@ -1083,6 +1118,7 @@ export type Database = {
           banker_name?: string | null
           blocked?: boolean | null
           codigo_xp?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
           empresa?: string | null
@@ -2285,15 +2321,18 @@ export type Database = {
       rpc_admin_lista_usuarios: {
         Args: never
         Returns: {
+          active: boolean
+          advisor_name: string
           banker_name: string
           blocked: boolean
           cpf: string
           created_at: string
           email: string
           empresa: string
-          nome: string
-          perfil_nome: string
-          status: string
+          finder_name: string
+          full_name: string
+          pre_cadastrado: boolean
+          role: string
           ultimo_acesso: string
           user_id: string
         }[]
@@ -2324,19 +2363,34 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_admin_salvar_usuario: {
-        Args: {
-          p_advisor_name?: string
-          p_banker_name?: string
-          p_email: string
-          p_empresa?: string
-          p_finder_name?: string
-          p_nome: string
-          p_perfil_nome?: string
-          p_role: string
-        }
-        Returns: Json
-      }
+      rpc_admin_salvar_usuario:
+        | {
+            Args: {
+              p_advisor_name?: string
+              p_banker_name?: string
+              p_email: string
+              p_empresa?: string
+              p_finder_name?: string
+              p_nome: string
+              p_perfil_nome?: string
+              p_role: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_advisor_name?: string
+              p_banker_name?: string
+              p_cpf?: string
+              p_email: string
+              p_empresa?: string
+              p_finder_name?: string
+              p_nome: string
+              p_perfil_nome?: string
+              p_role: string
+            }
+            Returns: Json
+          }
       rpc_auc_casa: {
         Args: {
           p_advisor?: string[]
@@ -2615,6 +2669,12 @@ export type Database = {
         }[]
       }
       rpc_filtro_finders: {
+        Args: never
+        Returns: {
+          finder: string
+        }[]
+      }
+      rpc_lista_finders: {
         Args: never
         Returns: {
           finder: string

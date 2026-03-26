@@ -10,6 +10,7 @@ interface AuthContextType {
   role: string | null;
   permissoes: Record<string, boolean> | null;
   bankerName: string | null;
+  isBlocked: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, nomeCompleto: string, cpf?: string, empresa?: string) => Promise<{ error: Error | null }>;
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
   const [permissoes, setPermissoes] = useState<Record<string, boolean> | null>(null);
   const [bankerName, setBankerName] = useState<string | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
   let navigate: ReturnType<typeof useNavigate>;
@@ -45,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(null);
         setPermissoes(null);
         setBankerName(null);
+        setIsBlocked(false);
         setLoading(false);
       }
     });
@@ -76,10 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Check if blocked
+      // Check if blocked — show waiting screen instead of signing out
       if (perfil.blocked) {
-        await supabase.auth.signOut();
-        navigate("/auth?blocked=true");
+        setIsBlocked(true);
+        setProfile({ full_name: perfil.banker_name || "", email: "", avatar_url: null });
+        setLoading(false);
         return;
       }
 
@@ -159,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, isBlocked, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
