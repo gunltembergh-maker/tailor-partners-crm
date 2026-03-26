@@ -62,18 +62,18 @@ export function AppSidebar() {
   const visibleDashboardItems = dashboardItems.filter((item) => canSee(item.key));
   const showMainMenu = visibleMenuItems.length > 0;
 
-  // Build admin items based on permissoes
+  // Build admin items based on permissions
   const adminItems: { title: string; icon: any; path: string }[] = [];
-  if (permissoes?.menu_importar_bases || isAdmin) {
+  if (canSee("menu_importar_bases")) {
     adminItems.push({ title: "Importar Bases", icon: Upload, path: "/admin/importar-bases" });
   }
-  if (permissoes?.menu_auditoria || isAdmin) {
+  if (canSee("menu_auditoria")) {
     adminItems.push({ title: "Auditoria Comercial", icon: ClipboardCheck, path: "/admin/auditoria-comercial" });
   }
-  if (permissoes?.menu_gestao_usuarios || isAdmin) {
+  if (canSee("menu_gestao_usuarios")) {
     adminItems.push({ title: "Usuários", icon: UsersRound, path: "/admin/usuarios" });
   }
-  if (permissoes?.menu_perfis_acesso || isAdmin) {
+  if (canSee("menu_perfis_acesso")) {
     adminItems.push({ title: "Perfis de Acesso", icon: Shield, path: "/admin/perfis" });
   }
 
