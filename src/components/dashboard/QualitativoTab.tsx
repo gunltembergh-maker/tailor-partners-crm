@@ -335,11 +335,11 @@ export function QualitativoTab({ filters }: Props) {
 
   /* ─── Custódia donuts ─── */
   const custIdxChart = useMemo(() =>
-    (custIdxData ?? []).map((r: any) => ({ name: r.indexador ?? "Outros", value: Number(r.total) || 0 }))
+    (custIdxData ?? []).map((r: any) => ({ name: r.indexador ?? "Outros", value: Number(r.net) || 0 }))
   , [custIdxData]);
 
   const custVeiChart = useMemo(() =>
-    (custVeiData ?? []).map((r: any) => ({ name: r.produto_ajustado ?? "Outros", value: Number(r.total) || 0 }))
+    (custVeiData ?? []).map((r: any) => ({ name: r.produto_ajustado ?? "Outros", value: Number(r.net) || 0 }))
   , [custVeiData]);
 
   /* ─── ROA por Tipo de Cliente — descending anomes (most recent LEFT) ─── */
