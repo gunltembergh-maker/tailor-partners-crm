@@ -33,11 +33,12 @@ import { BlockedUserScreen } from "@/components/admin/BlockedUserScreen";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading, profile } = useAuth();
+  const { session, loading, isBlocked } = useAuth();
   if (loading) {
     return <TailorLoader />;
   }
   if (!session) return <Navigate to="/auth" replace />;
+  if (isBlocked) return <BlockedUserScreen />;
   return <>{children}</>;
 }
 
