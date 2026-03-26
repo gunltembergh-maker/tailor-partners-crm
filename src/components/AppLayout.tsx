@@ -5,12 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useViewAs } from "@/contexts/ViewAsContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { roleLabels } from "@/lib/format";
-import { Eye } from "lucide-react";
+import { Eye, X } from "lucide-react";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
-  const { viewAsUserId, setViewAs, teamMembers, isLider } = useViewAs();
+  const { viewAsUserId, viewAsProfile, setViewAs, teamMembers, isLider } = useViewAs();
   const firstName = profile?.full_name?.split(" ")[0] || "Usuário";
 
   return (
@@ -18,6 +20,27 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-auto">
+          {/* ViewAs Banner */}
+          {viewAsProfile && (
+            <div className="flex items-center justify-between gap-2 px-4 py-1.5 bg-amber-400 text-amber-950 text-xs font-medium">
+              <div className="flex items-center gap-2">
+                <Eye className="h-3.5 w-3.5" />
+                <span>
+                  Visualizando como: <strong>{viewAsProfile.full_name}</strong> ({roleLabels[viewAsProfile.role] || viewAsProfile.role})
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px] gap-1 text-amber-950 hover:bg-amber-500 hover:text-amber-950"
+                onClick={() => setViewAs(null)}
+              >
+                <X className="h-3 w-3" />
+                Sair da visão
+              </Button>
+            </div>
+          )}
+
           {/* Topbar */}
           <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-3 border-b border-border bg-card/95 backdrop-blur-sm">
             <div className="flex items-center gap-3">
@@ -36,7 +59,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     value={viewAsUserId || "__self__"}
                     onValueChange={(v) => setViewAs(v === "__self__" ? null : v)}
                   >
-                    <SelectTrigger className="w-[180px] h-8 text-xs">
+                    <SelectTrigger className="w-[220px] h-8 text-xs">
                       <SelectValue placeholder="Ver como..." />
                     </SelectTrigger>
                     <SelectContent>

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { DashboardFilters } from "./useDashboardFilters";
 import { expandTipoCliente, expandAdvisor } from "@/components/dashboard/FiltersSidebar";
+import { useScopedRpcParams, useScopedRpcParamsPbi } from "./useScopedFilters";
 
 function anoMesRange(inicio: string, fim: string) {
   const s = inicio.replace(/-/g, "").slice(0, 6);
@@ -9,18 +10,14 @@ function anoMesRange(inicio: string, fim: string) {
   return { s, e };
 }
 
-/** Convert DashboardFilters → RPC params (null when empty) */
+/** Convert DashboardFilters → RPC params (null when empty) — used only by non-hook callers */
 function buildRpcParams(filters: DashboardFilters) {
-  // Expand advisor selections (João Fontes → ["João Fontes","João S"], Legado → all others)
   const expandedAdvisor = filters.advisor.length
     ? filters.advisor.flatMap((a) => expandAdvisor(a, []))
     : null;
-
-  // Expand tipo_cliente to cover DB variations
   const expandedTipoCliente = filters.tipoCliente
     ? expandTipoCliente(filters.tipoCliente)
     : null;
-
   return {
     p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
     p_banker: filters.banker.length ? filters.banker : null,
@@ -86,7 +83,7 @@ export function useSyncLogs() {
 // ─── Contas RPCs ───
 
 export function useContasKpis(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["contas-kpis", params],
     queryFn: async () => {
@@ -104,7 +101,7 @@ export function useContasKpis(filters: DashboardFilters) {
 }
 
 export function useContasAggMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["contas-agg-mes", params],
     queryFn: async () => {
@@ -117,7 +114,7 @@ export function useContasAggMes(filters: DashboardFilters) {
 }
 
 export function useContasTotalPorTipo(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["contas-total-por-tipo", params],
     queryFn: async () => {
@@ -132,7 +129,7 @@ export function useContasTotalPorTipo(filters: DashboardFilters) {
 // ─── Captação RPCs ───
 
 export function useCaptacaoKpis(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["captacao-kpis", params],
     queryFn: async () => {
@@ -150,7 +147,7 @@ export function useCaptacaoKpis(filters: DashboardFilters) {
 }
 
 export function useCaptacaoAggMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["captacao-agg-mes", params],
     queryFn: async () => {
@@ -163,7 +160,7 @@ export function useCaptacaoAggMes(filters: DashboardFilters) {
 }
 
 export function useCaptacaoTreemap(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["captacao-treemap", params],
     queryFn: async () => {
@@ -175,19 +172,12 @@ export function useCaptacaoTreemap(filters: DashboardFilters) {
   });
 }
 
-// ─── PBI-only params (AnoMes + Banker) ───
-
-function buildRpcParamsPbi(filters: DashboardFilters) {
-  return {
-    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
-    p_banker: filters.banker.length ? filters.banker : null,
-  };
-}
+// (buildRpcParamsPbi removed — now handled by useScopedRpcParamsPbi)
 
 // ─── AuC RPCs (PBIX) ───
 
 export function useAucMesStackCasa(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["auc-mes-stack-casa", params],
     queryFn: async () => {
@@ -200,7 +190,7 @@ export function useAucMesStackCasa(filters: DashboardFilters) {
 }
 
 export function useAucCasaM0(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["auc-casa-m0", params],
     queryFn: async () => {
@@ -215,7 +205,7 @@ export function useAucCasaM0(filters: DashboardFilters) {
 // ─── Faixa PL RPCs (PBIX — por mês) ───
 
 export function useFaixaPlClientesMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["faixa-pl-clientes-mes", params],
     queryFn: async () => {
@@ -228,7 +218,7 @@ export function useFaixaPlClientesMes(filters: DashboardFilters) {
 }
 
 export function useFaixaPlAucMes(filters: DashboardFilters) {
-  const params = buildRpcParams(filters);
+  const params = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["faixa-pl-auc-mes", params],
     queryFn: async () => {
@@ -243,7 +233,7 @@ export function useFaixaPlAucMes(filters: DashboardFilters) {
 // ─── Receita RPCs (PBIX) ───
 
 export function useReceitaTotal(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-total-pbi", params],
     queryFn: async () => {
@@ -257,7 +247,7 @@ export function useReceitaTotal(filters: DashboardFilters) {
 }
 
 export function useReceitaMesCategoria(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-mes-categoria-pbi", params],
     queryFn: async () => {
@@ -270,7 +260,7 @@ export function useReceitaMesCategoria(filters: DashboardFilters) {
 }
 
 export function useReceitaTreemapCategoria(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-treemap-categoria-pbi", params],
     queryFn: async () => {
@@ -283,7 +273,7 @@ export function useReceitaTreemapCategoria(filters: DashboardFilters) {
 }
 
 export function useReceitaMatrizRows(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-matriz-rows-pbi", params],
     queryFn: async () => {
@@ -296,7 +286,7 @@ export function useReceitaMatrizRows(filters: DashboardFilters) {
 }
 
 export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
-  const params = buildRpcParamsPbi(filters);
+  const params = useScopedRpcParamsPbi(filters);
   return useQuery({
     queryKey: ["receita-matriz-rows-cat", params],
     queryFn: async () => {
@@ -311,9 +301,10 @@ export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
 // ─── Receita Drilldown RPC ───
 
 export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string[]) {
+  const scopedPbi = useScopedRpcParamsPbi(filters);
   const params = {
-    p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
-    p_banker: filters.banker.length ? filters.banker : null,
+    p_anomes: scopedPbi.p_anomes,
+    p_banker: scopedPbi.p_banker,
     p_categoria: drillPath[0] ?? null,
     p_subcategoria: drillPath[1] ?? null,
     p_produto: drillPath[2] ?? null,

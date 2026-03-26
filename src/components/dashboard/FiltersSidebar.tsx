@@ -8,6 +8,7 @@ import { useFilterOptions } from "@/hooks/useDashboardData";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
@@ -66,10 +67,15 @@ export function FiltersSidebar({
 }: FiltersSidebarProps) {
   const { data: options } = useFilterOptions();
   const { role, bankerName, finderName } = useAuth();
+  const { viewAsProfile } = useViewAs();
 
-  // Resolve role-based locks
-  const isBanker = role === "BANKER";
-  const isFinder = role === "FINDER";
+  // Resolve role-based locks — real role OR simulated via ViewAs
+  const effectiveRole = viewAsProfile?.role || role;
+  const effectiveBankerName = viewAsProfile?.banker_name || bankerName;
+  const effectiveFinderName = viewAsProfile?.finder_name || finderName;
+
+  const isBanker = effectiveRole === "BANKER";
+  const isFinder = effectiveRole === "FINDER";
 
   if (!open) return null;
 
@@ -141,10 +147,10 @@ export function FiltersSidebar({
                 </TooltipProvider>
               )}
             </div>
-            {isBanker && bankerName ? (
+            {isBanker && effectiveBankerName ? (
               <div className="flex flex-wrap gap-1">
                 <Badge className="text-[8px] h-4 gap-0.5 px-1.5 bg-white/20 text-white border-0">
-                  {bankerName}
+                  {effectiveBankerName}
                   <Lock className="h-2 w-2 opacity-50" />
                 </Badge>
               </div>
@@ -200,7 +206,7 @@ export function FiltersSidebar({
             {isFinder ? (
               <div className="flex flex-wrap gap-1">
               <Badge className="text-[8px] h-4 gap-0.5 px-1.5 bg-white/20 text-white border-0">
-                  {finderName || "Seu perfil"}
+                  {effectiveFinderName || "Seu perfil"}
                   <Lock className="h-2 w-2 opacity-50" />
                 </Badge>
               </div>
