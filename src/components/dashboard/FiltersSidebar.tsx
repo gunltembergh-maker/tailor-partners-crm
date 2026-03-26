@@ -67,10 +67,15 @@ export function FiltersSidebar({
 }: FiltersSidebarProps) {
   const { data: options } = useFilterOptions();
   const { role, bankerName, finderName } = useAuth();
+  const { viewAsProfile } = useViewAs();
 
-  // Resolve role-based locks
-  const isBanker = role === "BANKER";
-  const isFinder = role === "FINDER";
+  // Resolve role-based locks — real role OR simulated via ViewAs
+  const effectiveRole = viewAsProfile?.role || role;
+  const effectiveBankerName = viewAsProfile?.banker_name || bankerName;
+  const effectiveFinderName = viewAsProfile?.finder_name || finderName;
+
+  const isBanker = effectiveRole === "BANKER";
+  const isFinder = effectiveRole === "FINDER";
 
   if (!open) return null;
 
