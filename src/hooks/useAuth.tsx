@@ -10,6 +10,7 @@ interface AuthContextType {
   role: string | null;
   permissoes: Record<string, boolean> | null;
   bankerName: string | null;
+  finderName: string | null;
   isBlocked: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
   const [permissoes, setPermissoes] = useState<Record<string, boolean> | null>(null);
   const [bankerName, setBankerName] = useState<string | null>(null);
+  const [finderName, setFinderName] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
