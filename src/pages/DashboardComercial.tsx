@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { X, RefreshCw, Clock } from "lucide-react";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { QuantitativoTab } from "@/components/dashboard/QuantitativoTab";
 import { QualitativoTab } from "@/components/dashboard/QualitativoTab";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { DashboardLoadingScreen } from "@/components/dashboard/DashboardLoadingScreen";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
 import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
@@ -25,6 +26,7 @@ export default function DashboardComercial() {
     removeChip,
   } = useDashboardFilters();
   const [activeTab, setActiveTab] = useState("quantitativo");
+  const [tabLoading, setTabLoading] = useState(false);
   const {
     isRefreshing,
     isManualRefreshing,
@@ -40,9 +42,16 @@ export default function DashboardComercial() {
   const { isLoading: l4 } = useReceitaTotal(appliedFilters);
   const isCriticalLoading = l1 || l2 || l3 || l4;
 
+  const handleTabChange = useCallback((tab: string) => {
+    setTabLoading(true);
+    setActiveTab(tab);
+    setTimeout(() => setTabLoading(false), 350);
+  }, []);
+
   return (
     <AppLayout>
       <DashboardLoadingScreen isLoading={isCriticalLoading} />
+      <LoadingOverlay show={tabLoading} />
       <div style={{ backgroundColor: "#F2F2F2", minHeight: "calc(100vh - 64px)", margin: "-1.5rem", padding: "0" }}>
         {isRefreshing && (
           <div className="fixed top-0 left-0 right-0 z-50">
@@ -103,7 +112,7 @@ export default function DashboardComercial() {
               </div>
             )}
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="mb-3 h-8 bg-white border border-gray-200">
                 <TabsTrigger value="quantitativo" className="text-[11px] h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
                   Quantitativo
