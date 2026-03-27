@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import TailorLoader from "@/components/TailorLoader";
+import { KpiSkeleton, ChartSkeleton } from "./ChartSkeleton";
 import { MetricCard } from "./MetricCard";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -412,16 +412,7 @@ export function QuantitativoTab({filters}:Props) {
   const activeMeses = drillLevel > 0 ? drillMeses : matrizMeses;
   const isLastLevel = drillLevel >= 3;
 
-  if(loading) return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2">{[...Array(3)].map((_,i)=><Skeleton key={i} className="h-20"/>)}</div>
-      {[...Array(5)].map((_,i)=><Skeleton key={i} className="h-64"/>)}
-    </div>
-  );
 
-  const CM={top:18,right:10,left:0,bottom:5};
-
-  if (loading) return <TailorLoader overlay={false} />;
 
   return (
     <div className="space-y-3">
