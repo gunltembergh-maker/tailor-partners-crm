@@ -201,14 +201,14 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
               </SelectTrigger>
               <SelectContent>
                 {PERFIS.map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                  <SelectItem key={p} value={p}>{p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           {perfil === "BANKER" && (
             <div className="space-y-1">
-              <Label>Banker Vinculado</Label>
+              <Label>Financial Advisor Vinculado</Label>
               <Select value={banker} onValueChange={setBanker}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />

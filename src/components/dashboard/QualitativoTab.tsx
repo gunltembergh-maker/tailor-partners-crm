@@ -490,7 +490,7 @@ export function QualitativoTab({ filters }: Props) {
             { key: "pl_declarado_ajustado", label: "PL Declarado", align: "right", fmt: fmtBRL },
             { key: "sow_ajustado", label: "SoW", align: "right", fmt: fmtPct },
             { key: "endereco", label: "Endereço" },
-            { key: "banker", label: "Banker" },
+            { key: "banker", label: "Financial Advisor" },
             { key: "advisor", label: "Advisor" },
             { key: "tipo_cliente", label: "Tipo de Cliente" },
           ]}
@@ -548,7 +548,7 @@ export function QualitativoTab({ filters }: Props) {
             { key: "indexador", label: "Indexador" },
             { key: "veiculo", label: "Veículo" },
             { key: "casa", label: "Casa" },
-            { key: "banker", label: "Banker" },
+            { key: "banker", label: "Financial Advisor" },
             { key: "advisor", label: "Advisor" },
             { key: "tipo", label: "Tipo" },
           ]}
@@ -587,7 +587,7 @@ export function QualitativoTab({ filters }: Props) {
             { key: "vencimento", label: "Vencimento", fmt: fmtDateShort },
             { key: "indexador", label: "Indexador" },
             { key: "veiculo", label: "Veículo" },
-            { key: "banker", label: "Banker" },
+            { key: "banker", label: "Financial Advisor" },
             { key: "advisor", label: "Advisor" },
           ]}
           rows={vencRows}

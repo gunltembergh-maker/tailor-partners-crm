@@ -134,10 +134,21 @@ export const estadosBR: Record<string, string> = {
 
 export const roleLabels: Record<string, string> = {
   ASSESSOR: "Assessor",
+  BANKER: "Financial Advisor",
+  FINDER: "Finder",
+  LIDER: "Líder",
+  ADMIN: "Admin",
+  OPERACOES: "Operações",
+};
+
+/** Admin-only role labels (shows internal names) */
+export const roleLabelsAdmin: Record<string, string> = {
+  ASSESSOR: "Assessor",
   BANKER: "Banker",
   FINDER: "Finder",
   LIDER: "Líder",
   ADMIN: "Admin",
+  OPERACOES: "Operações",
 };
 
 export function isToday(date: string | null | undefined): boolean {
