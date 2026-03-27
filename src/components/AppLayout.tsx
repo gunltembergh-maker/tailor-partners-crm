@@ -9,15 +9,17 @@ import { Eye, X } from "lucide-react";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
-  const { viewAsUserId, viewAsProfile, setViewAs, teamMembers, isLider } = useViewAs();
+  const { viewAsUserId, viewAsProfile, setViewAs, teamMembers, isLider, viewLoading } = useViewAs();
   const firstName = profile?.full_name?.split(" ")[0] || "Usuário";
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
+        <LoadingOverlay show={viewLoading} />
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-auto">
           {/* ViewAs Banner */}
