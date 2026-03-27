@@ -17,6 +17,7 @@ interface ViewAsContextType {
   setViewAs: (userId: string | null) => void;
   teamMembers: ViewAsProfile[];
   isLider: boolean;
+  viewLoading: boolean;
 }
 
 const ViewAsContext = createContext<ViewAsContextType>({
@@ -25,11 +26,13 @@ const ViewAsContext = createContext<ViewAsContextType>({
   setViewAs: () => {},
   teamMembers: [],
   isLider: false,
+  viewLoading: false,
 });
 
 export function ViewAsProvider({ children }: { children: ReactNode }) {
   const { role } = useAuth();
   const [viewAsUserId, setViewAsId] = useState<string | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<ViewAsProfile[]>([]);
   const isLider = role === "LIDER" || role === "ADMIN";
 
@@ -56,11 +59,13 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
     : null;
 
   function setViewAs(userId: string | null) {
+    setViewLoading(true);
     setViewAsId(userId);
+    setTimeout(() => setViewLoading(false), 400);
   }
 
   return (
-    <ViewAsContext.Provider value={{ viewAsUserId, viewAsProfile, setViewAs, teamMembers, isLider }}>
+    <ViewAsContext.Provider value={{ viewAsUserId, viewAsProfile, setViewAs, teamMembers, isLider, viewLoading }}>
       {children}
     </ViewAsContext.Provider>
   );
