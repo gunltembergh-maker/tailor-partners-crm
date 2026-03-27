@@ -17,6 +17,7 @@ interface ViewAsContextType {
   setViewAs: (userId: string | null) => void;
   teamMembers: ViewAsProfile[];
   isLider: boolean;
+  viewLoading: boolean;
 }
 
 const ViewAsContext = createContext<ViewAsContextType>({
