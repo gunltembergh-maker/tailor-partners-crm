@@ -412,7 +412,7 @@ export function QuantitativoTab({filters}:Props) {
   const activeMeses = drillLevel > 0 ? drillMeses : matrizMeses;
   const isLastLevel = drillLevel >= 3;
 
-
+  const CM={top:18,right:10,left:0,bottom:5};
 
   return (
     <div className="space-y-3">
