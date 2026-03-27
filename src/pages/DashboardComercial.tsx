@@ -7,8 +7,10 @@ import { X, RefreshCw, Clock } from "lucide-react";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { QuantitativoTab } from "@/components/dashboard/QuantitativoTab";
 import { QualitativoTab } from "@/components/dashboard/QualitativoTab";
+import { DashboardLoadingScreen } from "@/components/dashboard/DashboardLoadingScreen";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
 import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
+import { useContasKpis, useCaptacaoKpis, useAucMesStackCasa, useReceitaTotal } from "@/hooks/useDashboardData";
 import { Progress } from "@/components/ui/progress";
 
 export default function DashboardComercial() {
