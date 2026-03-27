@@ -30,7 +30,17 @@ import GestaoUsuarios from "./pages/admin/GestaoUsuarios";
 import { BlockedUserScreen } from "@/components/admin/BlockedUserScreen";
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60_000,
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      retry: 1,
+    },
+  },
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading, isBlocked } = useAuth();
