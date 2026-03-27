@@ -89,7 +89,7 @@ export function UserDetailSheet({ user, open, onOpenChange }: Props) {
               <p className="font-medium">{user.role || "-"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">Banker/Finder</p>
+              <p className="text-muted-foreground text-xs">Financial Advisor/Finder</p>
               <p className="font-medium">{vinculo || "-"}</p>
             </div>
             <div>

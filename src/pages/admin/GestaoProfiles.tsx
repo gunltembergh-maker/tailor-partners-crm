@@ -36,6 +36,7 @@ const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
   LIDER: "bg-purple-600 text-white hover:bg-purple-600",
   BANKER: "bg-blue-600 text-white hover:bg-blue-600",
+  "FINANCIAL ADVISOR": "bg-blue-600 text-white hover:bg-blue-600",
   DIRETORIA: "bg-orange-500 text-white hover:bg-orange-500",
   RH: "bg-green-600 text-white hover:bg-green-600",
   JURIDICO: "bg-gray-500 text-white hover:bg-gray-500",
@@ -79,8 +80,8 @@ const PERMISSION_GROUPS = [
   {
     title: "Dados e Visualização",
     items: [
-      { key: "dados_ver_todos_bankers", label: "Ver todos os Bankers", desc: "Visualiza dados de toda a equipe" },
-      { key: "dados_filtro_banker", label: "Usar filtro de Banker", desc: "Pode filtrar por Financial Advisor" },
+      { key: "dados_ver_todos_bankers", label: "Ver todos os Financial Advisors", desc: "Visualiza dados de toda a equipe" },
+      { key: "dados_filtro_banker", label: "Usar filtro de Financial Advisor", desc: "Pode filtrar por Financial Advisor" },
       { key: "dados_filtro_finder", label: "Usar filtro de Finder", desc: "Pode filtrar por Finder" },
       { key: "dados_exportar", label: "Exportar dados", desc: "Pode exportar tabelas e relatórios" },
     ],
@@ -164,7 +165,7 @@ function ProfileCard({ perfil, onRefetch }: { perfil: Perfil; onRefetch: () => v
     <Card className={`transition-all ${isModified ? "border-yellow-500/50" : "border-border"}`}>
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
         <div className="flex-1 space-y-2">
-          <Badge className={badgeClass}>{perfil.nome}</Badge>
+          <Badge className={badgeClass}>{perfil.nome === "BANKER" ? "FINANCIAL ADVISOR" : perfil.nome}</Badge>
           <Input
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}

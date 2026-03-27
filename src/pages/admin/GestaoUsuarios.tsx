@@ -334,7 +334,7 @@ export default function GestaoUsuarios() {
               </SelectTrigger>
               <SelectContent>
                 {PERFIS_FILTER.map((p) => (
-                  <SelectItem key={p} value={p}>{p === "Todos" ? "Todos os Perfis" : p}</SelectItem>
+                  <SelectItem key={p} value={p}>{p === "Todos" ? "Todos os Perfis" : p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -349,7 +349,7 @@ export default function GestaoUsuarios() {
                   <TableHead>E-mail</TableHead>
                   <TableHead>CPF</TableHead>
                   <TableHead>Perfil</TableHead>
-                  <TableHead>Banker/Finder</TableHead>
+                  <TableHead>Financial Advisor/Finder</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Último Acesso</TableHead>
                   <TableHead>Cadastrado em</TableHead>
@@ -377,7 +377,7 @@ export default function GestaoUsuarios() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {u.role ? <Badge className={badgeClass}>{u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
+                        {u.role ? <Badge className={badgeClass}>{u.role === "BANKER" ? "FINANCIAL ADVISOR" : u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
                       </TableCell>
                       <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
                       <TableCell>
