@@ -1622,6 +1622,24 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_comissoes_consolidado: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          categoria: string | null
+          comissao_bruta_tailor: number | null
+          documento: string | null
+          finder: string | null
+          id: number | null
+          produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
       pos_m0_desagrupado: {
         Row: {
           advisor: string | null

@@ -108,3 +108,9 @@
     font-family: 'Source Sans 3', sans-serif;
   }
 }
+
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(60%); }
+  100% { transform: translateX(-100%); }
+}
