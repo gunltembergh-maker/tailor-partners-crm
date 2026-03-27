@@ -33,8 +33,16 @@ export default function DashboardComercial() {
     dadosAteFormatted,
   } = useDashboardRefresh();
 
+  // Critical RPCs for initial loading screen
+  const { isLoading: l1 } = useContasKpis(appliedFilters);
+  const { isLoading: l2 } = useCaptacaoKpis(appliedFilters);
+  const { isLoading: l3 } = useAucMesStackCasa(appliedFilters);
+  const { isLoading: l4 } = useReceitaTotal(appliedFilters);
+  const isCriticalLoading = l1 || l2 || l3 || l4;
+
   return (
     <AppLayout>
+      <DashboardLoadingScreen isLoading={isCriticalLoading} />
       <div style={{ backgroundColor: "#F2F2F2", minHeight: "calc(100vh - 64px)", margin: "-1.5rem", padding: "0" }}>
         {isRefreshing && (
           <div className="fixed top-0 left-0 right-0 z-50">
