@@ -39,6 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissoes, setPermissoes] = useState<Record<string, boolean> | null>(null);
   const [bankerName, setBankerName] = useState<string | null>(null);
   const [finderName, setFinderName] = useState<string | null>(null);
+  const [primeiroAcesso, setPrimeiroAcesso] = useState(false);
+  const [area, setArea] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
