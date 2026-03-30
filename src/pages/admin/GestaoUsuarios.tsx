@@ -51,6 +51,14 @@ interface Usuario {
   ultimo_acesso: string | null;
   created_at: string | null;
   pre_cadastrado: boolean;
+  area: string | null;
+  gestor: string | null;
+  convite_status: string | null;
+  convite_enviado_em: string | null;
+  convite_aceito_em: string | null;
+  convite_expira_em: string | null;
+  convite_cancelado_em: string | null;
+  convite_reenvios: number | null;
 }
 
 function maskCpf(cpf: string | null): string {
