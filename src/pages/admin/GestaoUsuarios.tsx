@@ -557,14 +557,19 @@ export default function GestaoUsuarios() {
       <AlertDialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover pré-cadastro</AlertDialogTitle>
+            <AlertDialogTitle>Excluir cadastro</AlertDialogTitle>
             <AlertDialogDescription>
-              Remover pré-cadastro de {deleteUser?.email}? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o cadastro de{" "}
+              <strong>{deleteUser?.full_name}</strong>?
+              {deleteUser?.tem_conta
+                ? " O usuário perderá o acesso ao Hub imediatamente."
+                : " O pré-cadastro será removido."}
+              {" "}Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/80">
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
