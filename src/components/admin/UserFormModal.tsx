@@ -200,6 +200,14 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
             />
           </div>
           <div className="space-y-1">
+            <Label>Área</Label>
+            <Input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Ex: Comercial, Operações, RH" />
+          </div>
+          <div className="space-y-1">
+            <Label>Gestor Direto</Label>
+            <Input value={gestor} onChange={(e) => setGestor(e.target.value)} placeholder="Ex: Felipe Nunes" />
+          </div>
+          <div className="space-y-1">
             <Label>Perfil de Acesso</Label>
             <Select value={perfil} onValueChange={setPerfil}>
               <SelectTrigger>
