@@ -7,7 +7,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
@@ -60,20 +60,52 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Invite user
+    const metadata = {
+      nome_completo: nome,
+      full_name: nome,
+      perfil: perfil || null,
+      area: area || null,
+      gestor: gestor || null,
+      empresa: empresa || 'Tailor Partners',
+    }
+
+    // Try to invite
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: {
-        nome_completo: nome,
-        full_name: nome,
-        perfil: perfil || null,
-        area: area || null,
-        gestor: gestor || null,
-        empresa: empresa || 'Tailor Partners',
-      },
+      data: metadata,
       redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
     })
 
-    if (error) {
+    let userId = data?.user?.id
+
+    // If user already exists, generate a new invite link instead
+    if (error && error.message?.includes('already been registered')) {
+      console.log('User already exists, generating new magic link for:', email)
+
+      // Find the existing user
+      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+      if (!listError) {
+        const existingUser = users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+        if (existingUser) {
+          userId = existingUser.id
+          // Update user metadata
+          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+            user_metadata: metadata,
+          })
+          // Generate a new invite/magic link
+          const { error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email,
+            options: {
+              redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
+            },
+          })
+          if (linkError) {
+            console.error('Generate link error:', linkError)
+            // Still continue — user exists, we just couldn't resend
+          }
+        }
+      }
+    } else if (error) {
       console.error('Invite error:', error)
       return new Response(JSON.stringify({ success: false, message: error.message }), {
         status: 400,
@@ -89,18 +121,17 @@ Deno.serve(async (req) => {
 
     if (rpcError) {
       console.error('rpc_registrar_convite error:', rpcError)
-      // Invite was sent but status update failed - still return success
     }
 
     console.log('User invited successfully:', email)
 
-    return new Response(JSON.stringify({ success: true, user_id: data.user?.id }), {
+    return new Response(JSON.stringify({ success: true, user_id: userId }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
-  } catch (error) {
-    console.error('Error:', error)
-    return new Response(JSON.stringify({ success: false, message: error.message }), {
+  } catch (e: any) {
+    console.error('Error:', e)
+    return new Response(JSON.stringify({ success: false, message: e?.message || String(e) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
