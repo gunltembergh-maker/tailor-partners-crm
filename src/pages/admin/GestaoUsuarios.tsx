@@ -262,7 +262,7 @@ export default function GestaoUsuarios() {
   }, []);
 
   const handleConvidar = useCallback(async (u: Usuario, isReenvio = false) => {
-    setLoadingInviteId(u.user_id);
+    setLoadingInviteId(u.email);
     try {
       const { error } = await supabase.functions.invoke("invite-user", {
         body: {
