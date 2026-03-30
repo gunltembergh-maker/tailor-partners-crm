@@ -121,6 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPermissoes((perfil.permissoes as Record<string, boolean>) ?? null);
       setBankerName(perfil.banker_name ?? null);
       setFinderName(perfil.finder_name ?? null);
+      setPrimeiroAcesso(perfil.primeiro_acesso ?? false);
+      setArea(perfil.area ?? null);
     } catch {
       await fetchProfileFallback(userId);
     }
