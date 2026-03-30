@@ -11,10 +11,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate JWT from the caller
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Missing authorization' }), {
+      return new Response(JSON.stringify({ success: false, message: 'Missing authorization' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -33,7 +32,7 @@ Deno.serve(async (req) => {
     )
     const { data: { user } } = await supabaseUser.auth.getUser()
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ success: false, message: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -46,7 +45,7 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     if (!roleData || !['ADMIN', 'LIDER'].includes(roleData.role)) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      return new Response(JSON.stringify({ success: false, message: 'Forbidden' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -55,13 +54,13 @@ Deno.serve(async (req) => {
     const { email, nome, perfil, area, gestor, empresa } = await req.json()
 
     if (!email || !nome) {
-      return new Response(JSON.stringify({ error: 'email and nome are required' }), {
+      return new Response(JSON.stringify({ success: false, message: 'email and nome are required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Use Supabase Admin to invite user by email
+    // Invite user
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: {
         nome_completo: nome,
@@ -71,15 +70,26 @@ Deno.serve(async (req) => {
         gestor: gestor || null,
         empresa: empresa || 'Tailor Partners',
       },
-      redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.supabase.co')}/auth/v1/verify`,
+      redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
     })
 
     if (error) {
       console.error('Invite error:', error)
-      return new Response(JSON.stringify({ error: error.message }), {
+      return new Response(JSON.stringify({ success: false, message: error.message }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
+    }
+
+    // Register invite status
+    const { error: rpcError } = await supabaseAdmin.rpc('rpc_registrar_convite', {
+      p_email: email,
+      p_acao: 'enviado',
+    })
+
+    if (rpcError) {
+      console.error('rpc_registrar_convite error:', rpcError)
+      // Invite was sent but status update failed - still return success
     }
 
     console.log('User invited successfully:', email)
@@ -90,7 +100,7 @@ Deno.serve(async (req) => {
     })
   } catch (error) {
     console.error('Error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ success: false, message: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
