@@ -33,6 +33,7 @@ interface Usuario {
   convite_expira_em?: string | null;
   convite_cancelado_em?: string | null;
   convite_reenvios?: number | null;
+  operacao_tipo?: string | null;
 }
 
 function formatCpfFull(cpf: string | null): string {
