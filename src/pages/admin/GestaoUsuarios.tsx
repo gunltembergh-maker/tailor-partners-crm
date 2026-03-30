@@ -218,27 +218,17 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      const normalizedEmail = deleteUser.email.toLowerCase().trim();
-
-      if (deleteUser.tem_conta && deleteUser.user_id) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ blocked: true, active: false })
-          .eq("user_id", deleteUser.user_id);
-
-        if (profileError) throw profileError;
+      const { data, error } = await supabase.rpc("rpc_admin_excluir_usuario", {
+        p_email: deleteUser.email,
+        p_user_id: deleteUser.user_id || undefined,
+      });
+      if (error) throw error;
+      if (data && typeof data === "object" && "success" in data && !(data as any).success) {
+        throw new Error((data as any).message || "Erro ao excluir");
       }
-
-      const { error: teamRefError } = await supabase
-        .from("team_reference")
-        .delete()
-        .ilike("email", normalizedEmail);
-
-      if (teamRefError) throw teamRefError;
-
       toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
-      await queryClient.invalidateQueries({ queryKey: ["admin-usuarios"], exact: true });
+      await queryClient.invalidateQueries();
     } catch (e: any) {
       toast.error(e.message || "Erro ao excluir cadastro", { duration: 4000 });
     }
