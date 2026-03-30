@@ -542,6 +542,7 @@ export type Database = {
           id: string
           nome: string | null
           nome_completo: string | null
+          operacao_tipo: string | null
           perfil_id: string | null
           phone: string | null
           primeiro_acesso: boolean | null
@@ -566,6 +567,7 @@ export type Database = {
           id?: string
           nome?: string | null
           nome_completo?: string | null
+          operacao_tipo?: string | null
           perfil_id?: string | null
           phone?: string | null
           primeiro_acesso?: boolean | null
@@ -590,6 +592,7 @@ export type Database = {
           id?: string
           nome?: string | null
           nome_completo?: string | null
+          operacao_tipo?: string | null
           perfil_id?: string | null
           phone?: string | null
           primeiro_acesso?: boolean | null
@@ -1233,6 +1236,7 @@ export type Database = {
           gestor: string | null
           id: string
           nome: string | null
+          operacao_tipo: string | null
           perfil_nome: string | null
           role: string | null
           short_name: string
@@ -1259,6 +1263,7 @@ export type Database = {
           gestor?: string | null
           id?: string
           nome?: string | null
+          operacao_tipo?: string | null
           perfil_nome?: string | null
           role?: string | null
           short_name: string
@@ -1285,6 +1290,7 @@ export type Database = {
           gestor?: string | null
           id?: string
           nome?: string | null
+          operacao_tipo?: string | null
           perfil_nome?: string | null
           role?: string | null
           short_name?: string
@@ -2547,6 +2553,7 @@ export type Database = {
           finder_name: string
           full_name: string
           gestor: string
+          operacao_tipo: string
           pre_cadastrado: boolean
           role: string
           tem_conta: boolean
@@ -2619,6 +2626,23 @@ export type Database = {
               p_finder_name?: string
               p_gestor?: string
               p_nome: string
+              p_perfil_nome?: string
+              p_role: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_advisor_name?: string
+              p_area?: string
+              p_banker_name?: string
+              p_cpf?: string
+              p_email: string
+              p_empresa?: string
+              p_finder_name?: string
+              p_gestor?: string
+              p_nome: string
+              p_operacao_tipo?: string
               p_perfil_nome?: string
               p_role: string
             }
@@ -2943,6 +2967,7 @@ export type Database = {
           blocked: boolean
           finder_name: string
           gestor: string
+          operacao_tipo: string
           permissoes: Json
           primeiro_acesso: boolean
           role: string
