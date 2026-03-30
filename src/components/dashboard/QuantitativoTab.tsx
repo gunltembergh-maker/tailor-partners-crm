@@ -397,15 +397,18 @@ export function QuantitativoTab({filters}:Props) {
     const mesesMap = new Map<number, string>();
     drilldownData.forEach((r: any) => { if (!mesesMap.has(r.anomes)) mesesMap.set(r.anomes, r.anomes_nome || String(r.anomes)); });
     const meses = [...mesesMap.entries()].sort((a, b) => b[0] - a[0]).map(([, n]) => n);
+    // Pick the label field based on drill level: 1=subcategoria, 2=produto, 3=subproduto
+    const labelFields = ["subcategoria", "produto", "subproduto"];
+    const labelField = labelFields[drillLevel - 1] || "categoria";
     const catMap = new Map<string, { values: Record<string, number>; total: number }>();
     drilldownData.forEach((r: any) => {
-      const cat = r.label || "N/D", mes = r.anomes_nome || String(r.anomes), val = Number(r.valor) || 0;
+      const cat = r[labelField] || "N/D", mes = r.anomes_nome || String(r.anomes), val = Number(r.valor) || 0;
       if (!catMap.has(cat)) catMap.set(cat, { values: {}, total: 0 });
       const c = catMap.get(cat)!; c.total += val; c.values[mes] = (c.values[mes] || 0) + val;
     });
     const rows = [...catMap.entries()].map(([cat, v]) => ({ categoria: cat, ...v })).sort((a, b) => b.total - a.total);
     return { drillRows: rows, drillMeses: meses };
-  }, [drilldownData]);
+  }, [drilldownData, drillLevel]);
 
   // Use drill data when path > 0, otherwise existing category data
   const activeRows = drillLevel > 0 ? drillRows : matrizRows;
