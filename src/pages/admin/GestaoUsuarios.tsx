@@ -364,9 +364,16 @@ export default function GestaoUsuarios() {
                         <p className="text-sm font-medium text-foreground">{u.full_name || u.email}</p>
                         <p className="text-xs text-muted-foreground">{u.email}</p>
                       </div>
-                      <Button size="sm" onClick={() => { setApproveUser(u); setApproveRole(""); }}>
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Aprovar
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" onClick={() => { setApproveUser(u); setApproveRole(""); }}>
+                          <CheckCircle className="h-3.5 w-3.5 mr-1" /> Aprovar
+                        </Button>
+                        {u.user_id !== user?.id && (
+                          <Button size="sm" variant="outline" className="text-red-500 border-red-200 hover:bg-red-50" onClick={() => setDeleteUser(u)}>
+                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Recusar
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
