@@ -287,14 +287,14 @@ export default function GestaoUsuarios() {
         p_acao: isReenvio ? "reenvio" : "enviado",
       });
 
-      toast({ title: `Convite ${isReenvio ? "re" : ""}enviado para ${u.email}` });
+      toast.success(`Convite ${isReenvio ? "re" : ""}enviado para ${u.email}`, { duration: 3000 });
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro ao enviar convite", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao enviar convite", { duration: 4000 });
     } finally {
       setLoadingInviteId(null);
     }
-  }, [refetch, toast]);
+  }, [refetch]);
 
   const handleCancelarConvite = useCallback(async (u: Usuario) => {
     try {
@@ -302,12 +302,12 @@ export default function GestaoUsuarios() {
         p_email: u.email,
         p_acao: "cancelado",
       });
-      toast({ title: "Convite cancelado." });
+      toast.success("Convite cancelado.", { duration: 3000 });
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao cancelar convite", { duration: 4000 });
     }
-  }, [refetch, toast]);
+  }, [refetch]);
 
 
   const metricCards = useMemo(() => [
