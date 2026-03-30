@@ -102,7 +102,6 @@ const PERFIS_FILTER = ["Todos", "ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR"
 
 export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
