@@ -404,8 +404,8 @@ export default function GestaoUsuarios() {
                   <TableHead>Perfil</TableHead>
                   <TableHead>Financial Advisor/Finder</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Convite</TableHead>
                   <TableHead>Último Acesso</TableHead>
-                  <TableHead>Cadastrado em</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -413,6 +413,8 @@ export default function GestaoUsuarios() {
                 {filtered.map((u) => {
                   const status = getStatusDisplay(u);
                   const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
+                  const conviteStatus = getConviteStatus(u);
+                  const isInviteLoading = loadingInviteId === u.user_id;
                   return (
                     <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
                       <TableCell className="font-medium">{u.full_name || "-"}</TableCell>
@@ -436,15 +438,31 @@ export default function GestaoUsuarios() {
                       <TableCell>
                         <Badge variant="outline" className={status.className}>{status.label}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{relativeTime(u.ultimo_acesso)}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <ConviteBadge usuario={u} />
                       </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{relativeTime(u.ultimo_acesso)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
+                          {/* Invite actions */}
+                          {(conviteStatus === "pendente" || conviteStatus === "cancelado") && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u)}>
+                              <Mail className="h-3.5 w-3.5 text-blue-500" />
+                            </Button>
+                          )}
+                          {(conviteStatus === "enviado" || conviteStatus === "expirado") && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u, true)}>
+                              <RotateCcw className="h-3.5 w-3.5 text-orange-500" />
+                            </Button>
+                          )}
+                          {conviteStatus === "enviado" && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCancelarConvite(u)}>
+                              <XCircle className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
                             {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
                           </Button>
