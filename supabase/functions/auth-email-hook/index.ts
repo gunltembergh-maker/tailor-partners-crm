@@ -67,6 +67,11 @@ const SAMPLE_DATA: Record<string, object> = {
     siteName: SITE_NAME,
     siteUrl: SAMPLE_PROJECT_URL,
     confirmationUrl: SAMPLE_PROJECT_URL,
+    nomeCompleto: 'Alessandro Oliveira',
+    perfil: 'Financial Advisor',
+    area: 'Wealth Management',
+    gestor: 'Carlos Silva',
+    empresa: 'Tailor Partners',
   },
   email_change: {
     siteName: SITE_NAME,
