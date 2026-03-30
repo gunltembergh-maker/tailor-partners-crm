@@ -444,7 +444,11 @@ export default function GestaoUsuarios() {
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <ConviteBadge usuario={u} />
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{relativeTime(u.ultimo_acesso)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {u.ultimo_acesso
+                          ? new Date(u.ultimo_acesso).toLocaleDateString("pt-BR") + " " + new Date(u.ultimo_acesso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+                          : "Nunca"}
+                      </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
