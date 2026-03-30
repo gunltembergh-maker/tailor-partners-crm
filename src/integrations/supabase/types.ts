@@ -2512,6 +2512,10 @@ export type Database = {
         Returns: Json
       }
       rpc_admin_deletar_perfil: { Args: { p_id: string }; Returns: Json }
+      rpc_admin_excluir_usuario: {
+        Args: { p_email: string; p_user_id?: string }
+        Returns: Json
+      }
       rpc_admin_lista_perfis: {
         Args: never
         Returns: {
