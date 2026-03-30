@@ -209,7 +209,7 @@ export default function GestaoUsuarios() {
       if (error) throw error;
       toast.success(blockUser.blocked ? "Usuário desbloqueado!" : "Usuário bloqueado!", { duration: 3000 });
       setBlockUser(null);
-      refetch();
+      await refetch();
     } catch (e: any) {
       toast.error(e.message || "Erro ao alterar bloqueio", { duration: 4000 });
     }
