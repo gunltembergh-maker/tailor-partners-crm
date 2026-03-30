@@ -131,9 +131,9 @@ export const InviteEmail = ({
               alt="Tailor Partners"
               style={{ margin: '0 auto 12px', display: 'block', opacity: 0.3 }}
             />
-            <Text style={footerText}>
-              © 2025 Tailor Partners · Todos os direitos reservados
-            </Text>
+          <Text style={footerText}>
+            © 2026 Grupo Tailor Partners · Todos os direitos reservados
+          </Text>
             <Text style={footerText}>
               Mensagem automática — não responda este e-mail
             </Text>
