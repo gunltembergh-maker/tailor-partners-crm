@@ -218,13 +218,11 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      // 1. Remove from team_reference
       await supabase
         .from("team_reference")
         .delete()
         .eq("email", deleteUser.email.toLowerCase().trim());
 
-      // 2. If user has an account, block access
       if (deleteUser.tem_conta && deleteUser.user_id) {
         await supabase
           .from("profiles")
@@ -232,11 +230,11 @@ export default function GestaoUsuarios() {
           .eq("user_id", deleteUser.user_id);
       }
 
-      toast({ title: `Cadastro de ${deleteUser.full_name || deleteUser.email} removido.` });
+      toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro ao excluir cadastro", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao excluir cadastro", { duration: 4000 });
     }
   };
 
