@@ -16,6 +16,7 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [msLoading, setMsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
 
@@ -24,6 +25,27 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isBlocked = searchParams.get("blocked") === "true";
+
+  const handleMicrosoftLogin = async () => {
+    setMsLoading(true);
+    setLoginError("");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          scopes: 'email openid profile',
+          redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
+        }
+      });
+      if (error) {
+        setLoginError(error.message);
+        toast({ title: "Erro ao conectar com Microsoft", variant: "destructive" });
+      }
+    } catch (err: any) {
+      setLoginError(err?.message ?? "Erro ao conectar com Microsoft");
+    }
+    setMsLoading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
