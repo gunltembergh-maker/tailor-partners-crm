@@ -417,7 +417,7 @@ export default function GestaoUsuarios() {
                   const status = getStatusDisplay(u);
                   const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
                   const conviteStatus = getConviteStatus(u);
-                  const isInviteLoading = loadingInviteId === u.user_id;
+                  const isInviteLoading = loadingInviteId === u.email;
                   return (
                     <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
                       <TableCell className="font-medium">{u.full_name || "-"}</TableCell>
