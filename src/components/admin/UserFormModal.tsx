@@ -53,6 +53,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
   const [empresa, setEmpresa] = useState("Tailor Partners");
   const [area, setArea] = useState("");
   const [gestor, setGestor] = useState("");
+  const [operacaoTipo, setOperacaoTipo] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -67,6 +68,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
       setEmpresa(initialData?.empresa || "Tailor Partners");
       setArea((initialData as any)?.area || "");
       setGestor((initialData as any)?.gestor || "");
+      setOperacaoTipo((initialData as any)?.operacao_tipo || "");
       setEmailError(null);
     }
   }, [open, initialData]);
@@ -142,6 +144,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
         p_cpf: cpf.replace(/\D/g, ""),
         p_area: area || null,
         p_gestor: gestor || null,
+        p_operacao_tipo: perfil === "OPERACOES" ? operacaoTipo || null : null,
       });
       if (error) throw error;
       const result = data as any;
@@ -246,6 +249,21 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
                   {finderList?.map((f) => (
                     <SelectItem key={f} value={f}>{f}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {perfil === "OPERACOES" && (
+            <div className="space-y-1">
+              <Label>Tipo de Operação</Label>
+              <Select value={operacaoTipo} onValueChange={setOperacaoTipo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Middle">Middle</SelectItem>
+                  <SelectItem value="Operações Assistente">Operações Assistente</SelectItem>
+                  <SelectItem value="Operação Assistente Financial">Operação Assistente Financial</SelectItem>
                 </SelectContent>
               </Select>
             </div>

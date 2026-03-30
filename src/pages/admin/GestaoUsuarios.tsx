@@ -61,6 +61,7 @@ interface Usuario {
   convite_expira_em: string | null;
   convite_cancelado_em: string | null;
   convite_reenvios: number | null;
+  operacao_tipo: string | null;
 }
 
 function maskCpf(cpf: string | null): string {
@@ -93,6 +94,7 @@ function getStatusDisplay(u: Usuario) {
 }
 
 function getBankerFinderDisplay(u: Usuario): string {
+  if (u.role === "OPERACOES") return u.operacao_tipo || "—";
   if (u.role === "BANKER" && u.banker_name) return u.banker_name;
   if (u.role === "FINDER" && u.finder_name) return u.finder_name;
   return "-";
@@ -190,6 +192,7 @@ export default function GestaoUsuarios() {
       isEdit: true,
       area: u.area || "",
       gestor: u.gestor || "",
+      operacao_tipo: u.operacao_tipo || "",
     } as any);
     setFormOpen(true);
   }, []);
