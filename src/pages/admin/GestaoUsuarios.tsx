@@ -255,7 +255,7 @@ export default function GestaoUsuarios() {
           .eq("user_id", deleteUser.user_id);
       }
 
-      removeUsuarioFromCache(deleteUser);
+      updateUsuarioInCache(deleteUser, deleteUser.tem_conta ? 'block' : 'remove');
       toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
       await refetch();
