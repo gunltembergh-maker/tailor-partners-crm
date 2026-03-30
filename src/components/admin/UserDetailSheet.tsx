@@ -24,6 +24,7 @@ interface Usuario {
   created_at: string | null;
   ultimo_acesso: string | null;
   pre_cadastrado: boolean;
+  tem_conta?: boolean;
   area?: string | null;
   gestor?: string | null;
   convite_status?: string | null;
