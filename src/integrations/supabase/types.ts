@@ -2992,49 +2992,117 @@ export type Database = {
           valor: number
         }[]
       }
-      rpc_receita_matriz_rows: {
-        Args: { p_anomes?: number[]; p_banker?: string[] }
-        Returns: {
-          anomes: number
-          anomes_nome: string
-          categoria: string
-          produto: string
-          subcategoria: string
-          subproduto: string
-          valor: number
-        }[]
-      }
-      rpc_receita_matriz_rows_cat: {
-        Args: { p_anomes?: number[]; p_banker?: string[] }
-        Returns: {
-          anomes: number
-          anomes_nome: string
-          categoria: string
-          valor: number
-        }[]
-      }
-      rpc_receita_mes_categoria: {
-        Args: { p_anomes?: number[]; p_banker?: string[] }
-        Returns: {
-          anomes: number
-          anomes_nome: string
-          categoria: string
-          valor: number
-        }[]
-      }
-      rpc_receita_total: {
-        Args: { p_anomes?: number[]; p_banker?: string[] }
-        Returns: {
-          receita: number
-        }[]
-      }
-      rpc_receita_treemap_categoria: {
-        Args: { p_anomes?: number[]; p_banker?: string[] }
-        Returns: {
-          categoria: string
-          valor: number
-        }[]
-      }
+      rpc_receita_matriz_rows:
+        | {
+            Args: { p_anomes?: number[]; p_banker?: string[] }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              categoria: string
+              produto: string
+              subcategoria: string
+              subproduto: string
+              valor: number
+            }[]
+          }
+        | {
+            Args: {
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_finder?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              categoria: string
+              produto: string
+              subcategoria: string
+              subproduto: string
+              valor: number
+            }[]
+          }
+      rpc_receita_matriz_rows_cat:
+        | {
+            Args: { p_anomes?: number[]; p_banker?: string[] }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              categoria: string
+              valor: number
+            }[]
+          }
+        | {
+            Args: {
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_finder?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              categoria: string
+              valor: number
+            }[]
+          }
+      rpc_receita_mes_categoria:
+        | {
+            Args: { p_anomes?: number[]; p_banker?: string[] }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              categoria: string
+              valor: number
+            }[]
+          }
+        | {
+            Args: {
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_finder?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              categoria: string
+              valor: number
+            }[]
+          }
+      rpc_receita_total:
+        | {
+            Args: { p_anomes?: number[]; p_banker?: string[] }
+            Returns: {
+              receita: number
+            }[]
+          }
+        | {
+            Args: {
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_finder?: string[]
+            }
+            Returns: {
+              receita: number
+            }[]
+          }
+      rpc_receita_treemap_categoria:
+        | {
+            Args: { p_anomes?: number[]; p_banker?: string[] }
+            Returns: {
+              categoria: string
+              valor: number
+            }[]
+          }
+        | {
+            Args: {
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_finder?: string[]
+            }
+            Returns: {
+              categoria: string
+              valor: number
+            }[]
+          }
       rpc_registrar_acesso: { Args: never; Returns: undefined }
       rpc_registrar_convite: {
         Args: { p_acao: string; p_email: string }

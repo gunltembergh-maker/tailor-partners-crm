@@ -28,11 +28,12 @@ export function useScopedRpcParams(filters: DashboardFilters) {
 }
 
 export function useScopedRpcParamsPbi(filters: DashboardFilters) {
-  const { overrideBanker } = useViewAsFilters();
+  const { overrideBanker, overrideFinder } = useViewAsFilters();
 
   return {
     p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
     p_banker: overrideBanker ?? (filters.banker.length ? filters.banker : null),
+    p_finder: overrideFinder ?? (filters.finder.length ? filters.finder : null),
   };
 }
 
