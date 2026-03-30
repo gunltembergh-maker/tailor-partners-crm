@@ -250,7 +250,7 @@ export default function GestaoUsuarios() {
       toast.success("Usuário aprovado!", { duration: 3000 });
       setApproveUser(null);
       setApproveRole("");
-      refetch();
+      await refetch();
     } catch (e: any) {
       toast.error(e.message || "Erro ao aprovar", { duration: 4000 });
     } finally {
