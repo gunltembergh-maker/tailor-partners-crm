@@ -58,6 +58,13 @@ export default function DashboardComercial() {
 
   return (
     <AppLayout>
+      {showBoasVindas && profile && (
+        <BoasVindasModal
+          perfil={{ full_name: profile.full_name, role, area }}
+          open={showBoasVindas}
+          onClose={() => setShowBoasVindas(false)}
+        />
+      )}
       <DashboardLoadingScreen isLoading={isCriticalLoading} />
       <LoadingOverlay show={tabLoading} />
       <div style={{ backgroundColor: "#F2F2F2", minHeight: "calc(100vh - 64px)", margin: "-1.5rem", padding: "0" }}>
