@@ -247,12 +247,12 @@ export default function GestaoUsuarios() {
         p_role: approveRole,
       });
       if (error) throw error;
-      toast({ title: "Usuário aprovado!" });
+      toast.success("Usuário aprovado!", { duration: 3000 });
       setApproveUser(null);
       setApproveRole("");
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao aprovar", { duration: 4000 });
     } finally {
       setApproving(false);
     }
