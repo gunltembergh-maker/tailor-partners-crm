@@ -144,6 +144,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
         p_cpf: cpf.replace(/\D/g, ""),
         p_area: area || null,
         p_gestor: gestor || null,
+        p_operacao_tipo: perfil === "OPERACOES" ? operacaoTipo || null : null,
       });
       if (error) throw error;
       const result = data as any;
