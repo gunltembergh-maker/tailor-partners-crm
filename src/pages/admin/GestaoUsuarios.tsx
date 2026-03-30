@@ -508,7 +508,7 @@ export default function GestaoUsuarios() {
                             </Button>
                           )}
                           {u.user_id !== user?.id && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50" title="Excluir cadastro" onClick={() => setDeleteUser(u)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir cadastro" onClick={() => setDeleteUser(u)}>
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
