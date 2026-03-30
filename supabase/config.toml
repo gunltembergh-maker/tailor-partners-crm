@@ -11,3 +11,5 @@ project_id = "jtlelokzpqkgvlwomfus"
     verify_jwt = false
   [functions.process-email-queue]
     verify_jwt = true
+  [functions.sync-sharepoint]
+    verify_jwt = false
