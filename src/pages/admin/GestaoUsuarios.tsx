@@ -232,7 +232,7 @@ export default function GestaoUsuarios() {
       const { error: teamRefError } = await supabase
         .from("team_reference")
         .delete()
-        .eq("email", normalizedEmail);
+        .ilike("email", normalizedEmail);
 
       if (teamRefError) throw teamRefError;
 
