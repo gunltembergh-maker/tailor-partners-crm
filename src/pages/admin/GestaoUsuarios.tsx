@@ -219,20 +219,25 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_remover_precadastro" as any, {
-        p_email: deleteUser.email,
-      });
-      if (error) throw error;
-      const result = data as any;
-      if (result?.success === false) {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      } else {
-        toast({ title: "Pré-cadastro removido!" });
-        refetch();
+      // 1. Remove from team_reference
+      await supabase
+        .from("team_reference")
+        .delete()
+        .eq("email", deleteUser.email.toLowerCase().trim());
+
+      // 2. If user has an account, block access
+      if (deleteUser.tem_conta && deleteUser.user_id) {
+        await supabase
+          .from("profiles")
+          .update({ blocked: true, active: false })
+          .eq("user_id", deleteUser.user_id);
       }
+
+      toast({ title: `Cadastro de ${deleteUser.full_name || deleteUser.email} removido.` });
       setDeleteUser(null);
+      refetch();
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast({ title: "Erro ao excluir cadastro", description: e.message, variant: "destructive" });
     }
   };
 
