@@ -17,12 +17,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
+  signup: 'Confirme seu e-mail — Hub Tailor Partners',
   invite: 'Seu acesso ao Hub Tailor Partners está pronto 🎯',
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  magiclink: 'Seu link de acesso ao Hub Tailor Partners',
+  recovery: 'Redefinição de senha — Hub Tailor Partners',
+  email_change: 'Confirme seu novo e-mail — Hub Tailor Partners',
+  reauthentication: 'Código de verificação — Hub Tailor Partners',
 }
 
 // Template mapping
