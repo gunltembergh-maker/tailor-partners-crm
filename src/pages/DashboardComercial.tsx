@@ -13,6 +13,8 @@ import { useDashboardFilters } from "@/hooks/useDashboardFilters";
 import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
 import { useContasKpis, useCaptacaoKpis, useAucMesStackCasa, useReceitaTotal } from "@/hooks/useDashboardData";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/hooks/useAuth";
+import { BoasVindasModal } from "@/components/admin/BoasVindasModal";
 
 export default function DashboardComercial() {
   const {
