@@ -94,6 +94,7 @@ function getStatusDisplay(u: Usuario) {
 }
 
 function getBankerFinderDisplay(u: Usuario): string {
+  if (u.role === "OPERACOES") return u.operacao_tipo || "—";
   if (u.role === "BANKER" && u.banker_name) return u.banker_name;
   if (u.role === "FINDER" && u.finder_name) return u.finder_name;
   return "-";
