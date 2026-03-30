@@ -68,6 +68,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
       setEmpresa(initialData?.empresa || "Tailor Partners");
       setArea((initialData as any)?.area || "");
       setGestor((initialData as any)?.gestor || "");
+      setOperacaoTipo((initialData as any)?.operacao_tipo || "");
       setEmailError(null);
     }
   }, [open, initialData]);
