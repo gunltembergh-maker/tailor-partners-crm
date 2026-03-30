@@ -41,7 +41,7 @@ interface Props {
 }
 
 export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Props) {
-  const { toast } = useToast();
+  
   const isEdit = initialData?.isEdit ?? false;
 
   const [nome, setNome] = useState("");
