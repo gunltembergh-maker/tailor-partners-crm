@@ -528,6 +528,7 @@ export type Database = {
         Row: {
           active: boolean
           advisor_name: string | null
+          area: string | null
           avatar_url: string | null
           banker_name: string | null
           blocked: boolean | null
@@ -537,11 +538,13 @@ export type Database = {
           empresa: string | null
           finder_name: string | null
           full_name: string
+          gestor: string | null
           id: string
           nome: string | null
           nome_completo: string | null
           perfil_id: string | null
           phone: string | null
+          primeiro_acesso: boolean | null
           ultimo_acesso: string | null
           updated_at: string
           user_id: string
@@ -549,6 +552,7 @@ export type Database = {
         Insert: {
           active?: boolean
           advisor_name?: string | null
+          area?: string | null
           avatar_url?: string | null
           banker_name?: string | null
           blocked?: boolean | null
@@ -558,11 +562,13 @@ export type Database = {
           empresa?: string | null
           finder_name?: string | null
           full_name?: string
+          gestor?: string | null
           id?: string
           nome?: string | null
           nome_completo?: string | null
           perfil_id?: string | null
           phone?: string | null
+          primeiro_acesso?: boolean | null
           ultimo_acesso?: string | null
           updated_at?: string
           user_id: string
@@ -570,6 +576,7 @@ export type Database = {
         Update: {
           active?: boolean
           advisor_name?: string | null
+          area?: string | null
           avatar_url?: string | null
           banker_name?: string | null
           blocked?: boolean | null
@@ -579,11 +586,13 @@ export type Database = {
           empresa?: string | null
           finder_name?: string | null
           full_name?: string
+          gestor?: string | null
           id?: string
           nome?: string | null
           nome_completo?: string | null
           perfil_id?: string | null
           phone?: string | null
+          primeiro_acesso?: boolean | null
           ultimo_acesso?: string | null
           updated_at?: string
           user_id?: string
@@ -1205,15 +1214,23 @@ export type Database = {
       team_reference: {
         Row: {
           advisor_name: string | null
+          area: string | null
           banker_name: string | null
           blocked: boolean | null
           codigo_xp: string | null
+          convite_aceito_em: string | null
+          convite_cancelado_em: string | null
+          convite_enviado_em: string | null
+          convite_expira_em: string | null
+          convite_reenvios: number | null
+          convite_status: string | null
           cpf: string | null
           created_at: string
           email: string | null
           empresa: string | null
           finder_name: string | null
           full_name: string
+          gestor: string | null
           id: string
           nome: string | null
           perfil_nome: string | null
@@ -1223,15 +1240,23 @@ export type Database = {
         }
         Insert: {
           advisor_name?: string | null
+          area?: string | null
           banker_name?: string | null
           blocked?: boolean | null
           codigo_xp?: string | null
+          convite_aceito_em?: string | null
+          convite_cancelado_em?: string | null
+          convite_enviado_em?: string | null
+          convite_expira_em?: string | null
+          convite_reenvios?: number | null
+          convite_status?: string | null
           cpf?: string | null
           created_at?: string
           email?: string | null
           empresa?: string | null
           finder_name?: string | null
           full_name: string
+          gestor?: string | null
           id?: string
           nome?: string | null
           perfil_nome?: string | null
@@ -1241,15 +1266,23 @@ export type Database = {
         }
         Update: {
           advisor_name?: string | null
+          area?: string | null
           banker_name?: string | null
           blocked?: boolean | null
           codigo_xp?: string | null
+          convite_aceito_em?: string | null
+          convite_cancelado_em?: string | null
+          convite_enviado_em?: string | null
+          convite_expira_em?: string | null
+          convite_reenvios?: number | null
+          convite_status?: string | null
           cpf?: string | null
           created_at?: string
           email?: string | null
           empresa?: string | null
           finder_name?: string | null
           full_name?: string
+          gestor?: string | null
           id?: string
           nome?: string | null
           perfil_nome?: string | null
@@ -2494,14 +2527,22 @@ export type Database = {
         Returns: {
           active: boolean
           advisor_name: string
+          area: string
           banker_name: string
           blocked: boolean
+          convite_aceito_em: string
+          convite_cancelado_em: string
+          convite_enviado_em: string
+          convite_expira_em: string
+          convite_reenvios: number
+          convite_status: string
           cpf: string
           created_at: string
           email: string
           empresa: string
           finder_name: string
           full_name: string
+          gestor: string
           pre_cadastrado: boolean
           role: string
           ultimo_acesso: string
@@ -2556,6 +2597,22 @@ export type Database = {
               p_email: string
               p_empresa?: string
               p_finder_name?: string
+              p_nome: string
+              p_perfil_nome?: string
+              p_role: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_advisor_name?: string
+              p_area?: string
+              p_banker_name?: string
+              p_cpf?: string
+              p_email: string
+              p_empresa?: string
+              p_finder_name?: string
+              p_gestor?: string
               p_nome: string
               p_perfil_nome?: string
               p_role: string
@@ -2871,14 +2928,18 @@ export type Database = {
           finder: string
         }[]
       }
+      rpc_marcar_primeiro_acesso: { Args: never; Returns: undefined }
       rpc_meu_perfil: {
         Args: never
         Returns: {
           advisor_name: string
+          area: string
           banker_name: string
           blocked: boolean
           finder_name: string
+          gestor: string
           permissoes: Json
+          primeiro_acesso: boolean
           role: string
         }[]
       }
@@ -2942,6 +3003,10 @@ export type Database = {
           categoria: string
           valor: number
         }[]
+      }
+      rpc_registrar_convite: {
+        Args: { p_acao: string; p_email: string }
+        Returns: Json
       }
       rpc_roa_faixa_pl: {
         Args: {
