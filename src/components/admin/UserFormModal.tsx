@@ -10,7 +10,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const PERFIS = ["ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
 
@@ -41,7 +41,7 @@ interface Props {
 }
 
 export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Props) {
-  const { toast } = useToast();
+  
   const isEdit = initialData?.isEdit ?? false;
 
   const [nome, setNome] = useState("");
@@ -146,14 +146,14 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
       if (error) throw error;
       const result = data as any;
       if (result?.success === false) {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
+        toast.error(result.message || "Erro ao salvar", { duration: 4000 });
       } else {
-        toast({ title: isEdit ? "Usuário atualizado!" : "Pré-cadastro criado!" });
+        toast.success(isEdit ? "Usuário atualizado!" : "Pré-cadastro criado!", { duration: 3000 });
         onOpenChange(false);
         onSaved();
       }
     } catch (e: any) {
-      toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao salvar", { duration: 4000 });
     } finally {
       setSaving(false);
     }

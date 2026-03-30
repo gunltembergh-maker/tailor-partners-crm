@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -102,7 +102,6 @@ const PERFIS_FILTER = ["Todos", "ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR"
 
 export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
@@ -208,24 +207,22 @@ export default function GestaoUsuarios() {
         p_blocked: !blockUser.blocked,
       });
       if (error) throw error;
-      toast({ title: blockUser.blocked ? "Usuário desbloqueado!" : "Usuário bloqueado!" });
+      toast.success(blockUser.blocked ? "Usuário desbloqueado!" : "Usuário bloqueado!", { duration: 3000 });
       setBlockUser(null);
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao alterar bloqueio", { duration: 4000 });
     }
   };
 
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      // 1. Remove from team_reference
       await supabase
         .from("team_reference")
         .delete()
         .eq("email", deleteUser.email.toLowerCase().trim());
 
-      // 2. If user has an account, block access
       if (deleteUser.tem_conta && deleteUser.user_id) {
         await supabase
           .from("profiles")
@@ -233,11 +230,11 @@ export default function GestaoUsuarios() {
           .eq("user_id", deleteUser.user_id);
       }
 
-      toast({ title: `Cadastro de ${deleteUser.full_name || deleteUser.email} removido.` });
+      toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro ao excluir cadastro", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao excluir cadastro", { duration: 4000 });
     }
   };
 
@@ -250,12 +247,12 @@ export default function GestaoUsuarios() {
         p_role: approveRole,
       });
       if (error) throw error;
-      toast({ title: "Usuário aprovado!" });
+      toast.success("Usuário aprovado!", { duration: 3000 });
       setApproveUser(null);
       setApproveRole("");
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao aprovar", { duration: 4000 });
     } finally {
       setApproving(false);
     }
@@ -290,14 +287,14 @@ export default function GestaoUsuarios() {
         p_acao: isReenvio ? "reenvio" : "enviado",
       });
 
-      toast({ title: `Convite ${isReenvio ? "re" : ""}enviado para ${u.email}` });
+      toast.success(`Convite ${isReenvio ? "re" : ""}enviado para ${u.email}`, { duration: 3000 });
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro ao enviar convite", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao enviar convite", { duration: 4000 });
     } finally {
       setLoadingInviteId(null);
     }
-  }, [refetch, toast]);
+  }, [refetch]);
 
   const handleCancelarConvite = useCallback(async (u: Usuario) => {
     try {
@@ -305,12 +302,12 @@ export default function GestaoUsuarios() {
         p_email: u.email,
         p_acao: "cancelado",
       });
-      toast({ title: "Convite cancelado." });
+      toast.success("Convite cancelado.", { duration: 3000 });
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao cancelar convite", { duration: 4000 });
     }
-  }, [refetch, toast]);
+  }, [refetch]);
 
 
   const metricCards = useMemo(() => [
