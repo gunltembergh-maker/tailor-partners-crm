@@ -397,8 +397,8 @@ export function QuantitativoTab({filters}:Props) {
     const mesesMap = new Map<number, string>();
     drilldownData.forEach((r: any) => { if (!mesesMap.has(r.anomes)) mesesMap.set(r.anomes, r.anomes_nome || String(r.anomes)); });
     const meses = [...mesesMap.entries()].sort((a, b) => b[0] - a[0]).map(([, n]) => n);
-    // Pick the label field based on drill level: 1=subcategoria, 2=produto, 3=subproduto
-    const labelFields = ["subcategoria", "produto", "subproduto"];
+    // Pick the label field based on drill level: 1=subcategoria, 2=produto, 3=documento (cliente)
+    const labelFields = ["subcategoria", "produto", "documento"];
     const labelField = labelFields[drillLevel - 1] || "categoria";
     const catMap = new Map<string, { values: Record<string, number>; total: number }>();
     drilldownData.forEach((r: any) => {
