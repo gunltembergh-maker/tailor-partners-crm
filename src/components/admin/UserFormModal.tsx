@@ -253,6 +253,21 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
               </Select>
             </div>
           )}
+          {perfil === "OPERACOES" && (
+            <div className="space-y-1">
+              <Label>Tipo de Operação</Label>
+              <Select value={operacaoTipo} onValueChange={setOperacaoTipo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Middle">Middle</SelectItem>
+                  <SelectItem value="Operações Assistente">Operações Assistente</SelectItem>
+                  <SelectItem value="Operação Assistente Financial">Operação Assistente Financial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1">
             <Label>Empresa</Label>
             <Input value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Tailor Partners" readOnly={!isEdit && !!empresa && !emailError} />

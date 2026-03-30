@@ -105,6 +105,12 @@ export function UserDetailSheet({ user, open, onOpenChange }: Props) {
                 <p className="text-muted-foreground text-xs">Financial Advisor/Finder</p>
                 <p className="font-medium">{vinculo || "-"}</p>
               </div>
+              {user.role === "OPERACOES" && (
+                <div>
+                  <p className="text-muted-foreground text-xs">Tipo de Operação</p>
+                  <p className="font-medium">{user.operacao_tipo || "—"}</p>
+                </div>
+              )}
               <div>
                 <p className="text-muted-foreground text-xs">Área</p>
                 <p className="font-medium">{user.area || "-"}</p>

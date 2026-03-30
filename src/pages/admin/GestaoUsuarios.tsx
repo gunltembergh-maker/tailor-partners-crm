@@ -192,6 +192,7 @@ export default function GestaoUsuarios() {
       isEdit: true,
       area: u.area || "",
       gestor: u.gestor || "",
+      operacao_tipo: u.operacao_tipo || "",
     } as any);
     setFormOpen(true);
   }, []);
