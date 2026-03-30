@@ -140,6 +140,8 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
         p_empresa: empresa,
         p_advisor_name: null,
         p_cpf: cpf.replace(/\D/g, ""),
+        p_area: area || null,
+        p_gestor: gestor || null,
       });
       if (error) throw error;
       const result = data as any;
