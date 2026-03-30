@@ -65,6 +65,8 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
       setBanker(initialData?.banker || "");
       setFinder(initialData?.finder || "");
       setEmpresa(initialData?.empresa || "Tailor Partners");
+      setArea((initialData as any)?.area || "");
+      setGestor((initialData as any)?.gestor || "");
       setEmailError(null);
     }
   }, [open, initialData]);
