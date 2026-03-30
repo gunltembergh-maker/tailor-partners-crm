@@ -133,8 +133,8 @@ export default function GestaoUsuarios() {
     },
   });
 
-  const refetch = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+  const refetch = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
   }, [queryClient]);
 
   // Metrics
