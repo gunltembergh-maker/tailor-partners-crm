@@ -495,9 +495,9 @@ export default function GestaoUsuarios() {
                               <CheckCircle className="h-3.5 w-3.5 text-green-400" />
                             </Button>
                           )}
-                          {!u.active && u.pre_cadastrado && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteUser(u)}>
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          {u.user_id !== user?.id && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50" title="Excluir cadastro" onClick={() => setDeleteUser(u)}>
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
                         </div>
