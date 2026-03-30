@@ -120,6 +120,7 @@ export default function GestaoUsuarios() {
   const [approveUser, setApproveUser] = useState<Usuario | null>(null);
   const [approveRole, setApproveRole] = useState("");
   const [approving, setApproving] = useState(false);
+  const [loadingInviteId, setLoadingInviteId] = useState<string | null>(null);
 
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
