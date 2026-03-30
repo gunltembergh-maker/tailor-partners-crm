@@ -1,12 +1,12 @@
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
 
-const SITE_ID          = 'tailorpartnersinc.sharepoint.com,ebac43bd-13e8-4b23-bf89-b89211280880,a7796130-0ac6-47f3-9711-e1ef995d971a';
-const FOLDER_PATH      = 'Documentos Compartilhados/Bases';
-const AZURE_CLIENT_ID  = Deno.env.get('AZURE_CLIENT_ID')!;
-const AZURE_SECRET     = Deno.env.get('AZURE_CLIENT_SECRET')!;
-const AZURE_TENANT     = Deno.env.get('AZURE_TENANT_ID')!;
-const SUPABASE_URL     = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_KEY      = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const SITE_ID      = 'tailorpartnersinc.sharepoint.com,ebac43bd-13e8-4b23-bf89-b89211280880,a7796130-0ac6-47f3-9711-e1ef995d971a';
+const FOLDER_PATH  = 'Documentos Compartilhados/Bases';
+const CLIENT_ID    = Deno.env.get('GRAPH_CLIENT_ID')!;
+const CLIENT_SECRET = Deno.env.get('GRAPH_CLIENT_SECRET')!;
+const TENANT_ID    = Deno.env.get('GRAPH_TENANT_ID')!;
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const FILE_MAP = [
   {
@@ -53,19 +53,19 @@ const FILE_MAP = [
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 async function getToken(): Promise<string> {
   const r = await fetch(
-    `https://login.microsoftonline.com/${AZURE_TENANT}/oauth2/v2.0/token`,
+    `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type:    'client_credentials',
-        client_id:     AZURE_CLIENT_ID,
-        client_secret: AZURE_SECRET,
+        client_id:     CLIENT_ID,
+        client_secret: CLIENT_SECRET,
         scope:         'https://graph.microsoft.com/.default',
       }),
     }
