@@ -29,6 +29,8 @@ export default function DashboardComercial() {
   } = useDashboardFilters();
   const [activeTab, setActiveTab] = useState("quantitativo");
   const [tabLoading, setTabLoading] = useState(false);
+  const [showBoasVindas, setShowBoasVindas] = useState(false);
+  const { primeiroAcesso, profile, role, area } = useAuth();
   const {
     isRefreshing,
     isManualRefreshing,
@@ -43,6 +45,10 @@ export default function DashboardComercial() {
   const { isLoading: l3 } = useAucMesStackCasa(appliedFilters);
   const { isLoading: l4 } = useReceitaTotal(appliedFilters);
   const isCriticalLoading = l1 || l2 || l3 || l4;
+
+  useEffect(() => {
+    if (primeiroAcesso) setShowBoasVindas(true);
+  }, [primeiroAcesso]);
 
   const handleTabChange = useCallback((tab: string) => {
     setTabLoading(true);
