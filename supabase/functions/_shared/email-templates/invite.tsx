@@ -9,7 +9,7 @@ import {
   Head,
   Heading,
   Html,
-  Link,
+  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -25,26 +25,28 @@ export const InviteEmail = ({
   siteUrl,
   confirmationUrl,
 }: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
+    <Preview>Você foi convidado para o Hub Tailor Partners</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
+        <Img
+          src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png"
+          width="140"
+          height="auto"
+          alt="Tailor Partners"
+          style={{ margin: '0 0 24px' }}
+        />
+        <Heading style={h1}>Você foi convidado</Heading>
         <Text style={text}>
-          You've been invited to join{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
+          Você foi convidado para acessar o Hub Tailor Partners.
+          Clique no botão abaixo para aceitar o convite e criar sua conta.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Accept Invitation
+          Aceitar Convite
         </Button>
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          Se você não esperava este convite, pode ignorar este e-mail com segurança.
         </Text>
       </Container>
     </Body>
@@ -53,24 +55,23 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Source Sans 3', Arial, sans-serif" }
 const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: 'hsl(210, 40%, 17%)',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
+  color: 'hsl(210, 10%, 45%)',
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
+  backgroundColor: 'hsl(210, 40%, 17%)',
+  color: 'hsl(40, 20%, 96%)',
   fontSize: '14px',
   borderRadius: '8px',
   padding: '12px 20px',
