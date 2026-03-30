@@ -232,7 +232,7 @@ export default function GestaoUsuarios() {
 
       toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
-      refetch();
+      await refetch();
     } catch (e: any) {
       toast.error(e.message || "Erro ao excluir cadastro", { duration: 4000 });
     }

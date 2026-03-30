@@ -62,8 +62,7 @@ export function UserDetailSheet({ user, open, onOpenChange }: Props) {
         .from("access_logs")
         .select("logged_in_at, logged_out_at, duration_minutes, ip_address")
         .eq("user_id", user.user_id)
-        .order("logged_in_at", { ascending: false })
-        .limit(20);
+        .order("logged_in_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
