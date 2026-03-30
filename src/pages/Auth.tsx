@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, Eye, EyeOff, Lock } from "lucide-react";
 import { LOGO_LIGHT_BG } from "@/lib/constants";
 import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
