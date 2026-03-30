@@ -137,29 +137,6 @@ export default function GestaoUsuarios() {
     await queryClient.refetchQueries({ queryKey: ["admin-usuarios"], exact: true });
   }, [queryClient]);
 
-  const updateUsuarioInCache = useCallback((usuario: Usuario, action: 'remove' | 'block') => {
-    const normalizedEmail = usuario.email?.toLowerCase().trim();
-    queryClient.setQueryData(["admin-usuarios"], (old: Usuario[] | undefined) => {
-      if (!old) return old;
-      if (action === 'remove') {
-        return old.filter((u) => {
-          const sameEmail = normalizedEmail && u.email?.toLowerCase().trim() === normalizedEmail;
-          const sameUserId = !!usuario.user_id && u.user_id === usuario.user_id;
-          return !sameEmail && !sameUserId;
-        });
-      }
-      // action === 'block': mark as blocked in cache
-      return old.map((u) => {
-        const sameEmail = normalizedEmail && u.email?.toLowerCase().trim() === normalizedEmail;
-        const sameUserId = !!usuario.user_id && u.user_id === usuario.user_id;
-        if (sameEmail || sameUserId) {
-          return { ...u, blocked: true, active: false, pre_cadastrado: false };
-        }
-        return u;
-      });
-    });
-  }, [queryClient]);
-
   // Metrics
   const metrics = useMemo(() => {
     if (!usuarios) return { total: 0, active: 0, preCadastrado: 0, awaiting: 0, blocked: 0 };
@@ -243,22 +220,25 @@ export default function GestaoUsuarios() {
     try {
       const normalizedEmail = deleteUser.email.toLowerCase().trim();
 
-      await supabase
-        .from("team_reference")
-        .delete()
-        .ilike("email", normalizedEmail);
-
       if (deleteUser.tem_conta && deleteUser.user_id) {
-        await supabase
+        const { error: profileError } = await supabase
           .from("profiles")
           .update({ blocked: true, active: false })
           .eq("user_id", deleteUser.user_id);
+
+        if (profileError) throw profileError;
       }
 
-      updateUsuarioInCache(deleteUser, deleteUser.tem_conta ? 'block' : 'remove');
+      const { error: teamRefError } = await supabase
+        .from("team_reference")
+        .delete()
+        .eq("email", normalizedEmail);
+
+      if (teamRefError) throw teamRefError;
+
       toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
-      await refetch();
+      await queryClient.invalidateQueries({ queryKey: ["admin-usuarios"], exact: true });
     } catch (e: any) {
       toast.error(e.message || "Erro ao excluir cadastro", { duration: 4000 });
     }
