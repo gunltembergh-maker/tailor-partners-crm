@@ -134,6 +134,39 @@ export default function Auth() {
               </Button>
             </form>
 
+            <div className="relative my-5">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
+                ou
+              </span>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center gap-3 h-11 border-border"
+              onClick={handleMicrosoftLogin}
+              disabled={msLoading}
+            >
+              {msLoading ? (
+                "Conectando..."
+              ) : (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+                    <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+                    <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+                  </svg>
+                  Entrar com Microsoft
+                </>
+              )}
+            </Button>
+
+            <p className="text-center text-xs text-muted-foreground mt-2">
+              Para colaboradores do Grupo Tailor
+            </p>
+
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Lock className="h-3 w-3" />
               <span>Acesso somente por convite</span>
