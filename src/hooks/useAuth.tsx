@@ -11,6 +11,17 @@ interface AuthContextType {
   permissoes: Record<string, boolean> | null;
   bankerName: string | null;
   finderName: string | null;
+  primeiroAcesso: boolean;
+  area: string | null;
+  isBlocked: boolean;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, nomeCompleto: string, cpf?: string, empresa?: string) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
+}
+  permissoes: Record<string, boolean> | null;
+  bankerName: string | null;
+  finderName: string | null;
   isBlocked: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
