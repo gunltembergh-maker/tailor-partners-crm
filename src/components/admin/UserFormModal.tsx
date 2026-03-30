@@ -51,6 +51,8 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
   const [banker, setBanker] = useState("");
   const [finder, setFinder] = useState("");
   const [empresa, setEmpresa] = useState("Tailor Partners");
+  const [area, setArea] = useState("");
+  const [gestor, setGestor] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -63,6 +65,8 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
       setBanker(initialData?.banker || "");
       setFinder(initialData?.finder || "");
       setEmpresa(initialData?.empresa || "Tailor Partners");
+      setArea((initialData as any)?.area || "");
+      setGestor((initialData as any)?.gestor || "");
       setEmailError(null);
     }
   }, [open, initialData]);
@@ -136,6 +140,8 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
         p_empresa: empresa,
         p_advisor_name: null,
         p_cpf: cpf.replace(/\D/g, ""),
+        p_area: area || null,
+        p_gestor: gestor || null,
       });
       if (error) throw error;
       const result = data as any;
@@ -192,6 +198,14 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
               placeholder="000.000.000-00"
               maxLength={14}
             />
+          </div>
+          <div className="space-y-1">
+            <Label>Área</Label>
+            <Input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Ex: Comercial, Operações, RH" />
+          </div>
+          <div className="space-y-1">
+            <Label>Gestor Direto</Label>
+            <Input value={gestor} onChange={(e) => setGestor(e.target.value)} placeholder="Ex: Felipe Nunes" />
           </div>
           <div className="space-y-1">
             <Label>Perfil de Acesso</Label>

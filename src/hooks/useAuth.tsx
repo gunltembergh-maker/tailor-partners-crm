@@ -11,6 +11,8 @@ interface AuthContextType {
   permissoes: Record<string, boolean> | null;
   bankerName: string | null;
   finderName: string | null;
+  primeiroAcesso: boolean;
+  area: string | null;
   isBlocked: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -28,6 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissoes, setPermissoes] = useState<Record<string, boolean> | null>(null);
   const [bankerName, setBankerName] = useState<string | null>(null);
   const [finderName, setFinderName] = useState<string | null>(null);
+  const [primeiroAcesso, setPrimeiroAcesso] = useState(false);
+  const [area, setArea] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -50,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPermissoes(null);
         setBankerName(null);
         setFinderName(null);
+        setPrimeiroAcesso(false);
+        setArea(null);
         setIsBlocked(false);
         setLoading(false);
       }
@@ -106,6 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPermissoes((perfil.permissoes as Record<string, boolean>) ?? null);
       setBankerName(perfil.banker_name ?? null);
       setFinderName(perfil.finder_name ?? null);
+      setPrimeiroAcesso(perfil.primeiro_acesso ?? false);
+      setArea(perfil.area ?? null);
     } catch {
       await fetchProfileFallback(userId);
     }
@@ -167,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, finderName, isBlocked, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, role, permissoes, bankerName, finderName, primeiroAcesso, area, isBlocked, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

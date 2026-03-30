@@ -8,6 +8,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
+import { getConviteStatus } from "@/components/admin/ConviteBadge";
 
 interface Usuario {
   user_id: string;
@@ -23,6 +24,14 @@ interface Usuario {
   created_at: string | null;
   ultimo_acesso: string | null;
   pre_cadastrado: boolean;
+  area?: string | null;
+  gestor?: string | null;
+  convite_status?: string | null;
+  convite_enviado_em?: string | null;
+  convite_aceito_em?: string | null;
+  convite_expira_em?: string | null;
+  convite_cancelado_em?: string | null;
+  convite_reenvios?: number | null;
 }
 
 function formatCpfFull(cpf: string | null): string {
@@ -64,49 +73,106 @@ export function UserDetailSheet({ user, open, onOpenChange }: Props) {
 
   const status = getStatusBadge(user);
   const vinculo = user.role === "BANKER" ? user.banker_name : user.role === "FINDER" ? user.finder_name : null;
+  const conviteStatus = getConviteStatus(user);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle>{user.full_name || user.email}</SheetTitle>
-          <SheetDescription>Detalhes e histórico de acesso</SheetDescription>
+          <SheetDescription>Detalhes, convite e histórico de acesso</SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-6">
           {/* User info */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-muted-foreground text-xs">E-mail</p>
-              <p className="font-medium">{user.email}</p>
+          <div>
+            <h3 className="text-sm font-semibold mb-3 text-foreground">Dados do Usuário</h3>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-muted-foreground text-xs">E-mail</p>
+                <p className="font-medium">{user.email}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">CPF</p>
+                <p className="font-medium font-mono">{formatCpfFull(user.cpf)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Perfil</p>
+                <p className="font-medium">{user.role || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Financial Advisor/Finder</p>
+                <p className="font-medium">{vinculo || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Área</p>
+                <p className="font-medium">{user.area || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Gestor</p>
+                <p className="font-medium">{user.gestor || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Empresa</p>
+                <p className="font-medium">{user.empresa || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Status</p>
+                <Badge variant="outline" className={status.className}>{status.label}</Badge>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Cadastrado em</p>
+                <p className="font-medium">{user.created_at ? new Date(user.created_at).toLocaleDateString("pt-BR") : "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Último Acesso</p>
+                <p className="font-medium">{user.ultimo_acesso ? formatDateTime(user.ultimo_acesso) : "Nunca"}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-muted-foreground text-xs">CPF</p>
-              <p className="font-medium font-mono">{formatCpfFull(user.cpf)}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Perfil</p>
-              <p className="font-medium">{user.role || "-"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Financial Advisor/Finder</p>
-              <p className="font-medium">{vinculo || "-"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Empresa</p>
-              <p className="font-medium">{user.empresa || "-"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Status</p>
-              <Badge variant="outline" className={status.className}>{status.label}</Badge>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Cadastrado em</p>
-              <p className="font-medium">{user.created_at ? new Date(user.created_at).toLocaleDateString("pt-BR") : "-"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-xs">Último Acesso</p>
-              <p className="font-medium">{user.ultimo_acesso ? formatDateTime(user.ultimo_acesso) : "Nunca"}</p>
+          </div>
+
+          {/* Invite history */}
+          <div>
+            <h3 className="text-sm font-semibold mb-3 text-foreground">Histórico do Convite</h3>
+            <div className="space-y-3">
+              {user.convite_enviado_em && (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-blue-500">📤</span>
+                  <span className="text-muted-foreground">Convite enviado em</span>
+                  <span className="font-medium ml-auto">{formatDateTime(user.convite_enviado_em)}</span>
+                </div>
+              )}
+              {user.convite_expira_em && conviteStatus === "enviado" && (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-orange-500">⏱️</span>
+                  <span className="text-muted-foreground">Expira em</span>
+                  <span className="font-medium ml-auto">{formatDateTime(user.convite_expira_em)}</span>
+                </div>
+              )}
+              {user.convite_aceito_em && (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-green-500">✅</span>
+                  <span className="text-muted-foreground">Convite aceito em</span>
+                  <span className="font-medium ml-auto">{formatDateTime(user.convite_aceito_em)}</span>
+                </div>
+              )}
+              {user.convite_cancelado_em && conviteStatus === "cancelado" && (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-red-500">🚫</span>
+                  <span className="text-muted-foreground">Convite cancelado em</span>
+                  <span className="font-medium ml-auto">{formatDateTime(user.convite_cancelado_em)}</span>
+                </div>
+              )}
+              {(user.convite_reenvios ?? 0) > 0 && (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-muted-foreground">↩️</span>
+                  <span className="text-muted-foreground">Reenvios</span>
+                  <span className="font-medium ml-auto">{user.convite_reenvios}x</span>
+                </div>
+              )}
+              {!user.convite_enviado_em && !user.convite_aceito_em && (
+                <p className="text-sm text-muted-foreground">Nenhum convite enviado.</p>
+              )}
             </div>
           </div>
 

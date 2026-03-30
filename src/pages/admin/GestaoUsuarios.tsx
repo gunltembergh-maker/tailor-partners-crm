@@ -18,9 +18,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle } from "lucide-react";
 import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
+import { ConviteBadge, getConviteStatus } from "@/components/admin/ConviteBadge";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
@@ -50,6 +51,14 @@ interface Usuario {
   ultimo_acesso: string | null;
   created_at: string | null;
   pre_cadastrado: boolean;
+  area: string | null;
+  gestor: string | null;
+  convite_status: string | null;
+  convite_enviado_em: string | null;
+  convite_aceito_em: string | null;
+  convite_expira_em: string | null;
+  convite_cancelado_em: string | null;
+  convite_reenvios: number | null;
 }
 
 function maskCpf(cpf: string | null): string {
@@ -111,6 +120,7 @@ export default function GestaoUsuarios() {
   const [approveUser, setApproveUser] = useState<Usuario | null>(null);
   const [approveRole, setApproveRole] = useState("");
   const [approving, setApproving] = useState(false);
+  const [loadingInviteId, setLoadingInviteId] = useState<string | null>(null);
 
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
@@ -174,7 +184,9 @@ export default function GestaoUsuarios() {
       finder: u.finder_name || "",
       empresa: u.empresa || "Tailor Partners",
       isEdit: true,
-    });
+      area: u.area || "",
+      gestor: u.gestor || "",
+    } as any);
     setFormOpen(true);
   }, []);
 
@@ -247,6 +259,49 @@ export default function GestaoUsuarios() {
       return next;
     });
   }, []);
+
+  const handleConvidar = useCallback(async (u: Usuario, isReenvio = false) => {
+    setLoadingInviteId(u.user_id);
+    try {
+      const { error } = await supabase.functions.invoke("invite-user", {
+        body: {
+          email: u.email,
+          nome: u.full_name,
+          perfil: u.role,
+          area: u.area,
+          gestor: u.gestor,
+          empresa: u.empresa,
+        },
+      });
+      if (error) throw error;
+
+      await supabase.rpc("rpc_registrar_convite" as any, {
+        p_email: u.email,
+        p_acao: isReenvio ? "reenvio" : "enviado",
+      });
+
+      toast({ title: `Convite ${isReenvio ? "re" : ""}enviado para ${u.email}` });
+      refetch();
+    } catch (e: any) {
+      toast({ title: "Erro ao enviar convite", description: e.message, variant: "destructive" });
+    } finally {
+      setLoadingInviteId(null);
+    }
+  }, [refetch, toast]);
+
+  const handleCancelarConvite = useCallback(async (u: Usuario) => {
+    try {
+      await supabase.rpc("rpc_registrar_convite" as any, {
+        p_email: u.email,
+        p_acao: "cancelado",
+      });
+      toast({ title: "Convite cancelado." });
+      refetch();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    }
+  }, [refetch, toast]);
+
 
   const metricCards = useMemo(() => [
     { label: "Total Cadastrados", value: metrics.total, icon: Users, color: "text-primary" },
@@ -351,8 +406,8 @@ export default function GestaoUsuarios() {
                   <TableHead>Perfil</TableHead>
                   <TableHead>Financial Advisor/Finder</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Convite</TableHead>
                   <TableHead>Último Acesso</TableHead>
-                  <TableHead>Cadastrado em</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -360,6 +415,8 @@ export default function GestaoUsuarios() {
                 {filtered.map((u) => {
                   const status = getStatusDisplay(u);
                   const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
+                  const conviteStatus = getConviteStatus(u);
+                  const isInviteLoading = loadingInviteId === u.user_id;
                   return (
                     <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
                       <TableCell className="font-medium">{u.full_name || "-"}</TableCell>
@@ -383,15 +440,31 @@ export default function GestaoUsuarios() {
                       <TableCell>
                         <Badge variant="outline" className={status.className}>{status.label}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{relativeTime(u.ultimo_acesso)}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString("pt-BR") : "-"}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <ConviteBadge usuario={u} />
                       </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{relativeTime(u.ultimo_acesso)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
+                          {/* Invite actions */}
+                          {(conviteStatus === "pendente" || conviteStatus === "cancelado") && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u)}>
+                              <Mail className="h-3.5 w-3.5 text-blue-500" />
+                            </Button>
+                          )}
+                          {(conviteStatus === "enviado" || conviteStatus === "expirado") && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u, true)}>
+                              <RotateCcw className="h-3.5 w-3.5 text-orange-500" />
+                            </Button>
+                          )}
+                          {conviteStatus === "enviado" && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCancelarConvite(u)}>
+                              <XCircle className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
                             {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
                           </Button>
@@ -412,7 +485,7 @@ export default function GestaoUsuarios() {
                 })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                       Nenhum usuário encontrado
                     </TableCell>
                   </TableRow>

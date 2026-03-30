@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ import { useDashboardFilters } from "@/hooks/useDashboardFilters";
 import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
 import { useContasKpis, useCaptacaoKpis, useAucMesStackCasa, useReceitaTotal } from "@/hooks/useDashboardData";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/hooks/useAuth";
+import { BoasVindasModal } from "@/components/admin/BoasVindasModal";
 
 export default function DashboardComercial() {
   const {
@@ -27,6 +29,8 @@ export default function DashboardComercial() {
   } = useDashboardFilters();
   const [activeTab, setActiveTab] = useState("quantitativo");
   const [tabLoading, setTabLoading] = useState(false);
+  const [showBoasVindas, setShowBoasVindas] = useState(false);
+  const { primeiroAcesso, profile, role, area } = useAuth();
   const {
     isRefreshing,
     isManualRefreshing,
@@ -42,6 +46,10 @@ export default function DashboardComercial() {
   const { isLoading: l4 } = useReceitaTotal(appliedFilters);
   const isCriticalLoading = l1 || l2 || l3 || l4;
 
+  useEffect(() => {
+    if (primeiroAcesso) setShowBoasVindas(true);
+  }, [primeiroAcesso]);
+
   const handleTabChange = useCallback((tab: string) => {
     setTabLoading(true);
     setActiveTab(tab);
@@ -50,6 +58,13 @@ export default function DashboardComercial() {
 
   return (
     <AppLayout>
+      {showBoasVindas && profile && (
+        <BoasVindasModal
+          perfil={{ full_name: profile.full_name, role, area }}
+          open={showBoasVindas}
+          onClose={() => setShowBoasVindas(false)}
+        />
+      )}
       <DashboardLoadingScreen isLoading={isCriticalLoading} />
       <LoadingOverlay show={tabLoading} />
       <div style={{ backgroundColor: "#F2F2F2", minHeight: "calc(100vh - 64px)", margin: "-1.5rem", padding: "0" }}>
