@@ -134,7 +134,19 @@ export default function GestaoUsuarios() {
   });
 
   const refetch = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+    await queryClient.refetchQueries({ queryKey: ["admin-usuarios"], exact: true });
+  }, [queryClient]);
+
+  const removeUsuarioFromCache = useCallback((usuario: Usuario) => {
+    const normalizedEmail = usuario.email?.toLowerCase().trim();
+    queryClient.setQueryData(["admin-usuarios"], (old: Usuario[] | undefined) => {
+      if (!old) return old;
+      return old.filter((u) => {
+        const sameEmail = normalizedEmail && u.email?.toLowerCase().trim() === normalizedEmail;
+        const sameUserId = !!usuario.user_id && u.user_id === usuario.user_id;
+        return !sameEmail && !sameUserId;
+      });
+    });
   }, [queryClient]);
 
   // Metrics
@@ -151,10 +163,10 @@ export default function GestaoUsuarios() {
     };
   }, [usuarios]);
 
-  // Awaiting approval (sem pré-cadastro + blocked)
+  // Awaiting approval (sem pré-cadastro + bloqueado + sem perfil definido)
   const awaitingApproval = useMemo(() => {
     if (!usuarios) return [];
-    return usuarios.filter((u) => !u.pre_cadastrado && u.blocked);
+    return usuarios.filter((u) => !u.pre_cadastrado && u.blocked && !u.role);
   }, [usuarios]);
 
   // Filtered list
@@ -218,10 +230,12 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
+      const normalizedEmail = deleteUser.email.toLowerCase().trim();
+
       await supabase
         .from("team_reference")
         .delete()
-        .eq("email", deleteUser.email.toLowerCase().trim());
+        .ilike("email", normalizedEmail);
 
       if (deleteUser.tem_conta && deleteUser.user_id) {
         await supabase
@@ -230,6 +244,7 @@ export default function GestaoUsuarios() {
           .eq("user_id", deleteUser.user_id);
       }
 
+      removeUsuarioFromCache(deleteUser);
       toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
       await refetch();
@@ -366,7 +381,7 @@ export default function GestaoUsuarios() {
                           <CheckCircle className="h-3.5 w-3.5 mr-1" /> Aprovar
                         </Button>
                         {u.user_id !== user?.id && (
-                          <Button size="sm" variant="outline" className="text-red-500 border-red-200 hover:bg-red-50" onClick={() => setDeleteUser(u)}>
+                          <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setDeleteUser(u)}>
                             <Trash2 className="h-3.5 w-3.5 mr-1" /> Recusar
                           </Button>
                         )}
@@ -493,7 +508,7 @@ export default function GestaoUsuarios() {
                             </Button>
                           )}
                           {u.user_id !== user?.id && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50" title="Excluir cadastro" onClick={() => setDeleteUser(u)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir cadastro" onClick={() => setDeleteUser(u)}>
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
