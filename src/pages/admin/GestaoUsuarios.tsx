@@ -51,6 +51,7 @@ interface Usuario {
   ultimo_acesso: string | null;
   created_at: string | null;
   pre_cadastrado: boolean;
+  tem_conta: boolean;
   area: string | null;
   gestor: string | null;
   convite_status: string | null;
@@ -85,8 +86,8 @@ function relativeTime(dateStr: string | null): string {
 
 function getStatusDisplay(u: Usuario) {
   if (u.blocked) return { label: "Bloqueado", className: "bg-red-500/10 text-red-400" };
-  if (!u.pre_cadastrado && !u.active) return { label: "Sem Pré-cadastro", className: "bg-orange-500/10 text-orange-400" };
-  if (!u.active && !u.role) return { label: "Aguardando Cadastro", className: "bg-yellow-500/10 text-yellow-400" };
+  if (!u.tem_conta) return { label: "Pré-cadastrado", className: "bg-blue-500/10 text-blue-400" };
+  if (!u.active && !u.role) return { label: "Aguardando", className: "bg-yellow-500/10 text-yellow-400" };
   return { label: "Ativo", className: "bg-green-500/10 text-green-400" };
 }
 
@@ -137,13 +138,14 @@ export default function GestaoUsuarios() {
 
   // Metrics
   const metrics = useMemo(() => {
-    if (!usuarios) return { total: 0, active: 0, awaiting: 0, blocked: 0 };
+    if (!usuarios) return { total: 0, active: 0, preCadastrado: 0, awaiting: 0, blocked: 0 };
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     return {
       total: usuarios.length,
-      active: usuarios.filter((u) => u.ultimo_acesso && new Date(u.ultimo_acesso) >= thirtyDaysAgo).length,
-      awaiting: usuarios.filter((u) => (!u.active && !u.role) || (!u.pre_cadastrado && u.blocked)).length,
+      active: usuarios.filter((u) => u.tem_conta && u.ultimo_acesso && new Date(u.ultimo_acesso) >= thirtyDaysAgo).length,
+      preCadastrado: usuarios.filter((u) => !u.tem_conta && !u.blocked).length,
+      awaiting: usuarios.filter((u) => u.tem_conta && !u.active && !u.role && !u.blocked).length,
       blocked: usuarios.filter((u) => u.blocked).length,
     };
   }, [usuarios]);
@@ -161,8 +163,9 @@ export default function GestaoUsuarios() {
       const searchLower = search.toLowerCase();
       const matchSearch = !search || (u.full_name?.toLowerCase().includes(searchLower) || u.email?.toLowerCase().includes(searchLower) || u.cpf?.includes(search.replace(/\D/g, "")));
       const matchStatus = statusFilter === "Todos" ||
-        (statusFilter === "Ativo" && u.active && !u.blocked) ||
-        (statusFilter === "Aguardando" && ((!u.active && !u.role) || (!u.pre_cadastrado && u.blocked))) ||
+        (statusFilter === "Ativo" && u.tem_conta && u.active && !u.blocked) ||
+        (statusFilter === "Pré-cadastrado" && !u.tem_conta && !u.blocked) ||
+        (statusFilter === "Aguardando" && u.tem_conta && !u.active && !u.role && !u.blocked) ||
         (statusFilter === "Bloqueado" && u.blocked);
       const matchPerfil = perfilFilter === "Todos" || u.role === perfilFilter;
       return matchSearch && matchStatus && matchPerfil;
@@ -261,7 +264,7 @@ export default function GestaoUsuarios() {
   }, []);
 
   const handleConvidar = useCallback(async (u: Usuario, isReenvio = false) => {
-    setLoadingInviteId(u.user_id);
+    setLoadingInviteId(u.email);
     try {
       const { error } = await supabase.functions.invoke("invite-user", {
         body: {
@@ -304,9 +307,9 @@ export default function GestaoUsuarios() {
 
 
   const metricCards = useMemo(() => [
-    { label: "Total Cadastrados", value: metrics.total, icon: Users, color: "text-primary" },
+    { label: "Total", value: metrics.total, icon: Users, color: "text-primary" },
     { label: "Ativos (30 dias)", value: metrics.active, icon: UserCheck, color: "text-green-400" },
-    { label: "Aguardando", value: metrics.awaiting, icon: Clock, color: "text-yellow-400" },
+    { label: "Pré-cadastrados", value: metrics.preCadastrado, icon: Clock, color: "text-blue-400" },
     { label: "Bloqueados", value: metrics.blocked, icon: ShieldOff, color: "text-red-400" },
   ], [metrics]);
 
@@ -379,6 +382,7 @@ export default function GestaoUsuarios() {
               <SelectContent>
                 <SelectItem value="Todos">Todos</SelectItem>
                 <SelectItem value="Ativo">Ativo</SelectItem>
+                <SelectItem value="Pré-cadastrado">Pré-cadastrado</SelectItem>
                 <SelectItem value="Aguardando">Aguardando</SelectItem>
                 <SelectItem value="Bloqueado">Bloqueado</SelectItem>
               </SelectContent>
@@ -416,7 +420,7 @@ export default function GestaoUsuarios() {
                   const status = getStatusDisplay(u);
                   const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
                   const conviteStatus = getConviteStatus(u);
-                  const isInviteLoading = loadingInviteId === u.user_id;
+                  const isInviteLoading = loadingInviteId === u.email;
                   return (
                     <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
                       <TableCell className="font-medium">{u.full_name || "-"}</TableCell>
@@ -443,7 +447,11 @@ export default function GestaoUsuarios() {
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <ConviteBadge usuario={u} />
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{relativeTime(u.ultimo_acesso)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {u.ultimo_acesso
+                          ? new Date(u.ultimo_acesso).toLocaleDateString("pt-BR") + " " + new Date(u.ultimo_acesso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+                          : "Nunca"}
+                      </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>

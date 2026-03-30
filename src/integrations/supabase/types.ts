@@ -2545,6 +2545,7 @@ export type Database = {
           gestor: string
           pre_cadastrado: boolean
           role: string
+          tem_conta: boolean
           ultimo_acesso: string
           user_id: string
         }[]
@@ -3004,6 +3005,7 @@ export type Database = {
           valor: number
         }[]
       }
+      rpc_registrar_acesso: { Args: never; Returns: undefined }
       rpc_registrar_convite: {
         Args: { p_acao: string; p_email: string }
         Returns: Json
