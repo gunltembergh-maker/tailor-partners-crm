@@ -133,8 +133,8 @@ export default function GestaoUsuarios() {
     },
   });
 
-  const refetch = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+  const refetch = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
   }, [queryClient]);
 
   // Metrics
@@ -209,7 +209,7 @@ export default function GestaoUsuarios() {
       if (error) throw error;
       toast.success(blockUser.blocked ? "Usuário desbloqueado!" : "Usuário bloqueado!", { duration: 3000 });
       setBlockUser(null);
-      refetch();
+      await refetch();
     } catch (e: any) {
       toast.error(e.message || "Erro ao alterar bloqueio", { duration: 4000 });
     }
@@ -232,7 +232,7 @@ export default function GestaoUsuarios() {
 
       toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
-      refetch();
+      await refetch();
     } catch (e: any) {
       toast.error(e.message || "Erro ao excluir cadastro", { duration: 4000 });
     }
@@ -250,7 +250,7 @@ export default function GestaoUsuarios() {
       toast.success("Usuário aprovado!", { duration: 3000 });
       setApproveUser(null);
       setApproveRole("");
-      refetch();
+      await refetch();
     } catch (e: any) {
       toast.error(e.message || "Erro ao aprovar", { duration: 4000 });
     } finally {
