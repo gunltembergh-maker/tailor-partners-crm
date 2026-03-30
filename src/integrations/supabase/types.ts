@@ -1136,6 +1136,36 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_log: {
+        Row: {
+          detalhes: Json | null
+          duracao: string | null
+          erros: Json | null
+          executado_em: string | null
+          id: number
+          sucesso: boolean | null
+          tipo: string | null
+        }
+        Insert: {
+          detalhes?: Json | null
+          duracao?: string | null
+          erros?: Json | null
+          executado_em?: string | null
+          id?: number
+          sucesso?: boolean | null
+          tipo?: string | null
+        }
+        Update: {
+          detalhes?: Json | null
+          duracao?: string | null
+          erros?: Json | null
+          executado_em?: string | null
+          id?: number
+          sucesso?: boolean | null
+          tipo?: string | null
+        }
+        Relationships: []
+      }
       sync_logs: {
         Row: {
           error: string | null
@@ -2648,6 +2678,17 @@ export type Database = {
             }
             Returns: Json
           }
+      rpc_admin_sync_log: {
+        Args: never
+        Returns: {
+          duracao: string
+          erros: Json
+          executado_em: string
+          id: number
+          sucesso: boolean
+          tipo: string
+        }[]
+      }
       rpc_auc_casa: {
         Args: {
           p_advisor?: string[]
@@ -3103,6 +3144,7 @@ export type Database = {
               valor: number
             }[]
           }
+      rpc_refresh_mv_comissoes: { Args: never; Returns: undefined }
       rpc_registrar_acesso: { Args: never; Returns: undefined }
       rpc_registrar_convite: {
         Args: { p_acao: string; p_email: string }
@@ -3169,6 +3211,16 @@ export type Database = {
           roa: number
           tipo_cliente: string
         }[]
+      }
+      rpc_salvar_sync_log: {
+        Args: {
+          p_detalhes?: Json
+          p_duracao: string
+          p_erros?: Json
+          p_sucesso: boolean
+          p_tipo: string
+        }
+        Returns: undefined
       }
       rpc_tabela_clientes: {
         Args: {
