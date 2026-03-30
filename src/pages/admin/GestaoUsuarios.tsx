@@ -137,14 +137,25 @@ export default function GestaoUsuarios() {
     await queryClient.refetchQueries({ queryKey: ["admin-usuarios"], exact: true });
   }, [queryClient]);
 
-  const removeUsuarioFromCache = useCallback((usuario: Usuario) => {
+  const updateUsuarioInCache = useCallback((usuario: Usuario, action: 'remove' | 'block') => {
     const normalizedEmail = usuario.email?.toLowerCase().trim();
     queryClient.setQueryData(["admin-usuarios"], (old: Usuario[] | undefined) => {
       if (!old) return old;
-      return old.filter((u) => {
+      if (action === 'remove') {
+        return old.filter((u) => {
+          const sameEmail = normalizedEmail && u.email?.toLowerCase().trim() === normalizedEmail;
+          const sameUserId = !!usuario.user_id && u.user_id === usuario.user_id;
+          return !sameEmail && !sameUserId;
+        });
+      }
+      // action === 'block': mark as blocked in cache
+      return old.map((u) => {
         const sameEmail = normalizedEmail && u.email?.toLowerCase().trim() === normalizedEmail;
         const sameUserId = !!usuario.user_id && u.user_id === usuario.user_id;
-        return !sameEmail && !sameUserId;
+        if (sameEmail || sameUserId) {
+          return { ...u, blocked: true, active: false, pre_cadastrado: false };
+        }
+        return u;
       });
     });
   }, [queryClient]);
