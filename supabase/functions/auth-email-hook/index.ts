@@ -18,7 +18,7 @@ const corsHeaders = {
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'Confirm your email',
-  invite: "You've been invited",
+  invite: 'Seu acesso ao Hub Tailor Partners está pronto 🎯',
   magiclink: 'Your login link',
   recovery: 'Reset your password',
   email_change: 'Confirm your new email',
@@ -67,6 +67,11 @@ const SAMPLE_DATA: Record<string, object> = {
     siteName: SITE_NAME,
     siteUrl: SAMPLE_PROJECT_URL,
     confirmationUrl: SAMPLE_PROJECT_URL,
+    nomeCompleto: 'Alessandro Oliveira',
+    perfil: 'Financial Advisor',
+    area: 'Wealth Management',
+    gestor: 'Carlos Silva',
+    empresa: 'Tailor Partners',
   },
   email_change: {
     siteName: SITE_NAME,
@@ -218,6 +223,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Build template props from payload.data (HookData structure)
+  const userData = payload.data.user_metadata || {}
   const templateProps = {
     siteName: SITE_NAME,
     siteUrl: `https://${ROOT_DOMAIN}`,
@@ -226,6 +232,12 @@ async function handleWebhook(req: Request): Promise<Response> {
     token: payload.data.token,
     email: payload.data.email,
     newEmail: payload.data.new_email,
+    // Invite-specific fields from user_metadata
+    nomeCompleto: userData.nome_completo || userData.full_name,
+    perfil: userData.perfil,
+    area: userData.area,
+    gestor: userData.gestor,
+    empresa: userData.empresa,
   }
 
   // Render React Email to HTML and plain text
