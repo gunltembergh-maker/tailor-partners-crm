@@ -63,6 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPermissoes(null);
         setBankerName(null);
         setFinderName(null);
+        setPrimeiroAcesso(false);
+        setArea(null);
         setIsBlocked(false);
         setLoading(false);
       }
