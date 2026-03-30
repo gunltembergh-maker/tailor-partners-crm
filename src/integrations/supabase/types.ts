@@ -2956,6 +2956,7 @@ export type Database = {
           anomes: number
           anomes_nome: string
           categoria: string
+          documento: string
           produto: string
           subcategoria: string
           subproduto: string
