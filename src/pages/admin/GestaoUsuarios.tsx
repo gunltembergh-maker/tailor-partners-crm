@@ -207,11 +207,11 @@ export default function GestaoUsuarios() {
         p_blocked: !blockUser.blocked,
       });
       if (error) throw error;
-      toast({ title: blockUser.blocked ? "Usuário desbloqueado!" : "Usuário bloqueado!" });
+      toast.success(blockUser.blocked ? "Usuário desbloqueado!" : "Usuário bloqueado!", { duration: 3000 });
       setBlockUser(null);
       refetch();
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast.error(e.message || "Erro ao alterar bloqueio", { duration: 4000 });
     }
   };
 
