@@ -184,7 +184,9 @@ export default function GestaoUsuarios() {
       finder: u.finder_name || "",
       empresa: u.empresa || "Tailor Partners",
       isEdit: true,
-    });
+      area: u.area || "",
+      gestor: u.gestor || "",
+    } as any);
     setFormOpen(true);
   }, []);
 
