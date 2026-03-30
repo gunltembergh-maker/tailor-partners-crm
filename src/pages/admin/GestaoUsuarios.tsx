@@ -230,10 +230,12 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
+      const normalizedEmail = deleteUser.email.toLowerCase().trim();
+
       await supabase
         .from("team_reference")
         .delete()
-        .eq("email", deleteUser.email.toLowerCase().trim());
+        .ilike("email", normalizedEmail);
 
       if (deleteUser.tem_conta && deleteUser.user_id) {
         await supabase
@@ -242,6 +244,7 @@ export default function GestaoUsuarios() {
           .eq("user_id", deleteUser.user_id);
       }
 
+      removeUsuarioFromCache(deleteUser);
       toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
       setDeleteUser(null);
       await refetch();
