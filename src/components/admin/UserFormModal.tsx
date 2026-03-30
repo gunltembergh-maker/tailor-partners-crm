@@ -53,6 +53,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
   const [empresa, setEmpresa] = useState("Tailor Partners");
   const [area, setArea] = useState("");
   const [gestor, setGestor] = useState("");
+  const [operacaoTipo, setOperacaoTipo] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
