@@ -381,7 +381,7 @@ export default function GestaoUsuarios() {
                           <CheckCircle className="h-3.5 w-3.5 mr-1" /> Aprovar
                         </Button>
                         {u.user_id !== user?.id && (
-                          <Button size="sm" variant="outline" className="text-red-500 border-red-200 hover:bg-red-50" onClick={() => setDeleteUser(u)}>
+                          <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setDeleteUser(u)}>
                             <Trash2 className="h-3.5 w-3.5 mr-1" /> Recusar
                           </Button>
                         )}
