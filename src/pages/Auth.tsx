@@ -9,11 +9,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, Eye, EyeOff, Lock } from "lucide-react";
 import { LOGO_LIGHT_BG } from "@/lib/constants";
+import { Separator } from "@/components/ui/separator";
+import { lovable } from "@/integrations/lovable/index";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [msLoading, setMsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
 
@@ -22,6 +25,23 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isBlocked = searchParams.get("blocked") === "true";
+
+  const handleMicrosoftLogin = async () => {
+    setMsLoading(true);
+    setLoginError("");
+    try {
+      const result = await lovable.auth.signInWithOAuth("microsoft", {
+        redirect_uri: window.location.origin,
+      });
+      if (result?.error) {
+        setLoginError(result.error.message || "Erro ao conectar com Microsoft");
+        toast({ title: "Erro ao conectar com Microsoft", variant: "destructive" });
+      }
+    } catch (err: any) {
+      setLoginError(err?.message ?? "Erro ao conectar com Microsoft");
+    }
+    setMsLoading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +129,39 @@ export default function Auth() {
                 {loading ? "Carregando..." : "Entrar"}
               </Button>
             </form>
+
+            <div className="relative my-5">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
+                ou
+              </span>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center gap-3 h-11 border-border"
+              onClick={handleMicrosoftLogin}
+              disabled={msLoading}
+            >
+              {msLoading ? (
+                "Conectando..."
+              ) : (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+                    <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+                    <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+                  </svg>
+                  Entrar com Microsoft
+                </>
+              )}
+            </Button>
+
+            <p className="text-center text-xs text-muted-foreground mt-2">
+              Para colaboradores do Grupo Tailor
+            </p>
 
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Lock className="h-3 w-3" />
