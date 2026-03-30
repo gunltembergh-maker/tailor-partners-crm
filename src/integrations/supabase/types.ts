@@ -3321,6 +3321,7 @@ export type Database = {
           net: number
         }[]
       }
+      truncate_table: { Args: { table_name: string }; Returns: undefined }
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
