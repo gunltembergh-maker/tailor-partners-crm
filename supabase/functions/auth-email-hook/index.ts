@@ -223,6 +223,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Build template props from payload.data (HookData structure)
+  const userData = payload.data.user_metadata || {}
   const templateProps = {
     siteName: SITE_NAME,
     siteUrl: `https://${ROOT_DOMAIN}`,
@@ -231,6 +232,12 @@ async function handleWebhook(req: Request): Promise<Response> {
     token: payload.data.token,
     email: payload.data.email,
     newEmail: payload.data.new_email,
+    // Invite-specific fields from user_metadata
+    nomeCompleto: userData.nome_completo || userData.full_name,
+    perfil: userData.perfil,
+    area: userData.area,
+    gestor: userData.gestor,
+    empresa: userData.empresa,
   }
 
   // Render React Email to HTML and plain text
