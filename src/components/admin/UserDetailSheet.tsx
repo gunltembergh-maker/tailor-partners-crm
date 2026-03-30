@@ -42,8 +42,8 @@ function formatCpfFull(cpf: string | null): string {
 
 function getStatusBadge(u: Usuario) {
   if (u.blocked) return { label: "Bloqueado", className: "bg-red-500/10 text-red-400" };
-  if (!u.pre_cadastrado && !u.active) return { label: "Sem Pré-cadastro", className: "bg-orange-500/10 text-orange-400" };
-  if (!u.active && !u.role) return { label: "Aguardando Cadastro", className: "bg-yellow-500/10 text-yellow-400" };
+  if (u.tem_conta === false) return { label: "Pré-cadastrado", className: "bg-blue-500/10 text-blue-400" };
+  if (!u.active && !u.role) return { label: "Aguardando", className: "bg-yellow-500/10 text-yellow-400" };
   return { label: "Ativo", className: "bg-green-500/10 text-green-400" };
 }
 

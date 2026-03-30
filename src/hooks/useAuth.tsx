@@ -114,6 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setFinderName(perfil.finder_name ?? null);
       setPrimeiroAcesso(perfil.primeiro_acesso ?? false);
       setArea(perfil.area ?? null);
+
+      // Register access timestamp
+      supabase.rpc("rpc_registrar_acesso" as any).catch(() => {});
     } catch {
       await fetchProfileFallback(userId);
     }

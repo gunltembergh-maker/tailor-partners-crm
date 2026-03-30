@@ -307,9 +307,9 @@ export default function GestaoUsuarios() {
 
 
   const metricCards = useMemo(() => [
-    { label: "Total Cadastrados", value: metrics.total, icon: Users, color: "text-primary" },
+    { label: "Total", value: metrics.total, icon: Users, color: "text-primary" },
     { label: "Ativos (30 dias)", value: metrics.active, icon: UserCheck, color: "text-green-400" },
-    { label: "Aguardando", value: metrics.awaiting, icon: Clock, color: "text-yellow-400" },
+    { label: "Pré-cadastrados", value: metrics.preCadastrado, icon: Clock, color: "text-blue-400" },
     { label: "Bloqueados", value: metrics.blocked, icon: ShieldOff, color: "text-red-400" },
   ], [metrics]);
 
