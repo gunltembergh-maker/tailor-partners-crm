@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import TailorLoader from "@/components/TailorLoader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -102,6 +103,7 @@ const PERFIS_FILTER = ["Todos", "ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR"
 export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [perfilFilter, setPerfilFilter] = useState("Todos");
@@ -217,20 +219,25 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_remover_precadastro" as any, {
-        p_email: deleteUser.email,
-      });
-      if (error) throw error;
-      const result = data as any;
-      if (result?.success === false) {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      } else {
-        toast({ title: "Pré-cadastro removido!" });
-        refetch();
+      // 1. Remove from team_reference
+      await supabase
+        .from("team_reference")
+        .delete()
+        .eq("email", deleteUser.email.toLowerCase().trim());
+
+      // 2. If user has an account, block access
+      if (deleteUser.tem_conta && deleteUser.user_id) {
+        await supabase
+          .from("profiles")
+          .update({ blocked: true, active: false })
+          .eq("user_id", deleteUser.user_id);
       }
+
+      toast({ title: `Cadastro de ${deleteUser.full_name || deleteUser.email} removido.` });
       setDeleteUser(null);
+      refetch();
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast({ title: "Erro ao excluir cadastro", description: e.message, variant: "destructive" });
     }
   };
 
@@ -357,9 +364,16 @@ export default function GestaoUsuarios() {
                         <p className="text-sm font-medium text-foreground">{u.full_name || u.email}</p>
                         <p className="text-xs text-muted-foreground">{u.email}</p>
                       </div>
-                      <Button size="sm" onClick={() => { setApproveUser(u); setApproveRole(""); }}>
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Aprovar
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" onClick={() => { setApproveUser(u); setApproveRole(""); }}>
+                          <CheckCircle className="h-3.5 w-3.5 mr-1" /> Aprovar
+                        </Button>
+                        {u.user_id !== user?.id && (
+                          <Button size="sm" variant="outline" className="text-red-500 border-red-200 hover:bg-red-50" onClick={() => setDeleteUser(u)}>
+                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Recusar
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -481,9 +495,9 @@ export default function GestaoUsuarios() {
                               <CheckCircle className="h-3.5 w-3.5 text-green-400" />
                             </Button>
                           )}
-                          {!u.active && u.pre_cadastrado && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteUser(u)}>
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          {u.user_id !== user?.id && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50" title="Excluir cadastro" onClick={() => setDeleteUser(u)}>
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
                         </div>
@@ -543,14 +557,19 @@ export default function GestaoUsuarios() {
       <AlertDialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover pré-cadastro</AlertDialogTitle>
+            <AlertDialogTitle>Excluir cadastro</AlertDialogTitle>
             <AlertDialogDescription>
-              Remover pré-cadastro de {deleteUser?.email}? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o cadastro de{" "}
+              <strong>{deleteUser?.full_name}</strong>?
+              {deleteUser?.tem_conta
+                ? " O usuário perderá o acesso ao Hub imediatamente."
+                : " O pré-cadastro será removido."}
+              {" "}Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/80">
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
