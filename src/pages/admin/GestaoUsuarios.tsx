@@ -134,7 +134,19 @@ export default function GestaoUsuarios() {
   });
 
   const refetch = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+    await queryClient.refetchQueries({ queryKey: ["admin-usuarios"], exact: true });
+  }, [queryClient]);
+
+  const removeUsuarioFromCache = useCallback((usuario: Usuario) => {
+    const normalizedEmail = usuario.email?.toLowerCase().trim();
+    queryClient.setQueryData(["admin-usuarios"], (old: Usuario[] | undefined) => {
+      if (!old) return old;
+      return old.filter((u) => {
+        const sameEmail = normalizedEmail && u.email?.toLowerCase().trim() === normalizedEmail;
+        const sameUserId = !!usuario.user_id && u.user_id === usuario.user_id;
+        return !sameEmail && !sameUserId;
+      });
+    });
   }, [queryClient]);
 
   // Metrics
@@ -151,10 +163,10 @@ export default function GestaoUsuarios() {
     };
   }, [usuarios]);
 
-  // Awaiting approval (sem pré-cadastro + blocked)
+  // Awaiting approval (sem pré-cadastro + bloqueado + sem perfil definido)
   const awaitingApproval = useMemo(() => {
     if (!usuarios) return [];
-    return usuarios.filter((u) => !u.pre_cadastrado && u.blocked);
+    return usuarios.filter((u) => !u.pre_cadastrado && u.blocked && !u.role);
   }, [usuarios]);
 
   // Filtered list
