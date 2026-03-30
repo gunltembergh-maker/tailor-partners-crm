@@ -30,15 +30,11 @@ export default function Auth() {
     setMsLoading(true);
     setLoginError("");
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'azure',
-        options: {
-          scopes: 'email openid profile',
-          redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
-        }
+      const result = await lovable.auth.signInWithOAuth("microsoft", {
+        redirect_uri: window.location.origin,
       });
-      if (error) {
-        setLoginError(error.message);
+      if (result?.error) {
+        setLoginError(result.error.message || "Erro ao conectar com Microsoft");
         toast({ title: "Erro ao conectar com Microsoft", variant: "destructive" });
       }
     } catch (err: any) {
