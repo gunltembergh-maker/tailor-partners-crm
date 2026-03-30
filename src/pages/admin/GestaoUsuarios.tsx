@@ -51,6 +51,7 @@ interface Usuario {
   ultimo_acesso: string | null;
   created_at: string | null;
   pre_cadastrado: boolean;
+  tem_conta: boolean;
   area: string | null;
   gestor: string | null;
   convite_status: string | null;
