@@ -258,6 +258,49 @@ export default function GestaoUsuarios() {
     });
   }, []);
 
+  const handleConvidar = useCallback(async (u: Usuario, isReenvio = false) => {
+    setLoadingInviteId(u.user_id);
+    try {
+      const { error } = await supabase.functions.invoke("invite-user", {
+        body: {
+          email: u.email,
+          nome: u.full_name,
+          perfil: u.role,
+          area: u.area,
+          gestor: u.gestor,
+          empresa: u.empresa,
+        },
+      });
+      if (error) throw error;
+
+      await supabase.rpc("rpc_registrar_convite" as any, {
+        p_email: u.email,
+        p_acao: isReenvio ? "reenvio" : "enviado",
+      });
+
+      toast({ title: `Convite ${isReenvio ? "re" : ""}enviado para ${u.email}` });
+      refetch();
+    } catch (e: any) {
+      toast({ title: "Erro ao enviar convite", description: e.message, variant: "destructive" });
+    } finally {
+      setLoadingInviteId(null);
+    }
+  }, [refetch, toast]);
+
+  const handleCancelarConvite = useCallback(async (u: Usuario) => {
+    try {
+      await supabase.rpc("rpc_registrar_convite" as any, {
+        p_email: u.email,
+        p_acao: "cancelado",
+      });
+      toast({ title: "Convite cancelado." });
+      refetch();
+    } catch (e: any) {
+      toast({ title: "Erro", description: e.message, variant: "destructive" });
+    }
+  }, [refetch, toast]);
+
+
   const metricCards = useMemo(() => [
     { label: "Total Cadastrados", value: metrics.total, icon: Users, color: "text-primary" },
     { label: "Ativos (30 dias)", value: metrics.active, icon: UserCheck, color: "text-green-400" },
