@@ -60,6 +60,56 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Converter serial Excel → ISO date (igual ao Hub)
+function excelSerialToISO(serial: number): string {
+  return new Date(Math.floor(serial - 25569) * 86400 * 1000).toISOString().split('T')[0];
+}
+
+// Detectar se campo é de data (igual ao Hub)
+function isDateField(key: string): boolean {
+  const k = key.toLowerCase();
+  return k.includes('data') || k.includes('date') || k.includes('dt_') ||
+         k.includes('nascimento') || k.includes('vencimento') || k.includes('competência') ||
+         k.includes('competencia');
+}
+
+// Converter célula (Graph API retorna strings, datas como serial ou "M/D/YY")
+function convertCell(key: string, val: unknown): unknown {
+  if (val === null || val === undefined || val === '') return null;
+
+  // Número — pode ser serial de data
+  if (typeof val === 'number') {
+    if (isDateField(key) && val > 1000 && val < 60000) {
+      return excelSerialToISO(val);
+    }
+    return val;
+  }
+
+  // String — pode ser serial numérico ou data em formato M/D/YY
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed === '') return null;
+
+    // Verificar se é número puro (serial de data vindo como string)
+    const asNum = Number(trimmed);
+    if (!isNaN(asNum) && trimmed !== '' && isDateField(key) && asNum > 1000 && asNum < 60000) {
+      return excelSerialToISO(asNum);
+    }
+
+    // Formato M/D/YY ou M/D/YYYY (como o Excel exporta)
+    if (isDateField(key) && /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(trimmed)) {
+      try {
+        const d = new Date(trimmed);
+        if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+      } catch { /* ignorar */ }
+    }
+
+    return trimmed;
+  }
+
+  return val;
+}
+
 async function getToken(): Promise<string> {
   const r = await fetch(
     `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token`,
@@ -79,7 +129,6 @@ async function getToken(): Promise<string> {
   return d.access_token;
 }
 
-// Ler aba via Graph API — retorna null se não existir
 async function readSheet(token: string, fileId: string, sheetName: string): Promise<Record<string, unknown>[] | null> {
   const enc  = encodeURIComponent(sheetName);
   const url  = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`;
@@ -100,9 +149,9 @@ async function readSheet(token: string, fileId: string, sheetName: string): Prom
     let hasData = false;
     for (let j = 0; j < headers.length; j++) {
       if (!headers[j]) continue;
-      const val = values[i][j];
-      row[headers[j]] = (val === '' || val === undefined) ? null : val;
-      if (val !== null && val !== '' && val !== undefined) hasData = true;
+      const converted = convertCell(headers[j], values[i][j]);
+      row[headers[j]] = converted;
+      if (converted !== null) hasData = true;
     }
     if (hasData) rows.push(row);
   }
@@ -158,12 +207,10 @@ Deno.serve(async (req) => {
   const t0 = Date.now();
 
   try {
-    const body    = await req.json().catch(() => ({}));
-    const tipo    = body.tipo    || 'manual';
-    const arquivo = body.arquivo || 'todos';
-    // "aba" permite processar só uma aba específica dentro do arquivo
-    // Ex: { arquivo: 'base_receita', aba: 'Comissões Histórico' }
-    const abaFiltro: string | null = body.aba || null;
+    const body      = await req.json().catch(() => ({}));
+    const tipo      = body.tipo    || 'manual';
+    const arquivo   = body.arquivo || 'todos';
+    const abaFiltro = body.aba     || null;
 
     const filesToProcess = arquivo === 'todos' ? ALL_FILES : [arquivo];
 
@@ -178,9 +225,8 @@ Deno.serve(async (req) => {
       const fileId = FILE_IDS[fileKey];
       if (!fc || !fileId) { errors.push(`Desconhecido: ${fileKey}`); continue; }
 
-      log.push(`\n📄 ${fileKey}${abaFiltro ? ` / aba: ${abaFiltro}` : ''}`);
+      log.push(`\n📄 ${fileKey}${abaFiltro ? ' / ' + abaFiltro : ''}`);
 
-      // Filtrar abas se parâmetro "aba" foi passado
       const sheetsToProcess = abaFiltro
         ? fc.sheets.filter(s => s.sheet === abaFiltro)
         : fc.sheets;
@@ -210,7 +256,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Refresh MV se incluiu comissões
     if (needsMVRefresh || (arquivo === 'todos' && !abaFiltro)) {
       log.push('\n🔄 Refreshando materialized view...');
       await refreshMV();
