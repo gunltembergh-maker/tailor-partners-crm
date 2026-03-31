@@ -116,47 +116,40 @@ async function getToken(): Promise<string> {
   return d.access_token;
 }
 
-// Inserir chunk via RPC (sem trigger, com flag de truncate apenas no primeiro)
-async function insertChunkRPC(table: string, rows: Record<string, unknown>[], truncate: boolean): Promise<void> {
-  const h = { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` };
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_sync_bulk_insert`, {
-    method: 'POST', headers: h,
-    body: JSON.stringify({ p_table: table, p_rows: rows, p_truncate: truncate })
-  });
-  if (!r.ok) throw new Error(`RPC ${table}: ${(await r.text()).substring(0, 200)}`);
-  const res = await r.json();
-  if (res.success === false) throw new Error(`RPC erro: ${res.error}`);
-}
-
-// Inserir via REST (para tabelas sem trigger)
-async function insertChunkREST(table: string, rows: Record<string, unknown>[], truncate: boolean): Promise<void> {
-  const h = { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` };
-  if (truncate) {
-    await fetch(`${SUPABASE_URL}/rest/v1/rpc/truncate_table`, {
-      method: 'POST', headers: h, body: JSON.stringify({ table_name: table })
-    });
-  }
-  if (!rows.length) return;
-  for (let i = 0; i < rows.length; i += 500) {
-    const batch = rows.slice(i, i + 500).map(r => ({ data: r }));
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-      method: 'POST', headers: { ...h, 'Prefer': 'return=minimal' }, body: JSON.stringify(batch)
-    });
-    if (!r.ok) throw new Error(`REST ${table}: ${(await r.text()).substring(0, 200)}`);
-  }
-}
-
 const RPC_TABLES = new Set(['raw_comissoes_m0', 'raw_comissoes_historico']);
 
-// Processar aba: lê chunk → insere imediatamente → próximo chunk (pipeline)
-async function processSheet(
-  token: string, fileId: string, sheetName: string, table: string,
-  log: string[]
-): Promise<number | null> {
+async function insertChunk(table: string, rows: Record<string, unknown>[], truncate: boolean): Promise<void> {
+  const h = { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` };
+
+  if (RPC_TABLES.has(table)) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_sync_bulk_insert`, {
+      method: 'POST', headers: h,
+      body: JSON.stringify({ p_table: table, p_rows: rows, p_truncate: truncate })
+    });
+    if (!r.ok) throw new Error(`RPC ${table}: ${(await r.text()).substring(0, 200)}`);
+    const res = await r.json();
+    if (res.success === false) throw new Error(`RPC erro: ${res.error}`);
+  } else {
+    if (truncate) {
+      await fetch(`${SUPABASE_URL}/rest/v1/rpc/truncate_table`, {
+        method: 'POST', headers: h, body: JSON.stringify({ table_name: table })
+      });
+    }
+    if (!rows.length) return;
+    for (let i = 0; i < rows.length; i += 500) {
+      const batch = rows.slice(i, i + 500).map(r => ({ data: r }));
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+        method: 'POST', headers: { ...h, 'Prefer': 'return=minimal' }, body: JSON.stringify(batch)
+      });
+      if (!r.ok) throw new Error(`REST ${table}: ${(await r.text()).substring(0, 200)}`);
+    }
+  }
+}
+
+async function getSheetDimensions(token: string, fileId: string, sheetName: string): Promise<{ rowCount: number; columnCount: number; headers: string[] } | null> {
   const enc  = encodeURIComponent(sheetName);
   const base = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}/workbook/worksheets/${enc}`;
 
-  // Pegar dimensões
   const dimResp = await fetch(`${base}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`, {
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -164,33 +157,39 @@ async function processSheet(
   if (!dimResp.ok) throw new Error(`Dim ${sheetName}: ${dimResp.status}`);
 
   const { rowCount, columnCount } = await dimResp.json();
-  if (rowCount < 2) return 0;
+  if (rowCount < 2) return { rowCount, columnCount, headers: [] };
 
   const lastCol = colToLetter(columnCount);
-
-  // Ler headers
   const hdrResp = await fetch(`${base}/range(address='A1:${lastCol}1')?$select=values`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!hdrResp.ok) throw new Error(`Headers: ${hdrResp.status}`);
   const headers: string[] = ((await hdrResp.json()).values[0] || []).map((h: unknown) => String(h ?? '').trim());
 
+  return { rowCount, columnCount, headers };
+}
+
+async function readAndInsertRange(
+  token: string, fileId: string, sheetName: string, table: string,
+  startRow: number, endRow: number, headers: string[], lastCol: string,
+  truncate: boolean, log: string[]
+): Promise<number> {
+  const enc  = encodeURIComponent(sheetName);
+  const base = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}/workbook/worksheets/${enc}`;
+
   let totalInserted = 0;
-  let isFirst = true;
+  let isFirst = truncate;
 
-  // Ler e inserir chunk por chunk (PIPELINE)
-  for (let startRow = 2; startRow <= rowCount; startRow += READ_CHUNK) {
-    const endRow = Math.min(startRow + READ_CHUNK - 1, rowCount);
+  for (let r = startRow; r <= endRow; r += READ_CHUNK) {
+    const end = Math.min(r + READ_CHUNK - 1, endRow);
 
-    // Ler chunk da Graph API
-    const dataResp = await fetch(`${base}/range(address='A${startRow}:${lastCol}${endRow}')?$select=values`, {
+    const dataResp = await fetch(`${base}/range(address='A${r}:${lastCol}${end}')?$select=values`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    if (!dataResp.ok) throw new Error(`Range A${startRow}: ${dataResp.status}`);
+    if (!dataResp.ok) throw new Error(`Range A${r}: ${dataResp.status}`);
 
     const values: unknown[][] = (await dataResp.json()).values || [];
 
-    // Converter linhas
     const rows: Record<string, unknown>[] = [];
     for (const rowVals of values) {
       const row: Record<string, unknown> = {};
@@ -204,16 +203,10 @@ async function processSheet(
       if (hasData) rows.push(row);
     }
 
-    // Inserir imediatamente (sem acumular)
-    if (RPC_TABLES.has(table)) {
-      await insertChunkRPC(table, rows, isFirst);
-    } else {
-      await insertChunkREST(table, rows, isFirst);
-    }
-
-    totalInserted += rows.length;
+    await insertChunk(table, rows, isFirst);
     isFirst = false;
-    log.push(`   📦 ${startRow}-${endRow}: +${rows.length} linhas (total: ${totalInserted})`);
+    totalInserted += rows.length;
+    log.push(`   📦 linhas ${r}-${end}: +${rows.length} (total: ${totalInserted})`);
   }
 
   return totalInserted;
@@ -243,9 +236,14 @@ Deno.serve(async (req) => {
 
   try {
     const body      = await req.json().catch(() => ({}));
-    const tipo      = body.tipo    || 'manual';
-    const arquivo   = body.arquivo || 'todos';
-    const abaFiltro = body.aba     || null;
+    const tipo      = body.tipo      || 'manual';
+    const arquivo   = body.arquivo   || 'todos';
+    const abaFiltro = body.aba       || null;
+
+    // Novo: start_row e end_row para processar fatias (1-based, header=linha 1)
+    // Ex: { arquivo: 'base_receita', aba: 'Comissões Histórico', start_row: 2, end_row: 40000 }
+    const startRow: number | null = body.start_row || null;
+    const endRow: number | null   = body.end_row   || null;
 
     const filesToProcess = arquivo === 'todos' ? ALL_FILES : [arquivo];
 
@@ -259,22 +257,45 @@ Deno.serve(async (req) => {
       const fc = FILE_MAP[fileKey], fileId = FILE_IDS[fileKey];
       if (!fc || !fileId) { errors.push(`Desconhecido: ${fileKey}`); continue; }
 
-      log.push(`\n📄 ${fileKey}${abaFiltro ? ' / ' + abaFiltro : ''}`);
+      log.push(`\n📄 ${fileKey}${abaFiltro ? ' / ' + abaFiltro : ''}${startRow ? ` [rows ${startRow}-${endRow||'fim'}]` : ''}`);
 
       const sheets = abaFiltro ? fc.sheets.filter(s => s.sheet === abaFiltro) : fc.sheets;
 
       for (const sh of sheets) {
         try {
-          const total = await processSheet(token, fileId, sh.sheet, sh.table, log);
+          // Pegar dimensões
+          const dims = await getSheetDimensions(token, fileId, sh.sheet);
 
-          if (total === null) {
+          if (dims === null) {
             sh.required
               ? (errors.push(`${sh.sheet}: não encontrada`), log.push(`   ❌ "${sh.sheet}" não encontrada`))
-              : log.push(`   ⚪ "${sh.sheet}" opcional — não encontrada`);
-          } else {
-            log.push(`   ✅ "${sh.sheet}" → ${sh.table} (${total} linhas total)`);
-            if (fileKey === 'base_receita') needsMVRefresh = true;
+              : log.push(`   ⚪ "${sh.sheet}" opcional`);
+            continue;
           }
+
+          if (dims.rowCount < 2) {
+            log.push(`   ⚠️ "${sh.sheet}" vazia`);
+            continue;
+          }
+
+          const lastCol = colToLetter(dims.columnCount);
+
+          // Se start_row fornecido, usa esse range. Senão processa tudo.
+          const effectiveStart = startRow ?? 2;
+          const effectiveEnd   = endRow   ?? dims.rowCount;
+          const truncate       = !startRow || startRow <= 2; // trunca só na primeira fatia
+
+          log.push(`   📊 Total rows: ${dims.rowCount} | Processando: ${effectiveStart}-${effectiveEnd}`);
+
+          const total = await readAndInsertRange(
+            token, fileId, sh.sheet, sh.table,
+            effectiveStart, effectiveEnd, dims.headers, lastCol,
+            truncate, log
+          );
+
+          log.push(`   ✅ "${sh.sheet}" → ${sh.table} (${total} linhas inseridas)`);
+          if (fileKey === 'base_receita') needsMVRefresh = true;
+
         } catch (e) {
           errors.push(`${sh.sheet}: ${e.message}`);
           log.push(`   ❌ "${sh.sheet}": ${e.message}`);
@@ -282,7 +303,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (needsMVRefresh || (arquivo === 'todos' && !abaFiltro)) {
+    if (needsMVRefresh && !startRow) {
       log.push('\n🔄 Refreshando MV...');
       await refreshMV();
       log.push('✅ mv_comissoes_consolidado atualizado');
