@@ -1,35 +1,22 @@
 
 
-# Atualização de Dependências com Vulnerabilidades
+## Plan: Update sync-sharepoint Edge Function
 
-## Análise
+Replace the entire content of `supabase/functions/sync-sharepoint/index.ts` with the provided code.
 
-O scan de segurança do projeto não inclui auditoria de dependências npm — ele cobre apenas problemas de RLS, edge functions e rotas (todos já corrigidos).
+### Key changes in the new version:
+- Uses `DRIVE_ID` instead of `SITE_ID` for SharePoint access
+- Updated `FOLDER_PATH` from `'Documentos Compartilhados/Bases'` to `'Bases'`
+- Updated `FILE_MAP` with corrected file/sheet names and added `required` flag for optional sheets
+- Added `DePara.xlsm` with `Base CRM` and `DePara` sheets
+- Added `Positivador M0 Agrupado` as optional sheet
+- New `excelDateToISO` function for date conversion
+- Improved `processSheet` with `cellDates: true` and date field detection
+- Enhanced `upsertTable` with multiple delete strategies before insert
+- Download URL now uses `/drives/${DRIVE_ID}/root:/...` path
 
-Porém, analisando o `package.json`, há duas dependências conhecidas por terem vulnerabilidades de alta severidade:
+### Files modified:
+- `supabase/functions/sync-sharepoint/index.ts` — full replacement
 
-1. **`xlsx@0.18.5`** — O SheetJS Community Edition tem vulnerabilidades conhecidas de prototype pollution e arbitrary code execution. Esta é a principal preocupação.
-2. **`jsdom@20.0.3`** (devDependency) — Versão antiga com vulnerabilidades transitivas conhecidas.
-
-## Plano de Correção
-
-### 1. Atualizar `jsdom` (devDependency)
-- Atualizar de `^20.0.3` para `^25.0.1` (última versão estável)
-- Impacto: apenas ambiente de teste, risco zero para produção
-
-### 2. Avaliar `xlsx`
-- O pacote `xlsx` (SheetJS CE) parou de receber patches de segurança na versão gratuita. A versão 0.18.5 é a última disponível no npm.
-- **Opções**:
-  - **A) Manter como está** — o pacote só é usado no client-side (`ImportClients.tsx`) e no edge function (`ingest-sharepoint-file`), ambos processando arquivos internos confiáveis
-  - **B) Migrar para alternativa** como `exceljs` — requer refatoração significativa
-
-### 3. Atualizar outras dependências menores
-- Bump geral de patches/minor para todas as dependências via atualização do `package.json`
-
-## Recomendação
-
-Atualizar `jsdom` para v25 e fazer bump geral de patches. Para o `xlsx`, manter a versão atual dado que os inputs são controlados (arquivos internos da empresa), e a migração para `exceljs` seria um esforço separado maior.
-
-## Arquivos a editar
-- `package.json` — bump `jsdom` e demais dependências
+No other files, screens, or components will be changed.
 
