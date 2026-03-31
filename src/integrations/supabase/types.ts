@@ -3222,6 +3222,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      rpc_sync_bulk_insert: {
+        Args: { p_rows: Json; p_table: string }
+        Returns: Json
+      }
       rpc_tabela_clientes: {
         Args: {
           p_advisor?: string[]
