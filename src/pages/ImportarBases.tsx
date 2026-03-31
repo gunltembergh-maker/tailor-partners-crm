@@ -1,10 +1,15 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
-import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info, Cloud, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ─── MAPEAMENTO COMPLETO: Arquivo → Abas → Tabelas Supabase ───────────────────
 // Cada entrada define quais abas de cada arquivo devem ser importadas
@@ -282,6 +287,47 @@ export default function ImportarBases() {
   const [results, setResults] = useState<BaseResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const { role } = useAuth();
+  const queryClient = useQueryClient();
+
+  // ─── SharePoint Sync (ADMIN only) ─────────────────────────────────────────
+  const [syncing, setSyncing] = useState(false);
+  const [syncLog, setSyncLog] = useState<string[]>([]);
+  const [lastSync, setLastSync] = useState<any>(null);
+
+  useEffect(() => {
+    if (role === 'ADMIN') {
+      supabase.rpc('rpc_admin_sync_log' as any).then(({ data }: any) => {
+        if (data?.[0]) setLastSync(data[0]);
+      });
+    }
+  }, [role]);
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncLog(['🔄 Iniciando sincronização com SharePoint...']);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
+        body: { tipo: 'manual' }
+      });
+      if (error) throw error;
+      setSyncLog(data.log || ['Concluído']);
+      if (data.success) {
+        toast.success('SharePoint sincronizado com sucesso!');
+        queryClient.invalidateQueries();
+      } else {
+        toast.warning(`Sync com ${data.errors?.length} erro(s)`);
+      }
+      supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
+        if (logs?.[0]) setLastSync(logs[0]);
+      });
+    } catch (err: any) {
+      toast.error(`Erro: ${err.message}`);
+      setSyncLog(prev => [...prev, `❌ ${err.message}`]);
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   // ─── Processar arquivo drop ───────────────────────────────────────────────
   const processFile = useCallback(async (file: File) => {
@@ -448,6 +494,54 @@ export default function ImportarBases() {
           Arraste os arquivos Excel. Cada arquivo importa automaticamente todas as abas necessárias.
         </p>
       </div>
+
+      {/* SharePoint Sync Card — ADMIN only */}
+      {role === 'ADMIN' && (
+        <Card className="border-[#082537] border-2">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Cloud className="h-5 w-5 text-[#082537]" />
+                  <h3 className="font-semibold text-[#082537] text-lg">
+                    Sincronizar do SharePoint
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground max-w-lg">
+                  Atualiza automaticamente todos os arquivos da pasta Bases
+                  no SharePoint da Tailor Partners.
+                  Execução automática todo dia às 07h.
+                </p>
+                {lastSync && (
+                  <p className="text-xs text-muted-foreground/70 mt-2">
+                    Última sync: {new Date(lastSync.executado_em).toLocaleString('pt-BR')}
+                    {lastSync.sucesso ? ' ✅' : ' ❌'}
+                    {lastSync.duracao ? ` · ${lastSync.duracao}` : ''}
+                  </p>
+                )}
+              </div>
+              <Button
+                onClick={handleSync}
+                disabled={syncing}
+                className="bg-[#082537] hover:bg-[#0f3d5c] text-white gap-2 min-w-[180px]"
+              >
+                {syncing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" />Sincronizando...</>
+                ) : (
+                  <><RefreshCw className="h-4 w-4" />Sincronizar Agora</>
+                )}
+              </Button>
+            </div>
+            {syncLog.length > 0 && (
+              <div className="mt-4 bg-gray-900 rounded-lg p-4 max-h-48 overflow-y-auto">
+                <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
+                  {syncLog.join('\n')}
+                </pre>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Drop zone */}
       <div
