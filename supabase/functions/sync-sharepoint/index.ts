@@ -1,5 +1,4 @@
 const DRIVE_ID      = 'b!vUOs6-gTI0u_ibiSESgIgDBheafGCvNHlxHh75ldlxq4_43xU1I2ToIsrL0KNAlK';
-const FOLDER_PATH   = 'Bases';
 const CLIENT_ID     = Deno.env.get('GRAPH_CLIENT_ID')!;
 const CLIENT_SECRET = Deno.env.get('GRAPH_CLIENT_SECRET')!;
 const TENANT_ID     = Deno.env.get('GRAPH_TENANT_ID')!;
@@ -18,19 +17,19 @@ const FILE_IDS: Record<string, string> = {
 const FILE_MAP: Record<string, { sheets: { sheet: string; table: string; required: boolean }[] }> = {
   'base_receita': {
     sheets: [
-      { sheet: 'Comissões',           table: 'raw_comissoes_m0',          required: true },
-      { sheet: 'Comissões Histórico', table: 'raw_comissoes_historico',   required: true },
+      { sheet: 'Comissões',           table: 'raw_comissoes_m0',        required: true },
+      { sheet: 'Comissões Histórico',  table: 'raw_comissoes_historico', required: true },
     ]
   },
   'captacao': {
     sheets: [
-      { sheet: 'Captação Total',      table: 'raw_captacao_total',        required: true },
-      { sheet: 'Captação Histórico',  table: 'raw_captacao_historico',    required: true },
+      { sheet: 'Captação Total',      table: 'raw_captacao_total',       required: true },
+      { sheet: 'Captação Histórico',  table: 'raw_captacao_historico',   required: true },
     ]
   },
   'base_contas': {
     sheets: [
-      { sheet: 'Contas Total',        table: 'raw_contas_total',          required: true },
+      { sheet: 'Contas Total',        table: 'raw_contas_total',         required: true },
     ]
   },
   'positivador': {
@@ -61,7 +60,6 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// ── Auth ─────────────────────────────────────────────────────
 async function getToken(): Promise<string> {
   const r = await fetch(
     `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token`,
@@ -81,23 +79,20 @@ async function getToken(): Promise<string> {
   return d.access_token;
 }
 
-// ── Ler aba via Graph Excel API (sem baixar o arquivo) ────────
-async function readSheetViaGraph(token: string, fileId: string, sheetName: string): Promise<Record<string, unknown>[] | null> {
-  const encodedSheet = encodeURIComponent(sheetName);
-  const url = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}/workbook/worksheets/${encodedSheet}/usedRange`;
-
-  const resp = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-  });
+// Ler aba via Graph API — retorna null se não existir
+async function readSheet(token: string, fileId: string, sheetName: string): Promise<Record<string, unknown>[] | null> {
+  const enc  = encodeURIComponent(sheetName);
+  const url  = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}/workbook/worksheets/${enc}/usedRange(valuesOnly=true)`;
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
   if (resp.status === 404) return null;
-  if (!resp.ok) throw new Error(`Graph Excel API: ${resp.status} ${(await resp.text()).substring(0, 200)}`);
+  if (!resp.ok) throw new Error(`Graph ${sheetName}: ${resp.status} ${(await resp.text()).substring(0, 200)}`);
 
-  const data = await resp.json();
+  const data   = await resp.json();
   const values: unknown[][] = data.values;
   if (!values || values.length < 2) return [];
 
-  const headers = values[0].map(h => String(h ?? '').trim());
+  const headers = values[0].map((h: unknown) => String(h ?? '').trim());
   const rows: Record<string, unknown>[] = [];
 
   for (let i = 1; i < values.length; i++) {
@@ -106,8 +101,8 @@ async function readSheetViaGraph(token: string, fileId: string, sheetName: strin
     for (let j = 0; j < headers.length; j++) {
       if (!headers[j]) continue;
       const val = values[i][j];
-      row[headers[j]] = val === '' ? null : val;
-      if (val !== null && val !== '') hasData = true;
+      row[headers[j]] = (val === '' || val === undefined) ? null : val;
+      if (val !== null && val !== '' && val !== undefined) hasData = true;
     }
     if (hasData) rows.push(row);
   }
@@ -115,10 +110,10 @@ async function readSheetViaGraph(token: string, fileId: string, sheetName: strin
   return rows;
 }
 
-// ── Delete + Insert ───────────────────────────────────────────
 async function upsertTable(table: string, rows: Record<string, unknown>[]): Promise<void> {
   const h = { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` };
 
+  // Truncar
   const d1 = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=neq.0`, { method: 'DELETE', headers: h });
   if (!d1.ok) {
     const d2 = await fetch(`${SUPABASE_URL}/rest/v1/${table}?created_at=gte.1970-01-01`, { method: 'DELETE', headers: h });
@@ -129,6 +124,7 @@ async function upsertTable(table: string, rows: Record<string, unknown>[]): Prom
 
   if (!rows.length) return;
 
+  // Inserir em lotes de 500
   for (let i = 0; i < rows.length; i += 500) {
     const batch = rows.slice(i, i + 500).map(row => ({ data: row }));
     const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
@@ -138,7 +134,6 @@ async function upsertTable(table: string, rows: Record<string, unknown>[]): Prom
   }
 }
 
-// ── Refresh MV ────────────────────────────────────────────────
 async function refreshMV(): Promise<void> {
   await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_refresh_mv_comissoes`, {
     method: 'POST',
@@ -147,7 +142,6 @@ async function refreshMV(): Promise<void> {
   });
 }
 
-// ── Salvar log ────────────────────────────────────────────────
 async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], erros: string[]): Promise<void> {
   await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_salvar_sync_log`, {
     method: 'POST',
@@ -156,7 +150,6 @@ async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], er
   });
 }
 
-// ── Handler principal ─────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
@@ -165,9 +158,12 @@ Deno.serve(async (req) => {
   const t0 = Date.now();
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const tipo = body.tipo || 'manual';
+    const body    = await req.json().catch(() => ({}));
+    const tipo    = body.tipo    || 'manual';
     const arquivo = body.arquivo || 'todos';
+    // "aba" permite processar só uma aba específica dentro do arquivo
+    // Ex: { arquivo: 'base_receita', aba: 'Comissões Histórico' }
+    const abaFiltro: string | null = body.aba || null;
 
     const filesToProcess = arquivo === 'todos' ? ALL_FILES : [arquivo];
 
@@ -175,29 +171,38 @@ Deno.serve(async (req) => {
     const token = await getToken();
     log.push('✅ Token obtido');
 
+    let needsMVRefresh = false;
+
     for (const fileKey of filesToProcess) {
-      const fc = FILE_MAP[fileKey];
+      const fc     = FILE_MAP[fileKey];
       const fileId = FILE_IDS[fileKey];
-      if (!fc || !fileId) { errors.push(`Arquivo desconhecido: ${fileKey}`); continue; }
+      if (!fc || !fileId) { errors.push(`Desconhecido: ${fileKey}`); continue; }
 
-      log.push(`\n📄 ${fileKey}`);
+      log.push(`\n📄 ${fileKey}${abaFiltro ? ` / aba: ${abaFiltro}` : ''}`);
 
-      for (const sh of fc.sheets) {
+      // Filtrar abas se parâmetro "aba" foi passado
+      const sheetsToProcess = abaFiltro
+        ? fc.sheets.filter(s => s.sheet === abaFiltro)
+        : fc.sheets;
+
+      for (const sh of sheetsToProcess) {
         try {
-          const rows = await readSheetViaGraph(token, fileId, sh.sheet);
+          const rows = await readSheet(token, fileId, sh.sheet);
 
           if (rows === null) {
             if (sh.required) {
-              errors.push(`${sh.sheet}: aba não encontrada`);
-              log.push(`   ❌ Aba "${sh.sheet}" não encontrada (obrigatória)`);
+              errors.push(`${sh.sheet}: não encontrada`);
+              log.push(`   ❌ "${sh.sheet}" não encontrada (obrigatória)`);
             } else {
-              log.push(`   ⚪ Aba "${sh.sheet}" não encontrada (opcional)`);
+              log.push(`   ⚪ "${sh.sheet}" não encontrada (opcional)`);
             }
             continue;
           }
 
           await upsertTable(sh.table, rows);
           log.push(`   ✅ "${sh.sheet}" → ${sh.table} (${rows.length} linhas)`);
+
+          if (fileKey === 'base_receita') needsMVRefresh = true;
         } catch (e) {
           errors.push(`${sh.sheet}: ${e.message}`);
           log.push(`   ❌ "${sh.sheet}": ${e.message}`);
@@ -205,7 +210,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (filesToProcess.includes('base_receita') || arquivo === 'todos') {
+    // Refresh MV se incluiu comissões
+    if (needsMVRefresh || (arquivo === 'todos' && !abaFiltro)) {
       log.push('\n🔄 Refreshando materialized view...');
       await refreshMV();
       log.push('✅ mv_comissoes_consolidado atualizado');
