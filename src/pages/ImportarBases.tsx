@@ -287,6 +287,47 @@ export default function ImportarBases() {
   const [results, setResults] = useState<BaseResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const { role } = useAuth();
+  const queryClient = useQueryClient();
+
+  // ─── SharePoint Sync (ADMIN only) ─────────────────────────────────────────
+  const [syncing, setSyncing] = useState(false);
+  const [syncLog, setSyncLog] = useState<string[]>([]);
+  const [lastSync, setLastSync] = useState<any>(null);
+
+  useEffect(() => {
+    if (role === 'ADMIN') {
+      supabase.rpc('rpc_admin_sync_log' as any).then(({ data }: any) => {
+        if (data?.[0]) setLastSync(data[0]);
+      });
+    }
+  }, [role]);
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncLog(['🔄 Iniciando sincronização com SharePoint...']);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
+        body: { tipo: 'manual' }
+      });
+      if (error) throw error;
+      setSyncLog(data.log || ['Concluído']);
+      if (data.success) {
+        toast.success('SharePoint sincronizado com sucesso!');
+        queryClient.invalidateQueries();
+      } else {
+        toast.warning(`Sync com ${data.errors?.length} erro(s)`);
+      }
+      supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
+        if (logs?.[0]) setLastSync(logs[0]);
+      });
+    } catch (err: any) {
+      toast.error(`Erro: ${err.message}`);
+      setSyncLog(prev => [...prev, `❌ ${err.message}`]);
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   // ─── Processar arquivo drop ───────────────────────────────────────────────
   const processFile = useCallback(async (file: File) => {
