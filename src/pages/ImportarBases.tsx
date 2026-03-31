@@ -1,10 +1,15 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
-import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info, Cloud, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ─── MAPEAMENTO COMPLETO: Arquivo → Abas → Tabelas Supabase ───────────────────
 // Cada entrada define quais abas de cada arquivo devem ser importadas
