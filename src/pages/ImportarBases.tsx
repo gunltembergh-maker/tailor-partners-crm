@@ -495,6 +495,54 @@ export default function ImportarBases() {
         </p>
       </div>
 
+      {/* SharePoint Sync Card — ADMIN only */}
+      {role === 'ADMIN' && (
+        <Card className="border-[#082537] border-2">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Cloud className="h-5 w-5 text-[#082537]" />
+                  <h3 className="font-semibold text-[#082537] text-lg">
+                    Sincronizar do SharePoint
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground max-w-lg">
+                  Atualiza automaticamente todos os arquivos da pasta Bases
+                  no SharePoint da Tailor Partners.
+                  Execução automática todo dia às 07h.
+                </p>
+                {lastSync && (
+                  <p className="text-xs text-muted-foreground/70 mt-2">
+                    Última sync: {new Date(lastSync.executado_em).toLocaleString('pt-BR')}
+                    {lastSync.sucesso ? ' ✅' : ' ❌'}
+                    {lastSync.duracao ? ` · ${lastSync.duracao}` : ''}
+                  </p>
+                )}
+              </div>
+              <Button
+                onClick={handleSync}
+                disabled={syncing}
+                className="bg-[#082537] hover:bg-[#0f3d5c] text-white gap-2 min-w-[180px]"
+              >
+                {syncing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" />Sincronizando...</>
+                ) : (
+                  <><RefreshCw className="h-4 w-4" />Sincronizar Agora</>
+                )}
+              </Button>
+            </div>
+            {syncLog.length > 0 && (
+              <div className="mt-4 bg-gray-900 rounded-lg p-4 max-h-48 overflow-y-auto">
+                <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
+                  {syncLog.join('\n')}
+                </pre>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Drop zone */}
       <div
         {...getRootProps()}
