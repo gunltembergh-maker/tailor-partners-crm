@@ -459,9 +459,9 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={totalPorTipo} layout="vertical" margin={{top:5,right:30,left:65,bottom:5}}>
               <XAxis type="number" hide/>
-              <YAxis type="category" dataKey="tipo" tick={{fontSize:9,fill:"#6B7280"}} width={60}/>
-              <Tooltip content={<CustomTooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}} formatter={(v)=><span style={{color:CASA_COLORS[v]||"#374151"}}>{v}</span>}/>
+               <YAxis type="category" dataKey="tipo" tick={{fontSize:12,fill:"#6B7280"}} width={60}/>
+               <Tooltip content={<CustomTooltip/>}/>
+               <Legend wrapperStyle={{fontSize:12}} formatter={(v)=><span style={{color:CASA_COLORS[v]||"#374151"}}>{v}</span>}/>
               {casasContas.map((casa)=>(
                 <Bar key={casa} dataKey={casa} stackId="a" fill={CASA_COLORS[casa]||PBI_COLORS[casasContas.indexOf(casa)%PBI_COLORS.length]}/>
               ))}
