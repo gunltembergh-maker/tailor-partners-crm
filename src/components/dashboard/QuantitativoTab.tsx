@@ -562,10 +562,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <AreaChart data={faixaAucRows} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-              <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-              <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
-              <Tooltip content={<Percent100Tooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}} verticalAlign="top"/>
+               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
+               <Tooltip content={<Percent100Tooltip/>}/>
+               <Legend wrapperStyle={{fontSize:12}} verticalAlign="top"/>
               {faixaSeries.map((faixa)=>(
                 <Area key={faixa} type="monotone" dataKey={faixa} stackId="1" cursor="pointer"
                   fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
