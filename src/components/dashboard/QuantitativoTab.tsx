@@ -218,7 +218,7 @@ function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];
           ):<span className="pl-4">{node.label}</span>}
         </TableCell>
         {meses.map(m=>(
-          <TableCell key={m} className="text-[10px] py-0.5 text-right">
+           <TableCell key={m} className="text-xs py-0.5 text-right">
             {node.values[m]?fmtFull(node.values[m]):"—"}
           </TableCell>
         ))}
