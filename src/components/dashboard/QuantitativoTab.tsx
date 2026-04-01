@@ -612,13 +612,13 @@ export function QuantitativoTab({filters}:Props) {
           <Table>
             <TableHeader>
               <TableRow style={{backgroundColor:"#1B2A3D"}}>
-                <TableHead className="text-[10px] py-1.5 sticky left-0 text-white font-bold min-w-[200px]" style={{backgroundColor:"#1B2A3D"}}>
-                  {LEVEL_LABELS[drillLevel] ?? "Categoria"}
-                </TableHead>
-                {activeMeses.map(m=>(
-                  <TableHead key={m} className="text-[10px] py-1.5 text-right text-white font-semibold whitespace-nowrap">{m}</TableHead>
-                ))}
-                <TableHead className="text-[10px] py-1.5 text-right text-white font-bold">Total</TableHead>
+                 <TableHead className="text-xs py-1.5 sticky left-0 text-white font-bold min-w-[200px]" style={{backgroundColor:"#1B2A3D"}}>
+                   {LEVEL_LABELS[drillLevel] ?? "Categoria"}
+                 </TableHead>
+                 {activeMeses.map(m=>(
+                   <TableHead key={m} className="text-xs py-1.5 text-right text-white font-semibold whitespace-nowrap">{m}</TableHead>
+                 ))}
+                 <TableHead className="text-xs py-1.5 text-right text-white font-bold">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
