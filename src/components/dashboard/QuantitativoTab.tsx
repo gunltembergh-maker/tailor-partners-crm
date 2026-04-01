@@ -209,7 +209,7 @@ function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];
   return (
     <>
       <TableRow style={{backgroundColor:bg}}>
-        <TableCell className="text-[10px] py-0.5 sticky left-0 whitespace-nowrap"
+        <TableCell className="text-xs py-0.5 sticky left-0 whitespace-nowrap"
           style={{paddingLeft:node.depth*16+8,backgroundColor:bg,fontWeight:node.depth<2?700:400}}>
           {node.children.length>0?(
             <button onClick={()=>toggle(node.key)} className="inline-flex items-center gap-0.5 hover:text-primary">
