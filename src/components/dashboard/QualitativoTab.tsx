@@ -257,7 +257,7 @@ const AucTooltip = ({ active, payload, label }: any) => {
 const VencAnoTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-[10px]">
+    <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-xs">
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
       {payload.filter((p: any) => p.value > 0).map((p: any, i: number) => (
         <p key={i} style={{ color: p.color }}>{p.name}: {fmtMi(Number(p.value))}</p>
