@@ -2522,7 +2522,7 @@ export type Database = {
         Returns: number
       }
       norm_txt: { Args: { v: string }; Returns: string }
-      normalize_advisor: { Args: { p_advisor: string }; Returns: string }
+      normalize_advisor: { Args: { advisor: string }; Returns: string }
       normalize_banker: { Args: { v: string }; Returns: string }
       normalize_tipo_cliente: { Args: { p_tipo: string }; Returns: string }
       parse_num: { Args: { v: string }; Returns: number }

@@ -80,7 +80,7 @@ function PbiCard({ title, children, className, fill }: { title: string; children
   return (
     <div className={`bg-card border border-border rounded-lg shadow-sm overflow-hidden ${fill ? "flex flex-col h-full" : ""} ${className ?? ""}`}>
       <div className="px-3 py-1.5 border-b border-border">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground">{title}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-foreground">{title}</p>
       </div>
       <div className={`p-2 ${fill ? "flex-1 flex flex-col" : ""}`}>{children}</div>
     </div>
@@ -231,7 +231,7 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow, fill 
 const RoaTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-[10px]">
+     <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-xs">
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} style={{ color: p.color }}>{p.name}: {fmtPct(Number(p.value))}</p>
@@ -243,7 +243,7 @@ const RoaTooltip = ({ active, payload, label }: any) => {
 const AucTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-[10px]">
+     <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-xs">
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} style={{ color: p.color }}>
@@ -257,7 +257,7 @@ const AucTooltip = ({ active, payload, label }: any) => {
 const VencAnoTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-[10px]">
+    <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-xs">
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
       {payload.filter((p: any) => p.value > 0).map((p: any, i: number) => (
         <p key={i} style={{ color: p.color }}>{p.name}: {fmtMi(Number(p.value))}</p>
@@ -456,7 +456,7 @@ export function QualitativoTab({ filters }: Props) {
     if (actualAnomes && !isJanOrJul(actualAnomes)) return null;
     return (
       <g transform={`translate(${x},${y})`}>
-        <text x={0} y={0} dy={12} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize={8}>
+        <text x={0} y={0} dy={12} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize={12}>
           {anomes}
         </text>
       </g>

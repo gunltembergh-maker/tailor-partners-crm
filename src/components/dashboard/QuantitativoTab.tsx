@@ -72,8 +72,8 @@ function PbiCard({title,subtitle,children,className}:{title:string;subtitle?:str
   return (
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${className??""}`}>
       <div className="px-3 py-1.5 border-b border-gray-100">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600">{title}</p>
-        {subtitle && <p className="text-[9px] text-gray-400">{subtitle}</p>}
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+        {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
       </div>
       <div className="p-2">{children}</div>
     </div>
@@ -83,8 +83,8 @@ function PbiCard({title,subtitle,children,className}:{title:string;subtitle?:str
 const CustomTooltip = ({active,payload,label}:any) => {
   if (!active||!payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 shadow-md text-[10px]">
-      <p className="font-semibold mb-0.5 text-gray-800">{label}</p>
+     <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 shadow-md text-xs">
+       <p className="font-semibold mb-0.5 text-gray-800">{label}</p>
       {payload.map((p:any,i:number)=>(
         <p key={i} style={{color:p.color}}>
           {p.name}: {typeof p.value==="number"&&Math.abs(p.value)>100?fmtFull(p.value):p.value}
@@ -98,8 +98,8 @@ const Percent100Tooltip = ({active,payload,label}:any) => {
   if (!active||!payload?.length) return null;
   const total = payload.reduce((s:number,p:any)=>s+(Number(p.value)||0),0);
   return (
-    <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 shadow-md text-[10px]">
-      <p className="font-semibold mb-0.5 text-gray-800">{label}</p>
+     <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 shadow-md text-xs">
+       <p className="font-semibold mb-0.5 text-gray-800">{label}</p>
       {payload.map((p:any,i:number)=>(
         <p key={i} style={{color:p.color}}>{p.name}: {total>0?fmtFull(p.value):0} ({total>0?((p.value/total)*100).toFixed(1):0}%)</p>
       ))}
@@ -111,7 +111,7 @@ const BarTopLabel = ({x,y,width,value}:any) => {
   if (!value||Math.abs(value)<1) return null;
   const abs = Math.abs(value);
   const lbl = abs>=1e6?`${(value/1e6).toFixed(0)}Mi`:abs>=1e3?`${(value/1e3).toFixed(0)}K`:String(Math.round(value));
-  return <text x={x+width/2} y={y-3} textAnchor="middle" fill="#374151" fontSize={8} fontWeight="600">{lbl}</text>;
+  return <text x={x+width/2} y={y-3} textAnchor="middle" fill="#374151" fontSize={12} fontWeight="600">{lbl}</text>;
 };
 
 const TreemapContent = ({x,y,width,height,name,value,index}:any) => {
@@ -121,8 +121,8 @@ const TreemapContent = ({x,y,width,height,name,value,index}:any) => {
       <rect x={x} y={y} width={width} height={height} fill={PBI_COLORS[index%PBI_COLORS.length]} stroke="#fff" strokeWidth={2} rx={2}/>
       {width>40&&height>25&&(
         <>
-          <text x={x+width/2} y={y+height/2-6} textAnchor="middle" fill="#fff" fontSize={9} fontWeight="bold">{name}</text>
-          <text x={x+width/2} y={y+height/2+8} textAnchor="middle" fill="#fff" fontSize={8}>{fmtMi(value)}</text>
+           <text x={x+width/2} y={y+height/2-6} textAnchor="middle" fill="#fff" fontSize={12} fontWeight="bold">{name}</text>
+           <text x={x+width/2} y={y+height/2+8} textAnchor="middle" fill="#fff" fontSize={12}>{fmtMi(value)}</text>
         </>
       )}
     </g>
@@ -138,7 +138,7 @@ function TreemapLegend({data,selected,onSelect,colorMap}:{data:{name:string;valu
         const color=colorMap?.[d.name]||PBI_COLORS[i%PBI_COLORS.length];
         return (
           <button key={d.name} onClick={()=>onSelect(selected===d.name?null:d.name)}
-            className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border transition-opacity ${active?"opacity-100 border-gray-300":"opacity-40 border-transparent"}`}>
+            className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border transition-opacity ${active?"opacity-100 border-gray-300":"opacity-40 border-transparent"}`}>
             <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{backgroundColor:color}}/>
             <span className="truncate max-w-[80px]">{d.name}</span>
             <ChevronRight className="h-2.5 w-2.5 text-gray-400"/>
@@ -209,7 +209,7 @@ function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];
   return (
     <>
       <TableRow style={{backgroundColor:bg}}>
-        <TableCell className="text-[10px] py-0.5 sticky left-0 whitespace-nowrap"
+        <TableCell className="text-xs py-0.5 sticky left-0 whitespace-nowrap"
           style={{paddingLeft:node.depth*16+8,backgroundColor:bg,fontWeight:node.depth<2?700:400}}>
           {node.children.length>0?(
             <button onClick={()=>toggle(node.key)} className="inline-flex items-center gap-0.5 hover:text-primary">
@@ -218,11 +218,11 @@ function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];
           ):<span className="pl-4">{node.label}</span>}
         </TableCell>
         {meses.map(m=>(
-          <TableCell key={m} className="text-[10px] py-0.5 text-right">
+           <TableCell key={m} className="text-xs py-0.5 text-right">
             {node.values[m]?fmtFull(node.values[m]):"—"}
           </TableCell>
         ))}
-        <TableCell className="text-[10px] py-0.5 text-right font-bold">{fmtFull(node.total)}</TableCell>
+        <TableCell className="text-xs py-0.5 text-right font-bold">{fmtFull(node.total)}</TableCell>
       </TableRow>
       {isOpen&&node.children.map(child=>(
         <MatrizRow key={child.key} node={child} meses={meses} expanded={expanded} toggle={toggle}/>
@@ -442,10 +442,10 @@ export function QuantitativoTab({filters}:Props) {
             <ResponsiveContainer width="100%" height={230}>
               <BarChart data={contasComTotal} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-                <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-                <YAxis tick={{fontSize:9,fill:"#6B7280"}}/>
-                <Tooltip content={<CustomTooltip/>}/>
-                <Legend wrapperStyle={{fontSize:10}}/>
+                 <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
+                 <YAxis tick={{fontSize:12,fill:"#6B7280"}}/>
+                 <Tooltip content={<CustomTooltip/>}/>
+                 <Legend wrapperStyle={{fontSize:12}}/>
                 <Bar dataKey="Ativação"    stackId="a" fill={PBI_COLORS[0]} cursor="pointer"/>
                 <Bar dataKey="Habilitação" stackId="a" fill={PBI_COLORS[1]} cursor="pointer"/>
                 <Bar dataKey="Migração"    stackId="a" fill={PBI_COLORS[2]} radius={[2,2,0,0]} cursor="pointer">
@@ -459,9 +459,9 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={totalPorTipo} layout="vertical" margin={{top:5,right:30,left:65,bottom:5}}>
               <XAxis type="number" hide/>
-              <YAxis type="category" dataKey="tipo" tick={{fontSize:9,fill:"#6B7280"}} width={60}/>
-              <Tooltip content={<CustomTooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}} formatter={(v)=><span style={{color:CASA_COLORS[v]||"#374151"}}>{v}</span>}/>
+               <YAxis type="category" dataKey="tipo" tick={{fontSize:12,fill:"#6B7280"}} width={60}/>
+               <Tooltip content={<CustomTooltip/>}/>
+               <Legend wrapperStyle={{fontSize:12}} formatter={(v)=><span style={{color:CASA_COLORS[v]||"#374151"}}>{v}</span>}/>
               {casasContas.map((casa)=>(
                 <Bar key={casa} dataKey={casa} stackId="a" fill={CASA_COLORS[casa]||PBI_COLORS[casasContas.indexOf(casa)%PBI_COLORS.length]}/>
               ))}
@@ -481,10 +481,10 @@ export function QuantitativoTab({filters}:Props) {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={captacaoPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-                <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-                <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
-                <Tooltip content={<CustomTooltip/>}/>
-                <Legend wrapperStyle={{fontSize:9}}/>
+                 <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
+                 <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
+                 <Tooltip content={<CustomTooltip/>}/>
+                 <Legend wrapperStyle={{fontSize:12}}/>
                 {captacaoTipos.map((tipo,i)=>(
                   <Bar key={tipo} dataKey={tipo} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                     radius={i===captacaoTipos.length-1?[2,2,0,0]:undefined}>
@@ -508,10 +508,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={aucPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-              <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-              <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
-              <Tooltip content={<CustomTooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}}/>
+               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
+               <Tooltip content={<CustomTooltip/>}/>
+               <Legend wrapperStyle={{fontSize:12}}/>
               {aucCasas.map((casa,i)=>(
                 <Bar key={casa} dataKey={casa} stackId="a" fill={CASA_COLORS[casa]||PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                   radius={i===aucCasas.length-1?[2,2,0,0]:undefined}>
@@ -529,11 +529,11 @@ export function QuantitativoTab({filters}:Props) {
                 outerRadius={80} innerRadius={45} labelLine={true}
                 label={({cx,cy,midAngle,outerRadius,name,percent})=>{
                   const R=Math.PI/180,x=cx+(outerRadius+22)*Math.cos(-midAngle*R),y=cy+(outerRadius+22)*Math.sin(-midAngle*R);
-                  return <text x={x} y={y} textAnchor={x>cx?"start":"end"} fill="#374151" fontSize={8}>{`${name} (${(percent*100).toFixed(1)}%)`}</text>;
+                  return <text x={x} y={y} textAnchor={x>cx?"start":"end"} fill="#374151" fontSize={12}>{`${name} (${(percent*100).toFixed(1)}%)`}</text>;
                 }}>
                 {aucCasaData.map((e,i)=><Cell key={i} fill={CASA_COLORS[e.name]||PBI_COLORS[i%PBI_COLORS.length]}/>)}
               </Pie>
-              <Legend wrapperStyle={{fontSize:9}}/>
+               <Legend wrapperStyle={{fontSize:12}}/>
               <Tooltip formatter={(v:number)=>fmtFull(v)}/>
             </PieChart>
           </ResponsiveContainer>
@@ -545,10 +545,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <AreaChart data={faixaCliRows} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-              <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-              <YAxis tick={{fontSize:9,fill:"#6B7280"}}/>
-              <Tooltip content={<Percent100Tooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}} verticalAlign="top"/>
+               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:12,fill:"#6B7280"}}/>
+               <Tooltip content={<Percent100Tooltip/>}/>
+               <Legend wrapperStyle={{fontSize:12}} verticalAlign="top"/>
               {faixaSeries.map((faixa)=>(
                 <Area key={faixa} type="monotone" dataKey={faixa} stackId="1" cursor="pointer"
                   fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
@@ -562,10 +562,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <AreaChart data={faixaAucRows} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-              <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-              <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
-              <Tooltip content={<Percent100Tooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}} verticalAlign="top"/>
+               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
+               <Tooltip content={<Percent100Tooltip/>}/>
+               <Legend wrapperStyle={{fontSize:12}} verticalAlign="top"/>
               {faixaSeries.map((faixa)=>(
                 <Area key={faixa} type="monotone" dataKey={faixa} stackId="1" cursor="pointer"
                   fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
@@ -585,11 +585,11 @@ export function QuantitativoTab({filters}:Props) {
           <div className="flex items-center gap-2 px-1 mb-1">
             <button
               onClick={() => setDrillPath(prev => prev.slice(0, -1))}
-              className="flex items-center gap-1 text-[10px] text-primary hover:underline"
-            >
+               className="flex items-center gap-1 text-xs text-primary hover:underline"
+             >
               <ArrowLeft className="h-3 w-3" /> Voltar
             </button>
-            <div className="flex items-center gap-0.5 text-[10px] text-gray-500">
+            <div className="flex items-center gap-0.5 text-xs text-gray-500">
               <button onClick={() => setDrillPath([])} className="hover:underline font-medium">Receita</button>
               {drillPath.map((seg, i) => (
                 <React.Fragment key={i}>
@@ -612,13 +612,13 @@ export function QuantitativoTab({filters}:Props) {
           <Table>
             <TableHeader>
               <TableRow style={{backgroundColor:"#1B2A3D"}}>
-                <TableHead className="text-[10px] py-1.5 sticky left-0 text-white font-bold min-w-[200px]" style={{backgroundColor:"#1B2A3D"}}>
-                  {LEVEL_LABELS[drillLevel] ?? "Categoria"}
-                </TableHead>
-                {activeMeses.map(m=>(
-                  <TableHead key={m} className="text-[10px] py-1.5 text-right text-white font-semibold whitespace-nowrap">{m}</TableHead>
-                ))}
-                <TableHead className="text-[10px] py-1.5 text-right text-white font-bold">Total</TableHead>
+                 <TableHead className="text-xs py-1.5 sticky left-0 text-white font-bold min-w-[200px]" style={{backgroundColor:"#1B2A3D"}}>
+                   {LEVEL_LABELS[drillLevel] ?? "Categoria"}
+                 </TableHead>
+                 {activeMeses.map(m=>(
+                   <TableHead key={m} className="text-xs py-1.5 text-right text-white font-semibold whitespace-nowrap">{m}</TableHead>
+                 ))}
+                 <TableHead className="text-xs py-1.5 text-right text-white font-bold">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -629,13 +629,13 @@ export function QuantitativoTab({filters}:Props) {
                 activeRows.forEach(n => activeMeses.forEach(m => { mt[m] = (mt[m] || 0) + (n.values[m] || 0); }));
                 return (
                   <TableRow style={{ backgroundColor: "#E8EDF3" }}>
-                    <TableCell className="text-[10px] py-1 sticky left-0 font-bold" style={{ backgroundColor: "#E8EDF3" }}>
-                      Total{drillLevel > 0 ? ` ${drillPath[drillPath.length - 1]}` : ""}
-                    </TableCell>
-                    {activeMeses.map(m => (
-                      <TableCell key={m} className="text-[10px] py-1 text-right font-bold">{fmtFull(mt[m] || 0)}</TableCell>
-                    ))}
-                    <TableCell className="text-[10px] py-1 text-right font-bold">{fmtFull(gt)}</TableCell>
+                     <TableCell className="text-xs py-1 sticky left-0 font-bold" style={{ backgroundColor: "#E8EDF3" }}>
+                       Total{drillLevel > 0 ? ` ${drillPath[drillPath.length - 1]}` : ""}
+                     </TableCell>
+                     {activeMeses.map(m => (
+                       <TableCell key={m} className="text-xs py-1 text-right font-bold">{fmtFull(mt[m] || 0)}</TableCell>
+                     ))}
+                     <TableCell className="text-xs py-1 text-right font-bold">{fmtFull(gt)}</TableCell>
                   </TableRow>
                 );
               })()}
@@ -643,7 +643,7 @@ export function QuantitativoTab({filters}:Props) {
               {activeRows.map(row => (
                 <TableRow key={row.categoria} style={{ backgroundColor: "#EEF2FF" }}>
                   <TableCell
-                    className={`text-[10px] py-0.5 sticky left-0 whitespace-nowrap font-bold ${!isLastLevel ? "cursor-pointer" : ""}`}
+                    className={`text-xs py-0.5 sticky left-0 whitespace-nowrap font-bold ${!isLastLevel ? "cursor-pointer" : ""}`}
                     style={{ paddingLeft: 8, backgroundColor: "#EEF2FF" }}
                     onClick={!isLastLevel ? () => setDrillPath(prev => [...prev, row.categoria]) : undefined}
                   >
@@ -656,9 +656,9 @@ export function QuantitativoTab({filters}:Props) {
                     )}
                   </TableCell>
                   {activeMeses.map(m => (
-                    <TableCell key={m} className="text-[10px] py-0.5 text-right">{row.values[m] ? fmtFull(row.values[m]) : "—"}</TableCell>
-                  ))}
-                  <TableCell className="text-[10px] py-0.5 text-right font-bold">{fmtFull(row.total)}</TableCell>
+                     <TableCell key={m} className="text-xs py-0.5 text-right">{row.values[m] ? fmtFull(row.values[m]) : "—"}</TableCell>
+                   ))}
+                   <TableCell className="text-xs py-0.5 text-right font-bold">{fmtFull(row.total)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -672,10 +672,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={receitaPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-              <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-              <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(1)}M`}/>
-              <Tooltip content={<CustomTooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}}/>
+               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(1)}M`}/>
+               <Tooltip content={<CustomTooltip/>}/>
+               <Legend wrapperStyle={{fontSize:12}}/>
               {receitaCats.map((cat,i)=>(
                 <Bar key={cat} dataKey={cat} stackId="a" fill={RECEITA_COLORS[cat]||PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                   radius={i===receitaCats.length-1?[2,2,0,0]:undefined}>

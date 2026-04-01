@@ -90,18 +90,18 @@ export default function DashboardComercial() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
                 <h1 className="text-base font-semibold" style={{ color: "#1B2A3D" }}>Dashboard Comercial</h1>
-                <span className="text-[10px] flex items-center gap-1" style={{ color: "#9CA3AF" }}>
+                <span className="text-xs flex items-center gap-1" style={{ color: "#9CA3AF" }}>
                   <Clock className="h-3 w-3" />
                   Atualizado {atualizadoEmFormatted}
                 </span>
-                <span className="text-[10px] flex items-center gap-1" style={{ color: "#9CA3AF" }}>
+                <span className="text-xs flex items-center gap-1" style={{ color: "#9CA3AF" }}>
                   <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
                   Dados: {dadosAteFormatted}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-[10px] gap-1"
+                  className="h-6 text-xs gap-1"
                   onClick={manualRefresh}
                   disabled={isManualRefreshing}
                 >
@@ -113,11 +113,11 @@ export default function DashboardComercial() {
 
             {activeChips.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: "#6B7280" }}>Seleções:</span>
+                <span className="text-xs uppercase tracking-wider font-medium" style={{ color: "#6B7280" }}>Seleções:</span>
                 {activeChips.map((chip, i) => (
                   <Badge
                     key={`${chip.key}-${chip.value}-${i}`}
-                    className="text-[10px] h-5 gap-1 cursor-pointer px-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+                    className="text-xs h-5 gap-1 cursor-pointer px-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
                     onClick={() => removeChip(chip.key, chip.value)}
                   >
                     {chip.label}: {chip.value}
@@ -129,10 +129,10 @@ export default function DashboardComercial() {
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="mb-3 h-8 bg-white border border-gray-200">
-                <TabsTrigger value="quantitativo" className="text-[11px] h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
+                <TabsTrigger value="quantitativo" className="text-xs h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
                   Quantitativo
                 </TabsTrigger>
-                <TabsTrigger value="qualitativo" className="text-[11px] h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
+                <TabsTrigger value="qualitativo" className="text-xs h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
                   Qualitativo
                 </TabsTrigger>
               </TabsList>
