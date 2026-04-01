@@ -585,8 +585,8 @@ export function QuantitativoTab({filters}:Props) {
           <div className="flex items-center gap-2 px-1 mb-1">
             <button
               onClick={() => setDrillPath(prev => prev.slice(0, -1))}
-              className="flex items-center gap-1 text-[10px] text-primary hover:underline"
-            >
+               className="flex items-center gap-1 text-xs text-primary hover:underline"
+             >
               <ArrowLeft className="h-3 w-3" /> Voltar
             </button>
             <div className="flex items-center gap-0.5 text-[10px] text-gray-500">
