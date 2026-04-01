@@ -442,10 +442,10 @@ export function QuantitativoTab({filters}:Props) {
             <ResponsiveContainer width="100%" height={230}>
               <BarChart data={contasComTotal} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-                 <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
-                 <YAxis tick={{fontSize:12,fill:"#6B7280"}}/>
+                 <XAxis dataKey="_cat" tick={{fontSize:13,fill:"#6B7280"}}/>
+                 <YAxis tick={{fontSize:13,fill:"#6B7280"}}/>
                  <Tooltip content={<CustomTooltip/>}/>
-                 <Legend wrapperStyle={{fontSize:12}}/>
+                 <Legend wrapperStyle={{fontSize:13}}/>
                 <Bar dataKey="Ativação"    stackId="a" fill={PBI_COLORS[0]} cursor="pointer"/>
                 <Bar dataKey="Habilitação" stackId="a" fill={PBI_COLORS[1]} cursor="pointer"/>
                 <Bar dataKey="Migração"    stackId="a" fill={PBI_COLORS[2]} radius={[2,2,0,0]} cursor="pointer">
@@ -459,9 +459,9 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={totalPorTipo} layout="vertical" margin={{top:5,right:30,left:65,bottom:5}}>
               <XAxis type="number" hide/>
-               <YAxis type="category" dataKey="tipo" tick={{fontSize:12,fill:"#6B7280"}} width={60}/>
+               <YAxis type="category" dataKey="tipo" tick={{fontSize:13,fill:"#6B7280"}} width={60}/>
                <Tooltip content={<CustomTooltip/>}/>
-               <Legend wrapperStyle={{fontSize:12}} formatter={(v)=><span style={{color:CASA_COLORS[v]||"#374151"}}>{v}</span>}/>
+               <Legend wrapperStyle={{fontSize:13}} formatter={(v)=><span style={{color:CASA_COLORS[v]||"#374151"}}>{v}</span>}/>
               {casasContas.map((casa)=>(
                 <Bar key={casa} dataKey={casa} stackId="a" fill={CASA_COLORS[casa]||PBI_COLORS[casasContas.indexOf(casa)%PBI_COLORS.length]}/>
               ))}
@@ -481,10 +481,10 @@ export function QuantitativoTab({filters}:Props) {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={captacaoPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-                 <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
-                 <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
+                 <XAxis dataKey="_cat" tick={{fontSize:13,fill:"#6B7280"}}/>
+                 <YAxis tick={{fontSize:13,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
                  <Tooltip content={<CustomTooltip/>}/>
-                 <Legend wrapperStyle={{fontSize:12}}/>
+                 <Legend wrapperStyle={{fontSize:13}}/>
                 {captacaoTipos.map((tipo,i)=>(
                   <Bar key={tipo} dataKey={tipo} stackId="a" fill={PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                     radius={i===captacaoTipos.length-1?[2,2,0,0]:undefined}>
@@ -508,10 +508,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={aucPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
-               <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
+               <XAxis dataKey="_cat" tick={{fontSize:13,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:13,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
                <Tooltip content={<CustomTooltip/>}/>
-               <Legend wrapperStyle={{fontSize:12}}/>
+               <Legend wrapperStyle={{fontSize:13}}/>
               {aucCasas.map((casa,i)=>(
                 <Bar key={casa} dataKey={casa} stackId="a" fill={CASA_COLORS[casa]||PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                   radius={i===aucCasas.length-1?[2,2,0,0]:undefined}>
@@ -533,7 +533,7 @@ export function QuantitativoTab({filters}:Props) {
                 }}>
                 {aucCasaData.map((e,i)=><Cell key={i} fill={CASA_COLORS[e.name]||PBI_COLORS[i%PBI_COLORS.length]}/>)}
               </Pie>
-               <Legend wrapperStyle={{fontSize:12}}/>
+               <Legend wrapperStyle={{fontSize:13}}/>
               <Tooltip formatter={(v:number)=>fmtFull(v)}/>
             </PieChart>
           </ResponsiveContainer>
@@ -545,10 +545,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <AreaChart data={faixaCliRows} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
-               <YAxis tick={{fontSize:12,fill:"#6B7280"}}/>
+               <XAxis dataKey="_cat" tick={{fontSize:13,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:13,fill:"#6B7280"}}/>
                <Tooltip content={<Percent100Tooltip/>}/>
-               <Legend wrapperStyle={{fontSize:12}} verticalAlign="top"/>
+               <Legend wrapperStyle={{fontSize:13}} verticalAlign="top"/>
               {faixaSeries.map((faixa)=>(
                 <Area key={faixa} type="monotone" dataKey={faixa} stackId="1" cursor="pointer"
                   fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
@@ -562,10 +562,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <AreaChart data={faixaAucRows} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
-               <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
+               <XAxis dataKey="_cat" tick={{fontSize:13,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:13,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
                <Tooltip content={<Percent100Tooltip/>}/>
-               <Legend wrapperStyle={{fontSize:12}} verticalAlign="top"/>
+               <Legend wrapperStyle={{fontSize:13}} verticalAlign="top"/>
               {faixaSeries.map((faixa)=>(
                 <Area key={faixa} type="monotone" dataKey={faixa} stackId="1" cursor="pointer"
                   fill={FAIXA_COLORS[faixa]||PBI_COLORS[faixaSeries.indexOf(faixa)%PBI_COLORS.length]}
@@ -672,10 +672,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={receitaPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
-               <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(1)}M`}/>
+               <XAxis dataKey="_cat" tick={{fontSize:13,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:13,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(1)}M`}/>
                <Tooltip content={<CustomTooltip/>}/>
-               <Legend wrapperStyle={{fontSize:12}}/>
+               <Legend wrapperStyle={{fontSize:13}}/>
               {receitaCats.map((cat,i)=>(
                 <Bar key={cat} dataKey={cat} stackId="a" fill={RECEITA_COLORS[cat]||PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                   radius={i===receitaCats.length-1?[2,2,0,0]:undefined}>
