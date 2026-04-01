@@ -121,8 +121,8 @@ const TreemapContent = ({x,y,width,height,name,value,index}:any) => {
       <rect x={x} y={y} width={width} height={height} fill={PBI_COLORS[index%PBI_COLORS.length]} stroke="#fff" strokeWidth={2} rx={2}/>
       {width>40&&height>25&&(
         <>
-          <text x={x+width/2} y={y+height/2-6} textAnchor="middle" fill="#fff" fontSize={9} fontWeight="bold">{name}</text>
-          <text x={x+width/2} y={y+height/2+8} textAnchor="middle" fill="#fff" fontSize={8}>{fmtMi(value)}</text>
+           <text x={x+width/2} y={y+height/2-6} textAnchor="middle" fill="#fff" fontSize={12} fontWeight="bold">{name}</text>
+           <text x={x+width/2} y={y+height/2+8} textAnchor="middle" fill="#fff" fontSize={12}>{fmtMi(value)}</text>
         </>
       )}
     </g>
