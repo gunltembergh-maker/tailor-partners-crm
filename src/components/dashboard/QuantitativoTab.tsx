@@ -643,7 +643,7 @@ export function QuantitativoTab({filters}:Props) {
               {activeRows.map(row => (
                 <TableRow key={row.categoria} style={{ backgroundColor: "#EEF2FF" }}>
                   <TableCell
-                    className={`text-[10px] py-0.5 sticky left-0 whitespace-nowrap font-bold ${!isLastLevel ? "cursor-pointer" : ""}`}
+                    className={`text-xs py-0.5 sticky left-0 whitespace-nowrap font-bold ${!isLastLevel ? "cursor-pointer" : ""}`}
                     style={{ paddingLeft: 8, backgroundColor: "#EEF2FF" }}
                     onClick={!isLastLevel ? () => setDrillPath(prev => [...prev, row.categoria]) : undefined}
                   >
