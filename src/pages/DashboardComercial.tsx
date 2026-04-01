@@ -113,7 +113,7 @@ export default function DashboardComercial() {
 
             {activeChips.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: "#6B7280" }}>Seleções:</span>
+                <span className="text-xs uppercase tracking-wider font-medium" style={{ color: "#6B7280" }}>Seleções:</span>
                 {activeChips.map((chip, i) => (
                   <Badge
                     key={`${chip.key}-${chip.value}-${i}`}
