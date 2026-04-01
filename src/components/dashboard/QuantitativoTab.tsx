@@ -111,7 +111,7 @@ const BarTopLabel = ({x,y,width,value}:any) => {
   if (!value||Math.abs(value)<1) return null;
   const abs = Math.abs(value);
   const lbl = abs>=1e6?`${(value/1e6).toFixed(0)}Mi`:abs>=1e3?`${(value/1e3).toFixed(0)}K`:String(Math.round(value));
-  return <text x={x+width/2} y={y-3} textAnchor="middle" fill="#374151" fontSize={8} fontWeight="600">{lbl}</text>;
+  return <text x={x+width/2} y={y-3} textAnchor="middle" fill="#374151" fontSize={12} fontWeight="600">{lbl}</text>;
 };
 
 const TreemapContent = ({x,y,width,height,name,value,index}:any) => {
