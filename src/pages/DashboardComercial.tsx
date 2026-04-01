@@ -117,7 +117,7 @@ export default function DashboardComercial() {
                 {activeChips.map((chip, i) => (
                   <Badge
                     key={`${chip.key}-${chip.value}-${i}`}
-                    className="text-[10px] h-5 gap-1 cursor-pointer px-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+                    className="text-xs h-5 gap-1 cursor-pointer px-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
                     onClick={() => removeChip(chip.key, chip.value)}
                   >
                     {chip.label}: {chip.value}
