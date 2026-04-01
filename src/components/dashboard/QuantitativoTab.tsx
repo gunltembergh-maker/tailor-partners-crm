@@ -138,7 +138,7 @@ function TreemapLegend({data,selected,onSelect,colorMap}:{data:{name:string;valu
         const color=colorMap?.[d.name]||PBI_COLORS[i%PBI_COLORS.length];
         return (
           <button key={d.name} onClick={()=>onSelect(selected===d.name?null:d.name)}
-            className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border transition-opacity ${active?"opacity-100 border-gray-300":"opacity-40 border-transparent"}`}>
+            className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border transition-opacity ${active?"opacity-100 border-gray-300":"opacity-40 border-transparent"}`}>
             <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{backgroundColor:color}}/>
             <span className="truncate max-w-[80px]">{d.name}</span>
             <ChevronRight className="h-2.5 w-2.5 text-gray-400"/>
