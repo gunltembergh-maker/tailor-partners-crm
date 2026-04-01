@@ -80,7 +80,7 @@ function PbiCard({ title, children, className, fill }: { title: string; children
   return (
     <div className={`bg-card border border-border rounded-lg shadow-sm overflow-hidden ${fill ? "flex flex-col h-full" : ""} ${className ?? ""}`}>
       <div className="px-3 py-1.5 border-b border-border">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground">{title}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-foreground">{title}</p>
       </div>
       <div className={`p-2 ${fill ? "flex-1 flex flex-col" : ""}`}>{children}</div>
     </div>
