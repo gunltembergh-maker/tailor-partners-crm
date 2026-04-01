@@ -101,7 +101,7 @@ export default function DashboardComercial() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-[10px] gap-1"
+                  className="h-6 text-xs gap-1"
                   onClick={manualRefresh}
                   disabled={isManualRefreshing}
                 >
