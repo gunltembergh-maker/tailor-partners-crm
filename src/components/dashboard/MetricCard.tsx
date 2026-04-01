@@ -14,7 +14,7 @@ export function MetricCard({ title, value, subtitle, icon: Icon, loading, classN
   return (
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm px-4 py-3 ${className ?? ""}`}>
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
+        <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
         {Icon && <Icon className="h-3.5 w-3.5" style={{ color: "#9CA3AF" }} />}
       </div>
       {loading ? (
