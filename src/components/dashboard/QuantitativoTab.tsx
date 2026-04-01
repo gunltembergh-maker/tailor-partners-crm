@@ -83,8 +83,8 @@ function PbiCard({title,subtitle,children,className}:{title:string;subtitle?:str
 const CustomTooltip = ({active,payload,label}:any) => {
   if (!active||!payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 shadow-md text-[10px]">
-      <p className="font-semibold mb-0.5 text-gray-800">{label}</p>
+     <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 shadow-md text-xs">
+       <p className="font-semibold mb-0.5 text-gray-800">{label}</p>
       {payload.map((p:any,i:number)=>(
         <p key={i} style={{color:p.color}}>
           {p.name}: {typeof p.value==="number"&&Math.abs(p.value)>100?fmtFull(p.value):p.value}
