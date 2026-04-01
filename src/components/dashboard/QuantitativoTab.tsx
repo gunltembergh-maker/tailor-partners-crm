@@ -222,7 +222,7 @@ function MatrizRow({node,meses,expanded,toggle}:{node:MatrizNode;meses:string[];
             {node.values[m]?fmtFull(node.values[m]):"—"}
           </TableCell>
         ))}
-        <TableCell className="text-[10px] py-0.5 text-right font-bold">{fmtFull(node.total)}</TableCell>
+        <TableCell className="text-xs py-0.5 text-right font-bold">{fmtFull(node.total)}</TableCell>
       </TableRow>
       {isOpen&&node.children.map(child=>(
         <MatrizRow key={child.key} node={child} meses={meses} expanded={expanded} toggle={toggle}/>
