@@ -656,9 +656,9 @@ export function QuantitativoTab({filters}:Props) {
                     )}
                   </TableCell>
                   {activeMeses.map(m => (
-                    <TableCell key={m} className="text-[10px] py-0.5 text-right">{row.values[m] ? fmtFull(row.values[m]) : "—"}</TableCell>
-                  ))}
-                  <TableCell className="text-[10px] py-0.5 text-right font-bold">{fmtFull(row.total)}</TableCell>
+                     <TableCell key={m} className="text-xs py-0.5 text-right">{row.values[m] ? fmtFull(row.values[m]) : "—"}</TableCell>
+                   ))}
+                   <TableCell className="text-xs py-0.5 text-right font-bold">{fmtFull(row.total)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
