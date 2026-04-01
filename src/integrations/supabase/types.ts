@@ -3108,23 +3108,12 @@ export type Database = {
               valor: number
             }[]
           }
-      rpc_receita_total:
-        | {
-            Args: { p_anomes?: number[]; p_banker?: string[] }
-            Returns: {
-              receita: number
-            }[]
-          }
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_finder?: string[]
-            }
-            Returns: {
-              receita: number
-            }[]
-          }
+      rpc_receita_total: {
+        Args: { p_anomes?: number[]; p_banker?: string[]; p_finder?: string[] }
+        Returns: {
+          receita: number
+        }[]
+      }
       rpc_receita_treemap_categoria:
         | {
             Args: { p_anomes?: number[]; p_banker?: string[] }
@@ -3221,6 +3210,16 @@ export type Database = {
           p_tipo: string
         }
         Returns: undefined
+      }
+      rpc_sync_bases_status: {
+        Args: never
+        Returns: {
+          base: string
+          chunks_ativos: number
+          limite_chunk: number
+          linhas_banco: number
+          proximo_split: string
+        }[]
       }
       rpc_sync_bulk_insert:
         | { Args: { p_rows: Json; p_table: string }; Returns: Json }
