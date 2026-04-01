@@ -72,8 +72,8 @@ function PbiCard({title,subtitle,children,className}:{title:string;subtitle?:str
   return (
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${className??""}`}>
       <div className="px-3 py-1.5 border-b border-gray-100">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-600">{title}</p>
-        {subtitle && <p className="text-[9px] text-gray-400">{subtitle}</p>}
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+        {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
       </div>
       <div className="p-2">{children}</div>
     </div>
