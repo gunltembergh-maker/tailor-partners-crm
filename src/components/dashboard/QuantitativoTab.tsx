@@ -589,7 +589,7 @@ export function QuantitativoTab({filters}:Props) {
              >
               <ArrowLeft className="h-3 w-3" /> Voltar
             </button>
-            <div className="flex items-center gap-0.5 text-[10px] text-gray-500">
+            <div className="flex items-center gap-0.5 text-xs text-gray-500">
               <button onClick={() => setDrillPath([])} className="hover:underline font-medium">Receita</button>
               {drillPath.map((seg, i) => (
                 <React.Fragment key={i}>
