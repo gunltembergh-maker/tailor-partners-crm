@@ -529,7 +529,7 @@ export function QuantitativoTab({filters}:Props) {
                 outerRadius={80} innerRadius={45} labelLine={true}
                 label={({cx,cy,midAngle,outerRadius,name,percent})=>{
                   const R=Math.PI/180,x=cx+(outerRadius+22)*Math.cos(-midAngle*R),y=cy+(outerRadius+22)*Math.sin(-midAngle*R);
-                  return <text x={x} y={y} textAnchor={x>cx?"start":"end"} fill="#374151" fontSize={8}>{`${name} (${(percent*100).toFixed(1)}%)`}</text>;
+                  return <text x={x} y={y} textAnchor={x>cx?"start":"end"} fill="#374151" fontSize={12}>{`${name} (${(percent*100).toFixed(1)}%)`}</text>;
                 }}>
                 {aucCasaData.map((e,i)=><Cell key={i} fill={CASA_COLORS[e.name]||PBI_COLORS[i%PBI_COLORS.length]}/>)}
               </Pie>
