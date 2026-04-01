@@ -100,7 +100,7 @@ function DonutChart({ data, title }: { data: { name: string; value: number }[]; 
     const mi = (value / 1e6).toFixed(0);
     const pctStr = (percent * 100).toFixed(0);
     return (
-      <text x={x} y={y} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={11} fill="#111827" fontWeight={600}>
+      <text x={x} y={y} textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={13} fill="#111827" fontWeight={600}>
         R$ {mi} Mi ({pctStr}%)
       </text>
     );
@@ -169,7 +169,7 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow, fill 
         <div className="relative w-60">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            className="h-7 pl-7 text-[10px]"
+            className="h-7 pl-7 text-[12px]"
             placeholder="Buscar..."
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -456,7 +456,7 @@ export function QualitativoTab({ filters }: Props) {
     if (actualAnomes && !isJanOrJul(actualAnomes)) return null;
     return (
       <g transform={`translate(${x},${y})`}>
-        <text x={0} y={0} dy={12} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize={12}>
+        <text x={0} y={0} dy={12} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize={13}>
           {anomes}
         </text>
       </g>
@@ -509,9 +509,9 @@ export function QualitativoTab({ filters }: Props) {
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={aucFaixaChart} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="faixa" tick={{ fontSize: 11, fill: "#374151" }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#374151" }} />
+            <XAxis dataKey="faixa" tick={{ fontSize: 13, fill: "#374151" }} />
+            <YAxis yAxisId="left" tick={{ fontSize: 13, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
+            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 13, fill: "#374151" }} />
             <Tooltip content={<AucTooltip />} />
             <Bar yAxisId="left" dataKey="Net Em M" fill="#1a2e4a" name="NET" radius={[2, 2, 0, 0]}>
               <LabelList dataKey="Net Em M" position="top" formatter={(v: number) => `${Math.round(v / 1e6)} Mi`} style={{ fontSize: 12, fill: "#111827", fontWeight: 700 }} />
@@ -561,8 +561,8 @@ export function QualitativoTab({ filters }: Props) {
         <ResponsiveContainer width="100%" height={320}>
           <BarChart data={vencAnoChart} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="ano" tick={{ fontSize: 11, fill: "#374151" }} />
-            <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
+            <XAxis dataKey="ano" tick={{ fontSize: 13, fill: "#374151" }} />
+            <YAxis tick={{ fontSize: 13, fill: "#374151" }} tickFormatter={(v) => `${Math.round(v / 1e6)} Mi`} />
             <Tooltip content={<VencAnoTooltip />} />
             <Legend wrapperStyle={{ fontSize: 12, color: "#111827", fontWeight: 500 }} />
             {vencAnoProducts.map((p, i) => (
@@ -612,17 +612,17 @@ export function QualitativoTab({ filters }: Props) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical horizontal={false} />
                 {/* Vertical dashed grid at 6-month intervals */}
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
-                <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#374151" }} interval={0}
+                <XAxis dataKey="mes" tick={{ fontSize: 13, fill: "#374151" }} interval={0}
                   tickFormatter={(val) => {
                     const dp = roaTipoChart.find(d => d.mes === val);
                     return dp && isJanOrJul(dp.anomes) ? val : "";
                   }}
                 />
-                <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => fmtPct(v)} />
+                <YAxis tick={{ fontSize: 13, fill: "#374151" }} tickFormatter={(v) => fmtPct(v)} />
                 <Tooltip content={<RoaTooltip />} />
                 {roaTipoKeys.map(k => (
                   <Line key={k} type="monotone" dataKey={k} stroke={ROA_TIPO_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
-                    <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 11, fill: "#111827", fontWeight: 700 }} />
+                    <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 13, fill: "#111827", fontWeight: 700 }} />
                   </Line>
                 ))}
               </LineChart>
@@ -658,17 +658,17 @@ export function QualitativoTab({ filters }: Props) {
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={roaFaixaChart} margin={{ top: 15, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" horizontal={false} />
-              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#374151" }} interval={0}
+              <XAxis dataKey="mes" tick={{ fontSize: 13, fill: "#374151" }} interval={0}
                 tickFormatter={(val) => {
                   const dp = roaFaixaChart.find(d => d.mes === val);
                   return dp && isJanOrJul(dp.anomes) ? val : "";
                 }}
               />
-              <YAxis tick={{ fontSize: 11, fill: "#374151" }} tickFormatter={(v) => fmtPct(v)} />
+              <YAxis tick={{ fontSize: 13, fill: "#374151" }} tickFormatter={(v) => fmtPct(v)} />
               <Tooltip content={<RoaTooltip />} />
               {roaFaixaKeys.map(k => (
                 <Line key={k} type="monotone" dataKey={k} stroke={ROA_FAIXA_COLORS[k] || "#999"} strokeWidth={2} dot={{ r: 3 }} name={k}>
-                  <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 11, fill: "#111827", fontWeight: 700 }} />
+                  <LabelList dataKey={k} position="top" formatter={(v: number) => fmtPct(v)} style={{ fontSize: 13, fill: "#111827", fontWeight: 700 }} />
                 </Line>
               ))}
             </LineChart>
