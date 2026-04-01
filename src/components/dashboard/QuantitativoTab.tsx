@@ -508,10 +508,10 @@ export function QuantitativoTab({filters}:Props) {
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={aucPorMes} margin={CM} onClick={handleChartClick} style={{cursor:"pointer"}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB"/>
-              <XAxis dataKey="_cat" tick={{fontSize:9,fill:"#6B7280"}}/>
-              <YAxis tick={{fontSize:9,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
-              <Tooltip content={<CustomTooltip/>}/>
-              <Legend wrapperStyle={{fontSize:9}}/>
+               <XAxis dataKey="_cat" tick={{fontSize:12,fill:"#6B7280"}}/>
+               <YAxis tick={{fontSize:12,fill:"#6B7280"}} tickFormatter={v=>`${(v/1e6).toFixed(0)}M`}/>
+               <Tooltip content={<CustomTooltip/>}/>
+               <Legend wrapperStyle={{fontSize:12}}/>
               {aucCasas.map((casa,i)=>(
                 <Bar key={casa} dataKey={casa} stackId="a" fill={CASA_COLORS[casa]||PBI_COLORS[i%PBI_COLORS.length]} cursor="pointer"
                   radius={i===aucCasas.length-1?[2,2,0,0]:undefined}>
