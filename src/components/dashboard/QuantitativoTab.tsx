@@ -533,7 +533,7 @@ export function QuantitativoTab({filters}:Props) {
                 }}>
                 {aucCasaData.map((e,i)=><Cell key={i} fill={CASA_COLORS[e.name]||PBI_COLORS[i%PBI_COLORS.length]}/>)}
               </Pie>
-              <Legend wrapperStyle={{fontSize:9}}/>
+               <Legend wrapperStyle={{fontSize:12}}/>
               <Tooltip formatter={(v:number)=>fmtFull(v)}/>
             </PieChart>
           </ResponsiveContainer>
