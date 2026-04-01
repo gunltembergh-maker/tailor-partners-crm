@@ -629,13 +629,13 @@ export function QuantitativoTab({filters}:Props) {
                 activeRows.forEach(n => activeMeses.forEach(m => { mt[m] = (mt[m] || 0) + (n.values[m] || 0); }));
                 return (
                   <TableRow style={{ backgroundColor: "#E8EDF3" }}>
-                    <TableCell className="text-[10px] py-1 sticky left-0 font-bold" style={{ backgroundColor: "#E8EDF3" }}>
-                      Total{drillLevel > 0 ? ` ${drillPath[drillPath.length - 1]}` : ""}
-                    </TableCell>
-                    {activeMeses.map(m => (
-                      <TableCell key={m} className="text-[10px] py-1 text-right font-bold">{fmtFull(mt[m] || 0)}</TableCell>
-                    ))}
-                    <TableCell className="text-[10px] py-1 text-right font-bold">{fmtFull(gt)}</TableCell>
+                     <TableCell className="text-xs py-1 sticky left-0 font-bold" style={{ backgroundColor: "#E8EDF3" }}>
+                       Total{drillLevel > 0 ? ` ${drillPath[drillPath.length - 1]}` : ""}
+                     </TableCell>
+                     {activeMeses.map(m => (
+                       <TableCell key={m} className="text-xs py-1 text-right font-bold">{fmtFull(mt[m] || 0)}</TableCell>
+                     ))}
+                     <TableCell className="text-xs py-1 text-right font-bold">{fmtFull(gt)}</TableCell>
                   </TableRow>
                 );
               })()}
