@@ -456,7 +456,7 @@ export function QualitativoTab({ filters }: Props) {
     if (actualAnomes && !isJanOrJul(actualAnomes)) return null;
     return (
       <g transform={`translate(${x},${y})`}>
-        <text x={0} y={0} dy={12} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize={12}>
+        <text x={0} y={0} dy={12} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize={13}>
           {anomes}
         </text>
       </g>
