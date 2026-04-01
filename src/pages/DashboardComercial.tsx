@@ -90,11 +90,11 @@ export default function DashboardComercial() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
                 <h1 className="text-base font-semibold" style={{ color: "#1B2A3D" }}>Dashboard Comercial</h1>
-                <span className="text-[10px] flex items-center gap-1" style={{ color: "#9CA3AF" }}>
+                <span className="text-xs flex items-center gap-1" style={{ color: "#9CA3AF" }}>
                   <Clock className="h-3 w-3" />
                   Atualizado {atualizadoEmFormatted}
                 </span>
-                <span className="text-[10px] flex items-center gap-1" style={{ color: "#9CA3AF" }}>
+                <span className="text-xs flex items-center gap-1" style={{ color: "#9CA3AF" }}>
                   <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
                   Dados: {dadosAteFormatted}
                 </span>
