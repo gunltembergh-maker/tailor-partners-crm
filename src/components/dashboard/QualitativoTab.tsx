@@ -231,7 +231,7 @@ function SortableTable({ columns, rows, maxH = 300, searchKeys, footerRow, fill 
 const RoaTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-[10px]">
+     <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-xs">
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} style={{ color: p.color }}>{p.name}: {fmtPct(Number(p.value))}</p>
