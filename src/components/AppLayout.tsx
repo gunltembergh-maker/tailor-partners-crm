@@ -13,7 +13,7 @@ import { LoadingOverlay } from "@/components/LoadingOverlay";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
-  const { viewAsUserId, viewAsProfile, setViewAs, teamMembers, isLider, viewLoading } = useViewAs();
+  const { viewAsKey, viewAsProfile, setViewAs, teamMembers, isLider, viewLoading } = useViewAs();
   const firstName = profile?.full_name?.split(" ")[0] || "Usuário";
 
   return (
@@ -29,6 +29,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <Eye className="h-3.5 w-3.5" />
                 <span>
                   Visualizando como: <strong>{viewAsProfile.full_name}</strong> ({roleLabels[viewAsProfile.role] || viewAsProfile.role})
+                  {viewAsProfile.preCadastrado && (
+                    <Badge variant="outline" className="ml-2 text-[10px] h-4 border-amber-700 text-amber-900">
+                      Pré-cadastrado
+                    </Badge>
+                  )}
                 </span>
               </div>
               <Button
@@ -58,7 +63,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-muted-foreground" />
                   <Select
-                    value={viewAsUserId || "__self__"}
+                    value={viewAsKey || "__self__"}
                     onValueChange={(v) => setViewAs(v === "__self__" ? null : v)}
                   >
                     <SelectTrigger className="w-[220px] h-8 text-xs">
@@ -67,8 +72,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     <SelectContent>
                       <SelectItem value="__self__">Minha visão</SelectItem>
                       {teamMembers.map((m) => (
-                        <SelectItem key={m.user_id} value={m.user_id}>
+                        <SelectItem key={m.key} value={m.key}>
                           {m.full_name} ({roleLabels[m.role] || m.role})
+                          {m.preCadastrado ? " 📋" : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>

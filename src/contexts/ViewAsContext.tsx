@@ -3,35 +3,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 export interface ViewAsProfile {
-  user_id: string;
+  /** Stable key used for selection — email-based to support pre-registered users */
+  key: string;
+  user_id: string | null;
   full_name: string;
   role: string;
   banker_name: string | null;
   finder_name: string | null;
   advisor_name: string | null;
+  preCadastrado: boolean;
 }
 
 interface ViewAsContextType {
-  viewAsUserId: string | null;
+  viewAsKey: string | null;
   viewAsProfile: ViewAsProfile | null;
-  setViewAs: (userId: string | null) => void;
+  setViewAs: (key: string | null) => void;
   teamMembers: ViewAsProfile[];
   isLider: boolean;
   viewLoading: boolean;
+  /** @deprecated use viewAsKey */
+  viewAsUserId: string | null;
 }
 
 const ViewAsContext = createContext<ViewAsContextType>({
-  viewAsUserId: null,
+  viewAsKey: null,
   viewAsProfile: null,
   setViewAs: () => {},
   teamMembers: [],
   isLider: false,
   viewLoading: false,
+  viewAsUserId: null,
 });
 
 export function ViewAsProvider({ children }: { children: ReactNode }) {
   const { role } = useAuth();
-  const [viewAsUserId, setViewAsId] = useState<string | null>(null);
+  const [viewAsKey, setViewAsKey] = useState<string | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<ViewAsProfile[]>([]);
   const isLider = role === "LIDER" || role === "ADMIN";
@@ -42,32 +48,44 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
       const { data } = await supabase.rpc("rpc_admin_lista_usuarios" as any);
       if (!data) return;
       const members: ViewAsProfile[] = (data as any[])
-        .filter((u: any) => u.user_id) // exclude pre-registered users without auth account
+        .filter((u: any) => u.email) // must have email
         .map((u: any) => ({
-          user_id: u.user_id,
+          key: u.email as string,
+          user_id: u.user_id ?? null,
           full_name: u.full_name || "Usuário",
           role: u.role || "",
           banker_name: u.banker_name ?? null,
           finder_name: u.finder_name ?? null,
           advisor_name: u.advisor_name ?? null,
+          preCadastrado: !u.user_id,
         }));
       setTeamMembers(members);
     }
     loadTeam();
   }, [isLider]);
 
-  const viewAsProfile = viewAsUserId
-    ? teamMembers.find((m) => m.user_id === viewAsUserId) ?? null
+  const viewAsProfile = viewAsKey
+    ? teamMembers.find((m) => m.key === viewAsKey) ?? null
     : null;
 
-  function setViewAs(userId: string | null) {
+  function setViewAs(key: string | null) {
     setViewLoading(true);
-    setViewAsId(userId);
+    setViewAsKey(key);
     setTimeout(() => setViewLoading(false), 400);
   }
 
   return (
-    <ViewAsContext.Provider value={{ viewAsUserId, viewAsProfile, setViewAs, teamMembers, isLider, viewLoading }}>
+    <ViewAsContext.Provider
+      value={{
+        viewAsKey,
+        viewAsProfile,
+        setViewAs,
+        teamMembers,
+        isLider,
+        viewLoading,
+        viewAsUserId: viewAsProfile?.user_id ?? null,
+      }}
+    >
       {children}
     </ViewAsContext.Provider>
   );
