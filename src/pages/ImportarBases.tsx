@@ -303,32 +303,64 @@ export default function ImportarBases() {
     }
   }, [role]);
 
-  function handleSync() {
+  async function handleSync() {
     setSyncing(true);
-    setSyncLog(['✅ Sincronização iniciada! Os dados serão atualizados em alguns minutos.']);
-    toast.success('Sincronização disparada com sucesso!');
+    setSyncLog(['🔄 Disparando sincronização com SharePoint...']);
+    toast.info('Sincronização iniciada, aguarde...');
 
-    // Fire-and-forget: não aguarda resposta (evita timeout do browser)
-    supabase.functions.invoke('sync-sharepoint', {
-      body: { tipo: 'todos' }
-    }).catch((err: any) => {
-      console.error('Erro ao iniciar sync-sharepoint:', err);
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
+        body: { tipo: 'todos' }
+      });
 
-    // Libera o botão após 3s
-    setTimeout(() => {
-      setSyncing(false);
-    }, 3000);
+      if (error) {
+        console.error('Erro Edge Function:', error);
+        setSyncLog(prev => [...prev, `❌ Erro: ${error.message}`]);
+        toast.error(`Erro na sincronização: ${error.message}`);
+        return;
+      }
 
-    // Recarrega logs após 30s e 120s
-    const reloadLogs = () => {
+      // Mostra resultado real da função
+      if (data?.log && Array.isArray(data.log)) {
+        setSyncLog(data.log);
+      } else {
+        setSyncLog(['✅ Sincronização concluída!']);
+      }
+
+      if (data?.success) {
+        toast.success(`Sincronização concluída em ${data.duracao || '?'}!`);
+      } else {
+        toast.warning(`Sincronização concluída com ${data?.errors?.length || 0} erro(s)`);
+      }
+
+      // Recarrega logs do banco
       supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
         if (logs?.[0]) setLastSync(logs[0]);
       });
       queryClient.invalidateQueries();
-    };
-    setTimeout(reloadLogs, 30000);
-    setTimeout(reloadLogs, 120000);
+
+    } catch (err: any) {
+      console.error('Erro sync:', err);
+      // Se for timeout do fetch, a função ainda está rodando no servidor
+      if (err.message?.includes('timeout') || err.message?.includes('abort') || err.name === 'AbortError') {
+        setSyncLog(prev => [...prev, '⏳ A sincronização está demorando mais que o esperado. Ela continua rodando no servidor.', '🔄 Os logs serão atualizados automaticamente.']);
+        toast.info('A sincronização continua rodando no servidor...');
+        // Recarrega logs após 60s e 180s
+        const reloadLogs = () => {
+          supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
+            if (logs?.[0]) setLastSync(logs[0]);
+          });
+          queryClient.invalidateQueries();
+        };
+        setTimeout(reloadLogs, 60000);
+        setTimeout(reloadLogs, 180000);
+      } else {
+        setSyncLog(prev => [...prev, `❌ Erro inesperado: ${err.message}`]);
+        toast.error(`Erro: ${err.message}`);
+      }
+    } finally {
+      setSyncing(false);
+    }
   }
 
   // ─── Processar arquivo drop ───────────────────────────────────────────────
