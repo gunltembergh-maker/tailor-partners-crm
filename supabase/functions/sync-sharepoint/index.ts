@@ -55,6 +55,8 @@ const FILE_MAP: Record<string, { sheets: { sheet: string; table: string; require
 
 const ALL_FILES = Object.keys(FILE_MAP);
 const READ_CHUNK = 5000;
+// Max rows per invocation to avoid timeout (sheets > this will be auto-chunked)
+const MAX_ROWS_PER_CALL = 20000;
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -228,6 +230,24 @@ async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], er
   });
 }
 
+// Self-invoke helper: calls this same function with specific params
+async function selfInvoke(body: Record<string, unknown>): Promise<{ success: boolean; log?: string[]; errors?: string[] }> {
+  const url = `${SUPABASE_URL}/functions/v1/sync-sharepoint`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SERVICE_KEY}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => 'unknown');
+    return { success: false, errors: [`Self-invoke failed: ${resp.status} ${txt.substring(0, 100)}`] };
+  }
+  return await resp.json();
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
@@ -240,12 +260,66 @@ Deno.serve(async (req) => {
     const arquivo   = body.arquivo   || 'todos';
     const abaFiltro = body.aba       || null;
 
-    // Novo: start_row e end_row para processar fatias (1-based, header=linha 1)
-    // Ex: { arquivo: 'base_receita', aba: 'Comissões Histórico', start_row: 2, end_row: 40000 }
+    // start_row / end_row for processing slices (1-based, header=row 1)
     const startRow: number | null = body.start_row || null;
     const endRow: number | null   = body.end_row   || null;
+    // Internal flag: skip truncate (used for continuation slices)
+    const skipTruncate: boolean   = body._skip_truncate || false;
 
-    const filesToProcess = arquivo === 'todos' ? ALL_FILES : [arquivo];
+    // ═══════════════════════════════════════════════════════════════════
+    // ORCHESTRATOR MODE: when called with 'todos', process each file
+    // sequentially via self-invocation to avoid timeout
+    // ═══════════════════════════════════════════════════════════════════
+    if (arquivo === 'todos' && !abaFiltro && !startRow) {
+      log.push('🔐 Autenticando...');
+      const token = await getToken();
+      log.push('✅ Token obtido');
+      log.push('🚀 Modo orquestrador: processando cada arquivo sequencialmente\n');
+
+      let allSuccess = true;
+
+      for (const fileKey of ALL_FILES) {
+        log.push(`📄 Disparando sync: ${fileKey}...`);
+        const result = await selfInvoke({ tipo, arquivo: fileKey, _orchestrated: true });
+        
+        if (result.success) {
+          log.push(`   ✅ ${fileKey} concluído`);
+          if (result.log) {
+            // Add indented sub-logs
+            for (const l of result.log) {
+              if (l.startsWith('🔐') || l.startsWith('✅ Token') || l.startsWith('\n⏱')) continue;
+              log.push(`   ${l}`);
+            }
+          }
+        } else {
+          allSuccess = false;
+          log.push(`   ❌ ${fileKey} falhou`);
+          if (result.errors) errors.push(...result.errors);
+          if (result.log) {
+            for (const l of result.log) {
+              if (l.includes('❌')) log.push(`   ${l}`);
+            }
+          }
+        }
+      }
+
+      // Refresh MV after all files
+      log.push('\n🔄 Refreshando MV...');
+      await refreshMV();
+      log.push('✅ mv_comissoes_consolidado atualizado');
+
+      const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+      log.push(`\n⏱️ ${dur}`);
+      log.push(errors.length ? `⚠️ ${errors.length} erro(s)` : '🎉 Sem erros');
+
+      await saveLog(tipo, allSuccess, dur, log, errors);
+      return Response.json({ success: allSuccess, arquivo: 'todos', duracao: dur, log, errors }, { headers: cors });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SINGLE FILE MODE: process one file (possibly auto-chunking large sheets)
+    // ═══════════════════════════════════════════════════════════════════
+    const filesToProcess = [arquivo];
 
     log.push('🔐 Autenticando...');
     const token = await getToken();
@@ -263,7 +337,6 @@ Deno.serve(async (req) => {
 
       for (const sh of sheets) {
         try {
-          // Pegar dimensões
           const dims = await getSheetDimensions(token, fileId, sh.sheet);
 
           if (dims === null) {
@@ -279,22 +352,70 @@ Deno.serve(async (req) => {
           }
 
           const lastCol = colToLetter(dims.columnCount);
-
-          // Se start_row fornecido, usa esse range. Senão processa tudo.
           const effectiveStart = startRow ?? 2;
           const effectiveEnd   = endRow   ?? dims.rowCount;
-          const truncate       = !startRow || startRow <= 2; // trunca só na primeira fatia
+          const totalDataRows  = effectiveEnd - effectiveStart + 1;
 
           log.push(`   📊 Total rows: ${dims.rowCount} | Processando: ${effectiveStart}-${effectiveEnd}`);
 
-          const total = await readAndInsertRange(
-            token, fileId, sh.sheet, sh.table,
-            effectiveStart, effectiveEnd, dims.headers, lastCol,
-            truncate, log
-          );
+          // AUTO-CHUNKING: if sheet is too large and no explicit range, self-invoke in slices
+          if (!startRow && totalDataRows > MAX_ROWS_PER_CALL) {
+            log.push(`   🔀 Auto-chunking: ${totalDataRows} rows em fatias de ${MAX_ROWS_PER_CALL}`);
+            
+            let sliceStart = 2;
+            let isFirstSlice = true;
+            let totalInserted = 0;
 
-          log.push(`   ✅ "${sh.sheet}" → ${sh.table} (${total} linhas inseridas)`);
-          if (fileKey === 'base_receita') needsMVRefresh = true;
+            while (sliceStart <= effectiveEnd) {
+              const sliceEnd = Math.min(sliceStart + MAX_ROWS_PER_CALL - 1, effectiveEnd);
+              log.push(`   🔄 Fatia ${sliceStart}-${sliceEnd}...`);
+              
+              const sliceResult = await selfInvoke({
+                tipo,
+                arquivo: fileKey,
+                aba: sh.sheet,
+                start_row: sliceStart,
+                end_row: sliceEnd,
+                _skip_truncate: !isFirstSlice,
+              });
+
+              if (sliceResult.success) {
+                // Extract row count from sub-log
+                if (sliceResult.log) {
+                  for (const l of sliceResult.log) {
+                    if (l.includes('linhas inseridas')) {
+                      const m = l.match(/\((\d+) linhas/);
+                      if (m) totalInserted += parseInt(m[1]);
+                    }
+                    if (l.includes('📦')) log.push(`   ${l}`);
+                  }
+                }
+              } else {
+                errors.push(`${sh.sheet} fatia ${sliceStart}-${sliceEnd}: falhou`);
+                log.push(`   ❌ Fatia ${sliceStart}-${sliceEnd} falhou`);
+                if (sliceResult.errors) errors.push(...sliceResult.errors);
+              }
+
+              isFirstSlice = false;
+              sliceStart = sliceEnd + 1;
+            }
+
+            log.push(`   ✅ "${sh.sheet}" → ${sh.table} (${totalInserted} linhas total via auto-chunk)`);
+            if (fileKey === 'base_receita') needsMVRefresh = true;
+
+          } else {
+            // Normal processing (small sheet or explicit range)
+            const truncate = skipTruncate ? false : (!startRow || startRow <= 2);
+
+            const total = await readAndInsertRange(
+              token, fileId, sh.sheet, sh.table,
+              effectiveStart, effectiveEnd, dims.headers, lastCol,
+              truncate, log
+            );
+
+            log.push(`   ✅ "${sh.sheet}" → ${sh.table} (${total} linhas inseridas)`);
+            if (fileKey === 'base_receita') needsMVRefresh = true;
+          }
 
         } catch (e) {
           errors.push(`${sh.sheet}: ${e.message}`);
@@ -303,7 +424,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (needsMVRefresh && !startRow) {
+    // Only refresh MV if processing a single file directly (not orchestrated)
+    if (needsMVRefresh && !startRow && !body._orchestrated) {
       log.push('\n🔄 Refreshando MV...');
       await refreshMV();
       log.push('✅ mv_comissoes_consolidado atualizado');
@@ -313,7 +435,11 @@ Deno.serve(async (req) => {
     log.push(`\n⏱️ ${dur}`);
     log.push(errors.length ? `⚠️ ${errors.length} erro(s)` : '🎉 Sem erros');
 
-    await saveLog(tipo, errors.length === 0, dur, log, errors);
+    // Only save log for top-level calls (not sub-invocations)
+    if (!body._orchestrated && !startRow) {
+      await saveLog(tipo, errors.length === 0, dur, log, errors);
+    }
+
     return Response.json({ success: errors.length === 0, arquivo, duracao: dur, log, errors }, { headers: cors });
 
   } catch (e) {
