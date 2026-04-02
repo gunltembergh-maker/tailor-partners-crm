@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { KpiSkeleton, ChartSkeleton, TableSkeleton } from "./ChartSkeleton";
+import { LOGO_LIGHT_BG } from "@/lib/constants";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { ChevronUp, ChevronDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -467,8 +469,30 @@ export function QualitativoTab({ filters }: Props) {
 
   if (anyLoading) {
     return (
-      <div className="space-y-3">
-        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-64 rounded-lg" />)}
+      <div className="space-y-4">
+        {/* Branded loading header */}
+        <div className="flex flex-col items-center justify-center py-10">
+          <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-40 animate-pulse" />
+          <p className="mt-4 text-sm font-medium" style={{ color: "#6B7280" }}>Carregando dados qualitativos...</p>
+          <div className="mt-3 w-48 h-1 rounded-full overflow-hidden" style={{ backgroundColor: "#E5E7EB" }}>
+            <div className="h-full rounded-full animate-[loading_1.5s_ease-in-out_infinite]" style={{ backgroundColor: "#1B2A3D", width: "60%" }} />
+          </div>
+        </div>
+        {/* Skeleton cards matching Quantitativo layout */}
+        <TableSkeleton rows={6} />
+        <ChartSkeleton height="h-72" />
+        <div className="grid grid-cols-2 gap-3">
+          <ChartSkeleton height="h-64" />
+          <ChartSkeleton height="h-64" />
+        </div>
+        <TableSkeleton rows={5} />
+        <ChartSkeleton height="h-64" />
+        <TableSkeleton rows={5} />
+        <div className="grid grid-cols-[65%_35%] gap-3">
+          <ChartSkeleton height="h-72" />
+          <TableSkeleton rows={6} />
+        </div>
+        <ChartSkeleton height="h-72" />
       </div>
     );
   }

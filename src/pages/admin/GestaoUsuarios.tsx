@@ -467,16 +467,14 @@ export default function GestaoUsuarios() {
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          {/* Invite actions — sempre disponível */}
-                          {conviteStatus === "pendente" || conviteStatus === "cancelado" ? (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u)} title="Enviar convite">
-                              <Mail className="h-3.5 w-3.5 text-blue-500" />
-                            </Button>
-                          ) : (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u, true)} title="Reenviar convite">
-                              <RotateCcw className="h-3.5 w-3.5 text-orange-500" />
-                            </Button>
-                          )}
+                          {/* Invite actions — sempre disponível para qualquer status */}
+                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading}
+                            onClick={() => handleConvidar(u, conviteStatus !== "pendente" && conviteStatus !== "cancelado")}
+                            title={conviteStatus === "pendente" || conviteStatus === "cancelado" ? "Enviar convite" : "Reenviar convite"}>
+                            {conviteStatus === "pendente" || conviteStatus === "cancelado"
+                              ? <Mail className="h-3.5 w-3.5 text-blue-500" />
+                              : <RotateCcw className="h-3.5 w-3.5 text-orange-500" />}
+                          </Button>
                           {conviteStatus === "enviado" && (
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCancelarConvite(u)}>
                               <XCircle className="h-3.5 w-3.5 text-destructive" />
