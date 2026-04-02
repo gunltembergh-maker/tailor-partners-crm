@@ -28,6 +28,18 @@ interface InviteEmailProps {
   empresa?: string
 }
 
+const perfilLabel = (perfil: string) => {
+  const map: Record<string, string> = {
+    BANKER: 'Financial Advisor',
+    ADMIN: 'Administrador',
+    LIDER: 'Líder',
+    FINDER: 'Finder',
+    ASSESSOR: 'Assessor',
+    OPERACOES: 'Operações',
+  }
+  return map[perfil.toUpperCase()] || perfil
+}
+
 export const InviteEmail = ({
   siteName,
   siteUrl,
@@ -41,6 +53,7 @@ export const InviteEmail = ({
 }: InviteEmailProps) => {
   const displayName = nomeCompleto || recipient?.split('@')[0] || 'Colaborador'
   const subjectLine = `${displayName}, seu acesso ao Hub Tailor Partners está pronto 🎯`
+  const ssoUrl = `${siteUrl}/auth`
 
   return (
     <Html lang="pt-BR" dir="ltr">
@@ -73,11 +86,37 @@ export const InviteEmail = ({
             Aqui você acompanha em tempo real sua carteira, captação, AuC, receita e tudo mais. Tudo em um só lugar, feito para você.
           </Text>
 
-          {/* Botão CTA */}
+          {/* Opção 1: SSO Microsoft */}
           <Section style={buttonSection}>
-            <Button style={button} href={confirmationUrl}>
-              Aceitar Convite e Acessar o Hub
+            <Text style={optionLabel}>🔐 Acesso recomendado</Text>
+            <Button style={buttonSso} href={ssoUrl}>
+              Entrar com Microsoft (SSO)
             </Button>
+            <Text style={optionHint}>
+              Use seu e-mail corporativo e senha da Microsoft para acessar automaticamente.
+            </Text>
+          </Section>
+
+          {/* Separador */}
+          <Section style={separatorSection}>
+            <table width="100%" cellPadding="0" cellSpacing="0" style={{ margin: '0' }}>
+              <tr>
+                <td style={separatorLine}></td>
+                <td style={separatorText}>ou</td>
+                <td style={separatorLine}></td>
+              </tr>
+            </table>
+          </Section>
+
+          {/* Opção 2: Aceitar convite e criar senha */}
+          <Section style={buttonSection}>
+            <Text style={optionLabel}>🔑 Criar senha própria</Text>
+            <Button style={button} href={confirmationUrl}>
+              Aceitar Convite e Criar Senha
+            </Button>
+            <Text style={optionHint}>
+              Crie uma senha exclusiva para o Hub caso prefira não usar o SSO.
+            </Text>
           </Section>
 
           {/* Card de Informações */}
@@ -88,7 +127,7 @@ export const InviteEmail = ({
             </Text>
             {perfil && (
               <Text style={infoRow}>
-                <strong>Perfil:</strong> {perfil}
+                <strong>Perfil:</strong> {perfilLabel(perfil)}
               </Text>
             )}
             {area && (
@@ -112,7 +151,7 @@ export const InviteEmail = ({
           {/* Aviso de expiração */}
           <Section style={warningBox}>
             <Text style={warningText}>
-              ⏱️ Este convite expira em 2 horas.
+              ⏱️ O link de criação de senha expira em 2 horas. O acesso via SSO não expira.
             </Text>
           </Section>
 
@@ -189,10 +228,26 @@ const text = {
 
 const buttonSection = {
   textAlign: 'center' as const,
-  margin: '28px 0',
+  margin: '16px 0',
 }
 
-const button = {
+const optionLabel = {
+  fontSize: '14px',
+  fontWeight: 'bold' as const,
+  color: '#082537',
+  margin: '0 0 10px',
+  textAlign: 'center' as const,
+}
+
+const optionHint = {
+  fontSize: '12px',
+  color: '#718096',
+  margin: '8px 0 0',
+  textAlign: 'center' as const,
+  lineHeight: '1.4',
+}
+
+const buttonSso = {
   backgroundColor: '#082537',
   color: '#ffffff',
   fontSize: '15px',
@@ -202,6 +257,35 @@ const button = {
   textDecoration: 'none',
   display: 'inline-block' as const,
   boxShadow: '0 4px 12px rgba(8, 37, 55, 0.25)',
+}
+
+const button = {
+  backgroundColor: '#ffffff',
+  color: '#082537',
+  fontSize: '15px',
+  fontWeight: 'bold' as const,
+  borderRadius: '12px',
+  padding: '12px 28px',
+  textDecoration: 'none',
+  display: 'inline-block' as const,
+  border: '2px solid #082537',
+}
+
+const separatorSection = {
+  margin: '8px 0',
+}
+
+const separatorLine = {
+  borderBottom: '1px solid #e2e8f0',
+  width: '45%',
+}
+
+const separatorText = {
+  fontSize: '13px',
+  color: '#a0aec0',
+  textAlign: 'center' as const,
+  padding: '0 12px',
+  whiteSpace: 'nowrap' as const,
 }
 
 const infoCard = {
