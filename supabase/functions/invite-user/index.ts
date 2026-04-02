@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
           type: 'magiclink',
           email,
           options: {
-            redirectTo: `https://${ROOT_DOMAIN}/dashboards/comercial`,
+            redirectTo: `https://${ROOT_DOMAIN}/reset-password`,
           },
         })
         if (mlError) {
