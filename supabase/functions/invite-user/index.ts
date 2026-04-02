@@ -153,6 +153,13 @@ Deno.serve(async (req) => {
       const displayName = metadata.nome_completo || email.split('@')[0]
       const subject = `${displayName}, seu acesso ao Hub Tailor Partners está pronto 🎯`
 
+      // Generate unsubscribe token for the recipient
+      const unsubscribeToken = crypto.randomUUID()
+      await supabaseAdmin.from('email_unsubscribe_tokens').upsert(
+        { email, token: unsubscribeToken },
+        { onConflict: 'email' }
+      )
+
       // Log pending
       await supabaseAdmin.from('email_send_log').insert({
         message_id: messageId,
@@ -175,6 +182,7 @@ Deno.serve(async (req) => {
           text,
           purpose: 'transactional',
           label: 'invite',
+          unsubscribe_token: unsubscribeToken,
           queued_at: new Date().toISOString(),
         },
       })
