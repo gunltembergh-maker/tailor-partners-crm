@@ -303,35 +303,32 @@ export default function ImportarBases() {
     }
   }, [role]);
 
-  async function handleSync() {
+  function handleSync() {
     setSyncing(true);
-    setSyncLog(['🔄 Iniciando sincronização com SharePoint...']);
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
-        body: { tipo: 'todos' }
-      });
-      if (error) {
-        console.error('Erro Edge Function:', error);
-        setSyncLog(prev => [...prev, `❌ Erro: ${error.message}`]);
-        toast.error(`Erro: ${error.message}`);
-        return;
-      }
-      setSyncLog(prev => [...prev, '✅ Sincronização iniciada com sucesso!']);
-      toast.success('SharePoint sincronizado com sucesso!');
-      queryClient.invalidateQueries();
-      // Recarregar logs após 3s
-      setTimeout(() => {
-        supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
-          if (logs?.[0]) setLastSync(logs[0]);
-        });
-      }, 3000);
-    } catch (err: any) {
-      console.error('Erro sync:', err);
-      toast.error(`Erro inesperado: ${err.message}`);
-      setSyncLog(prev => [...prev, `❌ Erro inesperado: ${err.message}`]);
-    } finally {
+    setSyncLog(['✅ Sincronização iniciada! Os dados serão atualizados em alguns minutos.']);
+    toast.success('Sincronização disparada com sucesso!');
+
+    // Fire-and-forget: não aguarda resposta (evita timeout do browser)
+    supabase.functions.invoke('sync-sharepoint', {
+      body: { tipo: 'todos' }
+    }).catch((err: any) => {
+      console.error('Erro ao iniciar sync-sharepoint:', err);
+    });
+
+    // Libera o botão após 3s
+    setTimeout(() => {
       setSyncing(false);
-    }
+    }, 3000);
+
+    // Recarrega logs após 30s e 120s
+    const reloadLogs = () => {
+      supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
+        if (logs?.[0]) setLastSync(logs[0]);
+      });
+      queryClient.invalidateQueries();
+    };
+    setTimeout(reloadLogs, 30000);
+    setTimeout(reloadLogs, 120000);
   }
 
   // ─── Processar arquivo drop ───────────────────────────────────────────────
