@@ -18,6 +18,7 @@ import {
   LogOut,
   UserCircle,
   UsersRound,
+  KeyRound,
 } from "lucide-react";
 import {
   Sidebar,
