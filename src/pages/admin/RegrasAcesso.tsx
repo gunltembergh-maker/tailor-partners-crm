@@ -273,8 +273,8 @@ export default function RegrasAcesso() {
 
   const filtered = (rules || []).filter(
     (r) =>
-      r.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.email.toLowerCase().includes(search.toLowerCase())
+      (r.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.email || "").toLowerCase().includes(search.toLowerCase())
   );
 
   if (isLoading) {
