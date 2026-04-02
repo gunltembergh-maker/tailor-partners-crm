@@ -19,7 +19,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle, KeyRound, Link2, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { ConviteBadge, getConviteStatus } from "@/components/admin/ConviteBadge";
@@ -266,7 +269,7 @@ export default function GestaoUsuarios() {
     });
   }, []);
 
-  const handleConvidar = useCallback(async (u: Usuario, isReenvio = false) => {
+  const handleEnviarEmail = useCallback(async (u: Usuario, tipo: 'invite' | 'recovery' | 'magiclink' = 'invite') => {
     setLoadingInviteId(u.email);
     try {
       const { error } = await supabase.functions.invoke("invite-user", {
@@ -277,16 +280,22 @@ export default function GestaoUsuarios() {
           area: u.area,
           gestor: u.gestor,
           empresa: u.empresa,
+          tipo,
         },
       });
       if (error) throw error;
 
       await supabase.rpc("rpc_registrar_convite" as any, {
         p_email: u.email,
-        p_acao: isReenvio ? "reenvio" : "enviado",
+        p_acao: tipo === 'invite' ? "enviado" : "reenvio",
       });
 
-      toast.success(`Convite ${isReenvio ? "re" : ""}enviado para ${u.email}`, { duration: 3000 });
+      const labels: Record<string, string> = {
+        invite: "Convite enviado",
+        recovery: "E-mail de redefinição de senha enviado",
+        magiclink: "Magic Link enviado",
+      };
+      toast.success(`${labels[tipo]} para ${u.email}`, { duration: 3000 });
       refetch();
     } catch (e: any) {
       toast.error(e.message || "Erro ao enviar convite", { duration: 4000 });
@@ -468,13 +477,28 @@ export default function GestaoUsuarios() {
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           {/* Invite actions — sempre disponível para qualquer status */}
-                          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading}
-                            onClick={() => handleConvidar(u, conviteStatus !== "pendente" && conviteStatus !== "cancelado")}
-                            title={conviteStatus === "pendente" || conviteStatus === "cancelado" ? "Enviar convite" : "Reenviar convite"}>
-                            {conviteStatus === "pendente" || conviteStatus === "cancelado"
-                              ? <Mail className="h-3.5 w-3.5 text-blue-500" />
-                              : <RotateCcw className="h-3.5 w-3.5 text-orange-500" />}
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading}
+                                title="Enviar e-mail">
+                                <Mail className="h-3.5 w-3.5 text-blue-500" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'invite')}>
+                                <Mail className="h-4 w-4 mr-2 text-blue-500" />
+                                Enviar Convite
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'recovery')}>
+                                <KeyRound className="h-4 w-4 mr-2 text-orange-500" />
+                                Reset de Senha
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'magiclink')}>
+                                <Link2 className="h-4 w-4 mr-2 text-green-500" />
+                                Magic Link (Acesso Direto)
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                           {conviteStatus === "enviado" && (
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCancelarConvite(u)}>
                               <XCircle className="h-3.5 w-3.5 text-destructive" />
