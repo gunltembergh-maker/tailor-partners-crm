@@ -33,6 +33,7 @@ const ImportarBases = lazy(() => import("./pages/ImportarBases"));
 const GestaoProfiles = lazy(() => import("./pages/admin/GestaoProfiles"));
 const GestaoUsuarios = lazy(() => import("./pages/admin/GestaoUsuarios"));
 const RegrasAcesso = lazy(() => import("./pages/admin/RegrasAcesso"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +71,7 @@ function AppRoutes() {
     <Suspense fallback={<LoadingOverlay show />}>
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/dashboards/comercial" replace /> : <Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<ProtectedRoute><Navigate to="/dashboards/comercial" replace /></ProtectedRoute>} />
         <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
         <Route path="/leads/:id" element={<ProtectedRoute><LeadDetalhe /></ProtectedRoute>} />
