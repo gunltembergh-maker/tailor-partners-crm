@@ -166,6 +166,7 @@ Deno.serve(async (req) => {
         queue_name: 'auth_emails',
         payload: {
           message_id: messageId,
+          idempotency_key: `invite-${messageId}`,
           to: email,
           from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
           sender_domain: SENDER_DOMAIN,
