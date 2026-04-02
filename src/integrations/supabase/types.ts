@@ -1328,6 +1328,53 @@ export type Database = {
         }
         Relationships: []
       }
+      user_access_rules: {
+        Row: {
+          advisors: string[] | null
+          bankers: string[] | null
+          canais: string[] | null
+          created_at: string | null
+          descricao: string | null
+          documentos: string[] | null
+          finders: string[] | null
+          id: string
+          profile_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          advisors?: string[] | null
+          bankers?: string[] | null
+          canais?: string[] | null
+          created_at?: string | null
+          descricao?: string | null
+          documentos?: string[] | null
+          finders?: string[] | null
+          id?: string
+          profile_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          advisors?: string[] | null
+          bankers?: string[] | null
+          canais?: string[] | null
+          created_at?: string | null
+          descricao?: string | null
+          documentos?: string[] | null
+          finders?: string[] | null
+          id?: string
+          profile_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_access_rules_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -1817,6 +1864,14 @@ export type Database = {
           subcategoria: string | null
           subproduto: string | null
           tipo_cliente: string | null
+        }
+        Relationships: []
+      }
+      mv_dimensoes_filtro: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          finder: string | null
         }
         Relationships: []
       }
@@ -2502,6 +2557,8 @@ export type Database = {
       fix_encoding: { Args: { v: string }; Returns: string }
       get_user_advisor_filter: { Args: never; Returns: string[] }
       get_user_banker_filter: { Args: never; Returns: string[] }
+      get_user_canal_filter: { Args: never; Returns: string[] }
+      get_user_documento_filter: { Args: never; Returns: string[] }
       get_user_finder_filter: { Args: never; Returns: string[] }
       has_role: {
         Args: {
@@ -2591,6 +2648,20 @@ export type Database = {
           user_id: string
         }[]
       }
+      rpc_admin_listar_access_rules: {
+        Args: never
+        Returns: {
+          advisors: string[]
+          bankers: string[]
+          canais: string[]
+          descricao: string
+          documentos: string[]
+          email: string
+          finders: string[]
+          nome: string
+          profile_id: string
+        }[]
+      }
       rpc_admin_marcar_notif_lida: { Args: { p_id: string }; Returns: Json }
       rpc_admin_notificacoes: {
         Args: never
@@ -2604,9 +2675,25 @@ export type Database = {
           titulo: string
         }[]
       }
+      rpc_admin_remover_access_rule: {
+        Args: { p_profile_id: string }
+        Returns: undefined
+      }
       rpc_admin_remover_precadastro: {
         Args: { p_email: string }
         Returns: Json
+      }
+      rpc_admin_salvar_access_rule: {
+        Args: {
+          p_advisors?: string[]
+          p_bankers?: string[]
+          p_canais?: string[]
+          p_descricao?: string
+          p_documentos?: string[]
+          p_finders?: string[]
+          p_profile_id: string
+        }
+        Returns: undefined
       }
       rpc_admin_salvar_perfil: {
         Args: {

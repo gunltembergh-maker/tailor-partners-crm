@@ -32,6 +32,7 @@ const ImportClients = lazy(() => import("./pages/ImportClients"));
 const ImportarBases = lazy(() => import("./pages/ImportarBases"));
 const GestaoProfiles = lazy(() => import("./pages/admin/GestaoProfiles"));
 const GestaoUsuarios = lazy(() => import("./pages/admin/GestaoUsuarios"));
+const RegrasAcesso = lazy(() => import("./pages/admin/RegrasAcesso"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,6 +89,7 @@ function AppRoutes() {
         <Route path="/admin/auditoria-comercial" element={<AdminRoute><AuditoriaComercial /></AdminRoute>} />
         <Route path="/admin/perfis" element={<AdminRoute><GestaoProfiles /></AdminRoute>} />
         <Route path="/admin/usuarios" element={<AdminRoute><GestaoUsuarios /></AdminRoute>} />
+        <Route path="/admin/regras-acesso" element={<AdminRoute><RegrasAcesso /></AdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
