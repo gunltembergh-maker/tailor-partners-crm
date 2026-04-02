@@ -77,32 +77,49 @@ Deno.serve(async (req) => {
 
     let userId = data?.user?.id
 
-    // If user already exists, generate a new invite link instead
+    // If user already exists, update metadata and generate new invite link
     if (error && error.message?.includes('already been registered')) {
       console.log('User already exists, generating new magic link for:', email)
 
-      // Find the existing user
-      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-      if (!listError) {
-        const existingUser = users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
-        if (existingUser) {
-          userId = existingUser.id
-          // Update user metadata
-          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-            user_metadata: metadata,
-          })
-          // Generate a new invite/magic link
-          const { error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      // Find the existing user by email (efficient single-user lookup)
+      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1,
+      })
+      
+      // Use a more targeted approach - search by email
+      let existingUser: any = null
+      const { data: allUsersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+      if (allUsersData?.users) {
+        existingUser = allUsersData.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+      }
+      
+      if (existingUser) {
+        userId = existingUser.id
+        // Update user metadata
+        await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+          user_metadata: metadata,
+        })
+        // Generate a new invite link (type invite triggers the invite email template)
+        const { error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'invite',
+          email,
+          options: {
+            redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
+            data: metadata,
+          },
+        })
+        if (linkError) {
+          console.error('Generate link error:', linkError)
+          // Fallback: try magiclink
+          const { error: mlError } = await supabaseAdmin.auth.admin.generateLink({
             type: 'magiclink',
             email,
             options: {
               redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
             },
           })
-          if (linkError) {
-            console.error('Generate link error:', linkError)
-            // Still continue — user exists, we just couldn't resend
-          }
+          if (mlError) console.error('Magiclink fallback error:', mlError)
         }
       }
     } else if (error) {
