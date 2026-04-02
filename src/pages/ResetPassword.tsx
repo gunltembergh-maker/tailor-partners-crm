@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Check, X, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { Eye, EyeOff, Check, X, ShieldCheck, UserPlus } from "lucide-react";
 import { LOGO_LIGHT_BG } from "@/lib/constants";
 
 const validarSenha = (senha: string) => ({
@@ -34,20 +34,32 @@ export default function ResetPassword() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [isInvite, setIsInvite] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
-    // Check for recovery session from hash fragment
     const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
-      setReady(true);
-    } else {
-      // Also check if user already has a session (came from email link)
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) setReady(true);
-      });
+    if (hash) {
+      if (hash.includes("type=invite") || hash.includes("type=magiclink")) {
+        setIsInvite(true);
+        setReady(true);
+      } else if (hash.includes("type=recovery")) {
+        setReady(true);
+      }
     }
+    // Also check if user already has a session (came from email link)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true);
+    });
+
+    // Listen for auth events (SIGNED_IN from token exchange)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        setReady(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checks = validarSenha(password);
@@ -60,9 +72,9 @@ export default function ResetPassword() {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
-      toast({ title: "Erro ao atualizar senha", description: error.message, variant: "destructive" });
+      toast.error("Erro ao atualizar senha", { description: error.message });
     } else {
-      toast({ title: "Senha atualizada com sucesso!" });
+      toast.success("Senha atualizada com sucesso!");
       navigate("/dashboards/comercial", { replace: true });
     }
     setLoading(false);
@@ -76,6 +88,30 @@ export default function ResetPassword() {
     { key: "especial", label: "Caractere especial (!@#$%^&*)" },
   ] as const;
 
+  const title = isInvite ? "Criar sua Senha" : "Redefinir Senha";
+  const subtitle = isInvite
+    ? "Bem-vindo ao Hub Tailor Partners! Crie uma senha segura para acessar a plataforma."
+    : "Crie uma nova senha segura para acessar o Hub.";
+  const Icon = isInvite ? UserPlus : ShieldCheck;
+  const buttonLabel = isInvite ? "Criar Senha e Acessar" : "Salvar Nova Senha";
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md animate-fade-in text-center">
+          <div className="mb-8 flex flex-col items-center">
+            <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-40" />
+          </div>
+          <Card className="shadow-lg border-border/50">
+            <CardContent className="py-10">
+              <p className="text-muted-foreground">Verificando seu acesso...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md animate-fade-in">
@@ -86,10 +122,10 @@ export default function ResetPassword() {
         <Card className="shadow-lg border-border/50">
           <CardHeader className="pb-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Redefinir Senha</h2>
+              <Icon className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">{title}</h2>
             </div>
-            <p className="text-sm text-muted-foreground">Crie uma nova senha segura para acessar o Hub.</p>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -157,7 +193,7 @@ export default function ResetPassword() {
               </div>
 
               <Button type="submit" className="w-full" disabled={!allValid || loading}>
-                {loading ? "Salvando..." : "Salvar Nova Senha"}
+                {loading ? "Salvando..." : buttonLabel}
               </Button>
             </form>
           </CardContent>
