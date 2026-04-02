@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Eye, EyeOff, Check, X, ShieldCheck, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Check, X, ShieldCheck, UserPlus, AlertTriangle, ArrowLeft } from "lucide-react";
 import { LOGO_LIGHT_BG } from "@/lib/constants";
 
 const validarSenha = (senha: string) => ({
