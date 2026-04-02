@@ -1,9 +1,17 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import * as React from 'npm:react@18.3.1'
+import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { InviteEmail } from '../_shared/email-templates/invite.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
+
+const SITE_NAME = "Hub Grupo Tailor Partners"
+const SENDER_DOMAIN = "notify.hub.tailorpartners.com.br"
+const FROM_DOMAIN = "hub.tailorpartners.com.br"
+const ROOT_DOMAIN = "hub.tailorpartners.com.br"
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -69,57 +77,47 @@ Deno.serve(async (req) => {
       empresa: empresa || 'Tailor Partners',
     }
 
-    // Try to invite
+    // Try to invite (works for new users)
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: metadata,
-      redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
+      redirectTo: `https://${ROOT_DOMAIN}/dashboards/comercial`,
     })
 
     let userId = data?.user?.id
+    let needsManualEmail = false
+    let confirmationUrl = ''
 
     // If user already exists, update metadata and generate new invite link
     if (error && error.message?.includes('already been registered')) {
-      console.log('User already exists, generating new magic link for:', email)
+      console.log('User already exists, generating new invite link for:', email)
+      needsManualEmail = true
 
-      // Find the existing user by email (efficient single-user lookup)
-      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1,
-      })
-      
-      // Use a more targeted approach - search by email
-      let existingUser: any = null
+      // Find existing user
       const { data: allUsersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
-      if (allUsersData?.users) {
-        existingUser = allUsersData.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
-      }
-      
+      const existingUser = allUsersData?.users?.find(
+        (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+      )
+
       if (existingUser) {
         userId = existingUser.id
+
         // Update user metadata
         await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
           user_metadata: metadata,
         })
-        // Generate a new invite link (type invite triggers the invite email template)
-        const { error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'invite',
+
+        // Generate magiclink (invite type fails for existing users)
+        const { data: mlData, error: mlError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
           email,
           options: {
-            redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
-            data: metadata,
+            redirectTo: `https://${ROOT_DOMAIN}/dashboards/comercial`,
           },
         })
-        if (linkError) {
-          console.error('Generate link error:', linkError)
-          // Fallback: try magiclink
-          const { error: mlError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'magiclink',
-            email,
-            options: {
-              redirectTo: 'https://hub.tailorpartners.com.br/dashboards/comercial',
-            },
-          })
-          if (mlError) console.error('Magiclink fallback error:', mlError)
+        if (mlError) {
+          console.error('Generate magiclink error:', mlError)
+        } else if (mlData?.properties?.action_link) {
+          confirmationUrl = mlData.properties.action_link
         }
       }
     } else if (error) {
@@ -128,6 +126,79 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
+    }
+
+    // For existing users, manually render and enqueue the invite email
+    if (needsManualEmail && confirmationUrl) {
+      console.log('Rendering and enqueuing invite email manually for:', email)
+
+      const templateProps = {
+        siteName: SITE_NAME,
+        siteUrl: `https://${ROOT_DOMAIN}`,
+        recipient: email,
+        confirmationUrl,
+        nomeCompleto: metadata.nome_completo,
+        perfil: metadata.perfil,
+        area: metadata.area,
+        gestor: metadata.gestor,
+        empresa: metadata.empresa,
+      }
+
+      const html = await renderAsync(React.createElement(InviteEmail, templateProps))
+      const text = await renderAsync(React.createElement(InviteEmail, templateProps), {
+        plainText: true,
+      })
+
+      const messageId = crypto.randomUUID()
+      const displayName = metadata.nome_completo || email.split('@')[0]
+      const subject = `${displayName}, seu acesso ao Hub Tailor Partners está pronto 🎯`
+
+      // Generate unsubscribe token for the recipient
+      const unsubscribeToken = crypto.randomUUID()
+      await supabaseAdmin.from('email_unsubscribe_tokens').upsert(
+        { email, token: unsubscribeToken },
+        { onConflict: 'email' }
+      )
+
+      // Log pending
+      await supabaseAdmin.from('email_send_log').insert({
+        message_id: messageId,
+        template_name: 'invite',
+        recipient_email: email,
+        status: 'pending',
+      })
+
+      // Enqueue to auth_emails (high priority)
+      const { error: enqueueError } = await supabaseAdmin.rpc('enqueue_email', {
+        queue_name: 'auth_emails',
+        payload: {
+          message_id: messageId,
+          idempotency_key: `invite-${messageId}`,
+          to: email,
+          from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+          sender_domain: SENDER_DOMAIN,
+          subject,
+          html,
+          text,
+          purpose: 'transactional',
+          label: 'invite',
+          unsubscribe_token: unsubscribeToken,
+          queued_at: new Date().toISOString(),
+        },
+      })
+
+      if (enqueueError) {
+        console.error('Failed to enqueue invite email:', enqueueError)
+        await supabaseAdmin.from('email_send_log').insert({
+          message_id: messageId,
+          template_name: 'invite',
+          recipient_email: email,
+          status: 'failed',
+          error_message: 'Failed to enqueue email',
+        })
+      } else {
+        console.log('Invite email enqueued successfully for:', email)
+      }
     }
 
     // Register invite status
