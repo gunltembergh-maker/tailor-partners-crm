@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     // Try to invite (works for new users)
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: metadata,
-      redirectTo: `https://${ROOT_DOMAIN}/dashboards/comercial`,
+      redirectTo: `https://${ROOT_DOMAIN}/reset-password`,
     })
 
     let userId = data?.user?.id
