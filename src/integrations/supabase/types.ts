@@ -2677,7 +2677,7 @@ export type Database = {
       }
       rpc_admin_remover_access_rule: {
         Args: { p_profile_id: string }
-        Returns: Json
+        Returns: undefined
       }
       rpc_admin_remover_precadastro: {
         Args: { p_email: string }
@@ -2693,7 +2693,7 @@ export type Database = {
           p_finders?: string[]
           p_profile_id: string
         }
-        Returns: Json
+        Returns: undefined
       }
       rpc_admin_salvar_perfil: {
         Args: {
