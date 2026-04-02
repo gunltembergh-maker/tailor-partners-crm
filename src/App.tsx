@@ -71,6 +71,7 @@ function AppRoutes() {
     <Suspense fallback={<LoadingOverlay show />}>
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/dashboards/comercial" replace /> : <Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<ProtectedRoute><Navigate to="/dashboards/comercial" replace /></ProtectedRoute>} />
         <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
         <Route path="/leads/:id" element={<ProtectedRoute><LeadDetalhe /></ProtectedRoute>} />
