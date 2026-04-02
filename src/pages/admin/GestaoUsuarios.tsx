@@ -467,14 +467,13 @@ export default function GestaoUsuarios() {
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          {/* Invite actions */}
-                          {(conviteStatus === "pendente" || conviteStatus === "cancelado") && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u)}>
+                          {/* Invite actions — sempre disponível */}
+                          {conviteStatus === "pendente" || conviteStatus === "cancelado" ? (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u)} title="Enviar convite">
                               <Mail className="h-3.5 w-3.5 text-blue-500" />
                             </Button>
-                          )}
-                          {(conviteStatus === "enviado" || conviteStatus === "expirado") && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u, true)}>
+                          ) : (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading} onClick={() => handleConvidar(u, true)} title="Reenviar convite">
                               <RotateCcw className="h-3.5 w-3.5 text-orange-500" />
                             </Button>
                           )}
