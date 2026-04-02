@@ -59,7 +59,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { email, nome, perfil, area, gestor, empresa } = await req.json()
+  const { email, nome, perfil, area, gestor, empresa, tipo } = await req.json()
+  // tipo: 'invite' (default), 'recovery', 'magiclink'
+  const emailTipo = tipo || 'invite'
 
     if (!email || !nome) {
       return new Response(JSON.stringify({ success: false, message: 'email and nome are required' }), {
@@ -77,60 +79,91 @@ Deno.serve(async (req) => {
       empresa: empresa || 'Tailor Partners',
     }
 
-    // Try to invite (works for new users)
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: metadata,
-      redirectTo: `https://${ROOT_DOMAIN}/reset-password`,
-    })
-
-    let userId = data?.user?.id
-    let needsManualEmail = false
+    let userId: string | undefined
     let confirmationUrl = ''
+    let needsManualEmail = false
+    const redirectTo = `https://${ROOT_DOMAIN}/reset-password`
 
-    // If user already exists, update metadata and generate new invite link
-    if (error && error.message?.includes('already been registered')) {
-      console.log('User already exists, generating new invite link for:', email)
-      needsManualEmail = true
-
-      // Find existing user
-      const { data: allUsersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
-      const existingUser = allUsersData?.users?.find(
-        (u: any) => u.email?.toLowerCase() === email.toLowerCase()
-      )
-
-      if (existingUser) {
-        userId = existingUser.id
-
-        // Update user metadata
-        await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-          user_metadata: metadata,
-        })
-
-        // Generate magiclink (invite type fails for existing users)
-        const { data: mlData, error: mlError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'magiclink',
-          email,
-          options: {
-            redirectTo: `https://${ROOT_DOMAIN}/reset-password`,
-          },
-        })
-        if (mlError) {
-          console.error('Generate magiclink error:', mlError)
-        } else if (mlData?.properties?.action_link) {
-          confirmationUrl = mlData.properties.action_link
-        }
-      }
-    } else if (error) {
-      console.error('Invite error:', error)
-      return new Response(JSON.stringify({ success: false, message: error.message }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (emailTipo === 'recovery') {
+      // Password reset link
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: { redirectTo },
       })
+      if (linkError) {
+        console.error('Generate recovery link error:', linkError)
+        return new Response(JSON.stringify({ success: false, message: linkError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      userId = linkData?.user?.id
+      confirmationUrl = linkData?.properties?.action_link || ''
+      needsManualEmail = true
+    } else if (emailTipo === 'magiclink') {
+      // Magic link (passwordless sign-in)
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+        options: { redirectTo },
+      })
+      if (linkError) {
+        console.error('Generate magiclink error:', linkError)
+        return new Response(JSON.stringify({ success: false, message: linkError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      userId = linkData?.user?.id
+      confirmationUrl = linkData?.properties?.action_link || ''
+      needsManualEmail = true
+    } else {
+      // Default: invite flow
+      const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        data: metadata,
+        redirectTo,
+      })
+      userId = data?.user?.id
+
+      if (error && error.message?.includes('already been registered')) {
+        console.log('User already exists, generating invite link for:', email)
+        needsManualEmail = true
+
+        const { data: allUsersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+        const existingUser = allUsersData?.users?.find(
+          (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+        )
+
+        if (existingUser) {
+          userId = existingUser.id
+          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+            user_metadata: metadata,
+          })
+
+          const { data: mlData, error: mlError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email,
+            options: { redirectTo },
+          })
+          if (mlError) {
+            console.error('Generate magiclink error:', mlError)
+          } else if (mlData?.properties?.action_link) {
+            confirmationUrl = mlData.properties.action_link
+          }
+        }
+      } else if (error) {
+        console.error('Invite error:', error)
+        return new Response(JSON.stringify({ success: false, message: error.message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
     }
 
     // For existing users, manually render and enqueue the invite email
     if (needsManualEmail && confirmationUrl) {
-      console.log('Rendering and enqueuing invite email manually for:', email)
+      console.log(`Rendering and enqueuing ${emailTipo} email manually for:`, email)
 
       const templateProps = {
         siteName: SITE_NAME,
@@ -151,7 +184,14 @@ Deno.serve(async (req) => {
 
       const messageId = crypto.randomUUID()
       const displayName = metadata.nome_completo || email.split('@')[0]
-      const subject = `${displayName}, seu acesso ao Hub Tailor Partners está pronto 🎯`
+      let subject: string
+      if (emailTipo === 'recovery') {
+        subject = `${displayName}, redefina sua senha do Hub Tailor Partners 🔐`
+      } else if (emailTipo === 'magiclink') {
+        subject = `${displayName}, acesse o Hub Tailor Partners com este link 🔗`
+      } else {
+        subject = `${displayName}, seu acesso ao Hub Tailor Partners está pronto 🎯`
+      }
 
       // Generate unsubscribe token for the recipient
       const unsubscribeToken = crypto.randomUUID()
