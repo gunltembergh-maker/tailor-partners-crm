@@ -308,22 +308,27 @@ export default function ImportarBases() {
     setSyncLog(['🔄 Iniciando sincronização com SharePoint...']);
     try {
       const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
-        body: { tipo: 'manual' }
+        body: { tipo: 'todos' }
       });
-      if (error) throw error;
-      setSyncLog(data.log || ['Concluído']);
-      if (data.success) {
-        toast.success('SharePoint sincronizado com sucesso!');
-        queryClient.invalidateQueries();
-      } else {
-        toast.warning(`Sync com ${data.errors?.length} erro(s)`);
+      if (error) {
+        console.error('Erro Edge Function:', error);
+        setSyncLog(prev => [...prev, `❌ Erro: ${error.message}`]);
+        toast.error(`Erro: ${error.message}`);
+        return;
       }
-      supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
-        if (logs?.[0]) setLastSync(logs[0]);
-      });
+      setSyncLog(prev => [...prev, '✅ Sincronização iniciada com sucesso!']);
+      toast.success('SharePoint sincronizado com sucesso!');
+      queryClient.invalidateQueries();
+      // Recarregar logs após 3s
+      setTimeout(() => {
+        supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
+          if (logs?.[0]) setLastSync(logs[0]);
+        });
+      }, 3000);
     } catch (err: any) {
-      toast.error(`Erro: ${err.message}`);
-      setSyncLog(prev => [...prev, `❌ ${err.message}`]);
+      console.error('Erro sync:', err);
+      toast.error(`Erro inesperado: ${err.message}`);
+      setSyncLog(prev => [...prev, `❌ Erro inesperado: ${err.message}`]);
     } finally {
       setSyncing(false);
     }
