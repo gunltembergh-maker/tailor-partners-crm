@@ -41,14 +41,16 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
     async function loadTeam() {
       const { data } = await supabase.rpc("rpc_admin_lista_usuarios" as any);
       if (!data) return;
-      const members: ViewAsProfile[] = (data as any[]).map((u: any) => ({
-        user_id: u.user_id,
-        full_name: u.full_name || "Usuário",
-        role: u.role || "",
-        banker_name: u.banker_name ?? null,
-        finder_name: u.finder_name ?? null,
-        advisor_name: u.advisor_name ?? null,
-      }));
+      const members: ViewAsProfile[] = (data as any[])
+        .filter((u: any) => u.user_id) // exclude pre-registered users without auth account
+        .map((u: any) => ({
+          user_id: u.user_id,
+          full_name: u.full_name || "Usuário",
+          role: u.role || "",
+          banker_name: u.banker_name ?? null,
+          finder_name: u.finder_name ?? null,
+          advisor_name: u.advisor_name ?? null,
+        }));
       setTeamMembers(members);
     }
     loadTeam();
