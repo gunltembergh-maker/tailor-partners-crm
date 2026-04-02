@@ -75,6 +75,7 @@ const PERMISSION_GROUPS = [
       { key: "menu_auditoria", label: "Auditoria Comercial", desc: "Relatórios de auditoria" },
       { key: "menu_gestao_usuarios", label: "Gestão de Usuários", desc: "Administrar usuários do Hub" },
       { key: "menu_perfis_acesso", label: "Perfis de Acesso", desc: "Esta tela — gerenciar perfis" },
+      { key: "menu_regras_acesso", label: "Regras de Acesso", desc: "Gerenciar regras de visualização de dados" },
     ],
   },
   {
