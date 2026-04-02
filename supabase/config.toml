@@ -15,3 +15,20 @@ project_id = "jtlelokzpqkgvlwomfus"
     verify_jwt = false
   [functions.sync-sharepoint.options]
     request_timeout = 400
+
+[auth.email]
+
+[auth.email.template.invite]
+subject = "Bem-vindo ao Hub Grupo Tailor Partners"
+
+[auth.email.template.confirmation]
+subject = "Confirmação de E-mail Hub Grupo Tailor Partners"
+
+[auth.email.template.recovery]
+subject = "Reset de Senha Hub Grupo Tailor Partners"
+
+[auth.email.template.magic_link]
+subject = "Código de Verificação Hub Grupo Tailor Partners"
+
+[auth.email.template.email_change]
+subject = "Confirmação de E-mail Hub Grupo Tailor Partners"
