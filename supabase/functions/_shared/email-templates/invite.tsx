@@ -76,7 +76,7 @@ export const InviteEmail = ({
           {/* Botão CTA */}
           <Section style={buttonSection}>
             <Button style={button} href={confirmationUrl}>
-              Aceitar Convite e Criar Minha Senha
+              Aceitar Convite e Acessar o Hub
             </Button>
           </Section>
 
