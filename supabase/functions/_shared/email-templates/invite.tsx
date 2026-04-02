@@ -39,7 +39,7 @@ export const InviteEmail = ({
   gestor,
   empresa,
 }: InviteEmailProps) => {
-  const displayName = nomeCompleto || 'Colaborador'
+  const displayName = nomeCompleto || recipient?.split('@')[0] || 'Colaborador'
   const subjectLine = `${displayName}, seu acesso ao Hub Tailor Partners está pronto 🎯`
 
   return (

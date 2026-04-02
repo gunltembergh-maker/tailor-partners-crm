@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "hubtailor"
+const SITE_NAME = "Hub Grupo Tailor Partners"
 const SENDER_DOMAIN = "notify.hub.tailorpartners.com.br"
 const ROOT_DOMAIN = "hub.tailorpartners.com.br"
 const FROM_DOMAIN = "hub.tailorpartners.com.br" // Domain shown in From address (may be root or sender subdomain)
