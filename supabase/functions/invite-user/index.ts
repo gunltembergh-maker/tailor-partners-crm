@@ -106,33 +106,18 @@ Deno.serve(async (req) => {
           user_metadata: metadata,
         })
 
-        // Generate invite link (returns the link but does NOT send email)
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'invite',
+        // Generate magiclink (invite type fails for existing users)
+        const { data: mlData, error: mlError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
           email,
           options: {
             redirectTo: `https://${ROOT_DOMAIN}/dashboards/comercial`,
-            data: metadata,
           },
         })
-
-        if (linkError) {
-          console.error('Generate invite link error:', linkError)
-          // Fallback to magiclink
-          const { data: mlData, error: mlError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'magiclink',
-            email,
-            options: {
-              redirectTo: `https://${ROOT_DOMAIN}/dashboards/comercial`,
-            },
-          })
-          if (mlError) {
-            console.error('Magiclink fallback error:', mlError)
-          } else if (mlData?.properties?.action_link) {
-            confirmationUrl = mlData.properties.action_link
-          }
-        } else if (linkData?.properties?.action_link) {
-          confirmationUrl = linkData.properties.action_link
+        if (mlError) {
+          console.error('Generate magiclink error:', mlError)
+        } else if (mlData?.properties?.action_link) {
+          confirmationUrl = mlData.properties.action_link
         }
       }
     } else if (error) {
