@@ -35,11 +35,20 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [isInvite, setIsInvite] = useState(false);
+  const [errorState, setErrorState] = useState<{ code: string; description: string } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
+      // Handle error states from expired/invalid links
+      if (hash.includes("error=")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const errorCode = params.get("error_code");
+        const errorDesc = params.get("error_description")?.replace(/\+/g, " ");
+        setErrorState({ code: errorCode || "unknown", description: errorDesc || "Link inválido ou expirado." });
+        return;
+      }
       if (hash.includes("type=invite") || hash.includes("type=magiclink")) {
         setIsInvite(true);
         setReady(true);
@@ -94,6 +103,42 @@ export default function ResetPassword() {
     : "Crie uma nova senha segura para acessar o Hub.";
   const Icon = isInvite ? UserPlus : ShieldCheck;
   const buttonLabel = isInvite ? "Criar Senha e Acessar" : "Salvar Nova Senha";
+
+  // Show error state for expired/invalid links
+  if (errorState) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md animate-fade-in">
+          <div className="text-center mb-8 flex flex-col items-center">
+            <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-40" />
+          </div>
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="pb-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <h2 className="text-lg font-semibold text-foreground">Link Expirado</h2>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 text-center">
+                <p className="text-sm text-destructive">
+                  {errorState.code === "otp_expired"
+                    ? "Este link expirou. Solicite um novo convite ou redefinição de senha ao administrador."
+                    : errorState.description}
+                </p>
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => navigate("/auth", { replace: true })}>
+                <ArrowLeft className="h-4 w-4 mr-2" /> Ir para o Login
+              </Button>
+            </CardContent>
+          </Card>
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            Acesso restrito a Colaboradores Grupo Tailor Partners © 2026
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!ready) {
     return (
