@@ -1749,6 +1749,25 @@ export type Database = {
         }
         Relationships: []
       }
+      comissoes_consolidado_receita_corrigida: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          categoria: string | null
+          comissao_bruta_tailor: number | null
+          documento: string | null
+          finder: string | null
+          produto: string | null
+          source_origin: string | null
+          source_row_id: number | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
       comissoes_historico_all: {
         Row: {
           anomes: number | null
@@ -1861,6 +1880,25 @@ export type Database = {
           finder: string | null
           id: number | null
           produto: string | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
+      mv_comissoes_consolidado_v2: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          categoria: string | null
+          comissao_bruta_tailor: number | null
+          documento: string | null
+          finder: string | null
+          produto: string | null
+          source_origin: string | null
+          source_row_id: number | null
           subcategoria: string | null
           subproduto: string | null
           tipo_cliente: string | null
