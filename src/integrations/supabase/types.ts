@@ -1867,14 +1867,6 @@ export type Database = {
         }
         Relationships: []
       }
-      mv_dimensoes_filtro: {
-        Row: {
-          advisor: string | null
-          banker: string | null
-          finder: string | null
-        }
-        Relationships: []
-      }
       pos_m0_desagrupado: {
         Row: {
           advisor: string | null
