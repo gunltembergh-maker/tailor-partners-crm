@@ -1,0 +1,1 @@
+UPDATE profiles SET blocked = false WHERE user_id = '5039b6f6-2f3a-4290-b9f0-d2599dbdfff7';
