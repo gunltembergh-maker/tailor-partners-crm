@@ -3101,146 +3101,69 @@ export type Database = {
           role: string
         }[]
       }
-      rpc_receita_drilldown:
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_categoria?: string
-              p_produto?: string
-              p_subcategoria?: string
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              documento: string
-              produto: string
-              subcategoria: string
-              subproduto: string
-              valor: number
-            }[]
-          }
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_categoria?: string
-              p_finder?: string[]
-              p_produto?: string
-              p_subcategoria?: string
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              documento: string
-              produto: string
-              subcategoria: string
-              subproduto: string
-              valor: number
-            }[]
-          }
-      rpc_receita_matriz_rows:
-        | {
-            Args: { p_anomes?: number[]; p_banker?: string[] }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              produto: string
-              subcategoria: string
-              subproduto: string
-              valor: number
-            }[]
-          }
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_finder?: string[]
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              produto: string
-              subcategoria: string
-              subproduto: string
-              valor: number
-            }[]
-          }
-      rpc_receita_matriz_rows_cat:
-        | {
-            Args: { p_anomes?: number[]; p_banker?: string[] }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              valor: number
-            }[]
-          }
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_finder?: string[]
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              valor: number
-            }[]
-          }
-      rpc_receita_mes_categoria:
-        | {
-            Args: { p_anomes?: number[]; p_banker?: string[] }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              valor: number
-            }[]
-          }
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_finder?: string[]
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              valor: number
-            }[]
-          }
+      rpc_receita_drilldown: {
+        Args: {
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_categoria?: string
+          p_finder?: string[]
+          p_produto?: string
+          p_subcategoria?: string
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          categoria: string
+          documento: string
+          produto: string
+          subcategoria: string
+          subproduto: string
+          valor: number
+        }[]
+      }
+      rpc_receita_matriz_rows: {
+        Args: { p_anomes?: number[]; p_banker?: string[]; p_finder?: string[] }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          categoria: string
+          produto: string
+          subcategoria: string
+          subproduto: string
+          valor: number
+        }[]
+      }
+      rpc_receita_matriz_rows_cat: {
+        Args: { p_anomes?: number[]; p_banker?: string[]; p_finder?: string[] }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          categoria: string
+          valor: number
+        }[]
+      }
+      rpc_receita_mes_categoria: {
+        Args: { p_anomes?: number[]; p_banker?: string[]; p_finder?: string[] }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          categoria: string
+          valor: number
+        }[]
+      }
       rpc_receita_total: {
         Args: { p_anomes?: number[]; p_banker?: string[]; p_finder?: string[] }
         Returns: {
           receita: number
         }[]
       }
-      rpc_receita_treemap_categoria:
-        | {
-            Args: { p_anomes?: number[]; p_banker?: string[] }
-            Returns: {
-              categoria: string
-              valor: number
-            }[]
-          }
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_finder?: string[]
-            }
-            Returns: {
-              categoria: string
-              valor: number
-            }[]
-          }
+      rpc_receita_treemap_categoria: {
+        Args: { p_anomes?: number[]; p_banker?: string[]; p_finder?: string[] }
+        Returns: {
+          categoria: string
+          valor: number
+        }[]
+      }
       rpc_refresh_mv_comissoes: { Args: never; Returns: undefined }
       rpc_registrar_acesso: { Args: never; Returns: undefined }
       rpc_registrar_convite: {
