@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
-import { ConviteBadge, getConviteStatus } from "@/components/admin/ConviteBadge";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
