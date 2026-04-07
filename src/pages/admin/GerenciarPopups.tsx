@@ -55,8 +55,8 @@ interface PopupRow {
   cor_texto: string | null;
   botao_label: string | null;
   created_at: string | null;
-  criado_por: string | null;
-  dismissal_count?: number;
+  total_dismiss?: number;
+  total_views?: number;
 }
 
 type DestinatarioMode = "todos" | "perfil" | "especifico";
