@@ -95,7 +95,9 @@ export type Database = {
           data_inicio: string | null
           destinatarios: string[] | null
           id: string
+          logo_url: string | null
           mensagem: string
+          mostrar_nome_hub: boolean | null
           paginas: string[] | null
           perfis: string[] | null
           titulo: string
@@ -112,7 +114,9 @@ export type Database = {
           data_inicio?: string | null
           destinatarios?: string[] | null
           id?: string
+          logo_url?: string | null
           mensagem: string
+          mostrar_nome_hub?: boolean | null
           paginas?: string[] | null
           perfis?: string[] | null
           titulo: string
@@ -129,7 +133,9 @@ export type Database = {
           data_inicio?: string | null
           destinatarios?: string[] | null
           id?: string
+          logo_url?: string | null
           mensagem?: string
+          mostrar_nome_hub?: boolean | null
           paginas?: string[] | null
           perfis?: string[] | null
           titulo?: string
