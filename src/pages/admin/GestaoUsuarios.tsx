@@ -58,13 +58,15 @@ interface Usuario {
   tem_conta: boolean;
   area: string | null;
   gestor: string | null;
-  convite_status: string | null;
-  convite_enviado_em: string | null;
-  convite_aceito_em: string | null;
-  convite_expira_em: string | null;
-  convite_cancelado_em: string | null;
-  convite_reenvios: number | null;
+  primeiro_acesso: boolean;
+  invited_at: string | null;
   operacao_tipo: string | null;
+  convite_status?: string | null;
+  convite_enviado_em?: string | null;
+  convite_aceito_em?: string | null;
+  convite_expira_em?: string | null;
+  convite_cancelado_em?: string | null;
+  convite_reenvios?: number | null;
 }
 
 function maskCpf(cpf: string | null): string {
