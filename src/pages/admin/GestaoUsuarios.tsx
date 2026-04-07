@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
+import { PopupComunicado } from "@/components/PopupComunicado";
 import TailorLoader from "@/components/TailorLoader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -327,6 +328,7 @@ export default function GestaoUsuarios() {
 
   return (
     <AppLayout>
+      <PopupComunicado />
       {isLoading && <TailorLoader overlay={false} />}
       {!isLoading && (
         <div className="space-y-6">

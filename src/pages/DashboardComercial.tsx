@@ -15,6 +15,7 @@ import { useContasKpis, useCaptacaoKpis, useAucMesStackCasa, useReceitaTotal } f
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { BoasVindasModal } from "@/components/admin/BoasVindasModal";
+import { PopupComunicado } from "@/components/PopupComunicado";
 
 export default function DashboardComercial() {
   const {
@@ -58,6 +59,7 @@ export default function DashboardComercial() {
 
   return (
     <AppLayout>
+      <PopupComunicado />
       {showBoasVindas && profile && (
         <BoasVindasModal
           perfil={{ full_name: profile.full_name, role, area }}

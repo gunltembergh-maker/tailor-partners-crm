@@ -33,6 +33,7 @@ const ImportarBases = lazy(() => import("./pages/ImportarBases"));
 const GestaoProfiles = lazy(() => import("./pages/admin/GestaoProfiles"));
 const GestaoUsuarios = lazy(() => import("./pages/admin/GestaoUsuarios"));
 const RegrasAcesso = lazy(() => import("./pages/admin/RegrasAcesso"));
+const GerenciarPopups = lazy(() => import("./pages/admin/GerenciarPopups"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient({
@@ -92,6 +93,7 @@ function AppRoutes() {
         <Route path="/admin/perfis" element={<AdminRoute><GestaoProfiles /></AdminRoute>} />
         <Route path="/admin/usuarios" element={<AdminRoute><GestaoUsuarios /></AdminRoute>} />
         <Route path="/admin/regras-acesso" element={<AdminRoute><RegrasAcesso /></AdminRoute>} />
+        <Route path="/admin/popups" element={<AdminRoute><GerenciarPopups /></AdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
