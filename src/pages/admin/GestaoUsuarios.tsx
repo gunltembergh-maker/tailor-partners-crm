@@ -184,9 +184,9 @@ export default function GestaoUsuarios() {
       const searchLower = search.toLowerCase();
       const matchSearch = !search || (u.full_name?.toLowerCase().includes(searchLower) || u.email?.toLowerCase().includes(searchLower) || u.cpf?.includes(search.replace(/\D/g, "")));
       const matchStatus = statusFilter === "Todos" ||
-        (statusFilter === "Ativo" && u.tem_conta && u.active && !u.blocked) ||
-        (statusFilter === "Pré-cadastrado" && !u.tem_conta && !u.blocked) ||
-        (statusFilter === "Aguardando" && u.tem_conta && !u.active && !u.role && !u.blocked) ||
+        (statusFilter === "Ativo" && !u.primeiro_acesso && u.active && !u.blocked) ||
+        (statusFilter === "Nunca acessou" && u.primeiro_acesso && u.active && !u.blocked) ||
+        (statusFilter === "Pré-cadastrado" && !u.active && !u.blocked) ||
         (statusFilter === "Bloqueado" && u.blocked);
       const matchPerfil = perfilFilter === "Todos" || u.role === perfilFilter;
       return matchSearch && matchStatus && matchPerfil;
