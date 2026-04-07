@@ -152,7 +152,10 @@ export default function GestaoUsuarios() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_admin_lista_usuarios" as any);
       if (error) throw error;
-      return data as unknown as Usuario[];
+      return ((data as any[]) || []).map((row: any) => ({
+        ...row,
+        profile_id: row.id,
+      })) as unknown as Usuario[];
     },
   });
 
