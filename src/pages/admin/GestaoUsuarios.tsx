@@ -244,7 +244,7 @@ export default function GestaoUsuarios() {
     if (!deleteUser) return;
     try {
       const { data, error } = await supabase.rpc("rpc_admin_excluir_usuario" as any, {
-        p_profile_id: deleteUser.user_id,
+        p_profile_id: deleteUser.profile_id,
       });
       if (error) throw error;
       if (data && typeof data === "object" && "success" in data && !(data as any).success) {
