@@ -253,7 +253,7 @@ export default function GerenciarPopups() {
                         {" → "}
                         {p.data_fim ? format(new Date(p.data_fim), "dd/MM/yy") : "∞"}
                       </TableCell>
-                      <TableCell className="text-center">{(p as any).dismissal_count ?? 0}</TableCell>
+                      <TableCell className="text-center">{p.total_dismiss ?? 0}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
