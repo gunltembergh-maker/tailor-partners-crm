@@ -19,6 +19,7 @@ import {
   UserCircle,
   UsersRound,
   KeyRound,
+  Megaphone,
 } from "lucide-react";
 import {
   Sidebar,
