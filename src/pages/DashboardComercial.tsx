@@ -59,6 +59,7 @@ export default function DashboardComercial() {
 
   return (
     <AppLayout>
+      <PopupComunicado />
       {showBoasVindas && profile && (
         <BoasVindasModal
           perfil={{ full_name: profile.full_name, role, area }}
