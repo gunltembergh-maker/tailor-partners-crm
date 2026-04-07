@@ -80,22 +80,37 @@ function formatCpfFull(cpf: string | null): string {
   return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`;
 }
 
-function relativeTime(dateStr: string | null): string {
-  if (!dateStr) return "Nunca";
+function formatUltimoAcesso(dateStr: string | null): string {
+  if (!dateStr) return "Nunca acessou";
   const date = new Date(dateStr);
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "Hoje";
-  if (diffDays === 1) return "Há 1 dia";
-  return `Há ${diffDays} dias`;
+  const time = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  
+  const isToday = date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  if (isToday) return `Hoje às ${time}`;
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth() && date.getFullYear() === yesterday.getFullYear();
+  if (isYesterday) return `Ontem às ${time}`;
+  
+  return `${date.toLocaleDateString("pt-BR")} às ${time}`;
+}
+
+function formatConvite(u: Usuario): { icon: string; text: string; className: string } {
+  if (u.invited_at) {
+    const d = new Date(u.invited_at);
+    const formatted = `${d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} às ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+    return { icon: "📤", text: `Enviado em ${formatted}`, className: "bg-blue-500/10 text-blue-600" };
+  }
+  return { icon: "—", text: "Não enviado", className: "bg-muted text-muted-foreground" };
 }
 
 function getStatusDisplay(u: Usuario) {
-  if (u.blocked) return { label: "Bloqueado", className: "bg-red-500/10 text-red-400" };
-  if (!u.tem_conta) return { label: "Pré-cadastrado", className: "bg-blue-500/10 text-blue-400" };
-  if (!u.active && !u.role) return { label: "Aguardando", className: "bg-yellow-500/10 text-yellow-400" };
-  return { label: "Ativo", className: "bg-green-500/10 text-green-400" };
+  if (u.blocked) return { label: "Bloqueado", icon: "🔒", className: "bg-red-500/10 text-red-400" };
+  if (!u.active && !u.blocked) return { label: "Pré-cadastrado", icon: "👤", className: "bg-muted text-muted-foreground" };
+  if (u.primeiro_acesso) return { label: "Nunca acessou", icon: "⏳", className: "bg-yellow-500/10 text-yellow-400" };
+  return { label: "Ativo", icon: "✅", className: "bg-green-500/10 text-green-400" };
 }
 
 function getBankerFinderDisplay(u: Usuario): string {
