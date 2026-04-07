@@ -71,8 +71,6 @@ const defaultForm = {
   perfis: [] as string[],
   destinatarios: [] as string[],
   paginas: ["__all__"] as string[],
-  cor_fundo: "#082537",
-  botao_label: "Entendido!",
 };
 
 export default function GerenciarPopups() {
