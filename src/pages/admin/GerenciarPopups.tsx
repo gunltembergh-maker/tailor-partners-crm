@@ -131,7 +131,7 @@ export default function GerenciarPopups() {
       perfis: p.perfis || [],
       destinatarios: p.destinatarios || [],
       paginas: p.paginas && p.paginas.length > 0 ? p.paginas : ["__all__"],
-      logo_url: p.logo_url || LOGO_WHITE,
+      logo_url: p.logo_url || LOGO_COMPLETA,
       mostrar_nome_hub: p.mostrar_nome_hub ?? true,
     });
     setModalOpen(true);
