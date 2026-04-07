@@ -32,12 +32,12 @@ import { PopupCard } from "@/components/PopupComunicado";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const LOGO_WHITE = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-white.png";
-const LOGO_DARK = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-dark.png";
+const LOGO_COMPLETA = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png";
+const LOGO_TRANSPARENTE = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logo_Tailor_transparente.png";
 
 const LOGO_OPTIONS = [
-  { label: "Logo branca", value: LOGO_WHITE, thumb: LOGO_WHITE, bg: "#082537" },
-  { label: "Logo escura", value: LOGO_DARK, thumb: LOGO_DARK, bg: "#f3f4f6" },
+  { label: "Logo Tailor completa", value: LOGO_COMPLETA, thumb: LOGO_COMPLETA, bg: "#082537" },
+  { label: "Logo Tailor transparente", value: LOGO_TRANSPARENTE, thumb: LOGO_TRANSPARENTE, bg: "#082537" },
   { label: "Sem logo", value: "__none__", thumb: null, bg: "#f3f4f6" },
 ];
 
