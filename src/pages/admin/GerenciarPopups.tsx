@@ -81,7 +81,7 @@ const defaultForm = {
   perfis: [] as string[],
   destinatarios: [] as string[],
   paginas: ["__all__"] as string[],
-  logo_url: LOGO_WHITE as string,
+  logo_url: LOGO_COMPLETA as string,
   mostrar_nome_hub: true,
 };
 

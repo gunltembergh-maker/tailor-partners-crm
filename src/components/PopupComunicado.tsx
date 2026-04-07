@@ -50,7 +50,7 @@ export function PopupCard({
           <img
             src={logoSrc}
             alt="Tailor Partners"
-            className="h-7 object-contain"
+            className="max-h-[48px] object-contain"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
         )}
