@@ -2859,23 +2859,42 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_admin_salvar_popup: {
-        Args: {
-          p_ativo?: boolean
-          p_botao_label?: string
-          p_cor_fundo?: string
-          p_cor_texto?: string
-          p_data_fim?: string
-          p_data_inicio?: string
-          p_destinatarios?: string[]
-          p_id?: string
-          p_mensagem?: string
-          p_paginas?: string[]
-          p_perfis?: string[]
-          p_titulo?: string
-        }
-        Returns: Json
-      }
+      rpc_admin_salvar_popup:
+        | {
+            Args: {
+              p_ativo?: boolean
+              p_botao_label?: string
+              p_cor_fundo?: string
+              p_data_fim?: string
+              p_data_inicio?: string
+              p_destinatarios?: string[]
+              p_id?: string
+              p_logo_url?: string
+              p_mensagem?: string
+              p_mostrar_nome_hub?: boolean
+              p_paginas?: string[]
+              p_perfis?: string[]
+              p_titulo?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_ativo?: boolean
+              p_botao_label?: string
+              p_cor_fundo?: string
+              p_cor_texto?: string
+              p_data_fim?: string
+              p_data_inicio?: string
+              p_destinatarios?: string[]
+              p_id?: string
+              p_mensagem?: string
+              p_paginas?: string[]
+              p_perfis?: string[]
+              p_titulo?: string
+            }
+            Returns: Json
+          }
       rpc_admin_salvar_usuario:
         | {
             Args: {
@@ -3260,7 +3279,9 @@ export type Database = {
           cor_texto: string
           data_fim: string
           id: string
+          logo_url: string
           mensagem: string
+          mostrar_nome_hub: boolean
           paginas: string[]
           titulo: string
         }[]
