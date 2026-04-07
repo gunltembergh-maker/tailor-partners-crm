@@ -62,6 +62,7 @@ interface Usuario {
   primeiro_acesso: boolean;
   invited_at: string | null;
   operacao_tipo: string | null;
+  perfil_id: string | null;
   convite_status?: string | null;
   convite_enviado_em?: string | null;
   convite_aceito_em?: string | null;
@@ -146,6 +147,7 @@ export default function GestaoUsuarios() {
   const [approveRole, setApproveRole] = useState("");
   const [approving, setApproving] = useState(false);
   const [loadingInviteId, setLoadingInviteId] = useState<string | null>(null);
+  const [lastSentMap, setLastSentMap] = useState<Record<string, number>>({});
 
   const { data: usuarios, isLoading } = useQuery({
     queryKey: ["admin-usuarios"],
@@ -213,6 +215,7 @@ export default function GestaoUsuarios() {
       empresa: u.empresa || "Tailor Partners",
       isEdit: true,
       editProfileId: u.profile_id,
+      perfilId: u.perfil_id || "",
       area: u.area || "",
       gestor: u.gestor || "",
       operacao_tipo: u.operacao_tipo || "",
@@ -288,7 +291,25 @@ export default function GestaoUsuarios() {
     });
   }, []);
 
+  const getResendCooldown = useCallback((email: string): number => {
+    const sentAt = lastSentMap[email];
+    if (!sentAt) return 0;
+    const elapsed = Date.now() - sentAt;
+    const cooldown = 60 * 60 * 1000; // 60 minutes
+    return Math.max(0, cooldown - elapsed);
+  }, [lastSentMap]);
+
   const handleEnviarEmail = useCallback(async (u: Usuario, tipo: 'invite' | 'recovery' | 'magiclink' = 'invite') => {
+    // Check cooldown for invite type
+    if (tipo === 'invite') {
+      const remaining = getResendCooldown(u.email);
+      if (remaining > 0) {
+        const mins = Math.ceil(remaining / 60000);
+        toast.error(`Convite já enviado recentemente. Aguarde ${mins} minuto(s) antes de reenviar.`, { duration: 4000 });
+        return;
+      }
+    }
+
     setLoadingInviteId(u.email);
     try {
       const { error } = await supabase.functions.invoke("invite-user", {
@@ -309,6 +330,11 @@ export default function GestaoUsuarios() {
         p_acao: tipo === 'invite' ? "enviado" : "reenvio",
       });
 
+      // Track send time for cooldown
+      if (tipo === 'invite') {
+        setLastSentMap(prev => ({ ...prev, [u.email]: Date.now() }));
+      }
+
       const labels: Record<string, string> = {
         invite: "Convite enviado",
         recovery: "E-mail de redefinição de senha enviado",
@@ -321,7 +347,7 @@ export default function GestaoUsuarios() {
     } finally {
       setLoadingInviteId(null);
     }
-  }, [refetch]);
+  }, [refetch, getResendCooldown]);
 
   const handleCancelarConvite = useCallback(async (u: Usuario) => {
     try {
