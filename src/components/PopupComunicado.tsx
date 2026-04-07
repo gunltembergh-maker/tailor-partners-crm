@@ -105,32 +105,29 @@ export function PopupComunicado() {
           transform: animating ? "translateY(0)" : "translateY(20px)",
         }}
       >
-        {/* Header */}
-        <div className="p-6 pb-4" style={{ backgroundColor: bgColor }}>
-          <div className="flex items-start justify-between mb-4">
-            <img
-              src={LOGO_URL}
-              alt="Tailor Partners"
-              className="h-6 object-contain"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-            />
-            <button
-              onClick={handleDismissTemporary}
-              className="text-white/60 hover:text-white transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <h2 className="text-white font-bold text-lg leading-tight">
+        {/* Header with logo */}
+        <div className="p-6 flex justify-center" style={{ backgroundColor: "#082537" }}>
+          <img
+            src={LOGO_URL}
+            alt="Tailor Partners"
+            className="h-7 object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+
+        {/* Content */}
+        <div className="bg-white px-6 py-5 text-center">
+          <h2 className="font-bold text-lg leading-tight" style={{ color: "#1B2A3D" }}>
             {popup.titulo}
           </h2>
-          <p className="text-white/85 text-sm mt-3 whitespace-pre-line leading-relaxed">
+          <p className="text-gray-500 text-sm mt-3 whitespace-pre-line leading-relaxed">
             {popup.mensagem}
           </p>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-4 bg-white">
+        {/* Divider + Footer */}
+        <div className="border-t border-gray-200" />
+        <div className="flex items-center justify-between px-6 py-4 bg-white">
           <button
             onClick={handleDismissPermanent}
             className="text-xs text-gray-400 hover:text-gray-600 transition-colors underline"
@@ -140,10 +137,10 @@ export function PopupComunicado() {
           <Button
             onClick={handleDismissTemporary}
             size="sm"
-            className="text-sm font-medium"
-            style={{ backgroundColor: bgColor }}
+            className="text-sm font-medium text-white"
+            style={{ backgroundColor: "#082537" }}
           >
-            {popup.botao_label || "Entendido!"}
+            Entendido!
           </Button>
         </div>
       </div>

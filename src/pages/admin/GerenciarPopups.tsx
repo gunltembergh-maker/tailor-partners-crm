@@ -38,9 +38,8 @@ const PERFIL_OPTIONS = ["ADMIN", "LIDER", "BANKER", "FINDER", "OPERACOES"];
 const PAGINA_OPTIONS = [
   { label: "Todas as páginas", value: "__all__" },
   { label: "Dashboard Comercial", value: "/dashboards/comercial" },
-  { label: "Qualitativo", value: "/dashboards/comercial?tab=qualitativo" },
   { label: "Importar Bases", value: "/admin/importar-bases" },
-  { label: "Usuários", value: "/admin/usuarios" },
+  { label: "Gestão de Usuários", value: "/admin/usuarios" },
 ];
 
 interface PopupRow {
