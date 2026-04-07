@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -27,7 +28,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Megaphone, CalendarIcon, ImageOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Megaphone, CalendarIcon, ImageOff, ChevronDown, Search } from "lucide-react";
 import { PopupCard } from "@/components/PopupComunicado";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -39,14 +40,6 @@ const LOGO_OPTIONS = [
   { label: "Logo Tailor completa", value: LOGO_COMPLETA, thumb: LOGO_COMPLETA, bg: "#082537" },
   { label: "Logo Tailor transparente", value: LOGO_TRANSPARENTE, thumb: LOGO_TRANSPARENTE, bg: "#082537" },
   { label: "Sem logo", value: "__none__", thumb: null, bg: "#f3f4f6" },
-];
-
-const PERFIL_OPTIONS = ["ADMIN", "LIDER", "BANKER", "FINDER", "OPERACOES"];
-const PAGINA_OPTIONS = [
-  { label: "Todas as páginas", value: "__all__" },
-  { label: "Dashboard Comercial", value: "/dashboards/comercial" },
-  { label: "Importar Bases", value: "/admin/importar-bases" },
-  { label: "Gestão de Usuários", value: "/admin/usuarios" },
 ];
 
 interface PopupRow {
@@ -69,6 +62,18 @@ interface PopupRow {
   total_views?: number;
 }
 
+interface RotaOption {
+  rota: string;
+  nome: string;
+  ativo: boolean;
+}
+
+interface UsuarioOption {
+  user_id: string;
+  email: string;
+  full_name: string;
+}
+
 type DestinatarioMode = "todos" | "perfil" | "especifico";
 
 const defaultForm = {
@@ -85,6 +90,48 @@ const defaultForm = {
   mostrar_nome_hub: true,
 };
 
+/* ─── Accordion wrapper ──────────────────────────── */
+function AccordionField({
+  label,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  label: string;
+  summary: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Collapsible open={open} onOpenChange={onToggle}>
+      <div className="border rounded-lg">
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center justify-between w-full px-3 py-2.5 text-sm hover:bg-muted/50 rounded-lg transition-colors"
+          >
+            <div className="flex flex-col items-start gap-0.5">
+              <span className="text-xs font-medium text-muted-foreground">{label}</span>
+              <span className="font-medium">{summary}</span>
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                open && "rotate-180"
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-3 pb-3 pt-1 border-t">{children}</div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 export default function GerenciarPopups() {
   const qc = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
@@ -92,7 +139,11 @@ export default function GerenciarPopups() {
   const [form, setForm] = useState({ ...defaultForm });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [destOpen, setDestOpen] = useState(false);
+  const [paginasOpen, setPaginasOpen] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
 
+  /* ─── Queries ──────────────────────────── */
   const { data: popups, isLoading } = useQuery({
     queryKey: ["admin-popups"],
     queryFn: async () => {
@@ -102,17 +153,71 @@ export default function GerenciarPopups() {
     },
   });
 
-  const { data: users } = useQuery({
-    queryKey: ["all-profiles-emails"],
+  const { data: rotas } = useQuery({
+    queryKey: ["admin-rotas"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("email").order("email");
-      return (data || []).map((u) => u.email);
+      const { data, error } = await supabase.rpc("rpc_admin_listar_rotas" as any);
+      if (error) throw error;
+      return (data || []) as unknown as RotaOption[];
     },
   });
+
+  const { data: perfisAcesso } = useQuery({
+    queryKey: ["perfis-acesso-nomes"],
+    queryFn: async () => {
+      const { data } = await supabase.from("perfis_acesso").select("nome").order("nome");
+      return (data || []).map((p) => p.nome);
+    },
+  });
+
+  const { data: allUsers } = useQuery({
+    queryKey: ["admin-usuarios-popup"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("rpc_admin_lista_usuarios" as any);
+      return ((data || []) as any[]).map((u: any) => ({
+        user_id: u.user_id,
+        email: u.email,
+        full_name: u.full_name,
+      })) as UsuarioOption[];
+    },
+  });
+
+  const filteredUsers = useMemo(() => {
+    if (!allUsers) return [];
+    if (!userSearch.trim()) return allUsers;
+    const q = userSearch.toLowerCase();
+    return allUsers.filter(
+      (u) => u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+    );
+  }, [allUsers, userSearch]);
+
+  /* ─── Helpers ──────────────────────────── */
+  const rotasMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (rotas || []).forEach((r) => m.set(r.rota, r.nome));
+    return m;
+  }, [rotas]);
+
+  const getDestSummary = () => {
+    if (form.destinatario_mode === "perfil" && form.perfis.length > 0)
+      return form.perfis.length === 1 ? form.perfis[0] : `${form.perfis.length} perfis`;
+    if (form.destinatario_mode === "especifico" && form.destinatarios.length > 0)
+      return `${form.destinatarios.length} usuário(s)`;
+    return "Todos os usuários";
+  };
+
+  const getPaginasSummary = () => {
+    if (form.paginas.includes("__all__") || form.paginas.length === 0) return "Todas as páginas";
+    if (form.paginas.length === 1) return rotasMap.get(form.paginas[0]) || form.paginas[0];
+    return `${form.paginas.length} páginas`;
+  };
 
   const openNew = () => {
     setEditId(null);
     setForm({ ...defaultForm, data_inicio: new Date() });
+    setDestOpen(false);
+    setPaginasOpen(false);
+    setUserSearch("");
     setModalOpen(true);
   };
 
@@ -134,6 +239,9 @@ export default function GerenciarPopups() {
       logo_url: p.logo_url || LOGO_COMPLETA,
       mostrar_nome_hub: p.mostrar_nome_hub ?? true,
     });
+    setDestOpen(false);
+    setPaginasOpen(false);
+    setUserSearch("");
     setModalOpen(true);
   };
 
@@ -206,7 +314,7 @@ export default function GerenciarPopups() {
   const getPaginasLabel = (p: PopupRow) => {
     if (!p.paginas || p.paginas.length === 0) return "Todas";
     return p.paginas
-      .map((pg) => PAGINA_OPTIONS.find((o) => o.value === pg)?.label || pg)
+      .map((pg) => rotasMap.get(pg) || pg)
       .join(", ");
   };
 
@@ -309,73 +417,126 @@ export default function GerenciarPopups() {
               {/* Segmentation */}
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Segmentação</h3>
-                <div>
-                  <Label>Destinatários</Label>
-                  <Select value={form.destinatario_mode} onValueChange={(v) => setForm({ ...form, destinatario_mode: v as DestinatarioMode })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos os usuários</SelectItem>
-                      <SelectItem value="perfil">Por perfil</SelectItem>
-                      <SelectItem value="especifico">Usuários específicos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
-                {form.destinatario_mode === "perfil" && (
-                  <div className="flex flex-wrap gap-2">
-                    {PERFIL_OPTIONS.map((p) => (
-                      <label key={p} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                        <Checkbox
-                          checked={form.perfis.includes(p)}
-                          onCheckedChange={(c) =>
-                            setForm({ ...form, perfis: c ? [...form.perfis, p] : form.perfis.filter((x) => x !== p) })
-                          }
-                        />
-                        {p}
-                      </label>
-                    ))}
+                {/* Destinatários accordion */}
+                <AccordionField
+                  label="Destinatários"
+                  summary={getDestSummary()}
+                  open={destOpen}
+                  onToggle={() => setDestOpen(!destOpen)}
+                >
+                  <div className="space-y-3 pt-2">
+                    <Select
+                      value={form.destinatario_mode}
+                      onValueChange={(v) => {
+                        setForm({ ...form, destinatario_mode: v as DestinatarioMode });
+                        if (v === "todos") setDestOpen(false);
+                      }}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos os usuários</SelectItem>
+                        <SelectItem value="perfil">Por perfil</SelectItem>
+                        <SelectItem value="especifico">Usuários específicos</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {form.destinatario_mode === "perfil" && (
+                      <div className="flex flex-wrap gap-2">
+                        {(perfisAcesso || []).map((p) => (
+                          <label key={p} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                            <Checkbox
+                              checked={form.perfis.includes(p)}
+                              onCheckedChange={(c) =>
+                                setForm({ ...form, perfis: c ? [...form.perfis, p] : form.perfis.filter((x) => x !== p) })
+                              }
+                            />
+                            {p}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+
+                    {form.destinatario_mode === "especifico" && (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                          <Input
+                            value={userSearch}
+                            onChange={(e) => setUserSearch(e.target.value)}
+                            placeholder="Buscar por nome ou email..."
+                            className="pl-8 h-8 text-xs"
+                          />
+                        </div>
+                        <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-1">
+                          {filteredUsers.map((u) => (
+                            <label key={u.email} className="flex items-center gap-2 text-xs cursor-pointer py-0.5">
+                              <Checkbox
+                                checked={form.destinatarios.includes(u.email)}
+                                onCheckedChange={(c) =>
+                                  setForm({
+                                    ...form,
+                                    destinatarios: c
+                                      ? [...form.destinatarios, u.email]
+                                      : form.destinatarios.filter((x) => x !== u.email),
+                                  })
+                                }
+                              />
+                              <div className="flex flex-col leading-tight">
+                                <span className="font-medium">{u.full_name}</span>
+                                <span className="text-muted-foreground">{u.email}</span>
+                              </div>
+                            </label>
+                          ))}
+                          {filteredUsers.length === 0 && (
+                            <p className="text-xs text-muted-foreground text-center py-2">Nenhum usuário encontrado</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </AccordionField>
 
-                {form.destinatario_mode === "especifico" && (
-                  <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
-                    {(users || []).map((email) => (
-                      <label key={email} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                        <Checkbox
-                          checked={form.destinatarios.includes(email)}
-                          onCheckedChange={(c) =>
-                            setForm({ ...form, destinatarios: c ? [...form.destinatarios, email] : form.destinatarios.filter((x) => x !== email) })
+                {/* Páginas accordion */}
+                <AccordionField
+                  label="Onde aparece"
+                  summary={getPaginasSummary()}
+                  open={paginasOpen}
+                  onToggle={() => setPaginasOpen(!paginasOpen)}
+                >
+                  <div className="space-y-2 pt-2">
+                    <label className="flex items-center gap-1.5 text-sm cursor-pointer font-medium">
+                      <Checkbox
+                        checked={form.paginas.includes("__all__")}
+                        onCheckedChange={(c) => {
+                          if (c) {
+                            setForm({ ...form, paginas: ["__all__"] });
+                          } else {
+                            setForm({ ...form, paginas: [] });
                           }
-                        />
-                        {email}
-                      </label>
-                    ))}
-                  </div>
-                )}
-
-                <div>
-                  <Label>Páginas</Label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {PAGINA_OPTIONS.map((pg) => (
-                      <label key={pg.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                        <Checkbox
-                          checked={form.paginas.includes(pg.value)}
-                          onCheckedChange={(c) => {
-                            if (pg.value === "__all__") {
-                              setForm({ ...form, paginas: c ? ["__all__"] : [] });
-                            } else {
+                        }}
+                      />
+                      Todas as páginas
+                    </label>
+                    <div className="border-t pt-2 flex flex-wrap gap-2">
+                      {(rotas || []).map((r) => (
+                        <label key={r.rota} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                          <Checkbox
+                            checked={form.paginas.includes(r.rota)}
+                            disabled={form.paginas.includes("__all__")}
+                            onCheckedChange={(c) => {
                               const next = c
-                                ? [...form.paginas.filter((x) => x !== "__all__"), pg.value]
-                                : form.paginas.filter((x) => x !== pg.value);
+                                ? [...form.paginas.filter((x) => x !== "__all__"), r.rota]
+                                : form.paginas.filter((x) => x !== r.rota);
                               setForm({ ...form, paginas: next.length === 0 ? ["__all__"] : next });
-                            }
-                          }}
-                        />
-                        {pg.label}
-                      </label>
-                    ))}
+                            }}
+                          />
+                          {r.nome}
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                </AccordionField>
               </div>
 
               {/* Period */}
