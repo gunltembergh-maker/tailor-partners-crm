@@ -41,6 +41,7 @@ const BADGE_COLORS: Record<string, string> = {
 };
 
 interface Usuario {
+  profile_id: string;
   user_id: string;
   email: string;
   full_name: string;
