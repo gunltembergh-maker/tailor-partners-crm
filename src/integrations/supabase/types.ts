@@ -151,6 +151,30 @@ export type Database = {
           },
         ]
       }
+      admin_rotas: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          nome: string
+          rota: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          rota: string
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          rota?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           advisor_name: string | null
@@ -2815,6 +2839,14 @@ export type Database = {
           titulo: string
           total_dismiss: number
           total_views: number
+        }[]
+      }
+      rpc_admin_listar_rotas: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          nome: string
+          rota: string
         }[]
       }
       rpc_admin_marcar_notif_lida: { Args: { p_id: string }; Returns: Json }
