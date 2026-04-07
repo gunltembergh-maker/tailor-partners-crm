@@ -457,7 +457,7 @@ export default function GestaoUsuarios() {
                 {filtered.map((u) => {
                   const status = getStatusDisplay(u);
                   const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
-                  const conviteStatus = getConviteStatus(u);
+                  const convite = formatConvite(u);
                   const isInviteLoading = loadingInviteId === u.email;
                   return (
                     <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
@@ -480,22 +480,24 @@ export default function GestaoUsuarios() {
                       </TableCell>
                       <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={status.className}>{status.label}</Badge>
+                        <Badge variant="outline" className={status.className}>{status.icon} {status.label}</Badge>
                       </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <ConviteBadge usuario={u} />
+                      <TableCell>
+                        <Badge variant="outline" className={`${convite.className} text-xs`}>{convite.icon} {convite.text}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {u.primeiro_acesso
+                          ? <span className="text-yellow-500">⏳ Aguardando</span>
+                          : <span className="text-green-500">✅ Acessou</span>}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {u.ultimo_acesso
-                          ? new Date(u.ultimo_acesso).toLocaleDateString("pt-BR") + " " + new Date(u.ultimo_acesso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-                          : "Nunca"}
+                        {formatUltimoAcesso(u.ultimo_acesso)}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          {/* Invite actions — sempre disponível para qualquer status */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading}
@@ -518,11 +520,6 @@ export default function GestaoUsuarios() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          {conviteStatus === "enviado" && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCancelarConvite(u)}>
-                              <XCircle className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          )}
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
                             {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
                           </Button>
