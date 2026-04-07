@@ -239,15 +239,14 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_excluir_usuario", {
-        p_email: deleteUser.email,
-        p_user_id: deleteUser.user_id || undefined,
+      const { data, error } = await supabase.rpc("rpc_admin_excluir_usuario" as any, {
+        p_profile_id: deleteUser.user_id,
       });
       if (error) throw error;
       if (data && typeof data === "object" && "success" in data && !(data as any).success) {
-        throw new Error((data as any).message || "Erro ao excluir");
+        throw new Error((data as any).error || "Erro ao excluir");
       }
-      toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
+      toast.success(`Usuário ${deleteUser.full_name || deleteUser.email} excluído com sucesso.`, { duration: 3000 });
       setDeleteUser(null);
       await queryClient.invalidateQueries();
     } catch (e: any) {
