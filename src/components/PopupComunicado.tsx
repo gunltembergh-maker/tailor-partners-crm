@@ -85,7 +85,6 @@ export function PopupComunicado() {
   if (!visible || popups.length === 0) return null;
 
   const popup = popups[currentIndex];
-  const bgColor = popup.cor_fundo || "#082537";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
