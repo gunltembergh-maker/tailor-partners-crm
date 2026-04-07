@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT_LOGO_URL = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-white.png";
+const DEFAULT_LOGO_URL = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png";
 
 interface PopupData {
   id: string;
@@ -50,7 +50,7 @@ export function PopupCard({
           <img
             src={logoSrc}
             alt="Tailor Partners"
-            className="h-7 object-contain"
+            className="max-h-[48px] object-contain"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
         )}

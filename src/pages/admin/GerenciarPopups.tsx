@@ -32,12 +32,12 @@ import { PopupCard } from "@/components/PopupComunicado";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const LOGO_WHITE = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-white.png";
-const LOGO_DARK = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-dark.png";
+const LOGO_COMPLETA = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png";
+const LOGO_TRANSPARENTE = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logo_Tailor_transparente.png";
 
 const LOGO_OPTIONS = [
-  { label: "Logo branca", value: LOGO_WHITE, thumb: LOGO_WHITE, bg: "#082537" },
-  { label: "Logo escura", value: LOGO_DARK, thumb: LOGO_DARK, bg: "#f3f4f6" },
+  { label: "Logo Tailor completa", value: LOGO_COMPLETA, thumb: LOGO_COMPLETA, bg: "#082537" },
+  { label: "Logo Tailor transparente", value: LOGO_TRANSPARENTE, thumb: LOGO_TRANSPARENTE, bg: "#082537" },
   { label: "Sem logo", value: "__none__", thumb: null, bg: "#f3f4f6" },
 ];
 
@@ -81,7 +81,7 @@ const defaultForm = {
   perfis: [] as string[],
   destinatarios: [] as string[],
   paginas: ["__all__"] as string[],
-  logo_url: LOGO_WHITE as string,
+  logo_url: LOGO_COMPLETA as string,
   mostrar_nome_hub: true,
 };
 
@@ -131,7 +131,7 @@ export default function GerenciarPopups() {
       perfis: p.perfis || [],
       destinatarios: p.destinatarios || [],
       paginas: p.paginas && p.paginas.length > 0 ? p.paginas : ["__all__"],
-      logo_url: p.logo_url || LOGO_WHITE,
+      logo_url: p.logo_url || LOGO_COMPLETA,
       mostrar_nome_hub: p.mostrar_nome_hub ?? true,
     });
     setModalOpen(true);
