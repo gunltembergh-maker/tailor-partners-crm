@@ -423,7 +423,7 @@ export default function GerenciarPopups() {
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: "#082537" }}>
-              {saving ? "Salvando..." : "Salvar"}
+              {saving ? "Publicando..." : "Publicar Comunicado"}
             </Button>
           </DialogFooter>
         </DialogContent>
