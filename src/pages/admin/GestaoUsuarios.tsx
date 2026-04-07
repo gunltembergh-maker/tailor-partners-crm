@@ -448,6 +448,7 @@ export default function GestaoUsuarios() {
                   <TableHead>Financial Advisor/Finder</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Convite</TableHead>
+                  <TableHead>Primeiro Acesso</TableHead>
                   <TableHead>Último Acesso</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
