@@ -62,6 +62,7 @@ interface Usuario {
   primeiro_acesso: boolean;
   invited_at: string | null;
   operacao_tipo: string | null;
+  perfil_id: string | null;
   convite_status?: string | null;
   convite_enviado_em?: string | null;
   convite_aceito_em?: string | null;
