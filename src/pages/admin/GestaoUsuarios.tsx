@@ -358,7 +358,7 @@ export default function GestaoUsuarios() {
           </div>
 
           {/* Metric Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {metricCards.map((m) => (
               <Card key={m.label}>
                 <CardContent className="pt-4 pb-4 flex items-center gap-3">
