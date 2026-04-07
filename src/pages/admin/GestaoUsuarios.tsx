@@ -418,8 +418,8 @@ export default function GestaoUsuarios() {
               <SelectContent>
                 <SelectItem value="Todos">Todos</SelectItem>
                 <SelectItem value="Ativo">Ativo</SelectItem>
+                <SelectItem value="Nunca acessou">Nunca acessou</SelectItem>
                 <SelectItem value="Pré-cadastrado">Pré-cadastrado</SelectItem>
-                <SelectItem value="Aguardando">Aguardando</SelectItem>
                 <SelectItem value="Bloqueado">Bloqueado</SelectItem>
               </SelectContent>
             </Select>
