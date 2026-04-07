@@ -142,8 +142,8 @@ export default function GerenciarPopups() {
         p_perfis: form.destinatario_mode === "perfil" ? form.perfis : null,
         p_destinatarios: form.destinatario_mode === "especifico" ? form.destinatarios : null,
         p_paginas: form.paginas.includes("__all__") ? null : form.paginas,
-        p_cor_fundo: form.cor_fundo,
-        p_botao_label: form.botao_label || "Entendido!",
+        p_cor_fundo: "#082537",
+        p_botao_label: "Entendido!",
       };
       const { error } = await supabase.rpc("rpc_admin_salvar_popup", payload as any);
       if (error) throw error;
