@@ -115,7 +115,7 @@ export function PopupComunicado() {
         console.error("Error fetching popups:", error);
         return;
       }
-      const filtered = ((data as PopupData[]) || []).filter(
+      const filtered = ((data as unknown as PopupData[]) || []).filter(
         (p) => !dismissedThisSession.current.has(p.id)
       );
       if (filtered.length > 0) {
