@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, Megaphone, CalendarIcon } from "lucide-react";
+
+const LOGO_URL = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-tailor-white.png";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -36,9 +38,8 @@ const PERFIL_OPTIONS = ["ADMIN", "LIDER", "BANKER", "FINDER", "OPERACOES"];
 const PAGINA_OPTIONS = [
   { label: "Todas as páginas", value: "__all__" },
   { label: "Dashboard Comercial", value: "/dashboards/comercial" },
-  { label: "Qualitativo", value: "/dashboards/comercial?tab=qualitativo" },
   { label: "Importar Bases", value: "/admin/importar-bases" },
-  { label: "Usuários", value: "/admin/usuarios" },
+  { label: "Gestão de Usuários", value: "/admin/usuarios" },
 ];
 
 interface PopupRow {
@@ -71,8 +72,6 @@ const defaultForm = {
   perfis: [] as string[],
   destinatarios: [] as string[],
   paginas: ["__all__"] as string[],
-  cor_fundo: "#082537",
-  botao_label: "Entendido!",
 };
 
 export default function GerenciarPopups() {
@@ -123,8 +122,6 @@ export default function GerenciarPopups() {
       perfis: p.perfis || [],
       destinatarios: p.destinatarios || [],
       paginas: p.paginas && p.paginas.length > 0 ? p.paginas : ["__all__"],
-      cor_fundo: p.cor_fundo || "#082537",
-      botao_label: p.botao_label || "Entendido!",
     });
     setModalOpen(true);
   };
@@ -146,8 +143,8 @@ export default function GerenciarPopups() {
         p_perfis: form.destinatario_mode === "perfil" ? form.perfis : null,
         p_destinatarios: form.destinatario_mode === "especifico" ? form.destinatarios : null,
         p_paginas: form.paginas.includes("__all__") ? null : form.paginas,
-        p_cor_fundo: form.cor_fundo,
-        p_botao_label: form.botao_label || "Entendido!",
+        p_cor_fundo: "#082537",
+        p_botao_label: "Entendido!",
       };
       const { error } = await supabase.rpc("rpc_admin_salvar_popup", payload as any);
       if (error) throw error;
@@ -405,37 +402,20 @@ export default function GerenciarPopups() {
               </div>
             </div>
 
-            {/* Appearance */}
+            {/* Preview */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Aparência</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Cor de fundo</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={form.cor_fundo}
-                      onChange={(e) => setForm({ ...form, cor_fundo: e.target.value })}
-                      className="h-9 w-12 rounded border cursor-pointer"
-                    />
-                    <Input value={form.cor_fundo} onChange={(e) => setForm({ ...form, cor_fundo: e.target.value })} className="flex-1" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Texto do botão</Label>
-                  <Input value={form.botao_label} onChange={(e) => setForm({ ...form, botao_label: e.target.value })} placeholder="Entendido!" />
-                </div>
-              </div>
-
-              {/* Preview */}
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pré-visualização</h3>
               <div className="rounded-xl overflow-hidden border" style={{ maxWidth: 320 }}>
-                <div className="p-4" style={{ backgroundColor: form.cor_fundo }}>
-                  <p className="text-white font-bold text-sm">{form.titulo || "Título do comunicado"}</p>
-                  <p className="text-white/80 text-xs mt-1 whitespace-pre-line">{form.mensagem || "Mensagem..."}</p>
+                <div className="p-4 flex justify-center" style={{ backgroundColor: "#082537" }}>
+                  <img src={LOGO_URL} alt="Tailor Partners" className="h-5 object-contain" />
                 </div>
-                <div className="flex justify-end gap-2 p-3 bg-white">
-                  <span className="text-xs text-muted-foreground">Não mostrar novamente</span>
-                  <span className="text-xs font-medium" style={{ color: form.cor_fundo }}>{form.botao_label || "Entendido!"}</span>
+                <div className="p-4 bg-white text-center">
+                  <p className="font-bold text-sm" style={{ color: "#1B2A3D" }}>{form.titulo || "Título do comunicado"}</p>
+                  <p className="text-xs text-gray-500 mt-2 whitespace-pre-line">{form.mensagem || "Mensagem..."}</p>
+                </div>
+                <div className="border-t flex items-center justify-between p-3 bg-white">
+                  <span className="text-[10px] text-gray-400 underline">Não mostrar novamente</span>
+                  <span className="text-xs font-medium text-white px-3 py-1 rounded" style={{ backgroundColor: "#082537" }}>Entendido!</span>
                 </div>
               </div>
             </div>
@@ -444,7 +424,7 @@ export default function GerenciarPopups() {
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving} style={{ backgroundColor: "#082537" }}>
-              {saving ? "Salvando..." : "Salvar"}
+              {saving ? "Publicando..." : "Publicar Comunicado"}
             </Button>
           </DialogFooter>
         </DialogContent>
