@@ -401,37 +401,20 @@ export default function GerenciarPopups() {
               </div>
             </div>
 
-            {/* Appearance */}
+            {/* Preview */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Aparência</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Cor de fundo</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={form.cor_fundo}
-                      onChange={(e) => setForm({ ...form, cor_fundo: e.target.value })}
-                      className="h-9 w-12 rounded border cursor-pointer"
-                    />
-                    <Input value={form.cor_fundo} onChange={(e) => setForm({ ...form, cor_fundo: e.target.value })} className="flex-1" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Texto do botão</Label>
-                  <Input value={form.botao_label} onChange={(e) => setForm({ ...form, botao_label: e.target.value })} placeholder="Entendido!" />
-                </div>
-              </div>
-
-              {/* Preview */}
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pré-visualização</h3>
               <div className="rounded-xl overflow-hidden border" style={{ maxWidth: 320 }}>
-                <div className="p-4" style={{ backgroundColor: form.cor_fundo }}>
-                  <p className="text-white font-bold text-sm">{form.titulo || "Título do comunicado"}</p>
-                  <p className="text-white/80 text-xs mt-1 whitespace-pre-line">{form.mensagem || "Mensagem..."}</p>
+                <div className="p-4 flex justify-center" style={{ backgroundColor: "#082537" }}>
+                  <img src={LOGO_URL} alt="Tailor Partners" className="h-5 object-contain" />
                 </div>
-                <div className="flex justify-end gap-2 p-3 bg-white">
-                  <span className="text-xs text-muted-foreground">Não mostrar novamente</span>
-                  <span className="text-xs font-medium" style={{ color: form.cor_fundo }}>{form.botao_label || "Entendido!"}</span>
+                <div className="p-4 bg-white text-center">
+                  <p className="font-bold text-sm" style={{ color: "#1B2A3D" }}>{form.titulo || "Título do comunicado"}</p>
+                  <p className="text-xs text-gray-500 mt-2 whitespace-pre-line">{form.mensagem || "Mensagem..."}</p>
+                </div>
+                <div className="border-t flex items-center justify-between p-3 bg-white">
+                  <span className="text-[10px] text-gray-400 underline">Não mostrar novamente</span>
+                  <span className="text-xs font-medium text-white px-3 py-1 rounded" style={{ backgroundColor: "#082537" }}>Entendido!</span>
                 </div>
               </div>
             </div>
