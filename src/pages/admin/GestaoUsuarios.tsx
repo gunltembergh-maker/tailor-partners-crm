@@ -212,6 +212,7 @@ export default function GestaoUsuarios() {
       finder: u.finder_name || "",
       empresa: u.empresa || "Tailor Partners",
       isEdit: true,
+      editProfileId: u.profile_id,
       area: u.area || "",
       gestor: u.gestor || "",
       operacao_tipo: u.operacao_tipo || "",
