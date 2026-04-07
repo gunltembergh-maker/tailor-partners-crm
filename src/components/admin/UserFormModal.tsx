@@ -13,8 +13,6 @@ import {
 import { toast } from "sonner";
 import { CheckCircle, XCircle } from "lucide-react";
 
-const PERFIS = ["ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
-
 function cpfMask(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 11);
   if (digits.length <= 3) return digits;
@@ -51,6 +49,7 @@ export interface UserFormData {
   empresa: string;
   isEdit: boolean;
   editProfileId?: string;
+  perfilId?: string;
 }
 
 interface Props {
@@ -68,6 +67,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
   const [email, setEmail] = useState("");
   const [cpf, setCpf] = useState("");
   const [perfil, setPerfil] = useState("");
+  const [perfilId, setPerfilId] = useState("");
   const [banker, setBanker] = useState("");
   const [finder, setFinder] = useState("");
   const [empresa, setEmpresa] = useState("Tailor Partners");
@@ -79,12 +79,27 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
   const [cpfValid, setCpfValid] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Fetch perfis_acesso dynamically
+  const { data: perfisAcesso } = useQuery({
+    queryKey: ["perfis-acesso-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("perfis_acesso")
+        .select("id, nome")
+        .order("nome");
+      if (error) throw error;
+      return data as { id: string; nome: string }[];
+    },
+    enabled: open,
+  });
+
   useEffect(() => {
     if (open) {
       setNome(initialData?.nome || "");
       setEmail(initialData?.email || "");
       setCpf(initialData?.cpf ? cpfMask(initialData.cpf) : "");
       setPerfil(initialData?.perfil || "");
+      setPerfilId((initialData as any)?.perfilId || "");
       setBanker(initialData?.banker || "");
       setFinder(initialData?.finder || "");
       setEmpresa(initialData?.empresa || "Tailor Partners");
@@ -96,6 +111,14 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
       setCpfValid(null);
     }
   }, [open, initialData]);
+
+  // When perfisAcesso loads and we have a perfil name but no perfilId, resolve it
+  useEffect(() => {
+    if (perfisAcesso && perfil && !perfilId) {
+      const match = perfisAcesso.find(p => p.nome === perfil);
+      if (match) setPerfilId(match.id);
+    }
+  }, [perfisAcesso, perfil, perfilId]);
 
   const { data: bankerList } = useQuery({
     queryKey: ["admin-banker-list"],
@@ -193,6 +216,16 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
     }
   };
 
+  const handlePerfilChange = (perfilNome: string) => {
+    setPerfil(perfilNome);
+    const match = perfisAcesso?.find(p => p.nome === perfilNome);
+    setPerfilId(match?.id || "");
+    // Clear banker/finder when switching profiles
+    if (perfilNome !== "BANKER") setBanker("");
+    if (perfilNome !== "FINDER") setFinder("");
+    if (perfilNome !== "OPERACOES") setOperacaoTipo("");
+  };
+
   const handleSave = async () => {
     if (!email.trim() || !nome.trim() || emailError || cpfError) return;
     const digits = cpf.replace(/\D/g, "");
@@ -206,28 +239,54 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
     }
     setSaving(true);
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_salvar_usuario" as any, {
-        p_email: email,
-        p_nome: nome,
-        p_role: perfil,
-        p_perfil_nome: perfil,
-        p_banker_name: perfil === "BANKER" ? banker : null,
-        p_finder_name: perfil === "FINDER" ? finder : null,
-        p_empresa: empresa,
-        p_advisor_name: null,
-        p_cpf: digits || null,
-        p_area: area || null,
-        p_gestor: gestor || null,
-        p_operacao_tipo: perfil === "OPERACOES" ? operacaoTipo || null : null,
-      });
-      if (error) throw error;
-      const result = data as any;
-      if (result?.success === false) {
-        toast.error(result.message || "Erro ao salvar", { duration: 4000 });
+      if (isEdit && initialData?.editProfileId) {
+        // Use the update RPC for edits
+        const { data, error } = await supabase.rpc("rpc_admin_atualizar_usuario" as any, {
+          p_profile_id: initialData.editProfileId,
+          p_nome: nome,
+          p_email: email,
+          p_perfil_id: perfilId || null,
+          p_banker_name: perfil === "BANKER" ? banker : null,
+          p_finder_name: perfil === "FINDER" ? finder : null,
+          p_advisor_name: null,
+          p_blocked: null,
+          p_area: area || null,
+          p_gestor: gestor || null,
+        });
+        if (error) throw error;
+        const result = data as any;
+        if (result?.success === false) {
+          toast.error(result.error || "Erro ao atualizar", { duration: 4000 });
+        } else {
+          toast.success("Usuário atualizado com sucesso!", { duration: 3000 });
+          onOpenChange(false);
+          onSaved();
+        }
       } else {
-        toast.success(isEdit ? "Usuário atualizado!" : "Pré-cadastro criado!", { duration: 3000 });
-        onOpenChange(false);
-        onSaved();
+        // Use the create RPC for new users
+        const { data, error } = await supabase.rpc("rpc_admin_salvar_usuario" as any, {
+          p_email: email,
+          p_nome: nome,
+          p_role: perfil,
+          p_perfil_nome: perfil,
+          p_banker_name: perfil === "BANKER" ? banker : null,
+          p_finder_name: perfil === "FINDER" ? finder : null,
+          p_empresa: empresa,
+          p_advisor_name: null,
+          p_cpf: digits || null,
+          p_area: area || null,
+          p_gestor: gestor || null,
+          p_operacao_tipo: perfil === "OPERACOES" ? operacaoTipo || null : null,
+        });
+        if (error) throw error;
+        const result = data as any;
+        if (result?.success === false) {
+          toast.error(result.message || "Erro ao salvar", { duration: 4000 });
+        } else {
+          toast.success("Pré-cadastro criado!", { duration: 3000 });
+          onOpenChange(false);
+          onSaved();
+        }
       }
     } catch (e: any) {
       toast.error(e.message || "Erro ao salvar", { duration: 4000 });
@@ -260,7 +319,6 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
               }}
               onBlur={() => !isEdit && validateEmail(email)}
               placeholder="nome@tailorpartners.com.br"
-              disabled={isEdit}
               className={emailError ? "border-destructive" : ""}
             />
             {emailError && (
@@ -299,13 +357,15 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
           </div>
           <div className="space-y-1">
             <Label>Perfil de Acesso</Label>
-            <Select value={perfil} onValueChange={setPerfil}>
+            <Select value={perfil} onValueChange={handlePerfilChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                {PERFIS.map((p) => (
-                  <SelectItem key={p} value={p}>{p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
+                {perfisAcesso?.map((p) => (
+                  <SelectItem key={p.id} value={p.nome}>
+                    {p.nome === "BANKER" ? "FINANCIAL ADVISOR" : p.nome}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
