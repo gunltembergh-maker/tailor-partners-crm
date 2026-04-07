@@ -33,6 +33,7 @@ const ImportarBases = lazy(() => import("./pages/ImportarBases"));
 const GestaoProfiles = lazy(() => import("./pages/admin/GestaoProfiles"));
 const GestaoUsuarios = lazy(() => import("./pages/admin/GestaoUsuarios"));
 const RegrasAcesso = lazy(() => import("./pages/admin/RegrasAcesso"));
+const GerenciarPopups = lazy(() => import("./pages/admin/GerenciarPopups"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient({
