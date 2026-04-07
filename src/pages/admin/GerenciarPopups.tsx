@@ -121,8 +121,6 @@ export default function GerenciarPopups() {
       perfis: p.perfis || [],
       destinatarios: p.destinatarios || [],
       paginas: p.paginas && p.paginas.length > 0 ? p.paginas : ["__all__"],
-      cor_fundo: p.cor_fundo || "#082537",
-      botao_label: p.botao_label || "Entendido!",
     });
     setModalOpen(true);
   };
