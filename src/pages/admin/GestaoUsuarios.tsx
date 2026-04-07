@@ -20,13 +20,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle, KeyRound, Link2, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle, KeyRound, Link2, ChevronDown, LogIn } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
-import { ConviteBadge, getConviteStatus } from "@/components/admin/ConviteBadge";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
@@ -59,13 +58,15 @@ interface Usuario {
   tem_conta: boolean;
   area: string | null;
   gestor: string | null;
-  convite_status: string | null;
-  convite_enviado_em: string | null;
-  convite_aceito_em: string | null;
-  convite_expira_em: string | null;
-  convite_cancelado_em: string | null;
-  convite_reenvios: number | null;
+  primeiro_acesso: boolean;
+  invited_at: string | null;
   operacao_tipo: string | null;
+  convite_status?: string | null;
+  convite_enviado_em?: string | null;
+  convite_aceito_em?: string | null;
+  convite_expira_em?: string | null;
+  convite_cancelado_em?: string | null;
+  convite_reenvios?: number | null;
 }
 
 function maskCpf(cpf: string | null): string {
@@ -79,22 +80,37 @@ function formatCpfFull(cpf: string | null): string {
   return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`;
 }
 
-function relativeTime(dateStr: string | null): string {
-  if (!dateStr) return "Nunca";
+function formatUltimoAcesso(dateStr: string | null): string {
+  if (!dateStr) return "Nunca acessou";
   const date = new Date(dateStr);
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "Hoje";
-  if (diffDays === 1) return "Há 1 dia";
-  return `Há ${diffDays} dias`;
+  const time = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  
+  const isToday = date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  if (isToday) return `Hoje às ${time}`;
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth() && date.getFullYear() === yesterday.getFullYear();
+  if (isYesterday) return `Ontem às ${time}`;
+  
+  return `${date.toLocaleDateString("pt-BR")} às ${time}`;
+}
+
+function formatConvite(u: Usuario): { icon: string; text: string; className: string } {
+  if (u.invited_at) {
+    const d = new Date(u.invited_at);
+    const formatted = `${d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} às ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+    return { icon: "📤", text: `Enviado em ${formatted}`, className: "bg-blue-500/10 text-blue-600" };
+  }
+  return { icon: "—", text: "Não enviado", className: "bg-muted text-muted-foreground" };
 }
 
 function getStatusDisplay(u: Usuario) {
-  if (u.blocked) return { label: "Bloqueado", className: "bg-red-500/10 text-red-400" };
-  if (!u.tem_conta) return { label: "Pré-cadastrado", className: "bg-blue-500/10 text-blue-400" };
-  if (!u.active && !u.role) return { label: "Aguardando", className: "bg-yellow-500/10 text-yellow-400" };
-  return { label: "Ativo", className: "bg-green-500/10 text-green-400" };
+  if (u.blocked) return { label: "Bloqueado", icon: "🔒", className: "bg-red-500/10 text-red-400" };
+  if (!u.active && !u.blocked) return { label: "Pré-cadastrado", icon: "👤", className: "bg-muted text-muted-foreground" };
+  if (u.primeiro_acesso) return { label: "Nunca acessou", icon: "⏳", className: "bg-yellow-500/10 text-yellow-400" };
+  return { label: "Ativo", icon: "✅", className: "bg-green-500/10 text-green-400" };
 }
 
 function getBankerFinderDisplay(u: Usuario): string {
@@ -145,14 +161,12 @@ export default function GestaoUsuarios() {
 
   // Metrics
   const metrics = useMemo(() => {
-    if (!usuarios) return { total: 0, active: 0, preCadastrado: 0, awaiting: 0, blocked: 0 };
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    if (!usuarios) return { total: 0, active: 0, nuncaAcessou: 0, preCadastrado: 0, blocked: 0 };
     return {
       total: usuarios.length,
-      active: usuarios.filter((u) => u.tem_conta && u.ultimo_acesso && new Date(u.ultimo_acesso) >= thirtyDaysAgo).length,
-      preCadastrado: usuarios.filter((u) => !u.tem_conta && !u.blocked).length,
-      awaiting: usuarios.filter((u) => u.tem_conta && !u.active && !u.role && !u.blocked).length,
+      active: usuarios.filter((u) => !u.primeiro_acesso && u.ultimo_acesso && !u.blocked).length,
+      nuncaAcessou: usuarios.filter((u) => u.primeiro_acesso && u.active && !u.blocked).length,
+      preCadastrado: usuarios.filter((u) => !u.active && !u.blocked).length,
       blocked: usuarios.filter((u) => u.blocked).length,
     };
   }, [usuarios]);
@@ -170,9 +184,9 @@ export default function GestaoUsuarios() {
       const searchLower = search.toLowerCase();
       const matchSearch = !search || (u.full_name?.toLowerCase().includes(searchLower) || u.email?.toLowerCase().includes(searchLower) || u.cpf?.includes(search.replace(/\D/g, "")));
       const matchStatus = statusFilter === "Todos" ||
-        (statusFilter === "Ativo" && u.tem_conta && u.active && !u.blocked) ||
-        (statusFilter === "Pré-cadastrado" && !u.tem_conta && !u.blocked) ||
-        (statusFilter === "Aguardando" && u.tem_conta && !u.active && !u.role && !u.blocked) ||
+        (statusFilter === "Ativo" && !u.primeiro_acesso && u.active && !u.blocked) ||
+        (statusFilter === "Nunca acessou" && u.primeiro_acesso && u.active && !u.blocked) ||
+        (statusFilter === "Pré-cadastrado" && !u.active && !u.blocked) ||
         (statusFilter === "Bloqueado" && u.blocked);
       const matchPerfil = perfilFilter === "Todos" || u.role === perfilFilter;
       return matchSearch && matchStatus && matchPerfil;
@@ -321,8 +335,9 @@ export default function GestaoUsuarios() {
 
   const metricCards = useMemo(() => [
     { label: "Total", value: metrics.total, icon: Users, color: "text-primary" },
-    { label: "Ativos (30 dias)", value: metrics.active, icon: UserCheck, color: "text-green-400" },
-    { label: "Pré-cadastrados", value: metrics.preCadastrado, icon: Clock, color: "text-blue-400" },
+    { label: "Ativos", value: metrics.active, icon: UserCheck, color: "text-green-400" },
+    { label: "Nunca acessou", value: metrics.nuncaAcessou, icon: Clock, color: "text-yellow-400" },
+    { label: "Pré-cadastrados", value: metrics.preCadastrado, icon: Clock, color: "text-muted-foreground" },
     { label: "Bloqueados", value: metrics.blocked, icon: ShieldOff, color: "text-red-400" },
   ], [metrics]);
 
@@ -343,7 +358,7 @@ export default function GestaoUsuarios() {
           </div>
 
           {/* Metric Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {metricCards.map((m) => (
               <Card key={m.label}>
                 <CardContent className="pt-4 pb-4 flex items-center gap-3">
@@ -403,8 +418,8 @@ export default function GestaoUsuarios() {
               <SelectContent>
                 <SelectItem value="Todos">Todos</SelectItem>
                 <SelectItem value="Ativo">Ativo</SelectItem>
+                <SelectItem value="Nunca acessou">Nunca acessou</SelectItem>
                 <SelectItem value="Pré-cadastrado">Pré-cadastrado</SelectItem>
-                <SelectItem value="Aguardando">Aguardando</SelectItem>
                 <SelectItem value="Bloqueado">Bloqueado</SelectItem>
               </SelectContent>
             </Select>
@@ -432,6 +447,7 @@ export default function GestaoUsuarios() {
                   <TableHead>Financial Advisor/Finder</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Convite</TableHead>
+                  <TableHead>Primeiro Acesso</TableHead>
                   <TableHead>Último Acesso</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -440,7 +456,7 @@ export default function GestaoUsuarios() {
                 {filtered.map((u) => {
                   const status = getStatusDisplay(u);
                   const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
-                  const conviteStatus = getConviteStatus(u);
+                  const convite = formatConvite(u);
                   const isInviteLoading = loadingInviteId === u.email;
                   return (
                     <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
@@ -463,22 +479,24 @@ export default function GestaoUsuarios() {
                       </TableCell>
                       <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={status.className}>{status.label}</Badge>
+                        <Badge variant="outline" className={status.className}>{status.icon} {status.label}</Badge>
                       </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <ConviteBadge usuario={u} />
+                      <TableCell>
+                        <Badge variant="outline" className={`${convite.className} text-xs`}>{convite.icon} {convite.text}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {u.primeiro_acesso
+                          ? <span className="text-yellow-500">⏳ Aguardando</span>
+                          : <span className="text-green-500">✅ Acessou</span>}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {u.ultimo_acesso
-                          ? new Date(u.ultimo_acesso).toLocaleDateString("pt-BR") + " " + new Date(u.ultimo_acesso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-                          : "Nunca"}
+                        {formatUltimoAcesso(u.ultimo_acesso)}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          {/* Invite actions — sempre disponível para qualquer status */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading}
@@ -501,11 +519,6 @@ export default function GestaoUsuarios() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          {conviteStatus === "enviado" && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCancelarConvite(u)}>
-                              <XCircle className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          )}
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
                             {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
                           </Button>
@@ -526,7 +539,7 @@ export default function GestaoUsuarios() {
                 })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                       Nenhum usuário encontrado
                     </TableCell>
                   </TableRow>

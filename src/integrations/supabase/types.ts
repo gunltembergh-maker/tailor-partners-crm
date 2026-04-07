@@ -2786,21 +2786,21 @@ export type Database = {
           area: string
           banker_name: string
           blocked: boolean
-          convite_aceito_em: string
-          convite_cancelado_em: string
-          convite_enviado_em: string
-          convite_expira_em: string
-          convite_reenvios: number
-          convite_status: string
           cpf: string
           created_at: string
           email: string
           empresa: string
+          finder_id: string
           finder_name: string
           full_name: string
           gestor: string
+          id: string
+          invited_at: string
+          nome: string
           operacao_tipo: string
+          perfil_id: string
           pre_cadastrado: boolean
+          primeiro_acesso: boolean
           role: string
           tem_conta: boolean
           ultimo_acesso: string
