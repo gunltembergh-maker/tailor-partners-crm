@@ -161,14 +161,12 @@ export default function GestaoUsuarios() {
 
   // Metrics
   const metrics = useMemo(() => {
-    if (!usuarios) return { total: 0, active: 0, preCadastrado: 0, awaiting: 0, blocked: 0 };
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    if (!usuarios) return { total: 0, active: 0, nuncaAcessou: 0, preCadastrado: 0, blocked: 0 };
     return {
       total: usuarios.length,
-      active: usuarios.filter((u) => u.tem_conta && u.ultimo_acesso && new Date(u.ultimo_acesso) >= thirtyDaysAgo).length,
-      preCadastrado: usuarios.filter((u) => !u.tem_conta && !u.blocked).length,
-      awaiting: usuarios.filter((u) => u.tem_conta && !u.active && !u.role && !u.blocked).length,
+      active: usuarios.filter((u) => !u.primeiro_acesso && u.ultimo_acesso && !u.blocked).length,
+      nuncaAcessou: usuarios.filter((u) => u.primeiro_acesso && u.active && !u.blocked).length,
+      preCadastrado: usuarios.filter((u) => !u.active && !u.blocked).length,
       blocked: usuarios.filter((u) => u.blocked).length,
     };
   }, [usuarios]);
