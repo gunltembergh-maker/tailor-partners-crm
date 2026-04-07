@@ -41,6 +41,7 @@ const BADGE_COLORS: Record<string, string> = {
 };
 
 interface Usuario {
+  profile_id: string;
   user_id: string;
   email: string;
   full_name: string;
@@ -151,7 +152,10 @@ export default function GestaoUsuarios() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_admin_lista_usuarios" as any);
       if (error) throw error;
-      return data as unknown as Usuario[];
+      return ((data as any[]) || []).map((row: any) => ({
+        ...row,
+        profile_id: row.id,
+      })) as unknown as Usuario[];
     },
   });
 
@@ -208,6 +212,7 @@ export default function GestaoUsuarios() {
       finder: u.finder_name || "",
       empresa: u.empresa || "Tailor Partners",
       isEdit: true,
+      editProfileId: u.profile_id,
       area: u.area || "",
       gestor: u.gestor || "",
       operacao_tipo: u.operacao_tipo || "",
@@ -239,15 +244,14 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_excluir_usuario", {
-        p_email: deleteUser.email,
-        p_user_id: deleteUser.user_id || undefined,
+      const { data, error } = await supabase.rpc("rpc_admin_excluir_usuario" as any, {
+        p_profile_id: deleteUser.profile_id,
       });
       if (error) throw error;
       if (data && typeof data === "object" && "success" in data && !(data as any).success) {
-        throw new Error((data as any).message || "Erro ao excluir");
+        throw new Error((data as any).error || "Erro ao excluir");
       }
-      toast.success(`Cadastro de ${deleteUser.full_name || deleteUser.email} removido.`, { duration: 3000 });
+      toast.success(`Usuário ${deleteUser.full_name || deleteUser.email} excluído com sucesso.`, { duration: 3000 });
       setDeleteUser(null);
       await queryClient.invalidateQueries();
     } catch (e: any) {
@@ -589,20 +593,16 @@ export default function GestaoUsuarios() {
       <AlertDialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir cadastro</AlertDialogTitle>
+            <AlertDialogTitle>Excluir usuário permanentemente</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o cadastro de{" "}
-              <strong>{deleteUser?.full_name}</strong>?
-              {deleteUser?.tem_conta
-                ? " O usuário perderá o acesso ao Hub imediatamente."
-                : " O pré-cadastro será removido."}
-              {" "}Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir <strong>{deleteUser?.full_name || deleteUser?.email}</strong>?
+              {" "}Esta ação não pode ser desfeita. Todos os dados do usuário serão removidos permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">
-              Excluir
+              Excluir permanentemente
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

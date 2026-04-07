@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { CheckCircle, XCircle } from "lucide-react";
 
 const PERFIS = ["ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
 
@@ -22,6 +23,24 @@ function cpfMask(value: string): string {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
+function validarCPF(cpf: string): boolean {
+  const nums = cpf.replace(/\D/g, "");
+  if (nums.length !== 11) return false;
+  if (/^(\d)\1+$/.test(nums)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(nums[i]) * (10 - i);
+  let dig1 = 11 - (sum % 11);
+  if (dig1 >= 10) dig1 = 0;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(nums[i]) * (11 - i);
+  let dig2 = 11 - (sum % 11);
+  if (dig2 >= 10) dig2 = 0;
+
+  return dig1 === parseInt(nums[9]) && dig2 === parseInt(nums[10]);
+}
+
 export interface UserFormData {
   email: string;
   nome: string;
@@ -31,6 +50,7 @@ export interface UserFormData {
   finder: string;
   empresa: string;
   isEdit: boolean;
+  editProfileId?: string;
 }
 
 interface Props {
@@ -55,6 +75,8 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
   const [gestor, setGestor] = useState("");
   const [operacaoTipo, setOperacaoTipo] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [cpfError, setCpfError] = useState<string | null>(null);
+  const [cpfValid, setCpfValid] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -70,6 +92,8 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
       setGestor((initialData as any)?.gestor || "");
       setOperacaoTipo((initialData as any)?.operacao_tipo || "");
       setEmailError(null);
+      setCpfError(null);
+      setCpfValid(null);
     }
   }, [open, initialData]);
 
@@ -111,7 +135,6 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
         setEmpresa(result?.empresa || "Tailor Partners");
       }
     } catch {
-      // Fallback: check domain locally from dominio_empresa table
       const dominio = emailValue.split("@")[1];
       const { data: domData } = await supabase
         .from("dominio_empresa")
@@ -128,8 +151,59 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
     }
   }, []);
 
+  const handleCpfChange = (value: string) => {
+    const masked = cpfMask(value);
+    setCpf(masked);
+    const digits = masked.replace(/\D/g, "");
+    if (digits.length < 11) {
+      setCpfValid(null);
+      setCpfError(null);
+      return;
+    }
+    if (!validarCPF(digits)) {
+      setCpfValid(false);
+      setCpfError("CPF inválido");
+    } else {
+      setCpfValid(true);
+      setCpfError(null);
+    }
+  };
+
+  const handleCpfBlur = async () => {
+    const digits = cpf.replace(/\D/g, "");
+    if (digits.length !== 11 || !validarCPF(digits)) return;
+
+    try {
+      const params: any = { p_cpf: digits };
+      if (isEdit && initialData?.editProfileId) {
+        params.p_exclude_id = initialData.editProfileId;
+      }
+      const { data, error } = await supabase.rpc("rpc_verificar_cpf" as any, params);
+      if (error) throw error;
+      const result = data as any;
+      if (result?.disponivel === false) {
+        setCpfError(result.mensagem || "Este CPF já está cadastrado no Hub");
+        setCpfValid(false);
+      } else {
+        setCpfError(null);
+        setCpfValid(true);
+      }
+    } catch {
+      // Silently ignore check errors
+    }
+  };
+
   const handleSave = async () => {
-    if (!email.trim() || !nome.trim() || emailError) return;
+    if (!email.trim() || !nome.trim() || emailError || cpfError) return;
+    const digits = cpf.replace(/\D/g, "");
+    if (digits.length > 0 && digits.length !== 11) {
+      setCpfError("CPF deve ter 11 dígitos");
+      return;
+    }
+    if (digits.length === 11 && !validarCPF(digits)) {
+      setCpfError("CPF inválido");
+      return;
+    }
     setSaving(true);
     try {
       const { data, error } = await supabase.rpc("rpc_admin_salvar_usuario" as any, {
@@ -141,7 +215,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
         p_finder_name: perfil === "FINDER" ? finder : null,
         p_empresa: empresa,
         p_advisor_name: null,
-        p_cpf: cpf.replace(/\D/g, ""),
+        p_cpf: digits || null,
         p_area: area || null,
         p_gestor: gestor || null,
         p_operacao_tipo: perfil === "OPERACOES" ? operacaoTipo || null : null,
@@ -162,7 +236,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
     }
   };
 
-  const isFormValid = email.trim() && nome.trim() && !emailError && empresa;
+  const isFormValid = email.trim() && nome.trim() && !emailError && !cpfError && empresa;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -195,12 +269,25 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
           </div>
           <div className="space-y-1">
             <Label>CPF</Label>
-            <Input
-              value={cpf}
-              onChange={(e) => setCpf(cpfMask(e.target.value))}
-              placeholder="000.000.000-00"
-              maxLength={14}
-            />
+            <div className="relative">
+              <Input
+                value={cpf}
+                onChange={(e) => handleCpfChange(e.target.value)}
+                onBlur={handleCpfBlur}
+                placeholder="000.000.000-00"
+                maxLength={14}
+                className={cpfError ? "border-destructive pr-9" : cpfValid ? "border-green-500 pr-9" : ""}
+              />
+              {cpfValid === true && !cpfError && (
+                <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+              )}
+              {cpfValid === false && (
+                <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
+              )}
+            </div>
+            {cpfError && (
+              <p className="text-xs text-destructive mt-1">{cpfError}</p>
+            )}
           </div>
           <div className="space-y-1">
             <Label>Área</Label>

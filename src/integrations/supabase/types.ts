@@ -2764,10 +2764,9 @@ export type Database = {
       }
       rpc_admin_deletar_perfil: { Args: { p_id: string }; Returns: Json }
       rpc_admin_excluir_popup: { Args: { p_id: string }; Returns: Json }
-      rpc_admin_excluir_usuario: {
-        Args: { p_email: string; p_user_id?: string }
-        Returns: Json
-      }
+      rpc_admin_excluir_usuario:
+        | { Args: { p_email: string; p_user_id?: string }; Returns: Json }
+        | { Args: { p_profile_id: string }; Returns: Json }
       rpc_admin_lista_perfis: {
         Args: never
         Returns: {
@@ -3595,6 +3594,10 @@ export type Database = {
           ano: number
           net: number
         }[]
+      }
+      rpc_verificar_cpf: {
+        Args: { p_cpf: string; p_exclude_id?: string }
+        Returns: Json
       }
       truncate_table: { Args: { table_name: string }; Returns: undefined }
       unaccent: { Args: { "": string }; Returns: string }
