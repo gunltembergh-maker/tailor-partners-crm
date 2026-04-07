@@ -89,7 +89,7 @@ export default function GerenciarPopups() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_admin_listar_popups");
       if (error) throw error;
-      return (data || []) as PopupRow[];
+      return (data || []) as unknown as PopupRow[];
     },
   });
 
