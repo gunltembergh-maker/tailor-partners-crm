@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -27,12 +27,19 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Megaphone, CalendarIcon } from "lucide-react";
-
-const LOGO_URL = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-tailor-white.png";
+import { Plus, Pencil, Trash2, Megaphone, CalendarIcon, ImageOff } from "lucide-react";
+import { PopupCard } from "@/components/PopupComunicado";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+
+const LOGO_WHITE = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-white.png";
+const LOGO_DARK = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/logos/logo-dark.png";
+
+const LOGO_OPTIONS = [
+  { label: "Logo branca", value: LOGO_WHITE, thumb: LOGO_WHITE, bg: "#082537" },
+  { label: "Logo escura", value: LOGO_DARK, thumb: LOGO_DARK, bg: "#f3f4f6" },
+  { label: "Sem logo", value: "__none__", thumb: null, bg: "#f3f4f6" },
+];
 
 const PERFIL_OPTIONS = ["ADMIN", "LIDER", "BANKER", "FINDER", "OPERACOES"];
 const PAGINA_OPTIONS = [
@@ -55,6 +62,8 @@ interface PopupRow {
   cor_fundo: string | null;
   cor_texto: string | null;
   botao_label: string | null;
+  logo_url: string | null;
+  mostrar_nome_hub: boolean | null;
   created_at: string | null;
   total_dismiss?: number;
   total_views?: number;
@@ -72,6 +81,8 @@ const defaultForm = {
   perfis: [] as string[],
   destinatarios: [] as string[],
   paginas: ["__all__"] as string[],
+  logo_url: LOGO_WHITE as string,
+  mostrar_nome_hub: true,
 };
 
 export default function GerenciarPopups() {
@@ -82,7 +93,6 @@ export default function GerenciarPopups() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Fetch popups
   const { data: popups, isLoading } = useQuery({
     queryKey: ["admin-popups"],
     queryFn: async () => {
@@ -92,7 +102,6 @@ export default function GerenciarPopups() {
     },
   });
 
-  // Fetch users for "específico" mode
   const { data: users } = useQuery({
     queryKey: ["all-profiles-emails"],
     queryFn: async () => {
@@ -122,6 +131,8 @@ export default function GerenciarPopups() {
       perfis: p.perfis || [],
       destinatarios: p.destinatarios || [],
       paginas: p.paginas && p.paginas.length > 0 ? p.paginas : ["__all__"],
+      logo_url: p.logo_url || LOGO_WHITE,
+      mostrar_nome_hub: p.mostrar_nome_hub ?? true,
     });
     setModalOpen(true);
   };
@@ -145,6 +156,8 @@ export default function GerenciarPopups() {
         p_paginas: form.paginas.includes("__all__") ? null : form.paginas,
         p_cor_fundo: "#082537",
         p_botao_label: "Entendido!",
+        p_logo_url: form.logo_url === "__none__" ? null : form.logo_url,
+        p_mostrar_nome_hub: form.mostrar_nome_hub,
       };
       const { error } = await supabase.rpc("rpc_admin_salvar_popup", payload as any);
       if (error) throw error;
@@ -270,152 +283,193 @@ export default function GerenciarPopups() {
         </Card>
       </div>
 
-      {/* Create/Edit Modal */}
+      {/* Create/Edit Modal — Two columns */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editId ? "Editar Comunicado" : "Novo Comunicado"}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5">
-            {/* Content */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Conteúdo</h3>
-              <div>
-                <Label>Título *</Label>
-                <Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} placeholder="Título do comunicado" />
-              </div>
-              <div>
-                <Label>Mensagem *</Label>
-                <Textarea value={form.mensagem} onChange={(e) => setForm({ ...form, mensagem: e.target.value })} placeholder="Mensagem do comunicado" rows={4} />
-              </div>
-            </div>
-
-            {/* Segmentation */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Segmentação</h3>
-              <div>
-                <Label>Destinatários</Label>
-                <Select value={form.destinatario_mode} onValueChange={(v) => setForm({ ...form, destinatario_mode: v as DestinatarioMode })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os usuários</SelectItem>
-                    <SelectItem value="perfil">Por perfil</SelectItem>
-                    <SelectItem value="especifico">Usuários específicos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {form.destinatario_mode === "perfil" && (
-                <div className="flex flex-wrap gap-2">
-                  {PERFIL_OPTIONS.map((p) => (
-                    <label key={p} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                      <Checkbox
-                        checked={form.perfis.includes(p)}
-                        onCheckedChange={(c) =>
-                          setForm({ ...form, perfis: c ? [...form.perfis, p] : form.perfis.filter((x) => x !== p) })
-                        }
-                      />
-                      {p}
-                    </label>
-                  ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* LEFT — Form */}
+            <div className="space-y-5">
+              {/* Content */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Conteúdo</h3>
+                <div>
+                  <Label>Título *</Label>
+                  <Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} placeholder="Título do comunicado" />
                 </div>
-              )}
-
-              {form.destinatario_mode === "especifico" && (
-                <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-1">
-                  {(users || []).map((email) => (
-                    <label key={email} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                      <Checkbox
-                        checked={form.destinatarios.includes(email)}
-                        onCheckedChange={(c) =>
-                          setForm({ ...form, destinatarios: c ? [...form.destinatarios, email] : form.destinatarios.filter((x) => x !== email) })
-                        }
-                      />
-                      {email}
-                    </label>
-                  ))}
+                <div>
+                  <Label>Mensagem *</Label>
+                  <Textarea value={form.mensagem} onChange={(e) => setForm({ ...form, mensagem: e.target.value })} placeholder="Mensagem do comunicado" rows={3} />
                 </div>
-              )}
+              </div>
 
-              <div>
-                <Label>Páginas</Label>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {PAGINA_OPTIONS.map((pg) => (
-                    <label key={pg.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                      <Checkbox
-                        checked={form.paginas.includes(pg.value)}
-                        onCheckedChange={(c) => {
-                          if (pg.value === "__all__") {
-                            setForm({ ...form, paginas: c ? ["__all__"] : [] });
-                          } else {
-                            const next = c
-                              ? [...form.paginas.filter((x) => x !== "__all__"), pg.value]
-                              : form.paginas.filter((x) => x !== pg.value);
-                            setForm({ ...form, paginas: next.length === 0 ? ["__all__"] : next });
+              {/* Segmentation */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Segmentação</h3>
+                <div>
+                  <Label>Destinatários</Label>
+                  <Select value={form.destinatario_mode} onValueChange={(v) => setForm({ ...form, destinatario_mode: v as DestinatarioMode })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos os usuários</SelectItem>
+                      <SelectItem value="perfil">Por perfil</SelectItem>
+                      <SelectItem value="especifico">Usuários específicos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {form.destinatario_mode === "perfil" && (
+                  <div className="flex flex-wrap gap-2">
+                    {PERFIL_OPTIONS.map((p) => (
+                      <label key={p} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={form.perfis.includes(p)}
+                          onCheckedChange={(c) =>
+                            setForm({ ...form, perfis: c ? [...form.perfis, p] : form.perfis.filter((x) => x !== p) })
                           }
-                        }}
-                      />
-                      {pg.label}
-                    </label>
-                  ))}
+                        />
+                        {p}
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {form.destinatario_mode === "especifico" && (
+                  <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
+                    {(users || []).map((email) => (
+                      <label key={email} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                        <Checkbox
+                          checked={form.destinatarios.includes(email)}
+                          onCheckedChange={(c) =>
+                            setForm({ ...form, destinatarios: c ? [...form.destinatarios, email] : form.destinatarios.filter((x) => x !== email) })
+                          }
+                        />
+                        {email}
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                <div>
+                  <Label>Páginas</Label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {PAGINA_OPTIONS.map((pg) => (
+                      <label key={pg.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={form.paginas.includes(pg.value)}
+                          onCheckedChange={(c) => {
+                            if (pg.value === "__all__") {
+                              setForm({ ...form, paginas: c ? ["__all__"] : [] });
+                            } else {
+                              const next = c
+                                ? [...form.paginas.filter((x) => x !== "__all__"), pg.value]
+                                : form.paginas.filter((x) => x !== pg.value);
+                              setForm({ ...form, paginas: next.length === 0 ? ["__all__"] : next });
+                            }
+                          }}
+                        />
+                        {pg.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Period */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Período</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Data de início</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.data_inicio && "text-muted-foreground")}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {form.data_inicio ? format(form.data_inicio, "dd/MM/yyyy") : "Selecionar"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={form.data_inicio} onSelect={(d) => d && setForm({ ...form, data_inicio: d })} className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div>
+                    <Label>Data de fim (opcional)</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.data_fim && "text-muted-foreground")}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {form.data_fim ? format(form.data_fim, "dd/MM/yyyy") : "Sem expiração"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={form.data_fim || undefined} onSelect={(d) => setForm({ ...form, data_fim: d || null })} className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.ativo} onCheckedChange={(c) => setForm({ ...form, ativo: c })} />
+                  <Label>Ativo</Label>
+                </div>
+              </div>
+
+              {/* Logo selection */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Logo</h3>
+                <div className="flex gap-3">
+                  {LOGO_OPTIONS.map((opt) => {
+                    const isSelected = form.logo_url === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm({ ...form, logo_url: opt.value })}
+                        className={cn(
+                          "flex flex-col items-center gap-1.5 rounded-lg border-2 p-2 transition-all cursor-pointer w-24",
+                          isSelected ? "border-[#082537] ring-1 ring-[#082537]/30" : "border-gray-200 hover:border-gray-300"
+                        )}
+                      >
+                        <div
+                          className="w-full h-10 rounded flex items-center justify-center"
+                          style={{ backgroundColor: opt.bg }}
+                        >
+                          {opt.thumb ? (
+                            <img src={opt.thumb} alt={opt.label} className="h-5 object-contain" />
+                          ) : (
+                            <ImageOff className="h-4 w-4 text-gray-400" />
+                          )}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground leading-tight text-center">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch checked={form.mostrar_nome_hub} onCheckedChange={(c) => setForm({ ...form, mostrar_nome_hub: c })} />
+                  <Label>Mostrar "Hub Grupo Tailor Partners"</Label>
                 </div>
               </div>
             </div>
 
-            {/* Period */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Período</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Data de início</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.data_inicio && "text-muted-foreground")}>
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.data_inicio ? format(form.data_inicio, "dd/MM/yyyy") : "Selecionar"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={form.data_inicio} onSelect={(d) => d && setForm({ ...form, data_inicio: d })} className="p-3 pointer-events-auto" />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div>
-                  <Label>Data de fim (opcional)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.data_fim && "text-muted-foreground")}>
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.data_fim ? format(form.data_fim, "dd/MM/yyyy") : "Sem expiração"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={form.data_fim || undefined} onSelect={(d) => setForm({ ...form, data_fim: d || null })} className="p-3 pointer-events-auto" />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.ativo} onCheckedChange={(c) => setForm({ ...form, ativo: c })} />
-                <Label>Ativo</Label>
-              </div>
-            </div>
-
-            {/* Preview */}
+            {/* RIGHT — Live Preview */}
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pré-visualização</h3>
-              <div className="rounded-xl overflow-hidden border" style={{ maxWidth: 320 }}>
-                <div className="p-4 flex justify-center" style={{ backgroundColor: "#082537" }}>
-                  <img src={LOGO_URL} alt="Tailor Partners" className="h-5 object-contain" />
-                </div>
-                <div className="p-4 bg-white text-center">
-                  <p className="font-bold text-sm" style={{ color: "#1B2A3D" }}>{form.titulo || "Título do comunicado"}</p>
-                  <p className="text-xs text-gray-500 mt-2 whitespace-pre-line">{form.mensagem || "Mensagem..."}</p>
-                </div>
-                <div className="border-t flex items-center justify-between p-3 bg-white">
-                  <span className="text-[10px] text-gray-400 underline">Não mostrar novamente</span>
-                  <span className="text-xs font-medium text-white px-3 py-1 rounded" style={{ backgroundColor: "#082537" }}>Entendido!</span>
+              <div className="rounded-xl bg-gray-100 p-4 flex items-start justify-center min-h-[400px]">
+                <div className="relative w-full flex items-center justify-center pt-4">
+                  <div className="absolute inset-0 bg-black/30 rounded-lg" />
+                  <div className="relative z-10 w-full max-w-[340px]">
+                    <PopupCard
+                      titulo={form.titulo}
+                      mensagem={form.mensagem}
+                      logo_url={form.logo_url === "__none__" ? "" : form.logo_url}
+                      mostrar_nome_hub={form.mostrar_nome_hub}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
