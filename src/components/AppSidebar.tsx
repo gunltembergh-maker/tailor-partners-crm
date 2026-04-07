@@ -81,6 +81,9 @@ export function AppSidebar() {
   if (canSee("menu_regras_acesso")) {
     adminItems.push({ title: "Regras de Acesso", icon: KeyRound, path: "/admin/regras-acesso" });
   }
+  if (canSee("menu_gestao_usuarios")) {
+    adminItems.push({ title: "Comunicados", icon: Megaphone, path: "/admin/popups" });
+  }
 
   const showAdmin = adminItems.length > 0;
 
