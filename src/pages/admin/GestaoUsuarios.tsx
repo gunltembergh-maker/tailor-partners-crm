@@ -328,6 +328,7 @@ export default function GestaoUsuarios() {
 
   return (
     <AppLayout>
+      <PopupComunicado />
       {isLoading && <TailorLoader overlay={false} />}
       {!isLoading && (
         <div className="space-y-6">
