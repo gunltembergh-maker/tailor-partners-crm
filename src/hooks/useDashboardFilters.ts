@@ -9,7 +9,7 @@ export interface DashboardFilters {
   finder: string[];
   documento: string;
   tipoCliente: string;
-  casa: string;
+  casa: string[];
   vencimento: string;
 }
 
@@ -26,7 +26,7 @@ const defaultFilters: DashboardFilters = {
   finder: [],
   documento: "",
   tipoCliente: "",
-  casa: "",
+  casa: [],
   vencimento: "",
 };
 
@@ -71,8 +71,8 @@ export function useDashboardFilters() {
     if (appliedFilters.tipoCliente) {
       chips.push({ key: "tipoCliente", label: "Tipo Cliente", value: appliedFilters.tipoCliente });
     }
-    if (appliedFilters.casa) {
-      chips.push({ key: "casa", label: "Casa", value: appliedFilters.casa });
+    if (appliedFilters.casa.length) {
+      appliedFilters.casa.forEach(v => chips.push({ key: "casa", label: "Casa", value: v }));
     }
     if (appliedFilters.vencimento) {
       chips.push({ key: "vencimento", label: "Vencimento", value: appliedFilters.vencimento });
@@ -83,7 +83,7 @@ export function useDashboardFilters() {
   const removeChip = useCallback((key: keyof DashboardFilters, value: string) => {
     setAppliedFilters(prev => {
       const next = { ...prev };
-      if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes") {
+      if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes" || key === "casa") {
         next[key] = prev[key].filter(v => v !== value);
       } else {
         (next as any)[key] = "";
@@ -92,7 +92,7 @@ export function useDashboardFilters() {
     });
     setPendingFilters(prev => {
       const next = { ...prev };
-      if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes") {
+      if (key === "banker" || key === "advisor" || key === "finder" || key === "anoMes" || key === "casa") {
         next[key] = prev[key].filter(v => v !== value);
       } else {
         (next as any)[key] = "";
