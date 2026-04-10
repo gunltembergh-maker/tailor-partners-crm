@@ -305,6 +305,7 @@ export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string
   const params = {
     p_anomes: scopedPbi.p_anomes,
     p_banker: scopedPbi.p_banker,
+    p_finder: scopedPbi.p_finder,
     p_categoria: drillPath[0] ?? null,
     p_subcategoria: drillPath[1] ?? null,
     p_produto: drillPath[2] ?? null,
