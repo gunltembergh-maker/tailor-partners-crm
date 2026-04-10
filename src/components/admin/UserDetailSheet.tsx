@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,6 +12,7 @@ import { formatDateTime } from "@/lib/format";
 import { getConviteStatus } from "@/components/admin/ConviteBadge";
 
 interface Usuario {
+  profile_id?: string;
   user_id: string;
   email: string;
   full_name: string;
@@ -55,32 +57,71 @@ interface Props {
 }
 
 export function UserDetailSheet({ user, open, onOpenChange }: Props) {
-  const { data: accessLogs, isLoading } = useQuery({
-    queryKey: ["user-access-logs", user?.user_id],
+  const queryClient = useQueryClient();
+
+  // Fetch fresh user data from the RPC when opened
+  const { data: freshUser } = useQuery({
+    queryKey: ["admin-usuario-detalhe", user?.email],
     queryFn: async () => {
-      if (!user?.user_id) return [];
+      if (!user?.email) return null;
+      const { data, error } = await supabase.rpc("rpc_admin_lista_usuarios" as any);
+      if (error) throw error;
+      const found = ((data as any[]) || []).find(
+        (r: any) => r.email?.toLowerCase() === user.email.toLowerCase()
+      );
+      return found ? { ...found, profile_id: found.id } as unknown as Usuario : null;
+    },
+    enabled: open && !!user?.email,
+    refetchInterval: open ? 10000 : false, // poll every 10s while open
+  });
+
+  const displayUser = freshUser || user;
+
+  const { data: accessLogs, isLoading } = useQuery({
+    queryKey: ["user-access-logs", displayUser?.user_id],
+    queryFn: async () => {
+      if (!displayUser?.user_id) return [];
       const { data, error } = await supabase
         .from("access_logs")
         .select("logged_in_at, logged_out_at, duration_minutes, ip_address")
-        .eq("user_id", user.user_id)
+        .eq("user_id", displayUser.user_id)
         .order("logged_in_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
-    enabled: open && !!user?.user_id,
+    enabled: open && !!displayUser?.user_id,
   });
 
-  if (!user) return null;
+  // Realtime: refresh when team_reference changes
+  useEffect(() => {
+    if (!open || !user?.email) return;
+    const channel = supabase
+      .channel(`detail-${user.email}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "team_reference" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-usuario-detalhe", user.email] });
+          queryClient.invalidateQueries({ queryKey: ["user-access-logs", displayUser?.user_id] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [open, user?.email, displayUser?.user_id, queryClient]);
 
-  const status = getStatusBadge(user);
-  const vinculo = user.role === "BANKER" ? user.banker_name : user.role === "FINDER" ? user.finder_name : null;
-  const conviteStatus = getConviteStatus(user);
+  if (!displayUser) return null;
+
+  const status = getStatusBadge(displayUser);
+  const vinculo = displayUser.role === "BANKER" ? displayUser.banker_name : displayUser.role === "FINDER" ? displayUser.finder_name : null;
+  const conviteStatus = getConviteStatus(displayUser);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{user.full_name || user.email}</SheetTitle>
+          <SheetTitle>{displayUser.full_name || displayUser.email}</SheetTitle>
           <SheetDescription>Detalhes, convite e histórico de acesso</SheetDescription>
         </SheetHeader>
 
@@ -91,37 +132,37 @@ export function UserDetailSheet({ user, open, onOpenChange }: Props) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground text-xs">E-mail</p>
-                <p className="font-medium">{user.email}</p>
+                <p className="font-medium">{displayUser.email}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">CPF</p>
-                <p className="font-medium font-mono">{formatCpfFull(user.cpf)}</p>
+                <p className="font-medium font-mono">{formatCpfFull(displayUser.cpf)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Perfil</p>
-                <p className="font-medium">{user.role || "-"}</p>
+                <p className="font-medium">{displayUser.role || "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Financial Advisor/Finder</p>
                 <p className="font-medium">{vinculo || "-"}</p>
               </div>
-              {user.role === "OPERACOES" && (
+              {displayUser.role === "OPERACOES" && (
                 <div>
                   <p className="text-muted-foreground text-xs">Tipo de Operação</p>
-                  <p className="font-medium">{user.operacao_tipo || "—"}</p>
+                  <p className="font-medium">{displayUser.operacao_tipo || "—"}</p>
                 </div>
               )}
               <div>
                 <p className="text-muted-foreground text-xs">Área</p>
-                <p className="font-medium">{user.area || "-"}</p>
+                <p className="font-medium">{displayUser.area || "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Gestor</p>
-                <p className="font-medium">{user.gestor || "-"}</p>
+                <p className="font-medium">{displayUser.gestor || "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Empresa</p>
-                <p className="font-medium">{user.empresa || "-"}</p>
+                <p className="font-medium">{displayUser.empresa || "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Status</p>
@@ -129,11 +170,11 @@ export function UserDetailSheet({ user, open, onOpenChange }: Props) {
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Cadastrado em</p>
-                <p className="font-medium">{user.created_at ? new Date(user.created_at).toLocaleDateString("pt-BR") : "-"}</p>
+                <p className="font-medium">{displayUser.created_at ? new Date(displayUser.created_at).toLocaleDateString("pt-BR") : "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Último Acesso</p>
-                <p className="font-medium">{user.ultimo_acesso ? formatDateTime(user.ultimo_acesso) : "Nunca"}</p>
+                <p className="font-medium">{displayUser.ultimo_acesso ? formatDateTime(displayUser.ultimo_acesso) : "Nunca"}</p>
               </div>
             </div>
           </div>
@@ -142,42 +183,42 @@ export function UserDetailSheet({ user, open, onOpenChange }: Props) {
           <div>
             <h3 className="text-sm font-semibold mb-3 text-foreground">Histórico do Convite</h3>
             <div className="space-y-3">
-              {user.convite_enviado_em && (
+              {displayUser.convite_enviado_em && (
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-blue-500">📤</span>
                   <span className="text-muted-foreground">Convite enviado em</span>
-                  <span className="font-medium ml-auto">{formatDateTime(user.convite_enviado_em)}</span>
+                  <span className="font-medium ml-auto">{formatDateTime(displayUser.convite_enviado_em)}</span>
                 </div>
               )}
-              {user.convite_expira_em && conviteStatus === "enviado" && (
+              {displayUser.convite_expira_em && conviteStatus === "enviado" && (
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-orange-500">⏱️</span>
                   <span className="text-muted-foreground">Expira em</span>
-                  <span className="font-medium ml-auto">{formatDateTime(user.convite_expira_em)}</span>
+                  <span className="font-medium ml-auto">{formatDateTime(displayUser.convite_expira_em)}</span>
                 </div>
               )}
-              {user.convite_aceito_em && (
+              {displayUser.convite_aceito_em && (
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-green-500">✅</span>
                   <span className="text-muted-foreground">Convite aceito em</span>
-                  <span className="font-medium ml-auto">{formatDateTime(user.convite_aceito_em)}</span>
+                  <span className="font-medium ml-auto">{formatDateTime(displayUser.convite_aceito_em)}</span>
                 </div>
               )}
-              {user.convite_cancelado_em && conviteStatus === "cancelado" && (
+              {displayUser.convite_cancelado_em && conviteStatus === "cancelado" && (
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-red-500">🚫</span>
                   <span className="text-muted-foreground">Convite cancelado em</span>
-                  <span className="font-medium ml-auto">{formatDateTime(user.convite_cancelado_em)}</span>
+                  <span className="font-medium ml-auto">{formatDateTime(displayUser.convite_cancelado_em)}</span>
                 </div>
               )}
-              {(user.convite_reenvios ?? 0) > 0 && (
+              {(displayUser.convite_reenvios ?? 0) > 0 && (
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-muted-foreground">↩️</span>
                   <span className="text-muted-foreground">Reenvios</span>
-                  <span className="font-medium ml-auto">{user.convite_reenvios}x</span>
+                  <span className="font-medium ml-auto">{displayUser.convite_reenvios}x</span>
                 </div>
               )}
-              {!user.convite_enviado_em && !user.convite_aceito_em && (
+              {!displayUser.convite_enviado_em && !displayUser.convite_aceito_em && (
                 <p className="text-sm text-muted-foreground">Nenhum convite enviado.</p>
               )}
             </div>
