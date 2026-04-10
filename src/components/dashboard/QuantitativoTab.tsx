@@ -607,6 +607,10 @@ export function QuantitativoTab({filters}:Props) {
         )}
         {drillLoading && drillLevel > 0 ? (
           <div className="p-4"><Skeleton className="h-40" /></div>
+        ) : drillLevel > 0 && activeRows.length === 0 ? (
+          <div className="p-4 text-sm text-muted-foreground">
+            Não foi possível carregar o detalhamento desta seleção agora.
+          </div>
         ) : (
         <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
           <Table>
