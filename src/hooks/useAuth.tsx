@@ -43,7 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    let mounted = true;
+
+    // Safety timeout: never leave user stuck on loading screen
+    const safetyTimer = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -90,11 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPrimeiroAcesso(false);
         setArea(null);
         setIsBlocked(false);
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
       try {
         setSession(session);
         setUser(session?.user ?? null);
@@ -104,13 +113,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         console.error("Error fetching profile on init:", e);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }).catch(() => {
-      setLoading(false);
+      if (mounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function fetchMeuPerfil(userId: string) {
