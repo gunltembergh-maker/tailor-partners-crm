@@ -25,6 +25,7 @@ function buildRpcParams(filters: DashboardFilters) {
     p_advisor: expandedAdvisor,
     p_finder: filters.finder.length ? filters.finder : null,
     p_tipo_cliente: expandedTipoCliente,
+    p_casa: filters.casa.length ? filters.casa : null,
   };
 }
 
