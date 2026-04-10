@@ -259,17 +259,26 @@ export function QuantitativoTab({filters}:Props) {
     setClickedMonth(prev => prev === am ? null : am);
   };
 
+  // ─── Wave 1: KPIs (4 queries) ───
   const {data:kpis,isLoading:l1}=useContasKpis(effectiveFilters);
+  const {data:captKpis,isLoading:l4}=useCaptacaoKpis(effectiveFilters);
+  const {data:receitaTotalData,isLoading:l11}=useReceitaTotal(effectiveFilters);
+  const {data:aucStackCasa,isLoading:l7}=useAucMesStackCasa(effectiveFilters);
+
+  const wave1Done = !l1 && !l4 && !l11 && !l7;
+
+  // ─── Wave 2: Charts (enabled after wave 1) ───
   const {data:contasAgg,isLoading:l2}=useContasAggMes(effectiveFilters);
   const {data:contasTipo,isLoading:l3}=useContasTotalPorTipo(effectiveFilters);
-  const {data:captKpis,isLoading:l4}=useCaptacaoKpis(effectiveFilters);
   const {data:captAggMes,isLoading:l5}=useCaptacaoAggMes(effectiveFilters);
   const {data:captTreemap,isLoading:l6}=useCaptacaoTreemap(effectiveFilters);
-  const {data:aucStackCasa,isLoading:l7}=useAucMesStackCasa(effectiveFilters);
   const {data:aucCasaM0,isLoading:l8}=useAucCasaM0(effectiveFilters);
+
+  const wave2Done = wave1Done && !l2 && !l3 && !l5 && !l6 && !l8;
+
+  // ─── Wave 3: Detail data (enabled after wave 2) ───
   const {data:faixaCliMes,isLoading:l9}=useFaixaPlClientesMes(effectiveFilters);
   const {data:faixaAucMes,isLoading:l10}=useFaixaPlAucMes(effectiveFilters);
-  const {data:receitaTotalData,isLoading:l11}=useReceitaTotal(effectiveFilters);
   const {data:receitaMesCat,isLoading:l12}=useReceitaMesCategoria(effectiveFilters);
   const {data:receitaTreemap,isLoading:l13}=useReceitaTreemapCategoria(effectiveFilters);
   const {data:receitaMatrizRows}=useReceitaMatrizRows(effectiveFilters);
