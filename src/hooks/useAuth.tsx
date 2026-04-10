@@ -150,12 +150,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Use data already available from rpc_meu_perfil + minimal profile info
-      setProfile({
-        full_name: perfil.full_name || perfil.banker_name || "",
-        email: perfil.email || "",
-        avatar_url: perfil.avatar_url || null,
-      });
+      // Fetch profile display info in background (non-blocking)
+      supabase
+        .from("profiles")
+        .select("full_name, email, avatar_url")
+        .eq("user_id", userId)
+        .single()
+        .then(({ data: profileRow }) => {
+          if (profileRow) setProfile(profileRow);
+          else setProfile({ full_name: perfil.banker_name || "", email: "", avatar_url: null });
+        });
       setRole(perfil.role ?? null);
       setPermissoes((perfil.permissoes as Record<string, boolean>) ?? null);
       setBankerName(perfil.banker_name ?? null);
