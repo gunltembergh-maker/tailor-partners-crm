@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { QualitativoTab } from "@/components/dashboard/QualitativoTab";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";
 import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
 import { Progress } from "@/components/ui/progress";
+import { useActivityLog } from "@/hooks/useActivityLog";
 
 export default function QualitativoPage() {
   const {
