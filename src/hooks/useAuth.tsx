@@ -43,7 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    let mounted = true;
+
+    // Safety timeout: never leave user stuck on loading screen
+    const safetyTimer = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -90,20 +98,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPrimeiroAcesso(false);
         setArea(null);
         setIsBlocked(false);
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchMeuPerfil(session.user.id);
+      if (!mounted) return;
+      try {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchMeuPerfil(session.user.id);
+        }
+      } catch (e) {
+        console.error("Error fetching profile on init:", e);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
+    }).catch(() => {
+      if (mounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function fetchMeuPerfil(userId: string) {
@@ -156,19 +176,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function fetchProfileFallback(userId: string) {
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("full_name, email, avatar_url")
-      .eq("user_id", userId)
-      .single();
-    if (profileData) setProfile(profileData);
+    try {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("full_name, email, avatar_url")
+        .eq("user_id", userId)
+        .single();
+      if (profileData) setProfile(profileData);
 
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setRole(roleData?.role ?? null);
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setRole(roleData?.role ?? null);
+    } catch (e) {
+      console.error("fetchProfileFallback error:", e);
+    }
   }
 
   const signIn = async (email: string, password: string) => {
