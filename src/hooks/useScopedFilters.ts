@@ -49,5 +49,6 @@ export function useScopedFullParams(filters: DashboardFilters) {
     p_finder: overrideFinder ?? (filters.finder.length ? filters.finder : null),
     p_documento: filters.documento ? [filters.documento] : null,
     p_tipo_cliente: filters.tipoCliente ? [filters.tipoCliente] : null,
+    p_casa: filters.casa.length ? filters.casa : null,
   };
 }
