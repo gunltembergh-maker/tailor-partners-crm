@@ -21,6 +21,12 @@ export default function QualitativoPage() {
     activeChips,
     removeChip,
   } = useDashboardFilters();
+  const { logActivity } = useActivityLog();
+
+  useEffect(() => {
+    logActivity("Acesso ao Qualitativo", undefined, "/qualitativo");
+  }, []);
+
   const {
     isRefreshing,
     isManualRefreshing,
