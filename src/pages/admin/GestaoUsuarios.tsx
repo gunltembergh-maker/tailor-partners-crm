@@ -161,6 +161,23 @@ export default function GestaoUsuarios() {
     },
   });
 
+  // Realtime: auto-refresh when team_reference changes (e.g. invite sent)
+  useEffect(() => {
+    const channel = supabase
+      .channel("team-reference-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "team_reference" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const refetch = useCallback(async () => {
     await queryClient.refetchQueries({ queryKey: ["admin-usuarios"], exact: true });
   }, [queryClient]);
