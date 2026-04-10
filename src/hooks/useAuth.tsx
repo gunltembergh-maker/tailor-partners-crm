@@ -95,11 +95,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchMeuPerfil(session.user.id);
+      try {
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchMeuPerfil(session.user.id);
+        }
+      } catch (e) {
+        console.error("Error fetching profile on init:", e);
+      } finally {
+        setLoading(false);
       }
+    }).catch(() => {
       setLoading(false);
     });
 
