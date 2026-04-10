@@ -381,7 +381,7 @@ function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) 
   }
   if (filters.documento) q = q.ilike("documento", `%${filters.documento}%`);
   if (filters.tipoCliente) q = q.eq("tipo_cliente", filters.tipoCliente);
-  if (filters.casa) q = q.eq("casa", filters.casa);
+  if (filters.casa.length) q = q.in("casa", filters.casa);
   if (filters.banker.length) q = q.in("banker", filters.banker);
   if (filters.advisor.length) q = q.in("advisor", filters.advisor);
   if (filters.finder.length) q = q.in("finder", filters.finder);
