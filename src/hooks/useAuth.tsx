@@ -163,20 +163,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function fetchProfileFallback(userId: string) {
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("full_name, email, avatar_url")
-      .eq("user_id", userId)
-      .single();
-    if (profileData) setProfile(profileData);
+    try {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("full_name, email, avatar_url")
+        .eq("user_id", userId)
+        .single();
+      if (profileData) setProfile(profileData);
 
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setRole(roleData?.role ?? null);
-  }
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setRole(roleData?.role ?? null);
+    } catch (e) {
+      console.error("fetchProfileFallback error:", e);
+    }
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
