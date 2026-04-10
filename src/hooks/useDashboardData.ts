@@ -96,7 +96,10 @@ export function useContasKpis(filters: DashboardFilters) {
         ativacao: Number(row.ativacao) || 0,
       };
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -109,7 +112,10 @@ export function useContasAggMes(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -122,7 +128,10 @@ export function useContasTotalPorTipo(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -142,7 +151,10 @@ export function useCaptacaoKpis(filters: DashboardFilters) {
         captacao_ytd: Number(row.captacao_ytd) || 0,
       };
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -155,7 +167,10 @@ export function useCaptacaoAggMes(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -168,7 +183,10 @@ export function useCaptacaoTreemap(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -185,7 +203,10 @@ export function useAucMesStackCasa(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -198,7 +219,10 @@ export function useAucCasaM0(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -213,7 +237,10 @@ export function useFaixaPlClientesMes(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -226,7 +253,10 @@ export function useFaixaPlAucMes(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -242,7 +272,10 @@ export function useReceitaTotal(filters: DashboardFilters) {
       const row = (data as any)?.[0] ?? { receita: 0 };
       return { receita: Number(row.receita) || 0 };
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -255,7 +288,10 @@ export function useReceitaMesCategoria(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -268,7 +304,10 @@ export function useReceitaTreemapCategoria(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -281,7 +320,10 @@ export function useReceitaMatrizRows(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -294,7 +336,10 @@ export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }
 
@@ -317,7 +362,9 @@ export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string
       if (error) throw error;
       return (data as any[]) ?? [];
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
     enabled: drillPath.length > 0,
   });
 }
