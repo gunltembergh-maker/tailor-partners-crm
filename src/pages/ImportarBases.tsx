@@ -184,6 +184,10 @@ type BaseResult = {
   sheets: SheetResult[];
 };
 
+const RECEITA_TABLES = new Set(["raw_comissoes_m0", "raw_comissoes_historico"]);
+const DEFAULT_INSERT_BATCH = 500;
+const RECEITA_INSERT_BATCH = 2000;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function normalizeFileName(name: string): string {
@@ -202,6 +206,32 @@ async function truncateAndInsert(
   table: string,
   rows: Record<string, unknown>[]
 ): Promise<{ ok: boolean; error?: string }> {
+  if (RECEITA_TABLES.has(table)) {
+    if (rows.length === 0) {
+      const { error } = await supabase.rpc("truncate_table" as any, { table_name: table });
+      return error ? { ok: false, error: error.message } : { ok: true };
+    }
+
+    for (let i = 0; i < rows.length; i += RECEITA_INSERT_BATCH) {
+      const batch = rows.slice(i, i + RECEITA_INSERT_BATCH);
+      const { data, error } = await supabase.rpc("rpc_sync_bulk_insert" as any, {
+        p_table: table,
+        p_rows: batch,
+        p_truncate: i === 0,
+      });
+
+      if (error) return { ok: false, error: error.message };
+      if ((data as any)?.success === false) {
+        return {
+          ok: false,
+          error: (data as any)?.error ?? "Erro ao importar lote da Base Receita",
+        };
+      }
+    }
+
+    return { ok: true };
+  }
+
   // 1. Truncar
   const { error: delErr } = await supabase.from(table as any).delete().neq("id", 0);
   // fallback: se não tiver coluna id, tenta delete sem filtro
@@ -211,16 +241,18 @@ async function truncateAndInsert(
       .gte("created_at", "1970-01-01");
     if (delErr2) {
       // última tentativa: rpc truncate
-      await supabase.rpc("truncate_table" as any, { tbl: table });
+      const { error: truncateErr } = await supabase.rpc("truncate_table" as any, {
+        table_name: table,
+      });
+      if (truncateErr) return { ok: false, error: truncateErr.message };
     }
   }
 
   if (rows.length === 0) return { ok: true };
 
   // 2. Inserir em lotes de 500
-  const BATCH = 500;
-  for (let i = 0; i < rows.length; i += BATCH) {
-    const batch = rows.slice(i, i + BATCH).map(row => ({ data: row }));
+  for (let i = 0; i < rows.length; i += DEFAULT_INSERT_BATCH) {
+    const batch = rows.slice(i, i + DEFAULT_INSERT_BATCH).map(row => ({ data: row }));
     const { error } = await supabase.from(table as any).insert(batch);
     if (error) return { ok: false, error: error.message };
   }
@@ -310,12 +342,37 @@ export default function ImportarBases() {
     toast.info('Sincronização iniciada, aguarde...');
 
     try {
+      const scheduleReloads = () => {
+        const reloadLogs = () => {
+          supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
+            if (logs?.[0]) setLastSync(logs[0]);
+          });
+          queryClient.invalidateQueries();
+        };
+
+        setTimeout(reloadLogs, 10000);
+        setTimeout(reloadLogs, 30000);
+        setTimeout(reloadLogs, 90000);
+      };
+
       const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
-        body: { tipo: 'todos' }
+        body: { tipo: 'todos', async: true }
       });
 
       if (error) {
         console.error('Erro Edge Function:', error);
+
+        if (/Failed to send a request to the Edge Function|context canceled|timeout|abort/i.test(error.message)) {
+          setSyncLog(prev => [
+            ...prev,
+            '⏳ A sincronização foi disparada e continuará em segundo plano.',
+            '🔄 Os logs serão atualizados automaticamente.',
+          ]);
+          toast.info('A sincronização continua rodando no servidor...');
+          scheduleReloads();
+          return;
+        }
+
         setSyncLog(prev => [...prev, `❌ Erro: ${error.message}`]);
         toast.error(`Erro na sincronização: ${error.message}`);
         return;
@@ -324,11 +381,19 @@ export default function ImportarBases() {
       // Mostra resultado real da função
       if (data?.log && Array.isArray(data.log)) {
         setSyncLog(data.log);
+      } else if (data?.queued) {
+        setSyncLog([
+          '✅ Sincronização disparada com sucesso.',
+          '⏳ O processamento continuará em segundo plano.',
+        ]);
       } else {
         setSyncLog(['✅ Sincronização concluída!']);
       }
 
-      if (data?.success) {
+      if (data?.queued) {
+        toast.success('Sincronização disparada com sucesso!');
+        scheduleReloads();
+      } else if (data?.success) {
         toast.success(`Sincronização concluída em ${data.duracao || '?'}!`);
       } else {
         toast.warning(`Sincronização concluída com ${data?.errors?.length || 0} erro(s)`);
@@ -419,11 +484,18 @@ export default function ImportarBases() {
       return;
     }
 
+    let receitaImportadaComSucesso = false;
+    let receitaComErro = false;
+
     // Processar cada aba
     for (const sheetDef of base.sheets) {
       const rows = readSheet(workbook, sheetDef.sheet);
 
       if (rows === null) {
+        if (RECEITA_TABLES.has(sheetDef.table) && sheetDef.required) {
+          receitaComErro = true;
+        }
+
         // Aba não encontrada
         setResults(prev =>
           prev.map(r =>
@@ -467,6 +539,11 @@ export default function ImportarBases() {
       // Upload para Supabase
       const { ok, error } = await truncateAndInsert(sheetDef.table, rows);
 
+      if (RECEITA_TABLES.has(sheetDef.table)) {
+        if (ok) receitaImportadaComSucesso = true;
+        else receitaComErro = true;
+      }
+
       setResults(prev =>
         prev.map(r =>
           r.baseId === resultId
@@ -487,7 +564,37 @@ export default function ImportarBases() {
         )
       );
     }
-  }, []);
+
+    if (base.id === "base_receita" && receitaImportadaComSucesso && !receitaComErro) {
+      const { error: refreshError } = await supabase.rpc("rpc_refresh_mv_comissoes" as any);
+
+      if (refreshError) {
+        setResults(prev =>
+          prev.map(r =>
+            r.baseId === resultId
+              ? {
+                  ...r,
+                  sheets: r.sheets.map(s =>
+                    RECEITA_TABLES.has(s.table)
+                      ? {
+                          ...s,
+                          status: "error" as SheetStatus,
+                          error: `Os dados foram enviados, mas a atualização do dashboard falhou: ${refreshError.message}`,
+                        }
+                      : s
+                  ),
+                }
+              : r
+          )
+        );
+        toast.error("Base Receita enviada, mas a atualização do dashboard falhou.");
+        return;
+      }
+
+      queryClient.invalidateQueries();
+      toast.success("Base Receita importada com sucesso.");
+    }
+  }, [queryClient]);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
