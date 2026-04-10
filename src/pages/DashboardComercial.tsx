@@ -33,6 +33,12 @@ export default function DashboardComercial() {
   const [tabLoading, setTabLoading] = useState(false);
   const [showBoasVindas, setShowBoasVindas] = useState(false);
   const { primeiroAcesso, profile, role, area } = useAuth();
+  const { logActivity } = useActivityLog();
+
+  // Log page access
+  useEffect(() => {
+    logActivity("Acesso ao Dashboard", `Aba: ${activeTab}`, "/dashboards/comercial");
+  }, []);
   const {
     isRefreshing,
     isManualRefreshing,
