@@ -25,6 +25,7 @@ function buildRpcParams(filters: DashboardFilters) {
     p_advisor: expandedAdvisor,
     p_finder: filters.finder.length ? filters.finder : null,
     p_tipo_cliente: expandedTipoCliente,
+    p_casa: filters.casa.length ? filters.casa : null,
   };
 }
 
@@ -34,12 +35,13 @@ export function useFilterOptions() {
   return useQuery({
     queryKey: ["dashboard-filter-options"],
     queryFn: async () => {
-      const [anoMesRes, bankerRes, advisorRes, finderRes, tipoClienteRes] = await Promise.all([
+      const [anoMesRes, bankerRes, advisorRes, finderRes, tipoClienteRes, casasRes] = await Promise.all([
         supabase.rpc("rpc_filtro_anomes" as any),
         supabase.rpc("rpc_filtro_financial_advisors" as any),
         supabase.rpc("rpc_filtro_advisor_slicer" as any),
         supabase.rpc("rpc_filtro_finders" as any),
         supabase.rpc("rpc_filtro_tipo_cliente" as any),
+        supabase.rpc("rpc_filtro_casas" as any),
       ]);
 
       return {
@@ -52,7 +54,7 @@ export function useFilterOptions() {
         advisors: (advisorRes.data ?? []).map((r: any) => r.advisor as string).filter(Boolean).sort(),
         finders: (finderRes.data ?? []).map((r: any) => r.finder as string).filter(Boolean).sort(),
         tiposCliente: (tipoClienteRes.data ?? []).map((r: any) => r.tipo_cliente as string).filter(Boolean).sort(),
-        casas: [] as string[],
+        casas: (casasRes.data ?? []).map((r: any) => r.casa as string).filter(Boolean).sort(),
       };
     },
     staleTime: 5 * 60_000,
@@ -380,7 +382,7 @@ function applyCommonFilters(q: any, filters: DashboardFilters, dateCol: string) 
   }
   if (filters.documento) q = q.ilike("documento", `%${filters.documento}%`);
   if (filters.tipoCliente) q = q.eq("tipo_cliente", filters.tipoCliente);
-  if (filters.casa) q = q.eq("casa", filters.casa);
+  if (filters.casa.length) q = q.in("casa", filters.casa);
   if (filters.banker.length) q = q.in("banker", filters.banker);
   if (filters.advisor.length) q = q.in("advisor", filters.advisor);
   if (filters.finder.length) q = q.in("finder", filters.finder);
@@ -470,7 +472,7 @@ export function useDiversificadorData(filters: DashboardFilters) {
         .select("documento, conta, banker, advisor, finder, casa, tipo_cliente, ativo_ajustado, produto_ajustado, indexador, net, vencimento");
       if (filters.documento) q = q.ilike("documento", `%${filters.documento}%`);
       if (filters.tipoCliente) q = q.eq("tipo_cliente", filters.tipoCliente);
-      if (filters.casa) q = q.eq("casa", filters.casa);
+      if (filters.casa.length) q = q.in("casa", filters.casa);
       if (filters.banker.length) q = q.in("banker", filters.banker);
       if (filters.advisor.length) q = q.in("advisor", filters.advisor);
       if (filters.finder.length) q = q.in("finder", filters.finder);

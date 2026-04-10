@@ -79,7 +79,7 @@ export function FiltersSidebar({
 
   if (!open) return null;
 
-  const toggleMulti = (key: "banker" | "advisor" | "finder" | "anoMes", val: string) => {
+  const toggleMulti = (key: "banker" | "advisor" | "finder" | "anoMes" | "casa", val: string) => {
     // Don't allow toggling locked filters
     if (key === "banker" && isBanker) return;
     if (key === "finder" && isFinder) return;
@@ -193,6 +193,14 @@ export function FiltersSidebar({
               updatePendingFilter("tipoCliente", pendingFilters.tipoCliente === v ? "" : v);
             }}
             singleSelect
+          />
+
+          {/* Casa */}
+          <PbiMultiSelect
+            label="Casa"
+            values={pendingFilters.casa}
+            options={options?.casas ?? []}
+            onToggle={(v) => toggleMulti("casa", v)}
           />
 
           {/* Finder */}

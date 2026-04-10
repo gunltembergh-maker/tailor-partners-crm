@@ -24,6 +24,7 @@ export function useScopedRpcParams(filters: DashboardFilters) {
     p_advisor: overrideAdvisor ?? expandedAdvisor,
     p_finder: overrideFinder ?? (filters.finder.length ? filters.finder : null),
     p_tipo_cliente: expandedTipoCliente,
+    p_casa: filters.casa.length ? filters.casa : null,
   };
 }
 
@@ -34,6 +35,7 @@ export function useScopedRpcParamsPbi(filters: DashboardFilters) {
     p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
     p_banker: overrideBanker ?? (filters.banker.length ? filters.banker : null),
     p_finder: overrideFinder ?? (filters.finder.length ? filters.finder : null),
+    p_casa: filters.casa.length ? filters.casa : null,
   };
 }
 
@@ -47,5 +49,6 @@ export function useScopedFullParams(filters: DashboardFilters) {
     p_finder: overrideFinder ?? (filters.finder.length ? filters.finder : null),
     p_documento: filters.documento ? [filters.documento] : null,
     p_tipo_cliente: filters.tipoCliente ? [filters.tipoCliente] : null,
+    p_casa: filters.casa.length ? filters.casa : null,
   };
 }
