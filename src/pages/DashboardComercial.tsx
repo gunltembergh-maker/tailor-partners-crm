@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { BoasVindasModal } from "@/components/admin/BoasVindasModal";
 import { PopupComunicado } from "@/components/PopupComunicado";
+import { useActivityLog } from "@/hooks/useActivityLog";
 
 export default function DashboardComercial() {
   const {
