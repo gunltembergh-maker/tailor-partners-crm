@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -160,6 +160,23 @@ export default function GestaoUsuarios() {
       })) as unknown as Usuario[];
     },
   });
+
+  // Realtime: auto-refresh when team_reference changes (e.g. invite sent)
+  useEffect(() => {
+    const channel = supabase
+      .channel("team-reference-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "team_reference" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const refetch = useCallback(async () => {
     await queryClient.refetchQueries({ queryKey: ["admin-usuarios"], exact: true });
