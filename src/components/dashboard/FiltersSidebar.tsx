@@ -195,6 +195,14 @@ export function FiltersSidebar({
             singleSelect
           />
 
+          {/* Casa */}
+          <PbiMultiSelect
+            label="Casa"
+            values={pendingFilters.casa}
+            options={options?.casas ?? []}
+            onToggle={(v) => toggleMulti("casa", v)}
+          />
+
           {/* Finder */}
           <div className="space-y-1">
             <div className="flex items-center gap-1">
