@@ -2787,6 +2787,9 @@ export type Database = {
         Returns: number
       }
       fix_encoding: { Args: { v: string }; Returns: string }
+      fn_anomes_m0: { Args: never; Returns: number }
+      fn_anomes_m1: { Args: never; Returns: number }
+      fn_dentro_periodo_m1: { Args: never; Returns: boolean }
       get_user_advisor_filter: { Args: never; Returns: string[] }
       get_user_banker_filter: { Args: never; Returns: string[] }
       get_user_canal_filter: { Args: never; Returns: string[] }
@@ -3370,6 +3373,14 @@ export type Database = {
           atualizado_em: string
           dados_ate: string
         }[]
+      }
+      rpc_deletar_anomes_historico: {
+        Args: { p_anomes: number }
+        Returns: undefined
+      }
+      rpc_deletar_anomes_lista_historico: {
+        Args: { p_anomes_list: number[] }
+        Returns: undefined
       }
       rpc_dispensar_popup: { Args: { p_popup_id: string }; Returns: Json }
       rpc_empresa_por_dominio: { Args: { p_email: string }; Returns: string }

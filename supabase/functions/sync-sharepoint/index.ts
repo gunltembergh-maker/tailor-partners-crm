@@ -2,13 +2,15 @@
  * sync-sharepoint Edge Function
  * 
  * Handles syncing Excel files from SharePoint to Supabase raw tables.
- * Uses a cascade pattern for large sheets: each slice fires the next
- * slice asynchronously, avoiding timeout on the orchestrator.
  * 
  * Modes:
  *  - tipo=todos: orchestrator dispatches each file sequentially
  *  - arquivo=X: processes single file, auto-cascading large sheets
  *  - arquivo=X + aba + start_row/end_row: processes a specific slice
+ *  - sync_mode=m0: sync only current month sheet (Comissões → raw_comissoes_m0)
+ *  - sync_mode=m1: sync M-1 adjustment in historico (conditional on business days)
+ *  - sync_mode=historico_completo: full history sync with cascade
+ *  - sync_mode=historico_mensal: safe monthly chunk sync (delete by anomes, then insert)
  */
 
 const DRIVE_ID      = 'b!vUOs6-gTI0u_ibiSESgIgDBheafGCvNHlxHh75ldlxq4_43xU1I2ToIsrL0KNAlK';
@@ -68,7 +70,6 @@ const FILE_MAP: Record<string, { sheets: { sheet: string; table: string; require
 
 const ALL_FILES = Object.keys(FILE_MAP);
 const READ_CHUNK = 2000;
-// Max rows per single invocation to stay well within 400s timeout
 const MAX_ROWS_PER_CALL = 15000;
 
 const cors = {
@@ -144,7 +145,6 @@ const RPC_BATCH = 500;
 
 async function insertChunk(table: string, rows: Record<string, unknown>[], truncate: boolean): Promise<void> {
   if (RPC_TABLES.has(table)) {
-    // Batch RPC calls to avoid oversized payloads
     for (let i = 0; i < rows.length; i += RPC_BATCH) {
       const batch = rows.slice(i, i + RPC_BATCH);
       const shouldTruncate = truncate && i === 0;
@@ -178,6 +178,29 @@ async function insertChunk(table: string, rows: Record<string, unknown>[], trunc
       if (!r.ok) throw new Error(`REST ${table}: ${(await r.text()).substring(0, 200)}`);
     }
   }
+}
+
+// Insert rows WITHOUT truncate (for appending to historico)
+async function insertRowsNoTruncate(table: string, rows: Record<string, unknown>[]): Promise<void> {
+  for (let i = 0; i < rows.length; i += RPC_BATCH) {
+    const batch = rows.slice(i, i + RPC_BATCH);
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_sync_bulk_insert`, {
+      method: 'POST', headers: rpcHeaders,
+      body: JSON.stringify({ p_table: table, p_rows: batch, p_truncate: false })
+    });
+    if (!r.ok) throw new Error(`RPC ${table}: ${(await r.text()).substring(0, 200)}`);
+    const res = await r.json();
+    if (res.success === false) throw new Error(`RPC erro: ${res.error}`);
+  }
+}
+
+// Call an RPC function
+async function callRpc(name: string, params: Record<string, unknown> = {}): Promise<unknown> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST', headers: rpcHeaders, body: JSON.stringify(params)
+  });
+  if (!r.ok) throw new Error(`RPC ${name}: ${(await r.text()).substring(0, 200)}`);
+  return await r.json();
 }
 
 async function refreshMV(): Promise<void> {
@@ -216,6 +239,37 @@ async function getSheetDimensions(token: string, fileId: string, sheetName: stri
   const headers: string[] = ((await hdrResp.json()).values[0] || []).map((h: unknown) => String(h ?? '').trim());
 
   return { rowCount, columnCount, headers };
+}
+
+async function readRange(
+  token: string, fileId: string, sheetName: string,
+  startRow: number, endRow: number, headers: string[], lastCol: string,
+): Promise<Record<string, unknown>[]> {
+  const enc  = encodeURIComponent(sheetName);
+  const base = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}/workbook/worksheets/${enc}`;
+  const allRows: Record<string, unknown>[] = [];
+
+  for (let r = startRow; r <= endRow; r += READ_CHUNK) {
+    const end = Math.min(r + READ_CHUNK - 1, endRow);
+    const dataResp = await fetch(`${base}/range(address='A${r}:${lastCol}${end}')?$select=values`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!dataResp.ok) throw new Error(`Range A${r}: ${dataResp.status}`);
+
+    const values: unknown[][] = (await dataResp.json()).values || [];
+    for (const rowVals of values) {
+      const row: Record<string, unknown> = {};
+      let hasData = false;
+      for (let j = 0; j < headers.length; j++) {
+        if (!headers[j]) continue;
+        const c = convertCell(headers[j], rowVals[j]);
+        row[headers[j]] = c;
+        if (c !== null) hasData = true;
+      }
+      if (hasData) allRows.push(row);
+    }
+  }
+  return allRows;
 }
 
 async function readAndInsertRange(
@@ -259,17 +313,17 @@ async function readAndInsertRange(
   return totalInserted;
 }
 
-// Fire-and-forget: dispatch without waiting for response
+// Fire-and-forget
 function fireAndForget(body: Record<string, unknown>): void {
   const url = `${SUPABASE_URL}/functions/v1/sync-sharepoint`;
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SERVICE_KEY}` },
     body: JSON.stringify(body),
-  }).catch(() => {}); // intentionally not awaited
+  }).catch(() => {});
 }
 
-// Self-invoke and wait for response
+// Self-invoke and wait
 async function selfInvoke(body: Record<string, unknown>): Promise<{ success: boolean; log?: string[]; errors?: string[]; totalRows?: number }> {
   const url = `${SUPABASE_URL}/functions/v1/sync-sharepoint`;
   const resp = await fetch(url, {
@@ -282,6 +336,19 @@ async function selfInvoke(body: Record<string, unknown>): Promise<{ success: boo
     return { success: false, errors: [`Self-invoke failed: ${resp.status} ${txt.substring(0, 100)}`] };
   }
   return await resp.json();
+}
+
+// ─── Extract AnoMes from row data ──────────────────────────────────
+function extractAnomes(row: Record<string, unknown>): number | null {
+  const dataVal = row['Data'] as string | null;
+  if (!dataVal) return null;
+  try {
+    const d = new Date(dataVal);
+    if (isNaN(d.getTime())) return null;
+    return (d.getFullYear() * 100) + (d.getMonth() + 1);
+  } catch {
+    return null;
+  }
 }
 
 // ─── Main handler ───────────────────────────────────────────────────
@@ -301,14 +368,233 @@ Deno.serve(async (req) => {
     const endRow: number | null   = body.end_row   || null;
     const skipTruncate: boolean   = body._skip_truncate || false;
     const isCascadeSlice: boolean = body._cascade || false;
+    const syncMode: string | null = body.sync_mode || null;
+
+    // ═══════════════════════════════════════════════════════════════
+    // RECEITA SYNC MODES (m0, m1, historico_completo, historico_mensal)
+    // ═══════════════════════════════════════════════════════════════
+    if (arquivo === 'base_receita' && syncMode) {
+      const fileId = FILE_IDS['base_receita'];
+      log.push('🔐 Autenticando...');
+      const token = await getToken();
+      log.push('✅ Token obtido');
+
+      // ── M0: Sync current month only ──
+      if (syncMode === 'm0') {
+        log.push('\n📅 Sync M0 (mês atual)');
+        const sheetName = 'Comissões';
+        const dims = await getSheetDimensions(token, fileId, sheetName);
+        if (!dims || dims.rowCount < 2) {
+          log.push('   ⚠️ Aba "Comissões" vazia ou não encontrada');
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-m0', true, dur, log, []);
+          return Response.json({ success: true, log, totalRows: 0 }, { headers: cors });
+        }
+
+        const lastCol = colToLetter(dims.columnCount);
+        const total = await readAndInsertRange(
+          token, fileId, sheetName, 'raw_comissoes_m0',
+          2, dims.rowCount, dims.headers, lastCol, true, log
+        );
+
+        log.push(`   ✅ M0: ${total} linhas`);
+
+        // Refresh MV
+        log.push('\n🔄 Refreshando MV...');
+        await refreshMV();
+        log.push('✅ MV atualizada');
+
+        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        log.push(`\n⏱️ ${dur}`);
+        await saveLog('sync-m0', true, dur, log, []);
+        return Response.json({ success: true, arquivo: 'base_receita', syncMode: 'm0', totalRows: total, duracao: dur, log }, { headers: cors });
+      }
+
+      // ── M-1: Re-sync previous month in historico ──
+      if (syncMode === 'm1') {
+        log.push('\n📅 Sync M-1 (mês anterior no histórico)');
+
+        // Check if within first 10 business days
+        const dentroPeriodo = await callRpc('fn_dentro_periodo_m1') as boolean;
+        if (!dentroPeriodo) {
+          log.push('   ⏸️ Fora do período de ajuste M-1 (>10 dias úteis). Pulando.');
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-m1-skip', true, dur, log, []);
+          return Response.json({ success: true, syncMode: 'm1', skipped: true, reason: 'outside_m1_period', log }, { headers: cors });
+        }
+
+        const anoMesM1 = await callRpc('fn_anomes_m1') as number;
+        log.push(`   📊 AnoMes M-1: ${anoMesM1}`);
+
+        // Read historico sheet
+        const sheetName = 'Comissões Histórico';
+        const dims = await getSheetDimensions(token, fileId, sheetName);
+        if (!dims || dims.rowCount < 2) {
+          log.push('   ⚠️ Aba "Comissões Histórico" vazia');
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-m1', true, dur, log, []);
+          return Response.json({ success: true, syncMode: 'm1', totalRows: 0, log }, { headers: cors });
+        }
+
+        const lastCol = colToLetter(dims.columnCount);
+        log.push(`   📊 Lendo "${sheetName}": ${dims.rowCount - 1} linhas`);
+
+        // Read all rows and filter only M-1 month
+        const allRows = await readRange(token, fileId, sheetName, 2, dims.rowCount, dims.headers, lastCol);
+        const m1Rows = allRows.filter(r => extractAnomes(r) === anoMesM1);
+        log.push(`   🔍 ${m1Rows.length} linhas de ${anoMesM1} encontradas`);
+
+        if (m1Rows.length === 0) {
+          log.push('   ⚠️ Nenhuma linha de M-1 no arquivo');
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-m1', true, dur, log, []);
+          return Response.json({ success: true, syncMode: 'm1', totalRows: 0, log }, { headers: cors });
+        }
+
+        // Delete M-1 from historico
+        log.push(`   🗑️ Deletando ${anoMesM1} do histórico...`);
+        await callRpc('rpc_deletar_anomes_historico', { p_anomes: anoMesM1 });
+
+        // Insert M-1 rows
+        log.push(`   📦 Inserindo ${m1Rows.length} linhas de ${anoMesM1}...`);
+        await insertRowsNoTruncate('raw_comissoes_historico', m1Rows);
+
+        log.push(`   ✅ M-1: ${m1Rows.length} linhas`);
+
+        // Refresh MV
+        log.push('\n🔄 Refreshando MV...');
+        await refreshMV();
+        log.push('✅ MV atualizada');
+
+        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        log.push(`\n⏱️ ${dur}`);
+        await saveLog('sync-m1', true, dur, log, []);
+        return Response.json({ success: true, syncMode: 'm1', totalRows: m1Rows.length, duracao: dur, log }, { headers: cors });
+      }
+
+      // ── historico_completo: Full cascade sync ──
+      if (syncMode === 'historico_completo') {
+        log.push('\n📚 Sync Histórico Completo (cascade)');
+        const sheetName = 'Comissões Histórico';
+        const dims = await getSheetDimensions(token, fileId, sheetName);
+        if (!dims || dims.rowCount < 2) {
+          log.push('   ⚠️ Aba vazia');
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-historico-completo', true, dur, log, []);
+          return Response.json({ success: true, syncMode: 'historico_completo', totalRows: 0, log }, { headers: cors });
+        }
+
+        const lastCol = colToLetter(dims.columnCount);
+        const totalDataRows = dims.rowCount - 1;
+        log.push(`   📊 "${sheetName}": ${totalDataRows} linhas`);
+
+        if (totalDataRows > MAX_ROWS_PER_CALL) {
+          // Cascade pattern
+          const firstEnd = Math.min(2 + MAX_ROWS_PER_CALL - 1, dims.rowCount);
+          const firstTotal = await readAndInsertRange(
+            token, fileId, sheetName, 'raw_comissoes_historico',
+            2, firstEnd, dims.headers, lastCol, true, log
+          );
+          log.push(`   ✅ First slice: ${firstTotal} rows`);
+
+          const nextStart = firstEnd + 1;
+          if (nextStart <= dims.rowCount) {
+            const nextEnd = Math.min(nextStart + MAX_ROWS_PER_CALL - 1, dims.rowCount);
+            log.push(`   🔥 Cascade: ${nextStart}-${dims.rowCount}`);
+            fireAndForget({
+              tipo, arquivo: 'base_receita',
+              aba: sheetName, start_row: nextStart, end_row: nextEnd,
+              _skip_truncate: true, _cascade: true,
+              _cascade_total_rows: firstTotal, _refresh_mv: true,
+            });
+          }
+
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-historico-completo', true, dur, log, []);
+          return Response.json({ success: true, syncMode: 'historico_completo', totalRows: firstTotal, cascading: true, duracao: dur, log }, { headers: cors });
+        } else {
+          const total = await readAndInsertRange(
+            token, fileId, sheetName, 'raw_comissoes_historico',
+            2, dims.rowCount, dims.headers, lastCol, true, log
+          );
+          log.push(`   ✅ Histórico: ${total} linhas`);
+          log.push('\n🔄 Refreshando MV...');
+          await refreshMV();
+          log.push('✅ MV atualizada');
+
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-historico-completo', true, dur, log, []);
+          return Response.json({ success: true, syncMode: 'historico_completo', totalRows: total, duracao: dur, log }, { headers: cors });
+        }
+      }
+
+      // ── historico_mensal: Safe chunk sync (delete by anomes, then insert) ──
+      if (syncMode === 'historico_mensal') {
+        const chunkStart = startRow || 2;
+        const chunkEnd = endRow || 40001;
+        log.push(`\n📚 Sync Histórico Mensal Seguro [${chunkStart}-${chunkEnd}]`);
+
+        const sheetName = 'Comissões Histórico';
+        const dims = await getSheetDimensions(token, fileId, sheetName);
+        if (!dims || dims.rowCount < 2) {
+          log.push('   ⚠️ Aba vazia');
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-historico-mensal', true, dur, log, []);
+          return Response.json({ success: true, syncMode: 'historico_mensal', totalRows: 0, log }, { headers: cors });
+        }
+
+        // Check if chunk range exceeds sheet
+        if (chunkStart > dims.rowCount) {
+          log.push(`   ⏸️ Chunk start ${chunkStart} > total rows ${dims.rowCount}. Pulando.`);
+          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+          await saveLog('sync-historico-mensal-skip', true, dur, log, []);
+          return Response.json({ success: true, syncMode: 'historico_mensal', skipped: true, log }, { headers: cors });
+        }
+
+        const effectiveEnd = Math.min(chunkEnd, dims.rowCount);
+        const lastCol = colToLetter(dims.columnCount);
+        log.push(`   📊 Lendo linhas ${chunkStart}-${effectiveEnd} de ${dims.rowCount}`);
+
+        // Read the chunk
+        const chunkRows = await readRange(token, fileId, sheetName, chunkStart, effectiveEnd, dims.headers, lastCol);
+        log.push(`   📦 ${chunkRows.length} linhas lidas`);
+
+        // Identify unique anomes in this chunk
+        const anomesSet = new Set<number>();
+        for (const row of chunkRows) {
+          const am = extractAnomes(row);
+          if (am) anomesSet.add(am);
+        }
+        const anomesList = [...anomesSet].sort();
+        log.push(`   📆 AnoMes neste chunk: ${anomesList.join(', ')}`);
+
+        // Delete those months from historico
+        if (anomesList.length > 0) {
+          log.push(`   🗑️ Deletando ${anomesList.length} meses do histórico...`);
+          await callRpc('rpc_deletar_anomes_lista_historico', { p_anomes_list: anomesList });
+        }
+
+        // Insert chunk rows
+        log.push(`   📦 Inserindo ${chunkRows.length} linhas...`);
+        await insertRowsNoTruncate('raw_comissoes_historico', chunkRows);
+        log.push(`   ✅ Chunk: ${chunkRows.length} linhas`);
+
+        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        log.push(`\n⏱️ ${dur}`);
+        await saveLog('sync-historico-mensal', true, dur, log, []);
+        return Response.json({ success: true, syncMode: 'historico_mensal', totalRows: chunkRows.length, duracao: dur, log }, { headers: cors });
+      }
+
+      // Unknown sync_mode
+      return Response.json({ success: false, error: `Unknown sync_mode: ${syncMode}` }, { status: 400, headers: cors });
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // MODE 1: ORCHESTRATOR (tipo=todos)
-    // Process each file sequentially via self-invoke
     // ═══════════════════════════════════════════════════════════════
     if (arquivo === 'todos' && !abaFiltro && !startRow) {
       log.push('🔐 Autenticando...');
-      await getToken(); // validate creds early
+      await getToken();
       log.push('✅ Token válido');
       log.push('🚀 Modo orquestrador\n');
 
@@ -345,7 +631,6 @@ Deno.serve(async (req) => {
 
     // ═══════════════════════════════════════════════════════════════
     // MODE 2: CASCADE SLICE
-    // Process a specific row range, then fire-and-forget the NEXT slice
     // ═══════════════════════════════════════════════════════════════
     if (isCascadeSlice && startRow && endRow && abaFiltro) {
       const fileKey = arquivo;
@@ -374,7 +659,6 @@ Deno.serve(async (req) => {
 
       log.push(`✅ Slice done: ${total} rows`);
 
-      // Fire next slice if there are more rows
       const totalRows = dims.rowCount;
       const nextStart = endRow + 1;
       if (nextStart <= totalRows) {
@@ -392,7 +676,6 @@ Deno.serve(async (req) => {
           _refresh_mv: body._refresh_mv || false,
         });
       } else {
-        // Last slice: refresh MV if needed
         const grandTotal = (body._cascade_total_rows || 0) + total;
         log.push(`🏁 Cascade complete: ${grandTotal} total rows`);
         if (body._refresh_mv) {
@@ -401,7 +684,6 @@ Deno.serve(async (req) => {
           log.push('✅ MV refreshed');
         }
 
-        // Save a completion log
         const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
         await saveLog(`cascade-${fileKey}-${sh.sheet}`, true, dur, 
           [`Cascade complete: ${grandTotal} rows in ${sh.table}`], []);
@@ -446,28 +728,24 @@ Deno.serve(async (req) => {
           }
 
           const lastCol = colToLetter(dims.columnCount);
-          const totalDataRows = dims.rowCount - 1; // minus header
+          const totalDataRows = dims.rowCount - 1;
           const effectiveStart = startRow ?? 2;
           const effectiveEnd = endRow ?? dims.rowCount;
 
           log.push(`   📊 "${sh.sheet}": ${totalDataRows} data rows`);
 
-          // If sheet is large and no explicit range: use CASCADE pattern
           if (!startRow && totalDataRows > MAX_ROWS_PER_CALL) {
             log.push(`   🔀 Auto-cascade: ${totalDataRows} rows → fatias de ${MAX_ROWS_PER_CALL}`);
 
-            // Process FIRST slice inline (includes truncate)
             const firstEnd = Math.min(2 + MAX_ROWS_PER_CALL - 1, dims.rowCount);
-
             const firstTotal = await readAndInsertRange(
               token, fileId, sh.sheet, sh.table,
               2, firstEnd, dims.headers, lastCol,
-              !skipTruncate, log // truncate on first slice
+              !skipTruncate, log
             );
 
             log.push(`   ✅ First slice: ${firstTotal} rows inserted`);
 
-            // Fire cascade for remaining slices (fire-and-forget)
             const nextStart = firstEnd + 1;
             if (nextStart <= dims.rowCount) {
               const nextEnd = Math.min(nextStart + MAX_ROWS_PER_CALL - 1, dims.rowCount);
@@ -485,11 +763,9 @@ Deno.serve(async (req) => {
               });
             }
 
-            // Mark that first slice is done for this sheet
-            if (fileKey === 'base_receita') needsMVRefresh = false; // cascade will handle it
+            if (fileKey === 'base_receita') needsMVRefresh = false;
 
           } else {
-            // Small sheet or explicit range: process inline
             const truncate = skipTruncate ? false : (!startRow || startRow <= 2);
             const total = await readAndInsertRange(
               token, fileId, sh.sheet, sh.table,
@@ -507,7 +783,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Refresh MV only for small sheets that were fully processed inline
     if (needsMVRefresh && !body._orchestrated) {
       log.push('\n🔄 Refreshando MV...');
       await refreshMV();
