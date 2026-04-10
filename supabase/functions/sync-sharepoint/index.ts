@@ -140,15 +140,29 @@ async function getToken(): Promise<string> {
 const RPC_TABLES = new Set(['raw_comissoes_m0', 'raw_comissoes_historico']);
 const rpcHeaders = { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` };
 
+const RPC_BATCH = 500;
+
 async function insertChunk(table: string, rows: Record<string, unknown>[], truncate: boolean): Promise<void> {
   if (RPC_TABLES.has(table)) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_sync_bulk_insert`, {
-      method: 'POST', headers: rpcHeaders,
-      body: JSON.stringify({ p_table: table, p_rows: rows, p_truncate: truncate })
-    });
-    if (!r.ok) throw new Error(`RPC ${table}: ${(await r.text()).substring(0, 200)}`);
-    const res = await r.json();
-    if (res.success === false) throw new Error(`RPC erro: ${res.error}`);
+    // Batch RPC calls to avoid oversized payloads
+    for (let i = 0; i < rows.length; i += RPC_BATCH) {
+      const batch = rows.slice(i, i + RPC_BATCH);
+      const shouldTruncate = truncate && i === 0;
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_sync_bulk_insert`, {
+        method: 'POST', headers: rpcHeaders,
+        body: JSON.stringify({ p_table: table, p_rows: batch, p_truncate: shouldTruncate })
+      });
+      if (!r.ok) throw new Error(`RPC ${table}: ${(await r.text()).substring(0, 200)}`);
+      const res = await r.json();
+      if (res.success === false) throw new Error(`RPC erro: ${res.error}`);
+    }
+    if (rows.length === 0 && truncate) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_sync_bulk_insert`, {
+        method: 'POST', headers: rpcHeaders,
+        body: JSON.stringify({ p_table: table, p_rows: [], p_truncate: true })
+      });
+      if (!r.ok) throw new Error(`RPC ${table}: ${(await r.text()).substring(0, 200)}`);
+    }
   } else {
     if (truncate) {
       await fetch(`${SUPABASE_URL}/rest/v1/rpc/truncate_table`, {
