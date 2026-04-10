@@ -67,7 +67,7 @@ const FILE_MAP: Record<string, { sheets: { sheet: string; table: string; require
 };
 
 const ALL_FILES = Object.keys(FILE_MAP);
-const READ_CHUNK = 5000;
+const READ_CHUNK = 2000;
 // Max rows per single invocation to stay well within 400s timeout
 const MAX_ROWS_PER_CALL = 15000;
 
