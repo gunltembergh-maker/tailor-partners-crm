@@ -3680,12 +3680,10 @@ export type Database = {
           proximo_split: string
         }[]
       }
-      rpc_sync_bulk_insert:
-        | { Args: { p_rows: Json; p_table: string }; Returns: Json }
-        | {
-            Args: { p_rows: Json; p_table: string; p_truncate?: boolean }
-            Returns: Json
-          }
+      rpc_sync_bulk_insert: {
+        Args: { p_rows: Json; p_table: string; p_truncate?: boolean }
+        Returns: Json
+      }
       rpc_tabela_clientes: {
         Args: {
           p_advisor?: string[]

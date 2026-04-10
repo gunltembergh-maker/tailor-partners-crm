@@ -186,7 +186,7 @@ type BaseResult = {
 
 const RECEITA_TABLES = new Set(["raw_comissoes_m0", "raw_comissoes_historico"]);
 const DEFAULT_INSERT_BATCH = 500;
-const RECEITA_INSERT_BATCH = 2000;
+const RECEITA_INSERT_BATCH = 500;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
