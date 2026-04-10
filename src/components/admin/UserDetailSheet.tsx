@@ -46,12 +46,12 @@ interface Usuario {
 }
 
 interface Props {
-  user: Usuario | null;
+  user: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEdit?: (u: Usuario) => void;
-  onBlock?: (u: Usuario) => void;
-  onDelete?: (u: Usuario) => void;
+  onEdit?: (u: any) => void;
+  onBlock?: (u: any) => void;
+  onDelete?: (u: any) => void;
 }
 
 function formatCpfFull(cpf: string | null): string {
