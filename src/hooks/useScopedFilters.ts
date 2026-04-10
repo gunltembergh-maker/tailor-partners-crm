@@ -35,7 +35,6 @@ export function useScopedRpcParamsPbi(filters: DashboardFilters) {
     p_anomes: filters.anoMes.length ? filters.anoMes.map(Number) : null,
     p_banker: overrideBanker ?? (filters.banker.length ? filters.banker : null),
     p_finder: overrideFinder ?? (filters.finder.length ? filters.finder : null),
-    p_casa: filters.casa.length ? filters.casa : null,
   };
 }
 
