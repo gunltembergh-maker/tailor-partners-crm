@@ -610,6 +610,9 @@ export default function GestaoUsuarios() {
         user={detailUser}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        onEdit={(u) => { setDetailOpen(false); openEditModal(u); }}
+        onBlock={(u) => { setDetailOpen(false); setBlockUser(u); }}
+        onDelete={(u) => { setDetailOpen(false); setDeleteUser(u); }}
       />
 
       {/* Block/Unblock AlertDialog */}

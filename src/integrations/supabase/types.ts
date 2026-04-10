@@ -1503,6 +1503,36 @@ export type Database = {
           },
         ]
       }
+      user_activity_log: {
+        Row: {
+          acao: string
+          created_at: string | null
+          detalhe: string | null
+          email: string | null
+          id: string
+          pagina: string | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string | null
+          detalhe?: string | null
+          email?: string | null
+          id?: string
+          pagina?: string | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string | null
+          detalhe?: string | null
+          email?: string | null
+          id?: string
+          pagina?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1517,6 +1547,42 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions_log: {
+        Row: {
+          created_at: string | null
+          duracao_minutos: number | null
+          email: string | null
+          id: string
+          ip_address: string | null
+          login_at: string | null
+          logout_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          duracao_minutos?: number | null
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          login_at?: string | null
+          logout_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          duracao_minutos?: number | null
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          login_at?: string | null
+          logout_at?: string | null
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -2786,10 +2852,19 @@ export type Database = {
         Returns: Json
       }
       rpc_admin_deletar_perfil: { Args: { p_id: string }; Returns: Json }
+      rpc_admin_detalhe_usuario: { Args: { p_email: string }; Returns: Json }
       rpc_admin_excluir_popup: { Args: { p_id: string }; Returns: Json }
       rpc_admin_excluir_usuario:
         | { Args: { p_email: string; p_user_id?: string }; Returns: Json }
         | { Args: { p_profile_id: string }; Returns: Json }
+      rpc_admin_historico_convites: {
+        Args: { p_email: string }
+        Returns: {
+          data_hora: string
+          detalhe: string
+          evento: string
+        }[]
+      }
       rpc_admin_lista_perfis: {
         Args: never
         Returns: {
