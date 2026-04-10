@@ -35,6 +35,14 @@ interface Usuario {
   operacao_tipo?: string | null;
   primeiro_acesso?: boolean;
   perfil_id?: string | null;
+  invited_at?: string | null;
+  convite_status?: string | null;
+  convite_enviado_em?: string | null;
+  convite_aceito_em?: string | null;
+  convite_expira_em?: string | null;
+  convite_cancelado_em?: string | null;
+  convite_reenvios?: number | null;
+  [key: string]: any;
 }
 
 interface Props {
