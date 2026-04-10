@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, Component, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import TailorLoader from "@/components/TailorLoader";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,6 +10,36 @@ import { ViewAsProvider } from "@/contexts/ViewAsContext";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import Auth from "./pages/Auth";
 import { BlockedUserScreen } from "@/components/admin/BlockedUserScreen";
+
+// Error Boundary to prevent white screens from unhandled errors
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("App Error Boundary:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white gap-4">
+          <p className="text-sm font-medium text-gray-600">Algo deu errado. Tente recarregar a página.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 text-sm rounded-md bg-[#1B2A3D] text-white hover:opacity-90"
+          >
+            Recarregar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -66,7 +96,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   const { session, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <TailorLoader />;
 
   return (
     <Suspense fallback={<LoadingOverlay show />}>
@@ -101,19 +131,21 @@ function AppRoutes() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <ViewAsProvider>
-            <AppRoutes />
-          </ViewAsProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <ViewAsProvider>
+              <AppRoutes />
+            </ViewAsProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
