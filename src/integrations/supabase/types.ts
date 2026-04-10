@@ -3096,34 +3096,66 @@ export type Database = {
           tipo: string
         }[]
       }
-      rpc_auc_casa: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          auc: number
-          casa: string
-        }[]
-      }
-      rpc_auc_casa_m0: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          auc: number
-          casa: string
-        }[]
-      }
+      rpc_auc_casa:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              auc: number
+              casa: string
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              auc: number
+              casa: string
+            }[]
+          }
+      rpc_auc_casa_m0:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              auc: number
+              casa: string
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              auc: number
+              casa: string
+            }[]
+          }
       rpc_auc_faixa_pl_qualitativo: {
         Args: {
           p_advisor?: string[]
@@ -3141,128 +3173,266 @@ export type Database = {
           pl_declarado: number
         }[]
       }
-      rpc_auc_mes: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          anomes: number
-          anomes_nome: string
-          auc: number
-        }[]
-      }
-      rpc_auc_mes_stack_casa: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          anomes: number
-          anomes_nome: string
-          auc: number
-          casa: string
-        }[]
-      }
-      rpc_captacao_agg_mes: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          anomes: number
-          anomes_nome: string
-          captacao: number
-          tipo_captacao: string
-        }[]
-      }
-      rpc_captacao_kpis: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          captacao_mtd: number
-          captacao_ytd: number
-        }[]
-      }
-      rpc_captacao_treemap: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          captacao: number
-          tipo_captacao: string
-        }[]
-      }
-      rpc_contas_agg_mes: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          anomes: number
-          anomes_nome: string
-          casa: string
-          qtd: number
-          tipo: string
-        }[]
-      }
-      rpc_contas_kpis: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          ativacao: number
-          habilitacao: number
-          migracao: number
-        }[]
-      }
-      rpc_contas_total_por_tipo: {
-        Args: {
-          p_advisor?: string[]
-          p_anomes?: number[]
-          p_banker?: string[]
-          p_documento?: string[]
-          p_finder?: string[]
-          p_tipo_cliente?: string[]
-        }
-        Returns: {
-          casa: string
-          qtd: number
-          tipo: string
-        }[]
-      }
+      rpc_auc_mes:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              auc: number
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              auc: number
+            }[]
+          }
+      rpc_auc_mes_stack_casa:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              auc: number
+              casa: string
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              auc: number
+              casa: string
+            }[]
+          }
+      rpc_captacao_agg_mes:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              captacao: number
+              tipo_captacao: string
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              captacao: number
+              tipo_captacao: string
+            }[]
+          }
+      rpc_captacao_kpis:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              captacao_mtd: number
+              captacao_ytd: number
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              captacao_mtd: number
+              captacao_ytd: number
+            }[]
+          }
+      rpc_captacao_treemap:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              captacao: number
+              tipo_captacao: string
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              captacao: number
+              tipo_captacao: string
+            }[]
+          }
+      rpc_contas_agg_mes:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              casa: string
+              qtd: number
+              tipo: string
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              anomes: number
+              anomes_nome: string
+              casa: string
+              qtd: number
+              tipo: string
+            }[]
+          }
+      rpc_contas_kpis:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              ativacao: number
+              habilitacao: number
+              migracao: number
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              ativacao: number
+              habilitacao: number
+              migracao: number
+            }[]
+          }
+      rpc_contas_total_por_tipo:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              casa: string
+              qtd: number
+              tipo: string
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_anomes?: number[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_cliente?: string[]
+            }
+            Returns: {
+              casa: string
+              qtd: number
+              tipo: string
+            }[]
+          }
       rpc_custodia_indexador: {
         Args: {
           p_advisor?: string[]
@@ -3380,6 +3550,12 @@ export type Database = {
         Returns: {
           anomes: number
           anomes_nome: string
+        }[]
+      }
+      rpc_filtro_casas: {
+        Args: never
+        Returns: {
+          casa: string
         }[]
       }
       rpc_filtro_financial_advisors: {
