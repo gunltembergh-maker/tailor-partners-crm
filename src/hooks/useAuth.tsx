@@ -59,35 +59,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Track session login
         if (_event === 'SIGNED_IN') {
-          try {
-            await supabase.from("user_sessions_log" as any).insert({
-              user_id: session.user.id,
-              email: session.user.email,
-              login_at: new Date().toISOString(),
-              user_agent: navigator.userAgent,
-            } as any);
-          } catch { /* silent */ }
+          // Fire-and-forget: don't block auth flow
+          supabase.from("user_sessions_log" as any).insert({
+            user_id: session.user.id,
+            email: session.user.email,
+            login_at: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+          } as any).then(() => {}).catch(() => {});
         }
       } else {
         // Track session logout
         if (_event === 'SIGNED_OUT' && user?.id) {
-          try {
-            const { data: openSession } = await supabase
-              .from("user_sessions_log" as any)
-              .select("id, login_at")
-              .eq("user_id", user.id)
-              .is("logout_at", null)
-              .order("login_at", { ascending: false })
-              .limit(1)
-              .single();
-            if (openSession) {
-              const duracao = Math.round((Date.now() - new Date((openSession as any).login_at).getTime()) / 60000);
-              await supabase.from("user_sessions_log" as any).update({
-                logout_at: new Date().toISOString(),
-                duracao_minutos: duracao,
-              } as any).eq("id", (openSession as any).id);
-            }
-          } catch { /* silent */ }
+          // Fire-and-forget: don't block sign-out
+          const uid = user.id;
+          supabase
+            .from("user_sessions_log" as any)
+            .select("id, login_at")
+            .eq("user_id", uid)
+            .is("logout_at", null)
+            .order("login_at", { ascending: false })
+            .limit(1)
+            .single()
+            .then(({ data: openSession }) => {
+              if (openSession) {
+                const duracao = Math.round((Date.now() - new Date((openSession as any).login_at).getTime()) / 60000);
+                supabase.from("user_sessions_log" as any).update({
+                  logout_at: new Date().toISOString(),
+                  duracao_minutos: duracao,
+                } as any).eq("id", (openSession as any).id).then(() => {}).catch(() => {});
+              }
+            }).catch(() => {});
         }
 
         setProfile(null);
