@@ -231,7 +231,7 @@ export function useAucCasaM0(filters: DashboardFilters) {
 // ─── Faixa PL RPCs (PBIX — por mês) ───
 
 export function useFaixaPlClientesMes(filters: DashboardFilters) {
-  const params = useScopedRpcParams(filters);
+  const { p_casa: _c1, ...params } = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["faixa-pl-clientes-mes", params],
     queryFn: async () => {
@@ -247,7 +247,7 @@ export function useFaixaPlClientesMes(filters: DashboardFilters) {
 }
 
 export function useFaixaPlAucMes(filters: DashboardFilters) {
-  const params = useScopedRpcParams(filters);
+  const { p_casa: _c2, ...params } = useScopedRpcParams(filters);
   return useQuery({
     queryKey: ["faixa-pl-auc-mes", params],
     queryFn: async () => {
