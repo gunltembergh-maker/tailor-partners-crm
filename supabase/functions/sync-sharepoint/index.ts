@@ -9,8 +9,8 @@
  *  - arquivo=X + aba + start_row/end_row: processes a specific slice
  *  - sync_mode=m0: sync only current month sheet (Comissões → raw_comissoes_m0)
  *  - sync_mode=m1: sync M-1 adjustment in historico (conditional on business days)
- *  - sync_mode=historico_completo: full history sync with cascade
- *  - sync_mode=historico_mensal: safe monthly chunk sync (delete by anomes, then insert)
+ *  - sync_mode=historico_completo: full history sync month-by-month in background
+ *  - sync_mode=historico_mensal: monthly history sync in background
  */
 
 const DRIVE_ID      = 'b!vUOs6-gTI0u_ibiSESgIgDBheafGCvNHlxHh75ldlxq4_43xU1I2ToIsrL0KNAlK';
@@ -367,6 +367,37 @@ async function selfInvoke(body: Record<string, unknown>): Promise<{ success: boo
   return await resp.json();
 }
 
+function scheduleBackgroundTask(task: Promise<void>): void {
+  const runtime = globalThis as typeof globalThis & {
+    EdgeRuntime?: { waitUntil: (promise: Promise<unknown>) => void };
+  };
+
+  if (runtime.EdgeRuntime?.waitUntil) {
+    runtime.EdgeRuntime.waitUntil(task);
+    return;
+  }
+
+  task.catch((error) => {
+    console.error('Background sync failed', error);
+  });
+}
+
+function normalizeAnomesList(value: unknown): number[] | null {
+  const source = Array.isArray(value)
+    ? value
+    : typeof value === 'string' && value.includes(',')
+      ? value.split(',')
+      : value === null || value === undefined
+        ? []
+        : [value];
+
+  const months = source
+    .map((entry) => Number(String(entry).trim()))
+    .filter((entry) => Number.isInteger(entry) && entry >= 190001 && entry <= 299912);
+
+  return months.length ? [...new Set(months)].sort((a, b) => a - b) : null;
+}
+
 // ─── Extract AnoMes from row data ──────────────────────────────────
 function extractAnomes(row: Record<string, unknown>): number | null {
   const dataVal = row['Data'] as string | null;
@@ -377,6 +408,157 @@ function extractAnomes(row: Record<string, unknown>): number | null {
     return (d.getFullYear() * 100) + (d.getMonth() + 1);
   } catch {
     return null;
+  }
+}
+
+async function readHistoricoRowsGroupedByMonth(
+  token: string,
+  fileId: string,
+  sheetName: string,
+  monthFilter: number[] | null,
+  log: string[],
+): Promise<{
+  monthlyGroups: Map<number, Record<string, unknown>[]>;
+  rowsWithoutMonth: Record<string, unknown>[];
+  totalRowsRead: number;
+} | null> {
+  const dims = await getSheetDimensions(token, fileId, sheetName);
+  if (!dims || dims.rowCount < 2) return null;
+
+  const lastCol = colToLetter(dims.columnCount);
+  const allowedMonths = monthFilter?.length ? new Set(monthFilter) : null;
+  const monthlyGroups = new Map<number, Record<string, unknown>[]>();
+  const rowsWithoutMonth: Record<string, unknown>[] = [];
+  let totalRowsRead = 0;
+
+  for (let r = 2; r <= dims.rowCount; r += READ_CHUNK) {
+    const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
+    const chunkRows = await readRange(token, fileId, sheetName, r, end, dims.headers, lastCol);
+    totalRowsRead += chunkRows.length;
+
+    let eligibleRows = 0;
+    let unknownMonthRows = 0;
+
+    for (const row of chunkRows) {
+      const anomes = extractAnomes(row);
+
+      if (anomes === null) {
+        if (!allowedMonths) {
+          rowsWithoutMonth.push(row);
+          eligibleRows += 1;
+          unknownMonthRows += 1;
+        }
+        continue;
+      }
+
+      if (allowedMonths && !allowedMonths.has(anomes)) continue;
+
+      const current = monthlyGroups.get(anomes);
+      if (current) current.push(row);
+      else monthlyGroups.set(anomes, [row]);
+      eligibleRows += 1;
+    }
+
+    log.push(`   📦 ${r}-${end}: ${eligibleRows} linhas elegíveis${unknownMonthRows ? ` (${unknownMonthRows} sem mês)` : ''}`);
+  }
+
+  return { monthlyGroups, rowsWithoutMonth, totalRowsRead };
+}
+
+async function processHistoricoSyncInBackground({
+  tipo,
+  syncMode,
+  monthFilter,
+}: {
+  tipo: string;
+  syncMode: 'historico_completo' | 'historico_mensal';
+  monthFilter: number[] | null;
+}): Promise<void> {
+  const log: string[] = [];
+  const errors: string[] = [];
+  const t0 = Date.now();
+  const fileId = FILE_IDS['base_receita'];
+  const sheetName = 'Comissões Histórico';
+  const logType = syncMode === 'historico_completo' ? 'sync-historico-completo' : 'sync-historico-mensal';
+  const fullRebuild = syncMode === 'historico_completo' || !(monthFilter?.length);
+
+  try {
+    log.push('🔐 Autenticando...');
+    const token = await getToken();
+    log.push('✅ Token obtido');
+    log.push(fullRebuild ? '\n📚 Sync Histórico Completo em background' : `\n📚 Sync Histórico Mensal em background (${monthFilter?.join(', ')})`);
+
+    const groupedRows = await readHistoricoRowsGroupedByMonth(token, fileId, sheetName, monthFilter, log);
+
+    if (!groupedRows) {
+      if (fullRebuild) {
+        log.push('   🧹 Fonte vazia: limpando histórico atual');
+        await insertChunk('raw_comissoes_historico', [], true);
+      }
+
+      log.push('   ⚠️ Aba "Comissões Histórico" vazia ou não encontrada');
+      log.push('\n🔄 Refreshando MV...');
+      await refreshMV();
+      log.push('✅ MV atualizada');
+
+      const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+      log.push(`\n⏱️ ${dur}`);
+      await saveLog(logType, true, dur, log, []);
+      return;
+    }
+
+    const monthsWithRows = [...groupedRows.monthlyGroups.keys()].sort((a, b) => a - b);
+    const monthsToProcess = fullRebuild
+      ? monthsWithRows
+      : [...new Set(monthFilter ?? monthsWithRows)].sort((a, b) => a - b);
+
+    log.push(`   📊 ${groupedRows.totalRowsRead} linhas lidas da fonte`);
+
+    if (fullRebuild) {
+      log.push('   🧹 Limpando raw_comissoes_historico antes da reconstrução');
+      await insertChunk('raw_comissoes_historico', [], true);
+    }
+
+    let totalInserted = 0;
+    for (const anomes of monthsToProcess) {
+      const rows = groupedRows.monthlyGroups.get(anomes) ?? [];
+      log.push(`   📅 ${anomes}: ${rows.length} linhas`);
+
+      if (!fullRebuild) {
+        await callRpc('rpc_deletar_anomes_historico', { p_anomes: anomes });
+      }
+
+      if (rows.length > 0) {
+        await insertRowsNoTruncate('raw_comissoes_historico', rows);
+        totalInserted += rows.length;
+      }
+
+      log.push(`   ✅ ${anomes}: +${rows.length} (acum: ${totalInserted})`);
+    }
+
+    if (fullRebuild && groupedRows.rowsWithoutMonth.length > 0) {
+      log.push(`   📦 Sem mês identificável: ${groupedRows.rowsWithoutMonth.length} linhas`);
+      await insertRowsNoTruncate('raw_comissoes_historico', groupedRows.rowsWithoutMonth);
+      totalInserted += groupedRows.rowsWithoutMonth.length;
+      log.push(`   ✅ Sem mês: +${groupedRows.rowsWithoutMonth.length} (acum: ${totalInserted})`);
+    }
+
+    log.push(`   🏁 Histórico processado: ${totalInserted} linhas gravadas`);
+    log.push('\n🔄 Refreshando MV...');
+    await refreshMV();
+    log.push('✅ MV atualizada');
+
+    const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+    log.push(`\n⏱️ ${dur}`);
+    await saveLog(logType, true, dur, log, []);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    errors.push(message);
+    log.push(`❌ ${message}`);
+
+    const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+    await saveLog(logType, false, dur, log, errors).catch(() => {});
+    throw error;
   }
 }
 
@@ -404,6 +586,27 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════════════
     if (arquivo === 'base_receita' && syncMode) {
       const fileId = FILE_IDS['base_receita'];
+
+      if (syncMode === 'historico_completo' || syncMode === 'historico_mensal') {
+        const monthFilter = normalizeAnomesList(
+          body.anomes_list ?? body.anomes ?? body.target_anomes ?? body.target_months,
+        );
+
+        scheduleBackgroundTask(processHistoricoSyncInBackground({
+          tipo,
+          syncMode,
+          monthFilter,
+        }));
+
+        return Response.json({
+          success: true,
+          arquivo: 'base_receita',
+          syncMode,
+          background: true,
+          message: 'Sync Histórico iniciado em background',
+        }, { status: 202, headers: cors });
+      }
+
       log.push('🔐 Autenticando...');
       const token = await getToken();
       log.push('✅ Token obtido');
@@ -499,119 +702,6 @@ Deno.serve(async (req) => {
         log.push(`\n⏱️ ${dur}`);
         await saveLog('sync-m1', true, dur, log, []);
         return Response.json({ success: true, syncMode: 'm1', totalRows: m1Rows.length, duracao: dur, log }, { headers: cors });
-      }
-
-      // ── historico_completo: Full cascade sync ──
-      if (syncMode === 'historico_completo') {
-        log.push('\n📚 Sync Histórico Completo (cascade)');
-        const sheetName = 'Comissões Histórico';
-        const dims = await getSheetDimensions(token, fileId, sheetName);
-        if (!dims || dims.rowCount < 2) {
-          log.push('   ⚠️ Aba vazia');
-          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-          await saveLog('sync-historico-completo', true, dur, log, []);
-          return Response.json({ success: true, syncMode: 'historico_completo', totalRows: 0, log }, { headers: cors });
-        }
-
-        const lastCol = colToLetter(dims.columnCount);
-        const totalDataRows = dims.rowCount - 1;
-        log.push(`   📊 "${sheetName}": ${totalDataRows} linhas`);
-
-        if (totalDataRows > MAX_ROWS_PER_CALL) {
-          // Cascade pattern
-          const firstEnd = Math.min(2 + MAX_ROWS_PER_CALL - 1, dims.rowCount);
-          const firstTotal = await readAndInsertRange(
-            token, fileId, sheetName, 'raw_comissoes_historico',
-            2, firstEnd, dims.headers, lastCol, true, log
-          );
-          log.push(`   ✅ First slice: ${firstTotal} rows`);
-
-          const nextStart = firstEnd + 1;
-          if (nextStart <= dims.rowCount) {
-            const nextEnd = Math.min(nextStart + MAX_ROWS_PER_CALL - 1, dims.rowCount);
-            log.push(`   🔥 Cascade: ${nextStart}-${dims.rowCount}`);
-            fireAndForget({
-              tipo, arquivo: 'base_receita',
-              aba: sheetName, start_row: nextStart, end_row: nextEnd,
-              _skip_truncate: true, _cascade: true,
-              _cascade_total_rows: firstTotal, _refresh_mv: true,
-            });
-          }
-
-          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-          await saveLog('sync-historico-completo', true, dur, log, []);
-          return Response.json({ success: true, syncMode: 'historico_completo', totalRows: firstTotal, cascading: true, duracao: dur, log }, { headers: cors });
-        } else {
-          const total = await readAndInsertRange(
-            token, fileId, sheetName, 'raw_comissoes_historico',
-            2, dims.rowCount, dims.headers, lastCol, true, log
-          );
-          log.push(`   ✅ Histórico: ${total} linhas`);
-          log.push('\n🔄 Refreshando MV...');
-          await refreshMV();
-          log.push('✅ MV atualizada');
-
-          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-          await saveLog('sync-historico-completo', true, dur, log, []);
-          return Response.json({ success: true, syncMode: 'historico_completo', totalRows: total, duracao: dur, log }, { headers: cors });
-        }
-      }
-
-      // ── historico_mensal: Safe chunk sync (delete by anomes, then insert) ──
-      if (syncMode === 'historico_mensal') {
-        const chunkStart = startRow || 2;
-        const chunkEnd = endRow || 40001;
-        log.push(`\n📚 Sync Histórico Mensal Seguro [${chunkStart}-${chunkEnd}]`);
-
-        const sheetName = 'Comissões Histórico';
-        const dims = await getSheetDimensions(token, fileId, sheetName);
-        if (!dims || dims.rowCount < 2) {
-          log.push('   ⚠️ Aba vazia');
-          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-          await saveLog('sync-historico-mensal', true, dur, log, []);
-          return Response.json({ success: true, syncMode: 'historico_mensal', totalRows: 0, log }, { headers: cors });
-        }
-
-        // Check if chunk range exceeds sheet
-        if (chunkStart > dims.rowCount) {
-          log.push(`   ⏸️ Chunk start ${chunkStart} > total rows ${dims.rowCount}. Pulando.`);
-          const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-          await saveLog('sync-historico-mensal-skip', true, dur, log, []);
-          return Response.json({ success: true, syncMode: 'historico_mensal', skipped: true, log }, { headers: cors });
-        }
-
-        const effectiveEnd = Math.min(chunkEnd, dims.rowCount);
-        const lastCol = colToLetter(dims.columnCount);
-        log.push(`   📊 Lendo linhas ${chunkStart}-${effectiveEnd} de ${dims.rowCount}`);
-
-        // Read the chunk
-        const chunkRows = await readRange(token, fileId, sheetName, chunkStart, effectiveEnd, dims.headers, lastCol);
-        log.push(`   📦 ${chunkRows.length} linhas lidas`);
-
-        // Identify unique anomes in this chunk
-        const anomesSet = new Set<number>();
-        for (const row of chunkRows) {
-          const am = extractAnomes(row);
-          if (am) anomesSet.add(am);
-        }
-        const anomesList = [...anomesSet].sort();
-        log.push(`   📆 AnoMes neste chunk: ${anomesList.join(', ')}`);
-
-        // Delete those months from historico
-        if (anomesList.length > 0) {
-          log.push(`   🗑️ Deletando ${anomesList.length} meses do histórico...`);
-          await callRpc('rpc_deletar_anomes_lista_historico', { p_anomes_list: anomesList });
-        }
-
-        // Insert chunk rows
-        log.push(`   📦 Inserindo ${chunkRows.length} linhas...`);
-        await insertRowsNoTruncate('raw_comissoes_historico', chunkRows);
-        log.push(`   ✅ Chunk: ${chunkRows.length} linhas`);
-
-        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        log.push(`\n⏱️ ${dur}`);
-        await saveLog('sync-historico-mensal', true, dur, log, []);
-        return Response.json({ success: true, syncMode: 'historico_mensal', totalRows: chunkRows.length, duracao: dur, log }, { headers: cors });
       }
 
       // Unknown sync_mode
