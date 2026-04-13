@@ -3527,40 +3527,25 @@ export type Database = {
           role: string
         }[]
       }
-      rpc_receita_drilldown:
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_categoria?: string
-              p_produto?: string
-              p_subcategoria?: string
-            }
-            Returns: {
-              label: string
-              valor: number
-            }[]
-          }
-        | {
-            Args: {
-              p_anomes?: number[]
-              p_banker?: string[]
-              p_categoria?: string
-              p_finder?: string[]
-              p_produto?: string
-              p_subcategoria?: string
-            }
-            Returns: {
-              anomes: number
-              anomes_nome: string
-              categoria: string
-              documento: string
-              produto: string
-              subcategoria: string
-              subproduto: string
-              valor: number
-            }[]
-          }
+      rpc_receita_drilldown: {
+        Args: {
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_categoria?: string
+          p_finder?: string[]
+          p_produto?: string
+          p_subcategoria?: string
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          categoria: string
+          documento: string
+          produto: string
+          subcategoria: string
+          valor: number
+        }[]
+      }
       rpc_receita_matriz_rows: {
         Args: { p_anomes?: number[]; p_banker?: string[]; p_finder?: string[] }
         Returns: {
