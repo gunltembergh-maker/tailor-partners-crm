@@ -203,10 +203,35 @@ async function callRpc(name: string, params: Record<string, unknown> = {}): Prom
   return await r.json();
 }
 
+async function bumpDashboardRefresh(): Promise<void> {
+  const readResp = await fetch(`${SUPABASE_URL}/rest/v1/dashboard_refresh?id=eq.1&select=version`, {
+    method: 'GET',
+    headers: { ...rpcHeaders, 'Accept': 'application/json' },
+  });
+  if (!readResp.ok) throw new Error(`dashboard_refresh read: ${(await readResp.text()).substring(0, 200)}`);
+
+  const rows = await readResp.json();
+  const currentVersion = Number(rows?.[0]?.version);
+  if (!Number.isFinite(currentVersion)) throw new Error('dashboard_refresh row id=1 not found');
+
+  const updateResp = await fetch(`${SUPABASE_URL}/rest/v1/dashboard_refresh?id=eq.1`, {
+    method: 'PATCH',
+    headers: { ...rpcHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify({
+      version: currentVersion + 1,
+      updated_at: new Date().toISOString(),
+    }),
+  });
+  if (!updateResp.ok) throw new Error(`dashboard_refresh update: ${(await updateResp.text()).substring(0, 200)}`);
+}
+
 async function refreshMV(): Promise<void> {
-  await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_refresh_mv_comissoes`, {
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_refresh_mv_comissoes`, {
     method: 'POST', headers: rpcHeaders, body: JSON.stringify({}),
   });
+  if (!resp.ok) throw new Error(`RPC rpc_refresh_mv_comissoes: ${(await resp.text()).substring(0, 200)}`);
+
+  await bumpDashboardRefresh();
 }
 
 async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], erros: string[]): Promise<void> {
