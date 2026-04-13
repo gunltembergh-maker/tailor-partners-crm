@@ -115,6 +115,10 @@ function convertCell(key: string, val: unknown): unknown {
   return val;
 }
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 // ─── Auth ───────────────────────────────────────────────────────────
 
 async function getToken(): Promise<string> {
@@ -802,8 +806,9 @@ Deno.serve(async (req) => {
           }
 
         } catch (e) {
-          errors.push(`${sh.sheet}: ${e.message}`);
-          log.push(`   ❌ "${sh.sheet}": ${e.message}`);
+          const message = getErrorMessage(e);
+          errors.push(`${sh.sheet}: ${message}`);
+          log.push(`   ❌ "${sh.sheet}": ${message}`);
         }
       }
     }
@@ -824,8 +829,9 @@ Deno.serve(async (req) => {
     return Response.json({ success: errors.length === 0, arquivo, duracao: dur, log, errors }, { headers: cors });
 
   } catch (e) {
+    const message = getErrorMessage(e);
     const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-    await saveLog('erro', false, dur, log, [e.message]).catch(() => {});
-    return Response.json({ success: false, error: e.message, log }, { status: 500, headers: cors });
+    await saveLog('erro', false, dur, log, [message]).catch(() => {});
+    return Response.json({ success: false, error: message, log }, { status: 500, headers: cors });
   }
 });
