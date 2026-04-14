@@ -223,9 +223,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("user_id", userId)
         .maybeSingle();
       setRole(roleData?.role ?? null);
-
-      // Register access timestamp in fallback path too
-      (async () => { try { await supabase.rpc("rpc_registrar_acesso" as any); } catch {} })();
     } catch (e) {
       console.error("fetchProfileFallback error:", e);
     }
