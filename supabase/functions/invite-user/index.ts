@@ -102,9 +102,11 @@ Deno.serve(async (req) => {
       confirmationUrl = linkData?.properties?.action_link || ''
       needsManualEmail = true
     } else if (emailTipo === 'magiclink') {
-      // Magic link (passwordless sign-in)
+      // Existing users can hit duplicate-user conflicts with magiclink generation.
+      // Use a recovery link here, which supports the same first-access/login flow
+      // without attempting to create a duplicate auth record.
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'magiclink',
+        type: 'recovery',
         email,
         options: { redirectTo },
       })
