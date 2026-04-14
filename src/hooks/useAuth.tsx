@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setArea(perfil.area ?? null);
 
       // Register access timestamp (fire-and-forget)
-      supabase.rpc("rpc_registrar_acesso" as any).then(() => {}).catch(() => {});
+      (async () => { try { await supabase.rpc("rpc_registrar_acesso" as any); } catch {} })();
     } catch {
       await fetchProfileFallback(userId);
     }
