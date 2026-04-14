@@ -50,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (mounted) setLoading(false);
     }, 5000);
 
+    let sessionLoggedForUser: string | null = null;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
       setSession(session);
@@ -57,17 +59,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setTimeout(() => fetchMeuPerfil(session.user.id), 0);
 
-        // Track session login
-        if (_event === 'SIGNED_IN') {
+        // Track session login for SIGNED_IN, TOKEN_REFRESHED (SSO/magic-link), and INITIAL_SESSION
+        if (
+          (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || _event === 'INITIAL_SESSION') &&
+          sessionLoggedForUser !== session.user.id
+        ) {
+          sessionLoggedForUser = session.user.id;
           // Fire-and-forget: don't block auth flow
-          Promise.resolve(
-            supabase.from("user_sessions_log" as any).insert({
-              user_id: session.user.id,
-              email: session.user.email,
-              login_at: new Date().toISOString(),
-              user_agent: navigator.userAgent,
-            } as any)
-          ).catch(() => {});
+          setTimeout(() => {
+            Promise.resolve(
+              supabase.from("user_sessions_log" as any).insert({
+                user_id: session.user.id,
+                email: session.user.email,
+                login_at: new Date().toISOString(),
+                user_agent: navigator.userAgent,
+              } as any)
+            ).catch(() => {});
+          }, 0);
         }
       } else {
         // Track session logout
