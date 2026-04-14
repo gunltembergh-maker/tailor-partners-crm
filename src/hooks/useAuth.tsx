@@ -60,12 +60,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Track session login
         if (_event === 'SIGNED_IN') {
           // Fire-and-forget: don't block auth flow
-          supabase.from("user_sessions_log" as any).insert({
-            user_id: session.user.id,
-            email: session.user.email,
-            login_at: new Date().toISOString(),
-            user_agent: navigator.userAgent,
-          } as any).select().then(() => {}).catch(() => {});
+          Promise.resolve(
+            supabase.from("user_sessions_log" as any).insert({
+              user_id: session.user.id,
+              email: session.user.email,
+              login_at: new Date().toISOString(),
+              user_agent: navigator.userAgent,
+            } as any)
+          ).catch(() => {});
         }
       } else {
         // Track session logout
