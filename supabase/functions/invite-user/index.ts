@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
           })
 
           const { data: mlData, error: mlError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'magiclink',
+            type: 'recovery',
             email,
             options: { redirectTo },
           })
