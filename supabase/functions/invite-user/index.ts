@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
       })
       userId = data?.user?.id
 
-      if (error && error.message?.includes('already been registered')) {
+      if (error && (error.message?.includes('already been registered') || error.message?.includes('Database error saving new user') || error.message?.includes('duplicate key'))) {
         console.log('User already exists, generating invite link for:', email)
         needsManualEmail = true
 
