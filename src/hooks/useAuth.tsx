@@ -67,12 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           sessionLoggedForUser = session.user.id;
           // Fire-and-forget: don't block auth flow
           setTimeout(() => {
-            supabase.from("user_sessions_log" as any).insert({
-              user_id: session.user.id,
-              email: session.user.email,
-              login_at: new Date().toISOString(),
-              user_agent: navigator.userAgent,
-            } as any).then(() => {}).catch(() => {});
+            Promise.resolve(
+              supabase.from("user_sessions_log" as any).insert({
+                user_id: session.user.id,
+                email: session.user.email,
+                login_at: new Date().toISOString(),
+                user_agent: navigator.userAgent,
+              } as any)
+            ).catch(() => {});
           }, 0);
         }
       } else {
