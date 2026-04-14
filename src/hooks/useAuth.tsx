@@ -181,8 +181,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPrimeiroAcesso(perfil.primeiro_acesso ?? false);
       setArea(perfil.area ?? null);
 
-      // Register access timestamp
-      Promise.resolve(supabase.rpc("rpc_registrar_acesso" as any)).catch(() => {});
+      // Register access timestamp (fire-and-forget)
+      (async () => { try { await supabase.rpc("rpc_registrar_acesso" as any); } catch {} })();
     } catch {
       await fetchProfileFallback(userId);
     }
