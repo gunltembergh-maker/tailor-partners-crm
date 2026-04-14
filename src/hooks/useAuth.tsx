@@ -44,67 +44,88 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let sessionLoggedForUser: string | null = null;
 
     // Safety timeout: never leave user stuck on loading screen
     const safetyTimer = setTimeout(() => {
       if (mounted) setLoading(false);
     }, 5000);
 
-    let sessionLoggedForUser: string | null = null;
+    // Centralized tracking helper — fire-and-forget, never blocks auth
+    function trackLogin(uid: string, email: string | undefined) {
+      if (sessionLoggedForUser === uid) return;
+      sessionLoggedForUser = uid;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setTimeout(() => fetchMeuPerfil(session.user.id), 0);
+      // 1. Register session in user_sessions_log
+      (async () => {
+        try {
+          await supabase.from("user_sessions_log" as any).insert({
+            user_id: uid,
+            email: email ?? null,
+            login_at: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+          } as any);
+        } catch { /* silent */ }
+      })();
 
-        // Track session login for SIGNED_IN, TOKEN_REFRESHED (SSO/magic-link), and INITIAL_SESSION
-        if (
-          (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || _event === 'INITIAL_SESSION') &&
-          sessionLoggedForUser !== session.user.id
-        ) {
-          sessionLoggedForUser = session.user.id;
-          // Fire-and-forget: don't block auth flow
-          const uid = session.user.id;
-          const email = session.user.email;
-          setTimeout(async () => {
-            try {
-              await supabase.from("user_sessions_log" as any).insert({
-                user_id: uid,
-                email: email,
-                login_at: new Date().toISOString(),
-                user_agent: navigator.userAgent,
-              } as any);
-            } catch {
-              // silent fail
-            }
-          }, 100);
-        }
-      } else {
-        // Track session logout
-        if (_event === 'SIGNED_OUT' && user?.id) {
-          // Fire-and-forget: don't block sign-out
-          const uid = user.id;
-          supabase
+      // 2. Register activity in user_activity_log
+      (async () => {
+        try {
+          await supabase.from("user_activity_log" as any).insert({
+            user_id: uid,
+            email: email ?? null,
+            acao: "Login",
+            detalhe: "Sessão iniciada",
+            pagina: window.location.pathname,
+          } as any);
+        } catch { /* silent */ }
+      })();
+
+      // 3. Update ultimo_acesso via RPC
+      (async () => {
+        try { await supabase.rpc("rpc_registrar_acesso" as any); } catch { /* silent */ }
+      })();
+    }
+
+    function trackLogout(uid: string) {
+      // Close open session
+      (async () => {
+        try {
+          const { data: openSession } = await supabase
             .from("user_sessions_log" as any)
             .select("id, login_at")
             .eq("user_id", uid)
             .is("logout_at", null)
             .order("login_at", { ascending: false })
             .limit(1)
-            .single()
-            .then(({ data: openSession }) => {
-              if (openSession) {
-                const duracao = Math.round((Date.now() - new Date((openSession as any).login_at).getTime()) / 60000);
-                supabase.from("user_sessions_log" as any).update({
-                  logout_at: new Date().toISOString(),
-                  duracao_minutos: duracao,
-                } as any).eq("id", (openSession as any).id);
-              }
-            });
-        }
+            .single();
+          if (openSession) {
+            const duracao = Math.round((Date.now() - new Date((openSession as any).login_at).getTime()) / 60000);
+            await supabase.from("user_sessions_log" as any).update({
+              logout_at: new Date().toISOString(),
+              duracao_minutos: duracao,
+            } as any).eq("id", (openSession as any).id);
+          }
+        } catch { /* silent */ }
+      })();
+    }
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // Non-blocking profile fetch
+        setTimeout(() => fetchMeuPerfil(session.user.id), 0);
+        // Track login for all relevant events
+        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || _event === 'INITIAL_SESSION') {
+          trackLogin(session.user.id, session.user.email);
+        }
+      } else {
+        if (_event === 'SIGNED_OUT' && user?.id) {
+          trackLogout(user.id);
+        }
         setProfile(null);
         setRole(null);
         setPermissoes(null);
@@ -124,6 +145,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchMeuPerfil(session.user.id);
+          // Also track on initial page load / session restore
+          trackLogin(session.user.id, session.user.email);
         }
       } catch (e) {
         console.error("Error fetching profile on init:", e);
