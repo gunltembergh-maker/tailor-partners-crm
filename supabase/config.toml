@@ -9,6 +9,10 @@ project_id = "jtlelokzpqkgvlwomfus"
     verify_jwt = false
   [functions.ingest-sharepoint-file]
     verify_jwt = false
+  [functions.manual-import-refresh]
+    verify_jwt = true
+  [functions.manual-import-refresh.options]
+    request_timeout = 400
   [functions.process-email-queue]
     verify_jwt = true
   [functions.sync-sharepoint]
