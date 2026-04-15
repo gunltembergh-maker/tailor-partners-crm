@@ -2886,6 +2886,12 @@ export type Database = {
           area: string
           banker_name: string
           blocked: boolean
+          convite_aceito_em: string
+          convite_cancelado_em: string
+          convite_enviado_em: string
+          convite_expira_em: string
+          convite_reenvios: number
+          convite_status: string
           cpf: string
           created_at: string
           email: string
