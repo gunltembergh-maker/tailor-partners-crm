@@ -30,6 +30,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isBlocked = searchParams.get("blocked") === "true";
+  const isDomainBlocked = searchParams.get("blocked") === "dominio";
 
   const handleMicrosoftLogin = async () => {
     setMsLoading(true);
