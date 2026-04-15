@@ -328,7 +328,7 @@ export default function ImportarBases() {
     }
   }
 
-  function reloadStatus() {
+  const reloadStatus = useCallback(() => {
     supabase.rpc('rpc_admin_sync_log' as any).then(({ data: logs }: any) => {
       if (logs?.[0]) setLastSync(logs[0]);
     });
@@ -343,13 +343,14 @@ export default function ImportarBases() {
       }));
     });
     queryClient.invalidateQueries();
-  }
+  }, [queryClient]);
 
-  function scheduleReloads() {
+  const scheduleReloads = useCallback(() => {
+    reloadStatus();
     setTimeout(reloadStatus, 10000);
     setTimeout(reloadStatus, 30000);
     setTimeout(reloadStatus, 90000);
-  }
+  }, [reloadStatus]);
 
   // ─── Processar arquivo drop ───────────────────────────────────
   const processFile = useCallback(async (file: File) => {
@@ -421,21 +422,16 @@ export default function ImportarBases() {
     }
 
     if (base.id === "base_receita" && receitaImportadaComSucesso && !receitaComErro) {
-      const { error: refreshError } = await supabase.rpc("rpc_refresh_mv_comissoes" as any);
-      if (refreshError) {
-        setResults(prev => prev.map(r => r.baseId === resultId
-          ? { ...r, sheets: r.sheets.map(s => RECEITA_TABLES.has(s.table)
-              ? { ...s, status: "error" as SheetStatus, error: `Dados enviados, mas atualização do dashboard falhou: ${refreshError.message}` }
-              : s) }
-          : r
-        ));
-        toast.error("Base Receita enviada, mas atualização do dashboard falhou.");
-        return;
-      }
+      // Dispara refresh em background via edge function dedicada — nunca bloqueia o resultado
+      supabase.functions.invoke('manual-import-refresh', {
+        body: { source: 'base_receita_manual' },
+      }).catch(() => { /* fire-and-forget */ });
+
       queryClient.invalidateQueries();
-      toast.success("Base Receita importada com sucesso.");
+      toast.success("Base Receita importada! Dashboard atualizando em segundo plano.");
+      scheduleReloads();
     }
-  }, [queryClient]);
+  }, [queryClient, scheduleReloads]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setProcessing(true);
