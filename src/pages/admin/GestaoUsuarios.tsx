@@ -264,12 +264,21 @@ export default function GestaoUsuarios() {
   const handleDelete = async () => {
     if (!deleteUser) return;
     try {
-      const { data, error } = await supabase.rpc("rpc_admin_excluir_usuario" as any, {
-        p_profile_id: deleteUser.profile_id,
-      });
-      if (error) throw error;
-      if (data && typeof data === "object" && "success" in data && !(data as any).success) {
-        throw new Error((data as any).error || "Erro ao excluir");
+      // If user has no profile (team_reference-only), delete from team_reference directly
+      if (!deleteUser.tem_conta && !deleteUser.user_id) {
+        const { error } = await supabase
+          .from("team_reference")
+          .delete()
+          .eq("email", deleteUser.email.toLowerCase().trim());
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.rpc("rpc_admin_excluir_usuario" as any, {
+          p_profile_id: deleteUser.profile_id,
+        });
+        if (error) throw error;
+        if (data && typeof data === "object" && "success" in data && !(data as any).success) {
+          throw new Error((data as any).error || "Erro ao excluir");
+        }
       }
       toast.success(`Usuário ${deleteUser.full_name || deleteUser.email} excluído com sucesso.`, { duration: 3000 });
       setDeleteUser(null);

@@ -2886,6 +2886,12 @@ export type Database = {
           area: string
           banker_name: string
           blocked: boolean
+          convite_aceito_em: string
+          convite_cancelado_em: string
+          convite_enviado_em: string
+          convite_expira_em: string
+          convite_reenvios: number
+          convite_status: string
           cpf: string
           created_at: string
           email: string
@@ -3027,67 +3033,23 @@ export type Database = {
             }
             Returns: Json
           }
-      rpc_admin_salvar_usuario:
-        | {
-            Args: {
-              p_advisor_name?: string
-              p_banker_name?: string
-              p_email: string
-              p_empresa?: string
-              p_finder_name?: string
-              p_nome: string
-              p_perfil_nome?: string
-              p_role: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_advisor_name?: string
-              p_banker_name?: string
-              p_cpf?: string
-              p_email: string
-              p_empresa?: string
-              p_finder_name?: string
-              p_nome: string
-              p_perfil_nome?: string
-              p_role: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_advisor_name?: string
-              p_area?: string
-              p_banker_name?: string
-              p_cpf?: string
-              p_email: string
-              p_empresa?: string
-              p_finder_name?: string
-              p_gestor?: string
-              p_nome: string
-              p_perfil_nome?: string
-              p_role: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_advisor_name?: string
-              p_area?: string
-              p_banker_name?: string
-              p_cpf?: string
-              p_email: string
-              p_empresa?: string
-              p_finder_name?: string
-              p_gestor?: string
-              p_nome: string
-              p_operacao_tipo?: string
-              p_perfil_nome?: string
-              p_role: string
-            }
-            Returns: Json
-          }
+      rpc_admin_salvar_usuario: {
+        Args: {
+          p_advisor_name: string
+          p_area: string
+          p_banker_name: string
+          p_cpf: string
+          p_email: string
+          p_empresa: string
+          p_finder_name: string
+          p_gestor: string
+          p_nome: string
+          p_operacao_tipo?: string
+          p_perfil_nome: string
+          p_role: string
+        }
+        Returns: Json
+      }
       rpc_admin_sync_log: {
         Args: never
         Returns: {
