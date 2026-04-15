@@ -182,7 +182,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if blocked — show waiting screen instead of signing out
       if (perfil.blocked) {
         setIsBlocked(true);
-        setProfile({ full_name: perfil.banker_name || "", email: "", avatar_url: null });
+        // Fetch empresa to distinguish domain-rejected vs awaiting-approval
+        const { data: blockedProfile } = await supabase
+          .from("profiles")
+          .select("full_name, email, avatar_url, empresa")
+          .eq("user_id", userId)
+          .single();
+        setProfile(blockedProfile ?? { full_name: perfil.banker_name || "", email: "", avatar_url: null });
         setLoading(false);
         return;
       }
