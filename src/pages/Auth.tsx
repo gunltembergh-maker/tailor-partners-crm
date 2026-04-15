@@ -181,6 +181,15 @@ export default function Auth() {
           </Alert>
         )}
 
+        {isDomainBlocked && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              O domínio do seu e-mail não está autorizado para acessar o Hub. Entre em contato com o administrador.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Card className="shadow-lg border-border/50">
           <CardHeader className="pb-4 text-center">
             <h2 className="text-lg font-semibold text-foreground">Acessar o Hub</h2>
