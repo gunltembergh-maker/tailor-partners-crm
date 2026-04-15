@@ -221,7 +221,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("full_name, email, avatar_url")
         .eq("user_id", userId)
         .single();
-      if (profileData) setProfile(profileData);
+
+      if (!profileData) {
+        // No profile exists — domain not authorized. Sign out immediately.
+        console.warn("No profile found for user — unauthorized domain. Signing out.");
+        await supabase.auth.signOut();
+        try {
+          navigate("/auth?blocked=dominio");
+        } catch { /* ignore navigation errors */ }
+        return;
+      }
+
+      setProfile(profileData);
 
       const { data: roleData } = await supabase
         .from("user_roles")
