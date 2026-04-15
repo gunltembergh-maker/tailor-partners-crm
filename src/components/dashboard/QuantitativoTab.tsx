@@ -82,6 +82,7 @@ function PbiCard({title,subtitle,children,className}:{title:string;subtitle?:str
 
 const CustomTooltip = ({active,payload,label}:any) => {
   if (!active||!payload?.length) return null;
+  const total = payload.reduce((s:number,p:any)=>s+(Number(p.value)||0),0);
   return (
      <div className="bg-white border border-gray-200 rounded px-2.5 py-1.5 shadow-md text-xs">
        <p className="font-semibold mb-0.5 text-gray-800">{label}</p>
@@ -90,6 +91,7 @@ const CustomTooltip = ({active,payload,label}:any) => {
           {p.name}: {typeof p.value==="number"&&Math.abs(p.value)>100?fmtFull(p.value):p.value}
         </p>
       ))}
+      <p className="font-semibold mt-1 pt-1 border-t border-gray-200 text-gray-800">Total: {fmtFull(total)}</p>
     </div>
   );
 };
@@ -103,6 +105,7 @@ const Percent100Tooltip = ({active,payload,label}:any) => {
       {payload.map((p:any,i:number)=>(
         <p key={i} style={{color:p.color}}>{p.name}: {total>0?fmtFull(p.value):0} ({total>0?((p.value/total)*100).toFixed(1):0}%)</p>
       ))}
+      <p className="font-semibold mt-1 pt-1 border-t border-gray-200 text-gray-800">Total: {fmtFull(total)}</p>
     </div>
   );
 };

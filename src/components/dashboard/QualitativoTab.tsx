@@ -258,12 +258,15 @@ const AucTooltip = ({ active, payload, label }: any) => {
 
 const VencAnoTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
+  const items = payload.filter((p: any) => p.value > 0);
+  const total = items.reduce((s: number, p: any) => s + (Number(p.value) || 0), 0);
   return (
     <div className="bg-card border border-border rounded px-2.5 py-1.5 shadow-md text-xs">
       <p className="font-semibold text-foreground mb-0.5">{label}</p>
-      {payload.filter((p: any) => p.value > 0).map((p: any, i: number) => (
+      {items.map((p: any, i: number) => (
         <p key={i} style={{ color: p.color }}>{p.name}: {fmtMi(Number(p.value))}</p>
       ))}
+      <p className="font-semibold mt-1 pt-1 border-t border-border text-foreground">Total: {fmtMi(total)}</p>
     </div>
   );
 };
