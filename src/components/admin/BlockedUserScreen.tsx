@@ -6,8 +6,9 @@ import { LogOut, ShieldAlert, Clock } from "lucide-react";
 export function BlockedUserScreen() {
   const { signOut, profile } = useAuth();
 
-  const isDomainRejected = profile?.full_name === "" && !profile?.email;
-  // For domain-rejected users, empresa is set to "Domínio não autorizado"
+  // Check if user was rejected due to unauthorized domain
+  const profileAny = profile as any;
+  const isDomainRejected = profileAny?.empresa === "Domínio não autorizado";
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
