@@ -30,6 +30,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isBlocked = searchParams.get("blocked") === "true";
+  const isDomainBlocked = searchParams.get("blocked") === "dominio";
 
   const handleMicrosoftLogin = async () => {
     setMsLoading(true);
@@ -176,6 +177,15 @@ export default function Auth() {
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               Seu acesso foi revogado. Entre em contato com o administrador.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isDomainBlocked && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              O domínio do seu e-mail não está autorizado para acessar o Hub. Entre em contato com o administrador.
             </AlertDescription>
           </Alert>
         )}
