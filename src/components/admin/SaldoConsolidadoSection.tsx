@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import * as XLSX from "xlsx";
-import { Wallet, Upload, CheckCircle, XCircle, Loader2, AlertTriangle, Clock } from "lucide-react";
+import { Wallet, Upload, CheckCircle, XCircle, Loader2, AlertTriangle, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +27,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // ─── Tipos ─────────────────────────────────────────────────────────
 
@@ -187,11 +196,12 @@ const CARDS: CardConfig[] = [
 
 export function SaldoConsolidadoSection() {
   const { role, user } = useAuth();
-  const navigate = useNavigate();
   const [progress, setProgress] = useState<ProgressState>(initialProgress);
   const [cargas, setCargas] = useState<any[]>([]);
   const [loadingCargas, setLoadingCargas] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [cargaParaApagar, setCargaParaApagar] = useState<any | null>(null);
+  const [apagando, setApagando] = useState(false);
 
   const isAdmin = role === "ADMIN" || role === "LIDER";
 
@@ -317,14 +327,30 @@ export function SaldoConsolidadoSection() {
         let linhasEnriquecidas: Record<string, unknown>[] = [];
 
         if (casa === "XP") {
-          const { data: lookup, error: lookupErr } = await supabase
-            .from("raw_base_consolidada" as any)
+          // Lookup principal: raw_base_crm (cadastro oficial via DePara)
+          // Chave: Cód do Cliente (CRM) = Conta (arquivo XP)
+          const { data: crmLookup, error: crmErr } = await supabase
+            .from("raw_base_crm" as any)
             .select("data");
-          if (lookupErr) throw new Error(`Falha no lookup XP: ${lookupErr.message}`);
+          if (crmErr) throw new Error(`Falha no lookup CRM: ${crmErr.message}`);
           const contasMap = new Map<string, any>();
-          (lookup as any[] | null)?.forEach((r) => {
-            const conta = String(r?.data?.Conta ?? "").trim();
-            if (conta) contasMap.set(conta, r.data);
+          (crmLookup as any[] | null)?.forEach((r) => {
+            const cod = String(r?.data?.["Cód do Cliente"] ?? "").trim();
+            if (cod) contasMap.set(cod, r.data);
+          });
+
+          // Segundo lookup: raw_depara para resolver código de Assessor → Nome Encurtado (Advisor)
+          const { data: deparaLookup, error: deparaErr } = await supabase
+            .from("raw_depara" as any)
+            .select("data");
+          if (deparaErr) {
+            console.warn("[SaldoXP] depara indisponível, Advisor ficará null:", deparaErr.message);
+          }
+          const advisorMap = new Map<string, string>();
+          (deparaLookup as any[] | null)?.forEach((r) => {
+            const codAss = String(r?.data?.["Código Assessor XP"] ?? "").trim();
+            const nomeEnc = r?.data?.["Nome Encurtado"];
+            if (codAss && nomeEnc) advisorMap.set(codAss, String(nomeEnc));
           });
 
           linhasEnriquecidas = linhasRaw.map((row) => {
@@ -332,6 +358,9 @@ export function SaldoConsolidadoSection() {
             const ref = contasMap.get(conta);
             const banker = ref?.Banker ?? null;
             const finder = ref?.Finder ?? null;
+            // Advisor: tenta Nome Encurtado a partir do código de Assessor do CRM; fallback null
+            const codAssessorCrm = String(ref?.Assessor ?? "").trim();
+            const advisor = codAssessorCrm ? advisorMap.get(codAssessorCrm) ?? null : null;
             const status = banker || finder ? "ok" : "pendente";
             return {
               Casa: "XP",
@@ -345,7 +374,7 @@ export function SaldoConsolidadoSection() {
               Total: toNumber(row["Total"]),
               Documento: ref?.Documento ?? null,
               Banker: banker,
-              Advisor: ref?.Advisor ?? null,
+              Advisor: advisor,
               Finder: finder,
               Canal: ref?.Canal ?? null,
               "Tipo de Cliente": ref?.["Tipo de Cliente"] ?? null,
@@ -551,6 +580,57 @@ export function SaldoConsolidadoSection() {
     [setPhase, user?.email],
   );
 
+  const handleApagarCarga = useCallback(async (carga: any) => {
+    setApagando(true);
+    try {
+      // 1) Apagar linhas em raw_saldo_consolidado pelo _id_carga
+      let cleanupOk = false;
+      try {
+        const { error: delRawErr } = await (supabase
+          .from("raw_saldo_consolidado" as any) as any)
+          .delete()
+          .eq("data->>_id_carga", carga.id_carga);
+        if (!delRawErr) cleanupOk = true;
+        else console.warn("[Saldo] delete raw via JSONB falhou:", delRawErr.message);
+      } catch (e) {
+        console.warn("[Saldo] delete raw via JSONB lançou:", e);
+      }
+      if (!cleanupOk) {
+        const { error: rpcErr } = await supabase.rpc("rpc_limpar_saldo_periodo" as any, {
+          p_casa: carga.casa,
+          p_data_referencia: carga.data_referencia,
+        });
+        if (rpcErr) {
+          console.warn(
+            "[Saldo] limpeza via RPC indisponível, prosseguindo:",
+            rpcErr.message,
+          );
+        }
+      }
+
+      // 2) Apagar pendências
+      await supabase
+        .from("pendencias_saldo" as any)
+        .delete()
+        .eq("id_carga", carga.id_carga);
+
+      // 3) Apagar a própria carga
+      const { error: delCargaErr } = await supabase
+        .from("cargas_saldo" as any)
+        .delete()
+        .eq("id_carga", carga.id_carga);
+      if (delCargaErr) throw new Error(delCargaErr.message);
+
+      toast.success("Carga apagada com sucesso.");
+      setReloadKey((k) => k + 1);
+    } catch (err: any) {
+      toast.error(`Erro ao apagar carga: ${err?.message ?? String(err)}`);
+    } finally {
+      setApagando(false);
+      setCargaParaApagar(null);
+    }
+  }, []);
+
   if (!isAdmin) return null;
 
   return (
@@ -561,7 +641,46 @@ export function SaldoConsolidadoSection() {
         ))}
       </div>
 
-      <UltimasCargasTable cargas={cargas} loading={loadingCargas} />
+      <UltimasCargasTable
+        cargas={cargas}
+        loading={loadingCargas}
+        onApagar={(c) => setCargaParaApagar(c)}
+      />
+
+      <AlertDialog
+        open={!!cargaParaApagar}
+        onOpenChange={(open) => {
+          if (!open && !apagando) setCargaParaApagar(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar carga de saldo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apagar esta carga e todos os dados associados? Essa ação não pode ser desfeita.
+              {cargaParaApagar && (
+                <span className="block mt-2 text-foreground">
+                  <strong>{cargaParaApagar.casa}</strong> · {formatDate(cargaParaApagar.data_referencia)} ·{" "}
+                  <span className="text-muted-foreground">{cargaParaApagar.nome_arquivo}</span>
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={apagando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={apagando}
+              onClick={(e) => {
+                e.preventDefault();
+                if (cargaParaApagar) handleApagarCarga(cargaParaApagar);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {apagando ? "Apagando…" : "Apagar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={progress.open}
@@ -604,17 +723,6 @@ export function SaldoConsolidadoSection() {
             </div>
           )}
           <DialogFooter className="gap-2 sm:gap-2">
-            {progress.finished && progress.pendentes > 0 && !progress.errorMessage && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setProgress(initialProgress);
-                  navigate("/admin/saldo-pendencias");
-                }}
-              >
-                Ver Pendências
-              </Button>
-            )}
             <Button
               disabled={!progress.finished}
               onClick={() => setProgress(initialProgress)}
@@ -759,7 +867,15 @@ function CasaBadge({ casa }: { casa: string }) {
   );
 }
 
-function UltimasCargasTable({ cargas, loading }: { cargas: any[]; loading: boolean }) {
+function UltimasCargasTable({
+  cargas,
+  loading,
+  onApagar,
+}: {
+  cargas: any[];
+  loading: boolean;
+  onApagar: (carga: any) => void;
+}) {
   return (
     <Card>
       <CardContent className="p-5">
@@ -781,19 +897,20 @@ function UltimasCargasTable({ cargas, loading }: { cargas: any[]; loading: boole
                 <TableHead>Upload por</TableHead>
                 <TableHead>Data/hora</TableHead>
                 <TableHead>Duração</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                     Carregando…
                   </TableCell>
                 </TableRow>
               )}
               {!loading && cargas.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                     Nenhuma carga registrada ainda.
                   </TableCell>
                 </TableRow>
@@ -829,6 +946,21 @@ function UltimasCargasTable({ cargas, loading }: { cargas: any[]; loading: boole
                     <TableCell className="text-xs">{formatDateTime(c.criado_em)}</TableCell>
                     <TableCell className="text-xs">
                       {durationSeconds(c.criado_em, c.finalizado_em)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {(c.status_processamento === "CONCLUIDO" ||
+                        c.status_processamento === "CONCLUIDO_COM_ALERTA" ||
+                        c.status_processamento === "ERRO") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => onApagar(c)}
+                          title="Apagar carga"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
