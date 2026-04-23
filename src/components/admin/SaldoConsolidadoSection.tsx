@@ -317,14 +317,30 @@ export function SaldoConsolidadoSection() {
         let linhasEnriquecidas: Record<string, unknown>[] = [];
 
         if (casa === "XP") {
-          const { data: lookup, error: lookupErr } = await supabase
-            .from("raw_base_consolidada" as any)
+          // Lookup principal: raw_base_crm (cadastro oficial via DePara)
+          // Chave: Cód do Cliente (CRM) = Conta (arquivo XP)
+          const { data: crmLookup, error: crmErr } = await supabase
+            .from("raw_base_crm" as any)
             .select("data");
-          if (lookupErr) throw new Error(`Falha no lookup XP: ${lookupErr.message}`);
+          if (crmErr) throw new Error(`Falha no lookup CRM: ${crmErr.message}`);
           const contasMap = new Map<string, any>();
-          (lookup as any[] | null)?.forEach((r) => {
-            const conta = String(r?.data?.Conta ?? "").trim();
-            if (conta) contasMap.set(conta, r.data);
+          (crmLookup as any[] | null)?.forEach((r) => {
+            const cod = String(r?.data?.["Cód do Cliente"] ?? "").trim();
+            if (cod) contasMap.set(cod, r.data);
+          });
+
+          // Segundo lookup: raw_depara para resolver código de Assessor → Nome Encurtado (Advisor)
+          const { data: deparaLookup, error: deparaErr } = await supabase
+            .from("raw_depara" as any)
+            .select("data");
+          if (deparaErr) {
+            console.warn("[SaldoXP] depara indisponível, Advisor ficará null:", deparaErr.message);
+          }
+          const advisorMap = new Map<string, string>();
+          (deparaLookup as any[] | null)?.forEach((r) => {
+            const codAss = String(r?.data?.["Código Assessor XP"] ?? "").trim();
+            const nomeEnc = r?.data?.["Nome Encurtado"];
+            if (codAss && nomeEnc) advisorMap.set(codAss, String(nomeEnc));
           });
 
           linhasEnriquecidas = linhasRaw.map((row) => {
@@ -332,6 +348,9 @@ export function SaldoConsolidadoSection() {
             const ref = contasMap.get(conta);
             const banker = ref?.Banker ?? null;
             const finder = ref?.Finder ?? null;
+            // Advisor: tenta Nome Encurtado a partir do código de Assessor do CRM; fallback null
+            const codAssessorCrm = String(ref?.Assessor ?? "").trim();
+            const advisor = codAssessorCrm ? advisorMap.get(codAssessorCrm) ?? null : null;
             const status = banker || finder ? "ok" : "pendente";
             return {
               Casa: "XP",
@@ -345,7 +364,7 @@ export function SaldoConsolidadoSection() {
               Total: toNumber(row["Total"]),
               Documento: ref?.Documento ?? null,
               Banker: banker,
-              Advisor: ref?.Advisor ?? null,
+              Advisor: advisor,
               Finder: finder,
               Canal: ref?.Canal ?? null,
               "Tipo de Cliente": ref?.["Tipo de Cliente"] ?? null,
