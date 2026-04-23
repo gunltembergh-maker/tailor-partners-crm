@@ -20,6 +20,7 @@ import {
   UsersRound,
   KeyRound,
   Megaphone,
+  Wallet,
 } from "lucide-react";
 import {
   Sidebar,

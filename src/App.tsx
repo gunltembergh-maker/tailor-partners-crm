@@ -54,6 +54,7 @@ const Prioridades = lazy(() => import("./pages/Prioridades"));
 const Calendario = lazy(() => import("./pages/Calendario"));
 const Paineis = lazy(() => import("./pages/Paineis"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
+const SaldoConsolidado = lazy(() => import("./pages/SaldoConsolidado"));
 const DashComercial = lazy(() => import("./pages/DashComercial"));
 const DashboardComercial = lazy(() => import("./pages/DashboardComercial"));
 const AuditoriaComercial = lazy(() => import("./pages/AuditoriaComercial"));
@@ -117,6 +118,7 @@ function AppRoutes() {
         <Route path="/dashboards/comercial" element={<ProtectedRoute><DashboardComercial /></ProtectedRoute>} />
         <Route path="/relatorios/dash-comercial" element={<ProtectedRoute><DashComercial /></ProtectedRoute>} />
         <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+        <Route path="/relatorios/saldo-consolidado" element={<ProtectedRoute><SaldoConsolidado /></ProtectedRoute>} />
         <Route path="/import-clients" element={<AdminRoute><ImportClients /></AdminRoute>} />
         <Route path="/admin/importar-bases" element={<AdminRoute><ImportarBases /></AdminRoute>} />
         <Route path="/admin/auditoria-comercial" element={<AdminRoute><AuditoriaComercial /></AdminRoute>} />
