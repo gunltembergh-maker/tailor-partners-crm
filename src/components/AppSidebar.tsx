@@ -45,6 +45,7 @@ const menuItems = [
   { title: "Oportunidades", icon: Briefcase, path: "/oportunidades", key: "menu_oportunidades" },
   { title: "Painéis", icon: BarChart3, path: "/paineis", key: "menu_paineis" },
   { title: "Relatórios", icon: FileText, path: "/relatorios", key: "menu_relatorios" },
+  { title: "Saldo Consolidado", icon: Wallet, path: "/relatorios/saldo-consolidado", key: "menu_relatorios", indent: true },
 ];
 
 const dashboardItems = [
@@ -113,6 +114,7 @@ export function AppSidebar() {
                     isActive={location.pathname === item.path}
                     onClick={() => navigate(item.path)}
                     tooltip={item.title}
+                    className={(item as any).indent ? "pl-8 text-[13px]" : ""}
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
