@@ -641,7 +641,46 @@ export function SaldoConsolidadoSection() {
         ))}
       </div>
 
-      <UltimasCargasTable cargas={cargas} loading={loadingCargas} />
+      <UltimasCargasTable
+        cargas={cargas}
+        loading={loadingCargas}
+        onApagar={(c) => setCargaParaApagar(c)}
+      />
+
+      <AlertDialog
+        open={!!cargaParaApagar}
+        onOpenChange={(open) => {
+          if (!open && !apagando) setCargaParaApagar(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar carga de saldo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apagar esta carga e todos os dados associados? Essa ação não pode ser desfeita.
+              {cargaParaApagar && (
+                <span className="block mt-2 text-foreground">
+                  <strong>{cargaParaApagar.casa}</strong> · {formatDate(cargaParaApagar.data_referencia)} ·{" "}
+                  <span className="text-muted-foreground">{cargaParaApagar.nome_arquivo}</span>
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={apagando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={apagando}
+              onClick={(e) => {
+                e.preventDefault();
+                if (cargaParaApagar) handleApagarCarga(cargaParaApagar);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {apagando ? "Apagando…" : "Apagar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={progress.open}
