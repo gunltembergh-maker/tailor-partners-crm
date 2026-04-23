@@ -720,6 +720,9 @@ export default function ImportarBases() {
         </div>
       </div>
 
+      {/* ═══ SALDO CONSOLIDADO — XP & AVENUE ═══ */}
+      <SaldoConsolidadoSection />
+
       {/* Resultados */}
       {results.length > 0 && (
         <div className="space-y-3">
