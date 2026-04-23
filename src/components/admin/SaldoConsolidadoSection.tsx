@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import * as XLSX from "xlsx";
-import { Wallet, Upload, CheckCircle, XCircle, Loader2, AlertTriangle, Clock } from "lucide-react";
+import { Wallet, Upload, CheckCircle, XCircle, Loader2, AlertTriangle, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
