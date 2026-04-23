@@ -580,6 +580,57 @@ export function SaldoConsolidadoSection() {
     [setPhase, user?.email],
   );
 
+  const handleApagarCarga = useCallback(async (carga: any) => {
+    setApagando(true);
+    try {
+      // 1) Apagar linhas em raw_saldo_consolidado pelo _id_carga
+      let cleanupOk = false;
+      try {
+        const { error: delRawErr } = await (supabase
+          .from("raw_saldo_consolidado" as any) as any)
+          .delete()
+          .eq("data->>_id_carga", carga.id_carga);
+        if (!delRawErr) cleanupOk = true;
+        else console.warn("[Saldo] delete raw via JSONB falhou:", delRawErr.message);
+      } catch (e) {
+        console.warn("[Saldo] delete raw via JSONB lançou:", e);
+      }
+      if (!cleanupOk) {
+        const { error: rpcErr } = await supabase.rpc("rpc_limpar_saldo_periodo" as any, {
+          p_casa: carga.casa,
+          p_data_referencia: carga.data_referencia,
+        });
+        if (rpcErr) {
+          console.warn(
+            "[Saldo] limpeza via RPC indisponível, prosseguindo:",
+            rpcErr.message,
+          );
+        }
+      }
+
+      // 2) Apagar pendências
+      await supabase
+        .from("pendencias_saldo" as any)
+        .delete()
+        .eq("id_carga", carga.id_carga);
+
+      // 3) Apagar a própria carga
+      const { error: delCargaErr } = await supabase
+        .from("cargas_saldo" as any)
+        .delete()
+        .eq("id_carga", carga.id_carga);
+      if (delCargaErr) throw new Error(delCargaErr.message);
+
+      toast.success("Carga apagada com sucesso.");
+      setReloadKey((k) => k + 1);
+    } catch (err: any) {
+      toast.error(`Erro ao apagar carga: ${err?.message ?? String(err)}`);
+    } finally {
+      setApagando(false);
+      setCargaParaApagar(null);
+    }
+  }, []);
+
   if (!isAdmin) return null;
 
   return (
@@ -633,17 +684,6 @@ export function SaldoConsolidadoSection() {
             </div>
           )}
           <DialogFooter className="gap-2 sm:gap-2">
-            {progress.finished && progress.pendentes > 0 && !progress.errorMessage && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setProgress(initialProgress);
-                  navigate("/admin/saldo-pendencias");
-                }}
-              >
-                Ver Pendências
-              </Button>
-            )}
             <Button
               disabled={!progress.finished}
               onClick={() => setProgress(initialProgress)}
