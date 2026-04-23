@@ -175,6 +175,68 @@ export type Database = {
         }
         Relationships: []
       }
+      cargas_saldo: {
+        Row: {
+          casa: Database["public"]["Enums"]["tipo_casa_saldo"]
+          criado_em: string
+          data_referencia: string
+          finalizado_em: string | null
+          id_carga: string
+          linhas_com_erro: number | null
+          linhas_validas: number | null
+          mensagem_erro: string | null
+          nome_arquivo: string
+          status_processamento: Database["public"]["Enums"]["status_carga_saldo"]
+          tamanho_arquivo: number | null
+          total_linhas: number | null
+          total_pendencias: number | null
+          usuario_upload_email: string | null
+          usuario_upload_id: string | null
+        }
+        Insert: {
+          casa: Database["public"]["Enums"]["tipo_casa_saldo"]
+          criado_em?: string
+          data_referencia: string
+          finalizado_em?: string | null
+          id_carga?: string
+          linhas_com_erro?: number | null
+          linhas_validas?: number | null
+          mensagem_erro?: string | null
+          nome_arquivo: string
+          status_processamento?: Database["public"]["Enums"]["status_carga_saldo"]
+          tamanho_arquivo?: number | null
+          total_linhas?: number | null
+          total_pendencias?: number | null
+          usuario_upload_email?: string | null
+          usuario_upload_id?: string | null
+        }
+        Update: {
+          casa?: Database["public"]["Enums"]["tipo_casa_saldo"]
+          criado_em?: string
+          data_referencia?: string
+          finalizado_em?: string | null
+          id_carga?: string
+          linhas_com_erro?: number | null
+          linhas_validas?: number | null
+          mensagem_erro?: string | null
+          nome_arquivo?: string
+          status_processamento?: Database["public"]["Enums"]["status_carga_saldo"]
+          tamanho_arquivo?: number | null
+          total_linhas?: number | null
+          total_pendencias?: number | null
+          usuario_upload_email?: string | null
+          usuario_upload_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cargas_saldo_usuario_upload_id_fkey"
+            columns: ["usuario_upload_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           advisor_name: string | null
@@ -621,6 +683,108 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pendencias_saldo: {
+        Row: {
+          casa: Database["public"]["Enums"]["tipo_casa_saldo"]
+          cliente_nome: string | null
+          conta: string | null
+          cpf_cnpj: string | null
+          criado_em: string
+          data_referencia: string
+          descricao: string | null
+          documento_formatado: string | null
+          id_carga: string
+          id_pendencia: string
+          id_raw_saldo: number | null
+          responsavel_sugerido: string | null
+          saldo: number | null
+          status_tratativa: Database["public"]["Enums"]["status_pendencia_saldo"]
+          tipo_pendencia: Database["public"]["Enums"]["tipo_pendencia_saldo"]
+          tratativa_em: string | null
+          tratativa_observacao: string | null
+          tratativa_por_email: string | null
+          tratativa_por_id: string | null
+        }
+        Insert: {
+          casa: Database["public"]["Enums"]["tipo_casa_saldo"]
+          cliente_nome?: string | null
+          conta?: string | null
+          cpf_cnpj?: string | null
+          criado_em?: string
+          data_referencia: string
+          descricao?: string | null
+          documento_formatado?: string | null
+          id_carga: string
+          id_pendencia?: string
+          id_raw_saldo?: number | null
+          responsavel_sugerido?: string | null
+          saldo?: number | null
+          status_tratativa?: Database["public"]["Enums"]["status_pendencia_saldo"]
+          tipo_pendencia: Database["public"]["Enums"]["tipo_pendencia_saldo"]
+          tratativa_em?: string | null
+          tratativa_observacao?: string | null
+          tratativa_por_email?: string | null
+          tratativa_por_id?: string | null
+        }
+        Update: {
+          casa?: Database["public"]["Enums"]["tipo_casa_saldo"]
+          cliente_nome?: string | null
+          conta?: string | null
+          cpf_cnpj?: string | null
+          criado_em?: string
+          data_referencia?: string
+          descricao?: string | null
+          documento_formatado?: string | null
+          id_carga?: string
+          id_pendencia?: string
+          id_raw_saldo?: number | null
+          responsavel_sugerido?: string | null
+          saldo?: number | null
+          status_tratativa?: Database["public"]["Enums"]["status_pendencia_saldo"]
+          tipo_pendencia?: Database["public"]["Enums"]["tipo_pendencia_saldo"]
+          tratativa_em?: string | null
+          tratativa_observacao?: string | null
+          tratativa_por_email?: string | null
+          tratativa_por_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pendencias_saldo_id_carga_fkey"
+            columns: ["id_carga"]
+            isOneToOne: false
+            referencedRelation: "cargas_saldo"
+            referencedColumns: ["id_carga"]
+          },
+          {
+            foreignKeyName: "pendencias_saldo_id_raw_saldo_fkey"
+            columns: ["id_raw_saldo"]
+            isOneToOne: false
+            referencedRelation: "raw_saldo_consolidado"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pendencias_saldo_id_raw_saldo_fkey"
+            columns: ["id_raw_saldo"]
+            isOneToOne: false
+            referencedRelation: "vw_saldo_consolidado"
+            referencedColumns: ["id_raw"]
+          },
+          {
+            foreignKeyName: "pendencias_saldo_id_raw_saldo_fkey"
+            columns: ["id_raw_saldo"]
+            isOneToOne: false
+            referencedRelation: "vw_saldo_desagrupado"
+            referencedColumns: ["id_raw"]
+          },
+          {
+            foreignKeyName: "pendencias_saldo_tratativa_por_id_fkey"
+            columns: ["tratativa_por_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2776,6 +2940,61 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_saldo_consolidado: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          canal: string | null
+          casa: string | null
+          cliente_nome: string | null
+          cod_assessor: string | null
+          conta: string | null
+          cpf_cnpj: string | null
+          d_mais_1: number | null
+          d_mais_2: number | null
+          d_mais_3: number | null
+          d0: number | null
+          data_referencia: string | null
+          documento_formatado: string | null
+          finder: string | null
+          id_carga: string | null
+          id_raw: number | null
+          primeiro_nome: string | null
+          produto: string | null
+          tipo_cliente: string | null
+          total_saldo: number | null
+        }
+        Relationships: []
+      }
+      vw_saldo_desagrupado: {
+        Row: {
+          advisor: string | null
+          banker: string | null
+          canal: string | null
+          casa: string | null
+          cliente_nome: string | null
+          cliente_nome_original: string | null
+          cod_assessor: string | null
+          code_avenue: string | null
+          conta: string | null
+          cpf_cnpj: string | null
+          d_mais_1: number | null
+          d_mais_2: number | null
+          d_mais_3: number | null
+          d0: number | null
+          data_referencia: string | null
+          documento_formatado: string | null
+          finder: string | null
+          id_carga: string | null
+          id_raw: number | null
+          ingested_at: string | null
+          primeiro_nome: string | null
+          produto: string | null
+          tipo_cliente: string | null
+          total_saldo: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       ban_unauthorized_user: { Args: { p_user_id: string }; Returns: undefined }
@@ -3619,6 +3838,158 @@ export type Database = {
           tipo_cliente: string
         }[]
       }
+      rpc_saldo_cargas_list: {
+        Args: {
+          p_casa?: Database["public"]["Enums"]["tipo_casa_saldo"][]
+          p_data_fim?: string
+          p_data_inicio?: string
+          p_limit?: number
+          p_offset?: number
+          p_status?: Database["public"]["Enums"]["status_carga_saldo"][]
+        }
+        Returns: {
+          casa: Database["public"]["Enums"]["tipo_casa_saldo"]
+          criado_em: string
+          data_referencia: string
+          duracao_segundos: number
+          finalizado_em: string
+          id_carga: string
+          linhas_com_erro: number
+          linhas_validas: number
+          mensagem_erro: string
+          nome_arquivo: string
+          status_processamento: Database["public"]["Enums"]["status_carga_saldo"]
+          tamanho_arquivo: number
+          total_linhas: number
+          total_pendencias: number
+          usuario_upload_email: string
+        }[]
+      }
+      rpc_saldo_cliente_detalhe: {
+        Args: { p_cpf_cnpj: string }
+        Returns: {
+          advisor: string
+          banker: string
+          canal: string
+          casa: string
+          cliente_nome: string
+          conta: string
+          d_mais_1: number
+          d_mais_2: number
+          d_mais_3: number
+          d0: number
+          data_referencia: string
+          documento_formatado: string
+          finder: string
+          nivel: string
+          produto: string
+          tipo_cliente: string
+          total_saldo: number
+        }[]
+      }
+      rpc_saldo_filtros_casas: {
+        Args: never
+        Returns: {
+          casa: string
+        }[]
+      }
+      rpc_saldo_filtros_data_referencia: {
+        Args: never
+        Returns: {
+          data_formatada: string
+          data_referencia: string
+        }[]
+      }
+      rpc_saldo_kpis: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_casa?: string[]
+          p_data_referencia?: string
+          p_documento?: string[]
+          p_finder?: string[]
+        }
+        Returns: {
+          qtd_clientes: number
+          qtd_contas: number
+          total_d_mais_1: number
+          total_d_mais_2: number
+          total_d_mais_3: number
+          total_d0: number
+          total_geral: number
+        }[]
+      }
+      rpc_saldo_list: {
+        Args: {
+          p_advisor?: string[]
+          p_banker?: string[]
+          p_busca?: string
+          p_casa?: string[]
+          p_data_referencia?: string
+          p_documento?: string[]
+          p_finder?: string[]
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          advisor: string
+          banker: string
+          canal: string
+          casa: string
+          cliente_nome: string
+          conta: string
+          cpf_cnpj: string
+          d_mais_1: number
+          d_mais_2: number
+          d_mais_3: number
+          d0: number
+          data_referencia: string
+          documento_formatado: string
+          finder: string
+          produto: string
+          tipo_cliente: string
+          total_saldo: number
+        }[]
+      }
+      rpc_saldo_pendencias_list: {
+        Args: {
+          p_casa?: Database["public"]["Enums"]["tipo_casa_saldo"][]
+          p_data_referencia?: string
+          p_id_carga?: string
+          p_limit?: number
+          p_offset?: number
+          p_status?: Database["public"]["Enums"]["status_pendencia_saldo"][]
+          p_tipo?: Database["public"]["Enums"]["tipo_pendencia_saldo"][]
+        }
+        Returns: {
+          casa: Database["public"]["Enums"]["tipo_casa_saldo"]
+          cliente_nome: string
+          conta: string
+          cpf_cnpj: string
+          criado_em: string
+          data_referencia: string
+          descricao: string
+          documento_formatado: string
+          id_carga: string
+          id_pendencia: string
+          id_raw_saldo: number
+          responsavel_sugerido: string
+          saldo: number
+          status_tratativa: Database["public"]["Enums"]["status_pendencia_saldo"]
+          tipo_pendencia: Database["public"]["Enums"]["tipo_pendencia_saldo"]
+          tratativa_em: string
+          tratativa_observacao: string
+          tratativa_por_email: string
+        }[]
+      }
+      rpc_saldo_pendencias_tratar: {
+        Args: {
+          p_id_pendencia: string
+          p_novo_status: Database["public"]["Enums"]["status_pendencia_saldo"]
+          p_observacao?: string
+        }
+        Returns: Json
+      }
       rpc_salvar_sync_log: {
         Args: {
           p_detalhes?: Json
@@ -3773,6 +4144,16 @@ export type Database = {
         | "GANHA"
         | "PERDIDA"
       related_type: "LEAD" | "CLIENT" | "OPPORTUNITY"
+      status_carga_saldo:
+        | "PROCESSANDO"
+        | "CONCLUIDO"
+        | "CONCLUIDO_COM_ALERTA"
+        | "ERRO"
+      status_pendencia_saldo:
+        | "PENDENTE"
+        | "EM_ANALISE"
+        | "RESOLVIDA"
+        | "IGNORADA"
       task_status: "ABERTA" | "CONCLUIDA" | "ATRASADA"
       task_tipo:
         | "LIGACAO"
@@ -3780,6 +4161,16 @@ export type Database = {
         | "EMAIL"
         | "REUNIAO"
         | "POS_VENDA"
+        | "OUTRO"
+      tipo_casa_saldo: "XP" | "AVENUE"
+      tipo_pendencia_saldo:
+        | "SEM_VINCULO_COMERCIAL"
+        | "DOCUMENTO_INVALIDO"
+        | "DOCUMENTO_AUSENTE"
+        | "CONTA_NAO_ENCONTRADA"
+        | "CPF_NAO_ENCONTRADO"
+        | "LAYOUT_INVALIDO"
+        | "DUPLICIDADE_INESPERADA"
         | "OUTRO"
       tipo_pessoa: "PF" | "PJ"
     }
@@ -3928,6 +4319,18 @@ export const Constants = {
         "PERDIDA",
       ],
       related_type: ["LEAD", "CLIENT", "OPPORTUNITY"],
+      status_carga_saldo: [
+        "PROCESSANDO",
+        "CONCLUIDO",
+        "CONCLUIDO_COM_ALERTA",
+        "ERRO",
+      ],
+      status_pendencia_saldo: [
+        "PENDENTE",
+        "EM_ANALISE",
+        "RESOLVIDA",
+        "IGNORADA",
+      ],
       task_status: ["ABERTA", "CONCLUIDA", "ATRASADA"],
       task_tipo: [
         "LIGACAO",
@@ -3935,6 +4338,17 @@ export const Constants = {
         "EMAIL",
         "REUNIAO",
         "POS_VENDA",
+        "OUTRO",
+      ],
+      tipo_casa_saldo: ["XP", "AVENUE"],
+      tipo_pendencia_saldo: [
+        "SEM_VINCULO_COMERCIAL",
+        "DOCUMENTO_INVALIDO",
+        "DOCUMENTO_AUSENTE",
+        "CONTA_NAO_ENCONTRADA",
+        "CPF_NAO_ENCONTRADO",
+        "LAYOUT_INVALIDO",
+        "DUPLICIDADE_INESPERADA",
         "OUTRO",
       ],
       tipo_pessoa: ["PF", "PJ"],
