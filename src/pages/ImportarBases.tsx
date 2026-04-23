@@ -7,6 +7,7 @@ import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info,
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { PopupComunicado } from "@/components/PopupComunicado";
+import { SaldoConsolidadoSection } from "@/components/admin/SaldoConsolidadoSection";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
