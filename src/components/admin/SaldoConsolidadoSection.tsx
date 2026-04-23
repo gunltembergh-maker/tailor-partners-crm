@@ -867,7 +867,15 @@ function CasaBadge({ casa }: { casa: string }) {
   );
 }
 
-function UltimasCargasTable({ cargas, loading }: { cargas: any[]; loading: boolean }) {
+function UltimasCargasTable({
+  cargas,
+  loading,
+  onApagar,
+}: {
+  cargas: any[];
+  loading: boolean;
+  onApagar: (carga: any) => void;
+}) {
   return (
     <Card>
       <CardContent className="p-5">
@@ -889,19 +897,20 @@ function UltimasCargasTable({ cargas, loading }: { cargas: any[]; loading: boole
                 <TableHead>Upload por</TableHead>
                 <TableHead>Data/hora</TableHead>
                 <TableHead>Duração</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                     Carregando…
                   </TableCell>
                 </TableRow>
               )}
               {!loading && cargas.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
                     Nenhuma carga registrada ainda.
                   </TableCell>
                 </TableRow>
@@ -937,6 +946,21 @@ function UltimasCargasTable({ cargas, loading }: { cargas: any[]; loading: boole
                     <TableCell className="text-xs">{formatDateTime(c.criado_em)}</TableCell>
                     <TableCell className="text-xs">
                       {durationSeconds(c.criado_em, c.finalizado_em)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {(c.status_processamento === "CONCLUIDO" ||
+                        c.status_processamento === "CONCLUIDO_COM_ALERTA" ||
+                        c.status_processamento === "ERRO") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => onApagar(c)}
+                          title="Apagar carga"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
