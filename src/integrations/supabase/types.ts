@@ -760,27 +760,6 @@ export type Database = {
             referencedColumns: ["id_carga"]
           },
           {
-            foreignKeyName: "pendencias_saldo_id_raw_saldo_fkey"
-            columns: ["id_raw_saldo"]
-            isOneToOne: false
-            referencedRelation: "raw_saldo_consolidado"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pendencias_saldo_id_raw_saldo_fkey"
-            columns: ["id_raw_saldo"]
-            isOneToOne: false
-            referencedRelation: "vw_saldo_consolidado"
-            referencedColumns: ["id_raw"]
-          },
-          {
-            foreignKeyName: "pendencias_saldo_id_raw_saldo_fkey"
-            columns: ["id_raw_saldo"]
-            isOneToOne: false
-            referencedRelation: "vw_saldo_desagrupado"
-            referencedColumns: ["id_raw"]
-          },
-          {
             foreignKeyName: "pendencias_saldo_tratativa_por_id_fkey"
             columns: ["tratativa_por_id"]
             isOneToOne: false
