@@ -27,6 +27,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // ─── Tipos ─────────────────────────────────────────────────────────
 
@@ -186,11 +196,12 @@ const CARDS: CardConfig[] = [
 
 export function SaldoConsolidadoSection() {
   const { role, user } = useAuth();
-  const navigate = useNavigate();
   const [progress, setProgress] = useState<ProgressState>(initialProgress);
   const [cargas, setCargas] = useState<any[]>([]);
   const [loadingCargas, setLoadingCargas] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [cargaParaApagar, setCargaParaApagar] = useState<any | null>(null);
+  const [apagando, setApagando] = useState(false);
 
   const isAdmin = role === "ADMIN" || role === "LIDER";
 
