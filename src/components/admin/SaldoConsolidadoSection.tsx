@@ -85,12 +85,8 @@ const initialProgress: ProgressState = {
 const XP_HEADERS = ["Conta", "Cliente", "Assessor", "D0", "D+1", "D+2", "D+3", "Total"];
 const AVENUE_HEADERS = ["Data", "Escritório", "Code", "Nome Assessor", "CPF", "Nome Cliente", "Produto", "Valor"];
 
-const AVENUE_NAME_PATTERNS = [
-  "posição_em_caixa",
-  "posicao_em_caixa",
-  "posicaoemcaixa",
-  "posiçãoemcaixa",
-];
+const AVENUE_NAME_REGEX = /posi[çc][ãa]o.*caixa/i;
+const XP_NAME_REGEX = /relat[oó]rio.*saldo.*consolidado/i;
 
 function uuidv4(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -235,21 +231,17 @@ export function SaldoConsolidadoSection() {
       }
 
       // ── Validação por nome ──────────────────────────────────────
-      const lowerName = file.name.toLowerCase();
-      if (casa === "XP" && !lowerName.includes("relatoriosaldoconsolidado")) {
+      if (casa === "XP" && !XP_NAME_REGEX.test(file.name)) {
         toast.error(
           "Arquivo inválido para Saldo XP. Esperado arquivo com 'RelatorioSaldoConsolidado' no nome.",
         );
         return;
       }
-      if (casa === "AVENUE") {
-        const ok = AVENUE_NAME_PATTERNS.some((p) => lowerName.includes(p));
-        if (!ok) {
-          toast.error(
-            "Arquivo inválido para Saldo Avenue. Esperado arquivo com 'Posição em Caixa' no nome.",
-          );
-          return;
-        }
+      if (casa === "AVENUE" && !AVENUE_NAME_REGEX.test(file.name)) {
+        toast.error(
+          "Arquivo inválido para Saldo Avenue. Esperado arquivo com 'Posição em Caixa' no nome.",
+        );
+        return;
       }
 
       // ── Inicia modal ────────────────────────────────────────────
