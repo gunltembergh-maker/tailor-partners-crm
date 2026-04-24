@@ -1,58 +1,73 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 export interface ViewAsProfile {
   /** Stable key used for selection — email-based to support pre-registered users */
   key: string;
   user_id: string | null;
   full_name: string;
+  email: string;
   role: string;
   banker_name: string | null;
   finder_name: string | null;
   advisor_name: string | null;
+  permissoes?: Record<string, boolean> | null;
   preCadastrado: boolean;
 }
 
 interface ViewAsContextType {
   viewAsKey: string | null;
   viewAsProfile: ViewAsProfile | null;
-  setViewAs: (key: string | null) => void;
+  /** Activates Minha Visão for the given email (calls RPC + reloads). */
+  setViewAs: (key: string | null) => Promise<void>;
   teamMembers: ViewAsProfile[];
   isLider: boolean;
   viewLoading: boolean;
-  /** @deprecated use viewAsKey */
+  /** Effective user_id to use for permission/menu lookups — simulated when active. */
+  effectiveUserId: string | null;
+  /** Effective role for menu filtering — simulated when active. */
+  effectiveRole: string | null;
+  /** Effective permissoes for menu filtering — simulated when active. */
+  effectivePermissoes: Record<string, boolean> | null;
+  /** @deprecated use viewAsProfile?.user_id */
   viewAsUserId: string | null;
 }
 
 const ViewAsContext = createContext<ViewAsContextType>({
   viewAsKey: null,
   viewAsProfile: null,
-  setViewAs: () => {},
+  setViewAs: async () => {},
   teamMembers: [],
   isLider: false,
   viewLoading: false,
+  effectiveUserId: null,
+  effectiveRole: null,
+  effectivePermissoes: null,
   viewAsUserId: null,
 });
 
 export function ViewAsProvider({ children }: { children: ReactNode }) {
-  const { role } = useAuth();
-  const [viewAsKey, setViewAsKey] = useState<string | null>(null);
+  const { role, user, permissoes } = useAuth();
+  const [viewAsProfile, setViewAsProfile] = useState<ViewAsProfile | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<ViewAsProfile[]>([]);
   const isLider = role === "LIDER" || role === "ADMIN";
 
+  // Load team list (for the dropdown)
   useEffect(() => {
     if (!isLider) return;
     async function loadTeam() {
       const { data } = await supabase.rpc("rpc_admin_lista_usuarios" as any);
       if (!data) return;
       const members: ViewAsProfile[] = (data as any[])
-        .filter((u: any) => u.email) // must have email
+        .filter((u: any) => u.email)
         .map((u: any) => ({
           key: u.email as string,
           user_id: u.user_id ?? null,
           full_name: u.full_name || "Usuário",
+          email: u.email,
           role: u.role || "",
           banker_name: u.banker_name ?? null,
           finder_name: u.finder_name ?? null,
@@ -64,25 +79,117 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
     loadTeam();
   }, [isLider]);
 
-  const viewAsProfile = viewAsKey
-    ? teamMembers.find((m) => m.key === viewAsKey) ?? null
-    : null;
+  // Hydrate active view on mount / user change
+  useEffect(() => {
+    if (!user) {
+      setViewAsProfile(null);
+      return;
+    }
+    (async () => {
+      try {
+        const { data, error } = await supabase.rpc("rpc_admin_get_view_as" as any);
+        if (error || !data) return;
+        const d: any = data;
+        if (d.ativo) {
+          // Fetch effective permissoes for the simulated user (for sidebar)
+          const perms = await fetchPermissoes(d.target_user_id);
+          setViewAsProfile({
+            key: d.target_email,
+            user_id: d.target_user_id,
+            full_name: d.target_full_name,
+            email: d.target_email,
+            role: d.target_role,
+            banker_name: null,
+            finder_name: null,
+            advisor_name: null,
+            permissoes: perms,
+            preCadastrado: false,
+          });
+        } else {
+          setViewAsProfile(null);
+        }
+      } catch {
+        // silent
+      }
+    })();
+  }, [user]);
 
-  function setViewAs(key: string | null) {
-    setViewLoading(true);
-    setViewAsKey(key);
-    setTimeout(() => setViewLoading(false), 400);
+  async function fetchPermissoes(userId: string): Promise<Record<string, boolean> | null> {
+    try {
+      // Try RPC first (matches Alessandro's flow)
+      const { data } = await supabase.rpc("rpc_meu_perfil" as any, {} as any);
+      // rpc_meu_perfil uses auth.uid() — won't reflect simulated user. Fallback to direct lookup.
+      // Use profile -> perfil_id -> perfis_acesso.permissoes
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("perfil_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!profile?.perfil_id) {
+        // Fall back to role-based permissions: empty obj — sidebar will use role check
+        void data;
+        return {};
+      }
+      const { data: perfil } = await supabase
+        .from("perfis_acesso")
+        .select("permissoes")
+        .eq("id", profile.perfil_id)
+        .maybeSingle();
+      return (perfil?.permissoes as Record<string, boolean>) ?? {};
+    } catch {
+      return {};
+    }
   }
+
+  const setViewAs = useCallback(async (key: string | null) => {
+    setViewLoading(true);
+    try {
+      if (!key) {
+        const { data, error } = await supabase.rpc("rpc_admin_clear_view_as" as any);
+        if (error) throw error;
+        const d: any = data;
+        toast.success(d?.mensagem || "Voltou para a visão Admin");
+        // Reload to refresh all cached data with the real uid
+        setTimeout(() => window.location.reload(), 400);
+      } else {
+        const { data, error } = await supabase.rpc("rpc_admin_set_view_as" as any, {
+          p_target_email: key,
+        } as any);
+        if (error) throw error;
+        const d: any = data;
+        if (d?.sucesso === false) {
+          toast.error(d?.mensagem || "Não foi possível ativar a Minha Visão");
+          setViewLoading(false);
+          return;
+        }
+        toast.success(d?.mensagem || `Visualizando como ${d?.target_full_name}`);
+        setTimeout(() => window.location.reload(), 400);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao alterar Minha Visão");
+      setViewLoading(false);
+    }
+  }, []);
+
+  // Effective values used by sidebar / menus
+  const effectiveUserId = viewAsProfile?.user_id ?? user?.id ?? null;
+  const effectiveRole = viewAsProfile?.role ?? role ?? null;
+  const effectivePermissoes = viewAsProfile
+    ? viewAsProfile.permissoes ?? {}
+    : permissoes;
 
   return (
     <ViewAsContext.Provider
       value={{
-        viewAsKey,
+        viewAsKey: viewAsProfile?.key ?? null,
         viewAsProfile,
         setViewAs,
         teamMembers,
         isLider,
         viewLoading,
+        effectiveUserId,
+        effectiveRole,
+        effectivePermissoes,
         viewAsUserId: viewAsProfile?.user_id ?? null,
       }}
     >
@@ -96,9 +203,15 @@ export function useViewAs() {
 }
 
 /**
- * Returns override filters based on the ViewAs selection.
- * When an Admin views as a BANKER, returns { p_banker: [banker_name] }, etc.
- * Returns empty object when no ViewAs is active.
+ * Returns the effective user id to use for permission lookups — simulated when active.
+ */
+export function useEffectiveUserId(): string | null {
+  return useContext(ViewAsContext).effectiveUserId;
+}
+
+/**
+ * Backwards-compat: the DB-side functions now apply the simulated uid automatically.
+ * Returning nulls keeps the existing scoped filters from double-applying overrides.
  */
 export function useViewAsFilters(): {
   overrideBanker: string[] | null;
@@ -107,20 +220,10 @@ export function useViewAsFilters(): {
   viewRole: string | null;
 } {
   const { viewAsProfile } = useViewAs();
-  if (!viewAsProfile) return { overrideBanker: null, overrideFinder: null, overrideAdvisor: null, viewRole: null };
-
-  const { role, banker_name, finder_name, advisor_name } = viewAsProfile;
-
-  if (role === "BANKER" && banker_name) {
-    return { overrideBanker: [banker_name], overrideFinder: null, overrideAdvisor: null, viewRole: role };
-  }
-  if (role === "FINDER" && finder_name) {
-    return { overrideBanker: null, overrideFinder: [finder_name], overrideAdvisor: null, viewRole: role };
-  }
-  if (role === "ASSESSOR" && advisor_name) {
-    return { overrideBanker: null, overrideFinder: null, overrideAdvisor: [advisor_name], viewRole: role };
-  }
-
-  // LIDER, ADMIN, OPERACOES → no filter
-  return { overrideBanker: null, overrideFinder: null, overrideAdvisor: null, viewRole: role };
+  return {
+    overrideBanker: null,
+    overrideFinder: null,
+    overrideAdvisor: null,
+    viewRole: viewAsProfile?.role ?? null,
+  };
 }

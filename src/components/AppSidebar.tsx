@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { LOGO_DARK_BG } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { roleLabels } from "@/lib/format";
 import {
   Home,
@@ -55,9 +56,13 @@ const dashboardItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, role, permissoes, signOut } = useAuth();
+  const { profile, signOut } = useAuth();
+  const { effectiveRole, effectivePermissoes, viewAsProfile } = useViewAs();
 
-  const isAdmin = role === "ADMIN";
+  // When Minha Visão is active, the sidebar reflects the simulated user's permissions
+  const role = effectiveRole;
+  const permissoes = effectivePermissoes;
+  const isAdmin = role === "ADMIN" && !viewAsProfile;
 
   const canSee = (key: string) => isAdmin || permissoes?.[key] === true;
 
