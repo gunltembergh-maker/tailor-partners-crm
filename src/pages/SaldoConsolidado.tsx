@@ -187,7 +187,8 @@ export default function SaldoConsolidado() {
   const [casasInicializadas, setCasasInicializadas] = useState(false);
   const [bankersSelecionados, setBankersSelecionados] = useState<string[]>([]);
   const [findersSelecionados, setFindersSelecionados] = useState<string[]>([]);
-  const [dataRef, setDataRef] = useState<string | null>(null);
+  const [datasSelecionadas, setDatasSelecionadas] = useState<string[]>([]);
+  const [datasInicializadas, setDatasInicializadas] = useState(false);
   const [page, setPage] = useState(0);
 
   // Modal de detalhe
