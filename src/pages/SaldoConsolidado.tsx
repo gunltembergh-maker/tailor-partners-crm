@@ -783,19 +783,72 @@ export default function SaldoConsolidado() {
               </PopoverContent>
             </Popover>
 
-            {/* Filtro Data Referência */}
-            <Select value={dataRef ?? undefined} onValueChange={(v) => setDataRef(v)}>
-              <SelectTrigger className="w-[180px] h-10">
-                <SelectValue placeholder="Data ref." />
-              </SelectTrigger>
-              <SelectContent>
-                {(dataRefOpts ?? []).map((d) => (
-                  <SelectItem key={d.data_referencia} value={d.data_referencia}>
-                    {d.data_formatada}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Filtro Data Referência multi-select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Data
+                  </span>
+                  {totalDatasOpts > 0 && datasSelecionadas.length === totalDatasOpts ? (
+                    <span className="text-xs text-muted-foreground">Todas</span>
+                  ) : (
+                    <Badge variant="secondary" className="ml-1">
+                      {datasSelecionadas.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="end">
+                {!dataRefOpts ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : dataRefOpts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-2 py-3">
+                    Nenhuma data disponível
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (datasSelecionadas.length === dataRefOpts.length) {
+                          setDatasSelecionadas([]);
+                        } else {
+                          setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
+                        }
+                      }}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
+                    >
+                      {datasSelecionadas.length === dataRefOpts.length
+                        ? "Limpar seleção"
+                        : "Selecionar todas"}
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <div className="max-h-64 overflow-y-auto space-y-0.5">
+                      {dataRefOpts.map((d) => (
+                        <label
+                          key={d.data_referencia}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={datasSelecionadas.includes(d.data_referencia)}
+                            onCheckedChange={() =>
+                              setDatasSelecionadas((prev) =>
+                                prev.includes(d.data_referencia)
+                                  ? prev.filter((x) => x !== d.data_referencia)
+                                  : [...prev, d.data_referencia],
+                              )
+                            }
+                          />
+                          <span>{d.data_formatada}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
 
             <div className="flex gap-2">
               <DropdownMenu>
