@@ -55,6 +55,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus } from "lucide-react";
 
 // ─── Tipos ───────────────────────────────────────────────────────────
 
@@ -769,28 +776,36 @@ export default function SaldoConsolidado() {
             </Select>
 
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="h-10 gap-2"
-                onClick={handleExportExcel}
-                disabled={exporting || isEmpty}
-              >
-                {exporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <FileSpreadsheet className="h-4 w-4" />
-                )}
-                Exportar Excel
-              </Button>
-              <Button
-                variant="outline"
-                className="h-10 gap-2"
-                onClick={handleSendEmail}
-                disabled={isEmpty}
-              >
-                <Mail className="h-4 w-4" />
-                Enviar por Outlook
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-10 gap-2" disabled={isEmpty && !exporting}>
+                    {exporting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    Ações
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem
+                    onClick={handleExportExcel}
+                    disabled={exporting || isEmpty}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Exportar Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleSendEmail}
+                    disabled={isEmpty}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Enviar por Outlook
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 variant="ghost"
                 className="h-10 gap-2"
