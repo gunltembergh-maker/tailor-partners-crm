@@ -885,32 +885,42 @@ export default function SaldoConsolidado() {
               </Table>
             </div>
 
-            {/* Paginação */}
-            {!listaLoading && (lista?.length ?? 0) > 0 && (page > 0 || hasNextPage) && (
-              <div className="flex items-center justify-between px-4 py-3 border-t">
+            {/* Contador + Paginação */}
+            {!listaLoading && (lista?.length ?? 0) > 0 && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 py-3 border-t">
                 <p className="text-xs text-muted-foreground">
-                  Página {page + 1} — exibindo {lista?.length} registros
+                  Mostrando{" "}
+                  <span className="font-medium text-foreground">
+                    {showingFrom.toLocaleString("pt-BR")}-{showingTo.toLocaleString("pt-BR")}
+                  </span>{" "}
+                  de{" "}
+                  <span className="font-medium text-foreground">
+                    {totalFiltrado.toLocaleString("pt-BR")}
+                  </span>{" "}
+                  {totalFiltrado === 1 ? "cliente" : "clientes"}
                 </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Anterior
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!hasNextPage}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Próxima
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                {(page > 0 || hasNextPage) && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === 0}
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!hasNextPage}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
