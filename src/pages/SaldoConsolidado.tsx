@@ -646,6 +646,114 @@ export default function SaldoConsolidado() {
               </PopoverContent>
             </Popover>
 
+            {/* Filtro Banker multi-select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Banker
+                  </span>
+                  {bankersSelecionados.length > 0 ? (
+                    <Badge variant="secondary" className="ml-1">
+                      {bankersSelecionados.length}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Todos</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                {!bankersOpts ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : bankersOpts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-2 py-3">
+                    Nenhum banker disponível
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setBankersSelecionados([])}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
+                      disabled={bankersSelecionados.length === 0}
+                    >
+                      Limpar seleção
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <div className="max-h-64 overflow-y-auto space-y-0.5">
+                      {bankersOpts.map((b) => (
+                        <label
+                          key={b.banker}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={bankersSelecionados.includes(b.banker)}
+                            onCheckedChange={() => toggleBanker(b.banker)}
+                          />
+                          <span className="truncate">{b.banker}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Filtro Finder multi-select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Finder
+                  </span>
+                  {findersSelecionados.length > 0 ? (
+                    <Badge variant="secondary" className="ml-1">
+                      {findersSelecionados.length}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Todos</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                {!findersOpts ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : findersOpts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-2 py-3">
+                    Nenhum finder disponível
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setFindersSelecionados([])}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
+                      disabled={findersSelecionados.length === 0}
+                    >
+                      Limpar seleção
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <div className="max-h-64 overflow-y-auto space-y-0.5">
+                      {findersOpts.map((f) => (
+                        <label
+                          key={f.finder}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={findersSelecionados.includes(f.finder)}
+                            onCheckedChange={() => toggleFinder(f.finder)}
+                          />
+                          <span className="truncate">{f.finder}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
             {/* Filtro Data Referência */}
             <Select value={dataRef ?? undefined} onValueChange={(v) => setDataRef(v)}>
               <SelectTrigger className="w-[180px] h-10">
@@ -682,6 +790,16 @@ export default function SaldoConsolidado() {
               >
                 <Mail className="h-4 w-4" />
                 Enviar por Outlook
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-10 gap-2"
+                onClick={handleLimparFiltros}
+                disabled={!hasFiltrosAplicados}
+                title="Limpar filtros"
+              >
+                <FilterX className="h-4 w-4" />
+                Limpar filtros
               </Button>
             </div>
           </CardContent>
