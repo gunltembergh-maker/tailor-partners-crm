@@ -11,6 +11,7 @@ import {
   Filter,
   Loader2,
   ChevronDown,
+  FilterX,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -176,6 +177,8 @@ export default function SaldoConsolidado() {
   const [buscaDebounced, setBuscaDebounced] = useState("");
   const [casasSelecionadas, setCasasSelecionadas] = useState<string[]>([]);
   const [casasInicializadas, setCasasInicializadas] = useState(false);
+  const [bankersSelecionados, setBankersSelecionados] = useState<string[]>([]);
+  const [findersSelecionados, setFindersSelecionados] = useState<string[]>([]);
   const [dataRef, setDataRef] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
@@ -193,7 +196,7 @@ export default function SaldoConsolidado() {
   // Reset de paginação ao mudar filtros
   useEffect(() => {
     setPage(0);
-  }, [buscaDebounced, casasSelecionadas, dataRef]);
+  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, findersSelecionados, dataRef]);
 
   // ─── Filtros: opções
   const { data: casasOpts } = useQuery({
@@ -211,6 +214,24 @@ export default function SaldoConsolidado() {
       const { data, error } = await supabase.rpc("rpc_saldo_filtros_data_referencia");
       if (error) throw error;
       return (data ?? []) as DataRefOpt[];
+    },
+  });
+
+  const { data: bankersOpts } = useQuery({
+    queryKey: ["saldo-filtros-bankers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_saldo_filtros_bankers" as any);
+      if (error) throw error;
+      return ((data ?? []) as { banker: string }[]).filter((b) => !!b.banker);
+    },
+  });
+
+  const { data: findersOpts } = useQuery({
+    queryKey: ["saldo-filtros-finders"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_saldo_filtros_finders" as any);
+      if (error) throw error;
+      return ((data ?? []) as { finder: string }[]).filter((f) => !!f.finder);
     },
   });
 
@@ -236,16 +257,18 @@ export default function SaldoConsolidado() {
       casasSelecionadas.length > 0 && casasOpts && casasSelecionadas.length < casasOpts.length
         ? casasSelecionadas
         : null;
+    const bankerParam = bankersSelecionados.length > 0 ? bankersSelecionados : null;
+    const finderParam = findersSelecionados.length > 0 ? findersSelecionados : null;
     return {
-      p_banker: null as string[] | null,
+      p_banker: bankerParam,
       p_advisor: null as string[] | null,
-      p_finder: null as string[] | null,
+      p_finder: finderParam,
       p_documento: null as string[] | null,
       p_casa: casaParam,
       p_data_referencia: dataRef,
       p_busca: buscaDebounced || null,
     };
-  }, [casasSelecionadas, casasOpts, dataRef, buscaDebounced]);
+  }, [casasSelecionadas, casasOpts, bankersSelecionados, findersSelecionados, dataRef, buscaDebounced]);
 
   // ─── KPIs
   const { data: kpis, isLoading: kpisLoading } = useQuery({
@@ -281,6 +304,21 @@ export default function SaldoConsolidado() {
       });
       if (error) throw error;
       return (data ?? []) as SaldoRow[];
+    },
+    enabled: dataRef !== null,
+  });
+
+  // ─── Total de registros (sem paginação) — para contador "Mostrando X-Y de Z"
+  const { data: totalCount } = useQuery({
+    queryKey: ["saldo-list-total", rpcFilters],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_saldo_list", {
+        ...rpcFilters,
+        p_limit: null,
+        p_offset: null,
+      } as any);
+      if (error) throw error;
+      return ((data ?? []) as SaldoRow[]).length;
     },
     enabled: dataRef !== null,
   });
@@ -467,8 +505,40 @@ export default function SaldoConsolidado() {
     }
   }
 
+  function toggleBanker(b: string) {
+    setBankersSelecionados((prev) =>
+      prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b],
+    );
+  }
+
+  function toggleFinder(f: string) {
+    setFindersSelecionados((prev) =>
+      prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f],
+    );
+  }
+
+  const defaultDataRef = dataRefOpts?.[0]?.data_referencia ?? null;
+  const hasFiltrosAplicados =
+    busca.trim().length > 0 ||
+    (casasOpts ? casasSelecionadas.length !== casasOpts.length : false) ||
+    bankersSelecionados.length > 0 ||
+    findersSelecionados.length > 0 ||
+    (defaultDataRef !== null && dataRef !== defaultDataRef);
+
+  function handleLimparFiltros() {
+    setBusca("");
+    setBuscaDebounced("");
+    if (casasOpts) setCasasSelecionadas(casasOpts.map((c) => c.casa));
+    setBankersSelecionados([]);
+    setFindersSelecionados([]);
+    if (defaultDataRef) setDataRef(defaultDataRef);
+  }
+
   const isEmpty = !listaLoading && (lista?.length ?? 0) === 0;
   const hasNextPage = (lista?.length ?? 0) === PAGE_SIZE;
+  const totalFiltrado = totalCount ?? 0;
+  const showingFrom = totalFiltrado === 0 ? 0 : page * PAGE_SIZE + 1;
+  const showingTo = Math.min(totalFiltrado, page * PAGE_SIZE + (lista?.length ?? 0));
 
   return (
     <AppLayout>
@@ -576,6 +646,114 @@ export default function SaldoConsolidado() {
               </PopoverContent>
             </Popover>
 
+            {/* Filtro Banker multi-select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Banker
+                  </span>
+                  {bankersSelecionados.length > 0 ? (
+                    <Badge variant="secondary" className="ml-1">
+                      {bankersSelecionados.length}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Todos</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                {!bankersOpts ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : bankersOpts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-2 py-3">
+                    Nenhum banker disponível
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setBankersSelecionados([])}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
+                      disabled={bankersSelecionados.length === 0}
+                    >
+                      Limpar seleção
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <div className="max-h-64 overflow-y-auto space-y-0.5">
+                      {bankersOpts.map((b) => (
+                        <label
+                          key={b.banker}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={bankersSelecionados.includes(b.banker)}
+                            onCheckedChange={() => toggleBanker(b.banker)}
+                          />
+                          <span className="truncate">{b.banker}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Filtro Finder multi-select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Finder
+                  </span>
+                  {findersSelecionados.length > 0 ? (
+                    <Badge variant="secondary" className="ml-1">
+                      {findersSelecionados.length}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Todos</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                {!findersOpts ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : findersOpts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-2 py-3">
+                    Nenhum finder disponível
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setFindersSelecionados([])}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
+                      disabled={findersSelecionados.length === 0}
+                    >
+                      Limpar seleção
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <div className="max-h-64 overflow-y-auto space-y-0.5">
+                      {findersOpts.map((f) => (
+                        <label
+                          key={f.finder}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={findersSelecionados.includes(f.finder)}
+                            onCheckedChange={() => toggleFinder(f.finder)}
+                          />
+                          <span className="truncate">{f.finder}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
             {/* Filtro Data Referência */}
             <Select value={dataRef ?? undefined} onValueChange={(v) => setDataRef(v)}>
               <SelectTrigger className="w-[180px] h-10">
@@ -612,6 +790,16 @@ export default function SaldoConsolidado() {
               >
                 <Mail className="h-4 w-4" />
                 Enviar por Outlook
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-10 gap-2"
+                onClick={handleLimparFiltros}
+                disabled={!hasFiltrosAplicados}
+                title="Limpar filtros"
+              >
+                <FilterX className="h-4 w-4" />
+                Limpar filtros
               </Button>
             </div>
           </CardContent>
@@ -697,32 +885,42 @@ export default function SaldoConsolidado() {
               </Table>
             </div>
 
-            {/* Paginação */}
-            {!listaLoading && (lista?.length ?? 0) > 0 && (page > 0 || hasNextPage) && (
-              <div className="flex items-center justify-between px-4 py-3 border-t">
+            {/* Contador + Paginação */}
+            {!listaLoading && (lista?.length ?? 0) > 0 && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 py-3 border-t">
                 <p className="text-xs text-muted-foreground">
-                  Página {page + 1} — exibindo {lista?.length} registros
+                  Mostrando{" "}
+                  <span className="font-medium text-foreground">
+                    {showingFrom.toLocaleString("pt-BR")}-{showingTo.toLocaleString("pt-BR")}
+                  </span>{" "}
+                  de{" "}
+                  <span className="font-medium text-foreground">
+                    {totalFiltrado.toLocaleString("pt-BR")}
+                  </span>{" "}
+                  {totalFiltrado === 1 ? "cliente" : "clientes"}
                 </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Anterior
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!hasNextPage}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Próxima
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                {(page > 0 || hasNextPage) && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page === 0}
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!hasNextPage}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
