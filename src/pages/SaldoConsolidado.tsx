@@ -309,7 +309,7 @@ export default function SaldoConsolidado() {
         }
       );
     },
-    enabled: dataRef !== null,
+    enabled: datasInicializadas,
   });
 
   // ─── Lista paginada
@@ -324,7 +324,7 @@ export default function SaldoConsolidado() {
       if (error) throw error;
       return (data ?? []) as SaldoRow[];
     },
-    enabled: dataRef !== null,
+    enabled: datasInicializadas,
   });
 
   // ─── Total de registros (sem paginação) — para contador "Mostrando X-Y de Z"
@@ -339,7 +339,7 @@ export default function SaldoConsolidado() {
       if (error) throw error;
       return ((data ?? []) as SaldoRow[]).length;
     },
-    enabled: dataRef !== null,
+    enabled: datasInicializadas,
   });
 
   // ─── Modal: detalhe do cliente
@@ -469,9 +469,14 @@ export default function SaldoConsolidado() {
       toast.error("Nenhum dado para enviar");
       return;
     }
+    // Quando há múltiplas datas, usa a mais recente como rótulo do email
+    const dataRefLabel =
+      datasSelecionadas.length === 1
+        ? datasSelecionadas[0]
+        : dataRefOpts?.[0]?.data_referencia ?? null;
     const dataFormatada =
-      dataRefOpts?.find((d) => d.data_referencia === dataRef)?.data_formatada ??
-      formatDate(dataRef ?? "");
+      dataRefOpts?.find((d) => d.data_referencia === dataRefLabel)?.data_formatada ??
+      formatDate(dataRefLabel ?? "");
     const html = buildHtmlTable(lista, dataFormatada);
     const subject = encodeURIComponent(`Saldo em Conta ${dataFormatada}`);
     const body = encodeURIComponent(html);
@@ -536,13 +541,18 @@ export default function SaldoConsolidado() {
     );
   }
 
-  const defaultDataRef = dataRefOpts?.[0]?.data_referencia ?? null;
+  const totalDatasOpts = dataRefOpts?.length ?? 0;
+  const datasParcial =
+    datasInicializadas &&
+    totalDatasOpts > 0 &&
+    datasSelecionadas.length > 0 &&
+    datasSelecionadas.length < totalDatasOpts;
   const hasFiltrosAplicados =
     busca.trim().length > 0 ||
     (casasOpts ? casasSelecionadas.length !== casasOpts.length : false) ||
     bankersSelecionados.length > 0 ||
     findersSelecionados.length > 0 ||
-    (defaultDataRef !== null && dataRef !== defaultDataRef);
+    datasParcial;
 
   function handleLimparFiltros() {
     setBusca("");
@@ -550,7 +560,7 @@ export default function SaldoConsolidado() {
     if (casasOpts) setCasasSelecionadas(casasOpts.map((c) => c.casa));
     setBankersSelecionados([]);
     setFindersSelecionados([]);
-    if (defaultDataRef) setDataRef(defaultDataRef);
+    if (dataRefOpts) setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
   }
 
   const isEmpty = !listaLoading && (lista?.length ?? 0) === 0;
