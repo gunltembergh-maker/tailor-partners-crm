@@ -177,6 +177,8 @@ export default function SaldoConsolidado() {
   const [buscaDebounced, setBuscaDebounced] = useState("");
   const [casasSelecionadas, setCasasSelecionadas] = useState<string[]>([]);
   const [casasInicializadas, setCasasInicializadas] = useState(false);
+  const [bankersSelecionados, setBankersSelecionados] = useState<string[]>([]);
+  const [findersSelecionados, setFindersSelecionados] = useState<string[]>([]);
   const [dataRef, setDataRef] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
@@ -194,7 +196,7 @@ export default function SaldoConsolidado() {
   // Reset de paginação ao mudar filtros
   useEffect(() => {
     setPage(0);
-  }, [buscaDebounced, casasSelecionadas, dataRef]);
+  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, findersSelecionados, dataRef]);
 
   // ─── Filtros: opções
   const { data: casasOpts } = useQuery({
