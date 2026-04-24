@@ -12,6 +12,7 @@ import {
   Loader2,
   ChevronDown,
   FilterX,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -186,7 +187,8 @@ export default function SaldoConsolidado() {
   const [casasInicializadas, setCasasInicializadas] = useState(false);
   const [bankersSelecionados, setBankersSelecionados] = useState<string[]>([]);
   const [findersSelecionados, setFindersSelecionados] = useState<string[]>([]);
-  const [dataRef, setDataRef] = useState<string | null>(null);
+  const [datasSelecionadas, setDatasSelecionadas] = useState<string[]>([]);
+  const [datasInicializadas, setDatasInicializadas] = useState(false);
   const [page, setPage] = useState(0);
 
   // Modal de detalhe
@@ -203,7 +205,7 @@ export default function SaldoConsolidado() {
   // Reset de paginação ao mudar filtros
   useEffect(() => {
     setPage(0);
-  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, findersSelecionados, dataRef]);
+  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, findersSelecionados, datasSelecionadas]);
 
   // ─── Filtros: opções
   const { data: casasOpts } = useQuery({
@@ -250,12 +252,13 @@ export default function SaldoConsolidado() {
     }
   }, [casasOpts, casasInicializadas]);
 
-  // Inicializar data = mais recente
+  // Inicializar Datas = todas selecionadas
   useEffect(() => {
-    if (!dataRef && dataRefOpts && dataRefOpts.length > 0) {
-      setDataRef(dataRefOpts[0].data_referencia);
+    if (!datasInicializadas && dataRefOpts && dataRefOpts.length > 0) {
+      setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
+      setDatasInicializadas(true);
     }
-  }, [dataRefOpts, dataRef]);
+  }, [dataRefOpts, datasInicializadas]);
 
   // Filtros para RPC
   const rpcFilters = useMemo(() => {
@@ -266,16 +269,25 @@ export default function SaldoConsolidado() {
         : null;
     const bankerParam = bankersSelecionados.length > 0 ? bankersSelecionados : null;
     const finderParam = findersSelecionados.length > 0 ? findersSelecionados : null;
+    // Limitação: RPCs aceitam p_data_referencia como date único (não array).
+    // - 1 data específica selecionada → usa essa data
+    // - 0, todas, ou seleção parcial múltipla → null (mostra a data mais recente de cada cliente)
+    // TODO futuro: quando RPCs aceitarem array, suportar seleção parcial múltipla de fato.
+    const totalDatas = dataRefOpts?.length ?? 0;
+    const dataParam =
+      datasSelecionadas.length === 1 && totalDatas > 1
+        ? datasSelecionadas[0]
+        : null;
     return {
       p_banker: bankerParam,
       p_advisor: null as string[] | null,
       p_finder: finderParam,
       p_documento: null as string[] | null,
       p_casa: casaParam,
-      p_data_referencia: dataRef,
+      p_data_referencia: dataParam,
       p_busca: buscaDebounced || null,
     };
-  }, [casasSelecionadas, casasOpts, bankersSelecionados, findersSelecionados, dataRef, buscaDebounced]);
+  }, [casasSelecionadas, casasOpts, bankersSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced]);
 
   // ─── KPIs
   const { data: kpis, isLoading: kpisLoading } = useQuery({
@@ -297,7 +309,7 @@ export default function SaldoConsolidado() {
         }
       );
     },
-    enabled: dataRef !== null,
+    enabled: datasInicializadas,
   });
 
   // ─── Lista paginada
@@ -312,7 +324,7 @@ export default function SaldoConsolidado() {
       if (error) throw error;
       return (data ?? []) as SaldoRow[];
     },
-    enabled: dataRef !== null,
+    enabled: datasInicializadas,
   });
 
   // ─── Total de registros (sem paginação) — para contador "Mostrando X-Y de Z"
@@ -327,7 +339,7 @@ export default function SaldoConsolidado() {
       if (error) throw error;
       return ((data ?? []) as SaldoRow[]).length;
     },
-    enabled: dataRef !== null,
+    enabled: datasInicializadas,
   });
 
   // ─── Modal: detalhe do cliente
@@ -457,9 +469,14 @@ export default function SaldoConsolidado() {
       toast.error("Nenhum dado para enviar");
       return;
     }
+    // Quando há múltiplas datas, usa a mais recente como rótulo do email
+    const dataRefLabel =
+      datasSelecionadas.length === 1
+        ? datasSelecionadas[0]
+        : dataRefOpts?.[0]?.data_referencia ?? null;
     const dataFormatada =
-      dataRefOpts?.find((d) => d.data_referencia === dataRef)?.data_formatada ??
-      formatDate(dataRef ?? "");
+      dataRefOpts?.find((d) => d.data_referencia === dataRefLabel)?.data_formatada ??
+      formatDate(dataRefLabel ?? "");
     const html = buildHtmlTable(lista, dataFormatada);
     const subject = encodeURIComponent(`Saldo em Conta ${dataFormatada}`);
     const body = encodeURIComponent(html);
@@ -524,13 +541,18 @@ export default function SaldoConsolidado() {
     );
   }
 
-  const defaultDataRef = dataRefOpts?.[0]?.data_referencia ?? null;
+  const totalDatasOpts = dataRefOpts?.length ?? 0;
+  const datasParcial =
+    datasInicializadas &&
+    totalDatasOpts > 0 &&
+    datasSelecionadas.length > 0 &&
+    datasSelecionadas.length < totalDatasOpts;
   const hasFiltrosAplicados =
     busca.trim().length > 0 ||
     (casasOpts ? casasSelecionadas.length !== casasOpts.length : false) ||
     bankersSelecionados.length > 0 ||
     findersSelecionados.length > 0 ||
-    (defaultDataRef !== null && dataRef !== defaultDataRef);
+    datasParcial;
 
   function handleLimparFiltros() {
     setBusca("");
@@ -538,7 +560,7 @@ export default function SaldoConsolidado() {
     if (casasOpts) setCasasSelecionadas(casasOpts.map((c) => c.casa));
     setBankersSelecionados([]);
     setFindersSelecionados([]);
-    if (defaultDataRef) setDataRef(defaultDataRef);
+    if (dataRefOpts) setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
   }
 
   const isEmpty = !listaLoading && (lista?.length ?? 0) === 0;
@@ -761,19 +783,72 @@ export default function SaldoConsolidado() {
               </PopoverContent>
             </Popover>
 
-            {/* Filtro Data Referência */}
-            <Select value={dataRef ?? undefined} onValueChange={(v) => setDataRef(v)}>
-              <SelectTrigger className="w-[180px] h-10">
-                <SelectValue placeholder="Data ref." />
-              </SelectTrigger>
-              <SelectContent>
-                {(dataRefOpts ?? []).map((d) => (
-                  <SelectItem key={d.data_referencia} value={d.data_referencia}>
-                    {d.data_formatada}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Filtro Data Referência multi-select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Data
+                  </span>
+                  {totalDatasOpts > 0 && datasSelecionadas.length === totalDatasOpts ? (
+                    <span className="text-xs text-muted-foreground">Todas</span>
+                  ) : (
+                    <Badge variant="secondary" className="ml-1">
+                      {datasSelecionadas.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="end">
+                {!dataRefOpts ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : dataRefOpts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-2 py-3">
+                    Nenhuma data disponível
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (datasSelecionadas.length === dataRefOpts.length) {
+                          setDatasSelecionadas([]);
+                        } else {
+                          setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
+                        }
+                      }}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
+                    >
+                      {datasSelecionadas.length === dataRefOpts.length
+                        ? "Limpar seleção"
+                        : "Selecionar todas"}
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <div className="max-h-64 overflow-y-auto space-y-0.5">
+                      {dataRefOpts.map((d) => (
+                        <label
+                          key={d.data_referencia}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={datasSelecionadas.includes(d.data_referencia)}
+                            onCheckedChange={() =>
+                              setDatasSelecionadas((prev) =>
+                                prev.includes(d.data_referencia)
+                                  ? prev.filter((x) => x !== d.data_referencia)
+                                  : [...prev, d.data_referencia],
+                              )
+                            }
+                          />
+                          <span>{d.data_formatada}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
 
             <div className="flex gap-2">
               <DropdownMenu>
