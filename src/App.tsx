@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ViewAsProvider } from "@/contexts/ViewAsContext";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { MinhaVisaoIndicator } from "@/components/MinhaVisaoIndicator";
 import Auth from "./pages/Auth";
 import { BlockedUserScreen } from "@/components/admin/BlockedUserScreen";
 
@@ -142,6 +143,7 @@ const App = () => (
           <AuthProvider>
             <ViewAsProvider>
               <AppRoutes />
+              <MinhaVisaoIndicator />
             </ViewAsProvider>
           </AuthProvider>
         </BrowserRouter>
