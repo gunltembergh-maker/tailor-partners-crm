@@ -308,6 +308,21 @@ export default function SaldoConsolidado() {
     enabled: dataRef !== null,
   });
 
+  // ─── Total de registros (sem paginação) — para contador "Mostrando X-Y de Z"
+  const { data: totalCount } = useQuery({
+    queryKey: ["saldo-list-total", rpcFilters],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_saldo_list", {
+        ...rpcFilters,
+        p_limit: null,
+        p_offset: null,
+      } as any);
+      if (error) throw error;
+      return ((data ?? []) as SaldoRow[]).length;
+    },
+    enabled: dataRef !== null,
+  });
+
   // ─── Modal: detalhe do cliente
   const { data: detalhe, isLoading: detalheLoading } = useQuery({
     queryKey: ["saldo-cliente-detalhe", detalheCpf],
