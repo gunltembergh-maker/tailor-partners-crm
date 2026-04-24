@@ -252,12 +252,13 @@ export default function SaldoConsolidado() {
     }
   }, [casasOpts, casasInicializadas]);
 
-  // Inicializar data = mais recente
+  // Inicializar Datas = todas selecionadas
   useEffect(() => {
-    if (!dataRef && dataRefOpts && dataRefOpts.length > 0) {
-      setDataRef(dataRefOpts[0].data_referencia);
+    if (!datasInicializadas && dataRefOpts && dataRefOpts.length > 0) {
+      setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
+      setDatasInicializadas(true);
     }
-  }, [dataRefOpts, dataRef]);
+  }, [dataRefOpts, datasInicializadas]);
 
   // Filtros para RPC
   const rpcFilters = useMemo(() => {
@@ -268,16 +269,25 @@ export default function SaldoConsolidado() {
         : null;
     const bankerParam = bankersSelecionados.length > 0 ? bankersSelecionados : null;
     const finderParam = findersSelecionados.length > 0 ? findersSelecionados : null;
+    // Limitação: RPCs aceitam p_data_referencia como date único (não array).
+    // - 1 data específica selecionada → usa essa data
+    // - 0, todas, ou seleção parcial múltipla → null (mostra a data mais recente de cada cliente)
+    // TODO futuro: quando RPCs aceitarem array, suportar seleção parcial múltipla de fato.
+    const totalDatas = dataRefOpts?.length ?? 0;
+    const dataParam =
+      datasSelecionadas.length === 1 && totalDatas > 1
+        ? datasSelecionadas[0]
+        : null;
     return {
       p_banker: bankerParam,
       p_advisor: null as string[] | null,
       p_finder: finderParam,
       p_documento: null as string[] | null,
       p_casa: casaParam,
-      p_data_referencia: dataRef,
+      p_data_referencia: dataParam,
       p_busca: buscaDebounced || null,
     };
-  }, [casasSelecionadas, casasOpts, bankersSelecionados, findersSelecionados, dataRef, buscaDebounced]);
+  }, [casasSelecionadas, casasOpts, bankersSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced]);
 
   // ─── KPIs
   const { data: kpis, isLoading: kpisLoading } = useQuery({
