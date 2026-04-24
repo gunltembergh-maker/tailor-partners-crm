@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      _backup_funcoes_minha_visao: {
+        Row: {
+          backup_em: string
+          codigo_original: string
+          funcao_nome: string
+          observacao: string | null
+        }
+        Insert: {
+          backup_em?: string
+          codigo_original: string
+          funcao_nome: string
+          observacao?: string | null
+        }
+        Update: {
+          backup_em?: string
+          codigo_original?: string
+          funcao_nome?: string
+          observacao?: string | null
+        }
+        Relationships: []
+      }
       access_logs: {
         Row: {
           duration_minutes: number | null
@@ -172,6 +193,30 @@ export type Database = {
           id?: string
           nome?: string
           rota?: string
+        }
+        Relationships: []
+      }
+      admin_view_as: {
+        Row: {
+          admin_user_id: string
+          expira_em: string
+          iniciado_em: string
+          viewing_as_email: string | null
+          viewing_as_user_id: string
+        }
+        Insert: {
+          admin_user_id: string
+          expira_em?: string
+          iniciado_em?: string
+          viewing_as_email?: string | null
+          viewing_as_user_id: string
+        }
+        Update: {
+          admin_user_id?: string
+          expira_em?: string
+          iniciado_em?: string
+          viewing_as_email?: string | null
+          viewing_as_user_id?: string
         }
         Relationships: []
       }
@@ -3049,6 +3094,7 @@ export type Database = {
         Args: { p_blocked: boolean; p_email: string }
         Returns: Json
       }
+      rpc_admin_clear_view_as: { Args: never; Returns: Json }
       rpc_admin_criar_perfil: {
         Args: { p_descricao?: string; p_nome: string }
         Returns: Json
@@ -3059,6 +3105,7 @@ export type Database = {
       rpc_admin_excluir_usuario:
         | { Args: { p_email: string; p_user_id?: string }; Returns: Json }
         | { Args: { p_profile_id: string }; Returns: Json }
+      rpc_admin_get_view_as: { Args: never; Returns: Json }
       rpc_admin_historico_convites: {
         Args: { p_email: string }
         Returns: {
@@ -3249,6 +3296,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_admin_set_view_as: { Args: { p_target_email: string }; Returns: Json }
       rpc_admin_sync_log: {
         Args: never
         Returns: {
@@ -3866,6 +3914,12 @@ export type Database = {
           total_saldo: number
         }[]
       }
+      rpc_saldo_filtros_bankers: {
+        Args: never
+        Returns: {
+          banker: string
+        }[]
+      }
       rpc_saldo_filtros_casas: {
         Args: never
         Returns: {
@@ -3877,6 +3931,12 @@ export type Database = {
         Returns: {
           data_formatada: string
           data_referencia: string
+        }[]
+      }
+      rpc_saldo_filtros_finders: {
+        Args: never
+        Returns: {
+          finder: string
         }[]
       }
       rpc_saldo_kpis: {
