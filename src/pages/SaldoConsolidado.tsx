@@ -505,8 +505,40 @@ export default function SaldoConsolidado() {
     }
   }
 
+  function toggleBanker(b: string) {
+    setBankersSelecionados((prev) =>
+      prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b],
+    );
+  }
+
+  function toggleFinder(f: string) {
+    setFindersSelecionados((prev) =>
+      prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f],
+    );
+  }
+
+  const defaultDataRef = dataRefOpts?.[0]?.data_referencia ?? null;
+  const hasFiltrosAplicados =
+    busca.trim().length > 0 ||
+    (casasOpts ? casasSelecionadas.length !== casasOpts.length : false) ||
+    bankersSelecionados.length > 0 ||
+    findersSelecionados.length > 0 ||
+    (defaultDataRef !== null && dataRef !== defaultDataRef);
+
+  function handleLimparFiltros() {
+    setBusca("");
+    setBuscaDebounced("");
+    if (casasOpts) setCasasSelecionadas(casasOpts.map((c) => c.casa));
+    setBankersSelecionados([]);
+    setFindersSelecionados([]);
+    if (defaultDataRef) setDataRef(defaultDataRef);
+  }
+
   const isEmpty = !listaLoading && (lista?.length ?? 0) === 0;
   const hasNextPage = (lista?.length ?? 0) === PAGE_SIZE;
+  const totalFiltrado = totalCount ?? 0;
+  const showingFrom = totalFiltrado === 0 ? 0 : page * PAGE_SIZE + 1;
+  const showingTo = Math.min(totalFiltrado, page * PAGE_SIZE + (lista?.length ?? 0));
 
   return (
     <AppLayout>
