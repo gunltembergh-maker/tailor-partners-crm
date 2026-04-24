@@ -217,6 +217,24 @@ export default function SaldoConsolidado() {
     },
   });
 
+  const { data: bankersOpts } = useQuery({
+    queryKey: ["saldo-filtros-bankers"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_saldo_filtros_bankers" as any);
+      if (error) throw error;
+      return ((data ?? []) as { banker: string }[]).filter((b) => !!b.banker);
+    },
+  });
+
+  const { data: findersOpts } = useQuery({
+    queryKey: ["saldo-filtros-finders"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_saldo_filtros_finders" as any);
+      if (error) throw error;
+      return ((data ?? []) as { finder: string }[]).filter((f) => !!f.finder);
+    },
+  });
+
   // Inicializar Casa = todas selecionadas
   useEffect(() => {
     if (!casasInicializadas && casasOpts && casasOpts.length > 0) {
@@ -239,16 +257,18 @@ export default function SaldoConsolidado() {
       casasSelecionadas.length > 0 && casasOpts && casasSelecionadas.length < casasOpts.length
         ? casasSelecionadas
         : null;
+    const bankerParam = bankersSelecionados.length > 0 ? bankersSelecionados : null;
+    const finderParam = findersSelecionados.length > 0 ? findersSelecionados : null;
     return {
-      p_banker: null as string[] | null,
+      p_banker: bankerParam,
       p_advisor: null as string[] | null,
-      p_finder: null as string[] | null,
+      p_finder: finderParam,
       p_documento: null as string[] | null,
       p_casa: casaParam,
       p_data_referencia: dataRef,
       p_busca: buscaDebounced || null,
     };
-  }, [casasSelecionadas, casasOpts, dataRef, buscaDebounced]);
+  }, [casasSelecionadas, casasOpts, bankersSelecionados, findersSelecionados, dataRef, buscaDebounced]);
 
   // ─── KPIs
   const { data: kpis, isLoading: kpisLoading } = useQuery({
