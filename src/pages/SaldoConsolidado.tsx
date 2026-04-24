@@ -11,6 +11,7 @@ import {
   Filter,
   Loader2,
   ChevronDown,
+  FilterX,
 } from "lucide-react";
 import { toast } from "sonner";
 
