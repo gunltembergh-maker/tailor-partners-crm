@@ -232,9 +232,9 @@ export default function ImportarBases() {
   const [processing, setProcessing] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { role: realRole } = useAuth();
-  const { effectiveRole } = useViewAs();
+  const { effectiveRole, effectivePermissoes } = useViewAs();
   const role = effectiveRole ?? realRole;
-  const isAdminLider = role === 'ADMIN' || role === 'LIDER';
+  const canSeeLegacy = !!effectivePermissoes?.menu_importar_bases;
   const queryClient = useQueryClient();
 
   // ─── SharePoint Sync State ─────────────────────────────────────
