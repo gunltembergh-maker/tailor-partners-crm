@@ -71,9 +71,18 @@ export function AppSidebar() {
   const visibleDashboardItems = dashboardItems.filter((item) => canSee(item.key));
   const showMainMenu = visibleMenuItems.length > 0;
 
+  // Lista de permissões relacionadas a "Importar Bases" (pai + filhos).
+  // Adicionar futuras sub-permissões de importação aqui.
+  const IMPORT_PERMISSIONS = [
+    "menu_importar_bases",
+    "menu_importar_saldo_xp",
+    "menu_importar_saldo_avenue",
+  ];
+  const canSeeImportarBases = () => IMPORT_PERMISSIONS.some((p) => canSee(p));
+
   // Build admin items based on permissions
   const adminItems: { title: string; icon: any; path: string }[] = [];
-  if (canSee("menu_importar_bases")) {
+  if (canSeeImportarBases()) {
     adminItems.push({ title: "Importar Bases", icon: Upload, path: "/admin/importar-bases" });
   }
   if (canSee("menu_auditoria")) {
