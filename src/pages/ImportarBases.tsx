@@ -231,9 +231,7 @@ export default function ImportarBases() {
   const [results, setResults] = useState<BaseResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const { role: realRole } = useAuth();
-  const { effectiveRole, effectivePermissoes } = useViewAs();
-  const role = effectiveRole ?? realRole;
+  const { effectivePermissoes } = useViewAs();
   const canSeeLegacy = !!effectivePermissoes?.menu_importar_bases;
   const queryClient = useQueryClient();
 
