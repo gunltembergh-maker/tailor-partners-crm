@@ -669,8 +669,8 @@ export default function ImportarBases() {
         </div>
       )}
 
-      {/* Drop zone — apenas Admin/Líder (cobre as bases legadas) */}
-      {(role === 'ADMIN' || role === 'LIDER') && (
+      {/* Drop zone — gated por permissão menu_importar_bases */}
+      {canSeeLegacy && (
       <div
         {...getRootProps()}
         className={cn(
