@@ -252,7 +252,7 @@ export default function ImportarBases() {
   }>({ historicoCount: null, m0Count: null, dentroPeriodoM1: null, anoMesM1: null, anoMesM0: null });
 
   useEffect(() => {
-    if (role === 'ADMIN') {
+    if (isAdminLider) {
       // Load last sync log
       supabase.rpc('rpc_admin_sync_log' as any).then(({ data }: any) => {
         if (data?.[0]) setLastSync(data[0]);
@@ -275,7 +275,7 @@ export default function ImportarBases() {
         });
       });
     }
-  }, [role]);
+  }, [isAdminLider]);
 
   async function handleSyncMode(mode: string) {
     setSyncingMode(mode);
