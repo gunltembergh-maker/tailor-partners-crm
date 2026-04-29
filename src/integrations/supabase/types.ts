@@ -4167,6 +4167,7 @@ export type Database = {
         | "FINDER"
         | "ADMIN"
         | "OPERACOES"
+        | "FA ASSISTENTE"
       client_status: "ATIVO_NET" | "INATIVO_PLD" | "CRITICO"
       lead_status:
         | "NOVO"
@@ -4339,7 +4340,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["ASSESSOR", "BANKER", "LIDER", "FINDER", "ADMIN", "OPERACOES"],
+      app_role: [
+        "ASSESSOR",
+        "BANKER",
+        "LIDER",
+        "FINDER",
+        "ADMIN",
+        "OPERACOES",
+        "FA ASSISTENTE",
+      ],
       client_status: ["ATIVO_NET", "INATIVO_PLD", "CRITICO"],
       lead_status: [
         "NOVO",
