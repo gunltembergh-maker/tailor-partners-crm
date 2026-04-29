@@ -72,6 +72,8 @@ const PERMISSION_GROUPS = [
     title: "Admin",
     items: [
       { key: "menu_importar_bases", label: "Importar Bases", desc: "Página de upload de arquivos" },
+      { key: "menu_importar_saldo_xp", label: "↳ Saldo XP", desc: "Sub-item de Importar Bases — upload da base XP do Saldo Consolidado" },
+      { key: "menu_importar_saldo_avenue", label: "↳ Saldo Avenue", desc: "Sub-item de Importar Bases — upload da base Avenue do Saldo Consolidado" },
       { key: "menu_auditoria", label: "Auditoria Comercial", desc: "Relatórios de auditoria" },
       { key: "menu_gestao_usuarios", label: "Gestão de Usuários", desc: "Administrar usuários do Hub" },
       { key: "menu_perfis_acesso", label: "Perfis de Acesso", desc: "Esta tela — gerenciar perfis" },
