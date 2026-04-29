@@ -132,7 +132,7 @@ function AppRoutes() {
         <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
         <Route path="/relatorios/saldo-consolidado" element={<ProtectedRoute><SaldoConsolidado /></ProtectedRoute>} />
         <Route path="/import-clients" element={<AdminRoute><ImportClients /></AdminRoute>} />
-        <Route path="/admin/importar-bases" element={<PermissionRoute permission="menu_importar_bases"><ImportarBases /></PermissionRoute>} />
+        <Route path="/admin/importar-bases" element={<PermissionRoute permissions={["menu_importar_bases", "menu_importar_saldo_xp", "menu_importar_saldo_avenue"]}><ImportarBases /></PermissionRoute>} />
         <Route path="/admin/auditoria-comercial" element={<AdminRoute><AuditoriaComercial /></AdminRoute>} />
         <Route path="/admin/perfis" element={<AdminRoute><GestaoProfiles /></AdminRoute>} />
         <Route path="/admin/usuarios" element={<AdminRoute><GestaoUsuarios /></AdminRoute>} />
