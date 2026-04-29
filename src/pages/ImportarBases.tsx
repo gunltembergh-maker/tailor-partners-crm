@@ -634,8 +634,8 @@ export default function ImportarBases() {
         </div>
       )}
 
-      {/* ═══ SYNC ALL BASES — ADMIN ═══ */}
-      {role === 'ADMIN' && (
+      {/* ═══ SYNC ALL BASES ═══ */}
+      {canSeeLegacy && (
         <Card className="border-[#082537] border-2">
           <CardContent className="p-5">
             <div className="flex items-center justify-between flex-wrap gap-4">
