@@ -479,8 +479,7 @@ export default function ImportarBases() {
       </div>
 
       {/* ═══ STATUS PANEL — ADMIN ═══ */}
-      {role === 'ADMIN' && (
-        <Card className="border-[#082537]/30">
+      {isAdminLider && (
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="h-4 w-4 text-[#082537]" />
