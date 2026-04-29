@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info, Cloud, RefreshCw, Calendar, Clock, AlertTriangle, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { PopupComunicado } from "@/components/PopupComunicado";
 import { SaldoConsolidadoSection } from "@/components/admin/SaldoConsolidadoSection";
 import { Card, CardContent } from "@/components/ui/card";
