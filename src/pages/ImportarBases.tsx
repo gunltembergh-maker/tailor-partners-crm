@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { Upload, CheckCircle, XCircle, Loader2, ChevronDown, ChevronRight, Info, Cloud, RefreshCw, Calendar, Clock, AlertTriangle, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { PopupComunicado } from "@/components/PopupComunicado";
 import { SaldoConsolidadoSection } from "@/components/admin/SaldoConsolidadoSection";
 import { Card, CardContent } from "@/components/ui/card";
@@ -230,7 +231,10 @@ export default function ImportarBases() {
   const [results, setResults] = useState<BaseResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const { role } = useAuth();
+  const { role: realRole } = useAuth();
+  const { effectiveRole } = useViewAs();
+  const role = effectiveRole ?? realRole;
+  const isAdminLider = role === 'ADMIN' || role === 'LIDER';
   const queryClient = useQueryClient();
 
   // ─── SharePoint Sync State ─────────────────────────────────────
@@ -248,7 +252,7 @@ export default function ImportarBases() {
   }>({ historicoCount: null, m0Count: null, dentroPeriodoM1: null, anoMesM1: null, anoMesM0: null });
 
   useEffect(() => {
-    if (role === 'ADMIN') {
+    if (isAdminLider) {
       // Load last sync log
       supabase.rpc('rpc_admin_sync_log' as any).then(({ data }: any) => {
         if (data?.[0]) setLastSync(data[0]);
@@ -271,7 +275,7 @@ export default function ImportarBases() {
         });
       });
     }
-  }, [role]);
+  }, [isAdminLider]);
 
   async function handleSyncMode(mode: string) {
     setSyncingMode(mode);
@@ -475,8 +479,7 @@ export default function ImportarBases() {
       </div>
 
       {/* ═══ STATUS PANEL — ADMIN ═══ */}
-      {role === 'ADMIN' && (
-        <Card className="border-[#082537]/30">
+      {isAdminLider && (
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="h-4 w-4 text-[#082537]" />
