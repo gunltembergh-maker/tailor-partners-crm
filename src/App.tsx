@@ -96,6 +96,17 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Permite ADMIN/LIDER OU qualquer usuário cujo perfil tenha a permissão pai indicada.
+function PermissionRoute({ permission, children }: { permission: string; children: React.ReactNode }) {
+  const { session, role, permissoes, loading } = useAuth();
+  if (loading) return <TailorLoader />;
+  if (!session) return <Navigate to="/auth" replace />;
+  const isAdminLider = role === "ADMIN" || role === "LIDER";
+  const hasPerm = !!permissoes?.[permission];
+  if (!isAdminLider && !hasPerm) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   const { session, loading } = useAuth();
   if (loading) return <TailorLoader />;
@@ -121,7 +132,7 @@ function AppRoutes() {
         <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
         <Route path="/relatorios/saldo-consolidado" element={<ProtectedRoute><SaldoConsolidado /></ProtectedRoute>} />
         <Route path="/import-clients" element={<AdminRoute><ImportClients /></AdminRoute>} />
-        <Route path="/admin/importar-bases" element={<AdminRoute><ImportarBases /></AdminRoute>} />
+        <Route path="/admin/importar-bases" element={<PermissionRoute permission="menu_importar_bases"><ImportarBases /></PermissionRoute>} />
         <Route path="/admin/auditoria-comercial" element={<AdminRoute><AuditoriaComercial /></AdminRoute>} />
         <Route path="/admin/perfis" element={<AdminRoute><GestaoProfiles /></AdminRoute>} />
         <Route path="/admin/usuarios" element={<AdminRoute><GestaoUsuarios /></AdminRoute>} />

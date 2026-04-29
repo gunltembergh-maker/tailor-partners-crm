@@ -191,7 +191,7 @@ const CARDS: CardConfig[] = [
 // ─── Componente principal ─────────────────────────────────────────
 
 export function SaldoConsolidadoSection() {
-  const { role, user } = useAuth();
+  const { role, user, permissoes } = useAuth();
   const [progress, setProgress] = useState<ProgressState>(initialProgress);
   const [cargas, setCargas] = useState<any[]>([]);
   const [loadingCargas, setLoadingCargas] = useState(false);
@@ -200,8 +200,14 @@ export function SaldoConsolidadoSection() {
   const [apagando, setApagando] = useState(false);
 
   const isAdmin = role === "ADMIN" || role === "LIDER";
+  // Sub-permissões granulares de "Importar Bases".
+  // Admin/Lider sempre podem; demais perfis dependem das chaves no perfil de acesso.
+  const canXP = isAdmin || !!permissoes?.menu_importar_saldo_xp;
+  const canAvenue = isAdmin || !!permissoes?.menu_importar_saldo_avenue;
+  const canAny = canXP || canAvenue;
 
   useEffect(() => {
+    // Apenas Admin/Líder enxerga o histórico de cargas.
     if (!isAdmin) return;
     let mounted = true;
     setLoadingCargas(true);
@@ -623,21 +629,28 @@ export function SaldoConsolidadoSection() {
     }
   }, []);
 
-  if (!isAdmin) return null;
+  // Sem nenhuma sub-permissão de Saldo, não renderiza a seção.
+  if (!isAdmin && !canAny) return null;
+
+  const visibleCards = CARDS.filter((cfg) =>
+    cfg.casa === "XP" ? canXP : cfg.casa === "AVENUE" ? canAvenue : false,
+  );
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {CARDS.map((cfg) => (
+        {visibleCards.map((cfg) => (
           <SaldoCard key={cfg.casa} cfg={cfg} disabled={progress.open && !progress.finished} onFile={handleFile} />
         ))}
       </div>
 
-      <UltimasCargasTable
-        cargas={cargas}
-        loading={loadingCargas}
-        onApagar={(c) => setCargaParaApagar(c)}
-      />
+      {isAdmin && (
+        <UltimasCargasTable
+          cargas={cargas}
+          loading={loadingCargas}
+          onApagar={(c) => setCargaParaApagar(c)}
+        />
+      )}
 
       <AlertDialog
         open={!!cargaParaApagar}
