@@ -733,8 +733,8 @@ export default function ImportarBases() {
       {/* ═══ SALDO CONSOLIDADO — XP & AVENUE ═══ */}
       <SaldoConsolidadoSection />
 
-      {/* Resultados */}
-      {results.length > 0 && (
+      {/* Resultados — gated por permissão menu_importar_bases */}
+      {canSeeLegacy && results.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Última Importação por Base</h2>
           {results.map(result => {
