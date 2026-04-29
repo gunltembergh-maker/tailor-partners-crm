@@ -207,6 +207,7 @@ export function SaldoConsolidadoSection() {
   const canAny = canXP || canAvenue;
 
   useEffect(() => {
+    // Apenas Admin/Líder enxerga o histórico de cargas.
     if (!isAdmin) return;
     let mounted = true;
     setLoadingCargas(true);
