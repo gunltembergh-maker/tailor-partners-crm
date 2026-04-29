@@ -665,7 +665,8 @@ export default function ImportarBases() {
         </div>
       )}
 
-      {/* Drop zone */}
+      {/* Drop zone — apenas Admin/Líder (cobre as bases legadas) */}
+      {(role === 'ADMIN' || role === 'LIDER') && (
       <div
         {...getRootProps()}
         className={cn(
@@ -689,6 +690,7 @@ export default function ImportarBases() {
           </div>
         )}
       </div>
+      )}
 
       {/* Mapa de bases */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
