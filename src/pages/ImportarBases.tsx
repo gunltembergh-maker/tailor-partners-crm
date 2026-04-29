@@ -478,8 +478,9 @@ export default function ImportarBases() {
         </p>
       </div>
 
-      {/* ═══ STATUS PANEL — ADMIN ═══ */}
-      {isAdminLider && (
+      {/* ═══ STATUS PANEL ═══ */}
+      {canSeeLegacy && (
+        <Card className="border-[#082537]/30">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="h-4 w-4 text-[#082537]" />
