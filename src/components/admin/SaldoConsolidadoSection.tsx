@@ -191,7 +191,7 @@ const CARDS: CardConfig[] = [
 // ─── Componente principal ─────────────────────────────────────────
 
 export function SaldoConsolidadoSection() {
-  const { role, user } = useAuth();
+  const { role, user, permissoes } = useAuth();
   const [progress, setProgress] = useState<ProgressState>(initialProgress);
   const [cargas, setCargas] = useState<any[]>([]);
   const [loadingCargas, setLoadingCargas] = useState(false);
@@ -200,6 +200,11 @@ export function SaldoConsolidadoSection() {
   const [apagando, setApagando] = useState(false);
 
   const isAdmin = role === "ADMIN" || role === "LIDER";
+  // Sub-permissões granulares de "Importar Bases".
+  // Admin/Lider sempre podem; demais perfis dependem das chaves no perfil de acesso.
+  const canXP = isAdmin || !!permissoes?.menu_importar_saldo_xp;
+  const canAvenue = isAdmin || !!permissoes?.menu_importar_saldo_avenue;
+  const canAny = canXP || canAvenue;
 
   useEffect(() => {
     if (!isAdmin) return;
