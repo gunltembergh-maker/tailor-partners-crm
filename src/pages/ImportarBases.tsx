@@ -231,10 +231,8 @@ export default function ImportarBases() {
   const [results, setResults] = useState<BaseResult[]>([]);
   const [processing, setProcessing] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const { role: realRole } = useAuth();
-  const { effectiveRole } = useViewAs();
-  const role = effectiveRole ?? realRole;
-  const isAdminLider = role === 'ADMIN' || role === 'LIDER';
+  const { effectivePermissoes } = useViewAs();
+  const canSeeLegacy = !!effectivePermissoes?.menu_importar_bases;
   const queryClient = useQueryClient();
 
   // ─── SharePoint Sync State ─────────────────────────────────────
@@ -252,7 +250,7 @@ export default function ImportarBases() {
   }>({ historicoCount: null, m0Count: null, dentroPeriodoM1: null, anoMesM1: null, anoMesM0: null });
 
   useEffect(() => {
-    if (isAdminLider) {
+    if (canSeeLegacy) {
       // Load last sync log
       supabase.rpc('rpc_admin_sync_log' as any).then(({ data }: any) => {
         if (data?.[0]) setLastSync(data[0]);
@@ -275,7 +273,7 @@ export default function ImportarBases() {
         });
       });
     }
-  }, [isAdminLider]);
+  }, [canSeeLegacy]);
 
   async function handleSyncMode(mode: string) {
     setSyncingMode(mode);
@@ -472,14 +470,15 @@ export default function ImportarBases() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Importar Bases</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {role === 'ADMIN' || role === 'LIDER'
+          {canSeeLegacy
             ? 'Arraste os arquivos Excel. Cada arquivo importa automaticamente todas as abas necessárias.'
             : 'Use os cards abaixo para importar as bases liberadas para o seu perfil.'}
         </p>
       </div>
 
-      {/* ═══ STATUS PANEL — ADMIN ═══ */}
-      {isAdminLider && (
+      {/* ═══ STATUS PANEL ═══ */}
+      {canSeeLegacy && (
+        <Card className="border-[#082537]/30">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <BookOpen className="h-4 w-4 text-[#082537]" />
@@ -532,8 +531,8 @@ export default function ImportarBases() {
         </Card>
       )}
 
-      {/* ═══ 3 SYNC BUTTONS — ADMIN ═══ */}
-      {role === 'ADMIN' && (
+      {/* ═══ 3 SYNC BUTTONS ═══ */}
+      {canSeeLegacy && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* M0 */}
           <Card className="border-[#082537]/20 hover:border-[#082537]/40 transition-colors">
@@ -633,8 +632,8 @@ export default function ImportarBases() {
         </div>
       )}
 
-      {/* ═══ SYNC ALL BASES — ADMIN ═══ */}
-      {role === 'ADMIN' && (
+      {/* ═══ SYNC ALL BASES ═══ */}
+      {canSeeLegacy && (
         <Card className="border-[#082537] border-2">
           <CardContent className="p-5">
             <div className="flex items-center justify-between flex-wrap gap-4">
@@ -668,8 +667,8 @@ export default function ImportarBases() {
         </div>
       )}
 
-      {/* Drop zone — apenas Admin/Líder (cobre as bases legadas) */}
-      {(role === 'ADMIN' || role === 'LIDER') && (
+      {/* Drop zone — gated por permissão menu_importar_bases */}
+      {canSeeLegacy && (
       <div
         {...getRootProps()}
         className={cn(
@@ -695,8 +694,8 @@ export default function ImportarBases() {
       </div>
       )}
 
-      {/* Mapa de bases — apenas Admin/Líder */}
-      {(role === 'ADMIN' || role === 'LIDER') && (
+      {/* Mapa de bases — gated por permissão menu_importar_bases */}
+      {canSeeLegacy && (
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
           <Info size={14} className="text-gray-400" />
@@ -732,8 +731,8 @@ export default function ImportarBases() {
       {/* ═══ SALDO CONSOLIDADO — XP & AVENUE ═══ */}
       <SaldoConsolidadoSection />
 
-      {/* Resultados */}
-      {results.length > 0 && (
+      {/* Resultados — gated por permissão menu_importar_bases */}
+      {canSeeLegacy && results.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Última Importação por Base</h2>
           {results.map(result => {
