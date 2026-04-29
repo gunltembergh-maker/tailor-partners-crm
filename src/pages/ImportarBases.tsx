@@ -533,8 +533,8 @@ export default function ImportarBases() {
         </Card>
       )}
 
-      {/* ═══ 3 SYNC BUTTONS — ADMIN ═══ */}
-      {role === 'ADMIN' && (
+      {/* ═══ 3 SYNC BUTTONS ═══ */}
+      {canSeeLegacy && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* M0 */}
           <Card className="border-[#082537]/20 hover:border-[#082537]/40 transition-colors">
