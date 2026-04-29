@@ -472,7 +472,7 @@ export default function ImportarBases() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Importar Bases</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {role === 'ADMIN' || role === 'LIDER'
+          {canSeeLegacy
             ? 'Arraste os arquivos Excel. Cada arquivo importa automaticamente todas as abas necessárias.'
             : 'Use os cards abaixo para importar as bases liberadas para o seu perfil.'}
         </p>
