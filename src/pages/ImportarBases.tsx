@@ -696,8 +696,8 @@ export default function ImportarBases() {
       </div>
       )}
 
-      {/* Mapa de bases — apenas Admin/Líder */}
-      {(role === 'ADMIN' || role === 'LIDER') && (
+      {/* Mapa de bases — gated por permissão menu_importar_bases */}
+      {canSeeLegacy && (
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
           <Info size={14} className="text-gray-400" />
