@@ -629,21 +629,28 @@ export function SaldoConsolidadoSection() {
     }
   }, []);
 
-  if (!isAdmin) return null;
+  // Sem nenhuma sub-permissão de Saldo, não renderiza a seção.
+  if (!isAdmin && !canAny) return null;
+
+  const visibleCards = CARDS.filter((cfg) =>
+    cfg.casa === "XP" ? canXP : cfg.casa === "AVENUE" ? canAvenue : false,
+  );
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {CARDS.map((cfg) => (
+        {visibleCards.map((cfg) => (
           <SaldoCard key={cfg.casa} cfg={cfg} disabled={progress.open && !progress.finished} onFile={handleFile} />
         ))}
       </div>
 
-      <UltimasCargasTable
-        cargas={cargas}
-        loading={loadingCargas}
-        onApagar={(c) => setCargaParaApagar(c)}
-      />
+      {isAdmin && (
+        <UltimasCargasTable
+          cargas={cargas}
+          loading={loadingCargas}
+          onApagar={(c) => setCargaParaApagar(c)}
+        />
+      )}
 
       <AlertDialog
         open={!!cargaParaApagar}
