@@ -692,7 +692,8 @@ export default function ImportarBases() {
       </div>
       )}
 
-      {/* Mapa de bases */}
+      {/* Mapa de bases — apenas Admin/Líder */}
+      {(role === 'ADMIN' || role === 'LIDER') && (
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
           <Info size={14} className="text-gray-400" />
@@ -723,6 +724,7 @@ export default function ImportarBases() {
           ))}
         </div>
       </div>
+      )}
 
       {/* ═══ SALDO CONSOLIDADO — XP & AVENUE ═══ */}
       <SaldoConsolidadoSection />
