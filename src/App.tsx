@@ -96,14 +96,14 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Permite ADMIN/LIDER OU qualquer usuário cujo perfil tenha a permissão pai indicada.
-function PermissionRoute({ permission, children }: { permission: string; children: React.ReactNode }) {
+// Permite ADMIN/LIDER OU qualquer usuário cujo perfil tenha PELO MENOS UMA das permissões indicadas (lógica OR).
+function PermissionRoute({ permissions, children }: { permissions: string[]; children: React.ReactNode }) {
   const { session, role, permissoes, loading } = useAuth();
   if (loading) return <TailorLoader />;
   if (!session) return <Navigate to="/auth" replace />;
   const isAdminLider = role === "ADMIN" || role === "LIDER";
-  const hasPerm = !!permissoes?.[permission];
-  if (!isAdminLider && !hasPerm) return <Navigate to="/" replace />;
+  const hasAnyPerm = permissions.some((p) => !!permissoes?.[p]);
+  if (!isAdminLider && !hasAnyPerm) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
