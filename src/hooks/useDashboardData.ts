@@ -352,6 +352,12 @@ export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string
   // Always propagate the full anomes window from the parent table so the drill
   // header keeps the same months even when the drilled slice has no data.
   const anomesParam = anomesOverride && anomesOverride.length ? anomesOverride : scopedPbi.p_anomes;
+  // Use the aggregated RPC: it groups by (mês × label) server-side, so the
+  // response is ~1 row per month×label instead of ~1 row per document. This
+  // bypasses PostgREST's hard max-rows cap (1000) that was silently
+  // truncating heavy categories like Assessoria (~17k detail rows) and
+  // returning only the OLDEST months — leaving recent columns blank/zero.
+  const drillLevel = drillPath.length; // 1=subcat, 2=produto, 3=cliente
   const params = {
     p_anomes: anomesParam,
     p_banker: scopedPbi.p_banker,
@@ -359,15 +365,12 @@ export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string
     p_categoria: drillPath[0] ?? null,
     p_subcategoria: drillPath[1] ?? null,
     p_produto: drillPath[2] ?? null,
+    p_level: drillLevel,
   };
   return useQuery({
-    queryKey: ["receita-drilldown", params],
+    queryKey: ["receita-drilldown-agg", params],
     queryFn: async () => {
-      // Override PostgREST's default 1000-row cap so we don't lose the recent
-      // months on heavy categories (e.g. Assessoria has ~17k detail rows).
-      const { data, error } = await supabase
-        .rpc("rpc_receita_drilldown", params as any)
-        .range(0, 199999);
+      const { data, error } = await supabase.rpc("rpc_receita_drilldown_agg", params as any);
       if (error) throw error;
       return (data as any[]) ?? [];
     },

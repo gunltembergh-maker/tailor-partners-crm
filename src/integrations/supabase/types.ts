@@ -3757,6 +3757,23 @@ export type Database = {
           valor: number
         }[]
       }
+      rpc_receita_drilldown_agg: {
+        Args: {
+          p_anomes?: number[]
+          p_banker?: string[]
+          p_categoria?: string
+          p_finder?: string[]
+          p_level?: number
+          p_produto?: string
+          p_subcategoria?: string
+        }
+        Returns: {
+          anomes: number
+          anomes_nome: string
+          label: string
+          valor: number
+        }[]
+      }
       rpc_receita_matriz_rows: {
         Args: { p_anomes?: number[]; p_banker?: string[]; p_finder?: string[] }
         Returns: {
