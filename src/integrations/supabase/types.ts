@@ -168,7 +168,7 @@ export type Database = {
             columns: ["criado_por"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -3063,6 +3063,7 @@ export type Database = {
       normalize_tipo_cliente: { Args: { p_tipo: string }; Returns: string }
       parse_num: { Args: { v: string }; Returns: number }
       parse_num_any: { Args: { v: string }; Returns: number }
+      pode_importar_saldo: { Args: { _user_id: string }; Returns: boolean }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
