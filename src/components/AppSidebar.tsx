@@ -57,14 +57,15 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-  const { effectiveRole, effectivePermissoes, viewAsProfile } = useViewAs();
+  const { effectiveRole, effectivePermissoes } = useViewAs();
 
-  // When Minha Visão is active, the sidebar reflects the simulated user's permissions
+  // Visibility ALWAYS reflects the simulated profile when Minha Visão is active.
+  // ADMIN/LIDER are auto-granted access by convention (matches what they'd see logging in).
   const role = effectiveRole;
   const permissoes = effectivePermissoes;
-  const isAdmin = role === "ADMIN" && !viewAsProfile;
+  const isAdminLider = role === "ADMIN" || role === "LIDER";
 
-  const canSee = (key: string) => isAdmin || permissoes?.[key] === true;
+  const canSee = (key: string) => isAdminLider || permissoes?.[key] === true;
 
   // Filter menu items based on permissions
   const visibleMenuItems = menuItems.filter((item) => canSee(item.key));
