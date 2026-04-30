@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { ViewAsProvider } from "@/contexts/ViewAsContext";
+import { ViewAsProvider, useViewAs } from "@/contexts/ViewAsContext";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { MinhaVisaoIndicator } from "@/components/MinhaVisaoIndicator";
 import Auth from "./pages/Auth";
@@ -89,20 +89,23 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { session, role, loading } = useAuth();
+  const { session, loading } = useAuth();
+  const { effectiveRole } = useViewAs();
   if (loading) return <TailorLoader />;
   if (!session) return <Navigate to="/auth" replace />;
-  if (!role || !["ADMIN", "LIDER"].includes(role)) return <Navigate to="/" replace />;
+  if (!effectiveRole || !["ADMIN", "LIDER"].includes(effectiveRole)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 // Permite ADMIN/LIDER OU qualquer usuário cujo perfil tenha PELO MENOS UMA das permissões indicadas (lógica OR).
+// Usa effectiveRole/effectivePermissoes para que a Minha Visão simule corretamente o acesso do perfil alvo.
 function PermissionRoute({ permissions, children }: { permissions: string[]; children: React.ReactNode }) {
-  const { session, role, permissoes, loading } = useAuth();
+  const { session, loading } = useAuth();
+  const { effectiveRole, effectivePermissoes } = useViewAs();
   if (loading) return <TailorLoader />;
   if (!session) return <Navigate to="/auth" replace />;
-  const isAdminLider = role === "ADMIN" || role === "LIDER";
-  const hasAnyPerm = permissions.some((p) => !!permissoes?.[p]);
+  const isAdminLider = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
+  const hasAnyPerm = permissions.some((p) => !!effectivePermissoes?.[p]);
   if (!isAdminLider && !hasAnyPerm) return <Navigate to="/" replace />;
   return <>{children}</>;
 }

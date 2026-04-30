@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, X, Users, ArrowUpRight, TrendingUp, BarChart3 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 
 function fmtBRL(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
@@ -24,7 +24,7 @@ interface MetricRow {
 }
 
 export default function AuditoriaComercial() {
-  const { role } = useAuth();
+  const { effectiveRole } = useViewAs();
   const {
     pendingFilters, appliedFilters, updatePendingFilter,
     applyFilters, resetFilters, hasChanges, activeChips, removeChip,
@@ -94,7 +94,7 @@ export default function AuditoriaComercial() {
     URL.revokeObjectURL(url);
   };
 
-  if (role !== "ADMIN" && role !== "LIDER") {
+  if (effectiveRole !== "ADMIN" && effectiveRole !== "LIDER") {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">

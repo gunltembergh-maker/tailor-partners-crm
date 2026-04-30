@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -29,14 +29,14 @@ interface Notif {
 }
 
 export function AdminNotifications() {
-  const { role } = useAuth();
+  const { effectiveRole } = useViewAs();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [approveNotif, setApproveNotif] = useState<Notif | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [approving, setApproving] = useState(false);
 
-  const isAdmin = role === "ADMIN" || role === "LIDER";
+  const isAdmin = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
 
   const { data: notifs } = useQuery({
     queryKey: ["admin-notificacoes"],
