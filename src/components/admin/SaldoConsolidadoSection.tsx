@@ -194,6 +194,7 @@ const CARDS: CardConfig[] = [
 
 export function SaldoConsolidadoSection() {
   const { role, user, permissoes } = useAuth();
+  const { effectivePermissoes } = useViewAs();
   const [progress, setProgress] = useState<ProgressState>(initialProgress);
   const [cargas, setCargas] = useState<any[]>([]);
   const [loadingCargas, setLoadingCargas] = useState(false);
@@ -202,30 +203,35 @@ export function SaldoConsolidadoSection() {
   const [apagando, setApagando] = useState(false);
 
   const isAdmin = role === "ADMIN" || role === "LIDER";
-  // Sub-permissões granulares de "Importar Bases".
-  // Admin/Lider sempre podem; demais perfis dependem das chaves no perfil de acesso.
-  const canXP = isAdmin || !!permissoes?.menu_importar_saldo_xp;
-  const canAvenue = isAdmin || !!permissoes?.menu_importar_saldo_avenue;
+  // Sub-permissões granulares de "Importar Bases" — respeita "Minha Visão".
+  const effPerms = effectivePermissoes ?? permissoes;
+  const canXP = isAdmin || !!effPerms?.menu_importar_saldo_xp;
+  const canAvenue = isAdmin || !!effPerms?.menu_importar_saldo_avenue;
   const canAny = canXP || canAvenue;
+  // Qualquer usuário com permissão de import (granular ou admin) vê a tabela de cargas.
+  const canSeeImport = isAdmin || canAny;
 
   useEffect(() => {
-    // Apenas Admin/Líder enxerga o histórico de cargas.
-    if (!isAdmin) return;
+    if (!canSeeImport) return;
     let mounted = true;
     setLoadingCargas(true);
-    supabase
+    let query = supabase
       .from("cargas_saldo" as any)
       .select("*")
       .order("criado_em", { ascending: false })
-      .limit(10)
-      .then(({ data }) => {
-        if (mounted) setCargas((data as any[]) ?? []);
-        setLoadingCargas(false);
-      });
+      .limit(10);
+    // Não-admin vê apenas as próprias cargas
+    if (!isAdmin && user?.id) {
+      query = query.eq("usuario_upload_id", user.id) as any;
+    }
+    query.then(({ data }) => {
+      if (mounted) setCargas((data as any[]) ?? []);
+      setLoadingCargas(false);
+    });
     return () => {
       mounted = false;
     };
-  }, [isAdmin, reloadKey]);
+  }, [canSeeImport, isAdmin, user?.id, reloadKey]);
 
   const setPhase = useCallback((phase: PhaseKey, state: PhaseState) => {
     setProgress((prev) => ({ ...prev, phases: { ...prev.phases, [phase]: state } }));
