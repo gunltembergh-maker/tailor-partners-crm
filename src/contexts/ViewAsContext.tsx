@@ -193,6 +193,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
         effectiveUserId,
         effectiveRole,
         effectivePermissoes,
+        isViewingAs: !!viewAsProfile,
         viewAsUserId: viewAsProfile?.user_id ?? null,
       }}
     >
