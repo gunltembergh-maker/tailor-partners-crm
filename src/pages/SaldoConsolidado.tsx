@@ -255,6 +255,15 @@ export default function SaldoConsolidado() {
     },
   });
 
+  const { data: advisorsOpts } = useQuery({
+    queryKey: ["saldo-filtros-advisors"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_saldo_filtros_advisors" as any);
+      if (error) throw error;
+      return ((data ?? []) as { advisor: string }[]).filter((a) => !!a.advisor);
+    },
+  });
+
   const { data: findersOpts } = useQuery({
     queryKey: ["saldo-filtros-finders"],
     queryFn: async () => {
