@@ -183,6 +183,8 @@ function buildHtmlTable(rows: SaldoRow[], dataFormatada: string): string {
 // ─── Página ──────────────────────────────────────────────────────────
 
 export default function SaldoConsolidado() {
+  const { user } = useAuth();
+
   // Filtros
   const [busca, setBusca] = useState("");
   const [buscaDebounced, setBuscaDebounced] = useState("");
@@ -198,6 +200,20 @@ export default function SaldoConsolidado() {
   const [detalheCpf, setDetalheCpf] = useState<string | null>(null);
   const [detalheOpen, setDetalheOpen] = useState(false);
   const [produtoOpen, setProdutoOpen] = useState(false);
+
+  // Onboarding modal: abre auto na 1ª vez por usuário (persistência via localStorage)
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `saldo_consolidado_onboarding_${user.id}`;
+    if (!localStorage.getItem(key)) setShowOnboarding(true);
+  }, [user?.id]);
+  const handleCloseOnboarding = () => {
+    if (user?.id) {
+      localStorage.setItem(`saldo_consolidado_onboarding_${user.id}`, "1");
+    }
+    setShowOnboarding(false);
+  };
 
   // Debounce da busca
   useEffect(() => {
