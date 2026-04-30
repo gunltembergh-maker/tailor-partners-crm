@@ -453,6 +453,7 @@ export function SaldoConsolidadoSection() {
           total_linhas: linhasEnriquecidas.length,
           status_processamento: "PROCESSANDO",
           usuario_upload_email: user?.email ?? null,
+          usuario_upload_id: user?.id ?? null,
         });
         if (cargaErr) throw new Error(`Falha ao registrar carga: ${cargaErr.message}`);
         inserted = true;
