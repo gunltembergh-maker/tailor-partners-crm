@@ -917,8 +917,10 @@ function UltimasCargasTable({
 }: {
   cargas: any[];
   loading: boolean;
-  onApagar: (carga: any) => void;
+  onApagar?: (carga: any) => void;
 }) {
+  const showActions = !!onApagar;
+  const colSpan = showActions ? 9 : 8;
   return (
     <Card>
       <CardContent className="p-5">
@@ -940,20 +942,20 @@ function UltimasCargasTable({
                 <TableHead>Upload por</TableHead>
                 <TableHead>Data/hora</TableHead>
                 <TableHead>Duração</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                {showActions && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={colSpan} className="text-center text-muted-foreground py-6">
                     Carregando…
                   </TableCell>
                 </TableRow>
               )}
               {!loading && cargas.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={colSpan} className="text-center text-muted-foreground py-6">
                     Nenhuma carga registrada ainda.
                   </TableCell>
                 </TableRow>
@@ -981,7 +983,7 @@ function UltimasCargasTable({
                       )}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={c.status_processamento} />
+                      <StatusBadge status={c.status_processamento} criadoEm={c.criado_em} />
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[180px] truncate">
                       {c.usuario_upload_email ?? "—"}
@@ -990,21 +992,23 @@ function UltimasCargasTable({
                     <TableCell className="text-xs">
                       {durationSeconds(c.criado_em, c.finalizado_em)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {(c.status_processamento === "CONCLUIDO" ||
-                        c.status_processamento === "CONCLUIDO_COM_ALERTA" ||
-                        c.status_processamento === "ERRO") && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onApagar(c)}
-                          title="Apagar carga"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </TableCell>
+                    {showActions && (
+                      <TableCell className="text-right">
+                        {(c.status_processamento === "CONCLUIDO" ||
+                          c.status_processamento === "CONCLUIDO_COM_ALERTA" ||
+                          c.status_processamento === "ERRO") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => onApagar!(c)}
+                            title="Apagar carga"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
             </TableBody>
