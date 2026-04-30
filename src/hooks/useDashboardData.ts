@@ -347,10 +347,13 @@ export function useReceitaMatrizRowsCat(filters: DashboardFilters) {
 
 // ─── Receita Drilldown RPC ───
 
-export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string[]) {
+export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string[], anomesOverride?: number[] | null) {
   const scopedPbi = useScopedRpcParamsPbi(filters);
+  // Always propagate the full anomes window from the parent table so the drill
+  // header keeps the same months even when the drilled slice has no data.
+  const anomesParam = anomesOverride && anomesOverride.length ? anomesOverride : scopedPbi.p_anomes;
   const params = {
-    p_anomes: scopedPbi.p_anomes,
+    p_anomes: anomesParam,
     p_banker: scopedPbi.p_banker,
     p_finder: scopedPbi.p_finder,
     p_categoria: drillPath[0] ?? null,
