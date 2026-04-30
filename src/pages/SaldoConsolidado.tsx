@@ -1063,8 +1063,8 @@ export default function SaldoConsolidado() {
                           {fmtBRL(r.total_saldo)}
                         </TableCell>
                         <TableCell className="text-xs">{r.banker}</TableCell>
-                        <TableCell className="text-xs">{r.finder}</TableCell>
                         <TableCell className="text-xs">{r.advisor}</TableCell>
+                        <TableCell className="text-xs">{r.finder}</TableCell>
                       </TableRow>
                     ))
                   )}
