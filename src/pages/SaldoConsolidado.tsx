@@ -13,8 +13,11 @@ import {
   ChevronDown,
   FilterX,
   Calendar,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { SaldoConsolidadoOnboardingModal } from "@/components/relatorios/SaldoConsolidadoOnboardingModal";
 
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
