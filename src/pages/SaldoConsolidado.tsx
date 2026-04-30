@@ -1008,9 +1008,9 @@ export default function SaldoConsolidado() {
                     <TableHead className="text-right">D+2</TableHead>
                     <TableHead className="text-right">D+3</TableHead>
                     <TableHead className="text-right">Total</TableHead>
-                    <TableHead>Banker</TableHead>
-                    <TableHead>Finder</TableHead>
+                    <TableHead>FA</TableHead>
                     <TableHead>Advisor</TableHead>
+                    <TableHead>Finder</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
