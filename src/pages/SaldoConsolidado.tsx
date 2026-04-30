@@ -969,6 +969,37 @@ export default function SaldoConsolidado() {
                     )}
                   </div>
 
+                  {/* Filtro Tipo de Pessoa */}
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-2">
+                      <Filter className="h-3.5 w-3.5" />
+                      Tipo de Pessoa
+                      {tiposPessoaSelecionados.length === 2 ? (
+                        <span className="text-xs text-muted-foreground normal-case font-normal">(Todos)</span>
+                      ) : (
+                        <Badge variant="secondary" className="ml-1">
+                          {tiposPessoaSelecionados.length}
+                        </Badge>
+                      )}
+                    </p>
+                    <div className="space-y-0.5">
+                      <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox
+                          checked={tiposPessoaSelecionados.includes("PF")}
+                          onCheckedChange={() => toggleTipoPessoa("PF")}
+                        />
+                        <span>Pessoa Física</span>
+                      </label>
+                      <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox
+                          checked={tiposPessoaSelecionados.includes("PJ")}
+                          onCheckedChange={() => toggleTipoPessoa("PJ")}
+                        />
+                        <span>Pessoa Jurídica</span>
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="h-px bg-border" />
 
                   <button
