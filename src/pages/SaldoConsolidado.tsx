@@ -191,6 +191,7 @@ export default function SaldoConsolidado() {
   const [casasSelecionadas, setCasasSelecionadas] = useState<string[]>([]);
   const [casasInicializadas, setCasasInicializadas] = useState(false);
   const [bankersSelecionados, setBankersSelecionados] = useState<string[]>([]);
+  const [advisorsSelecionados, setAdvisorsSelecionados] = useState<string[]>([]);
   const [findersSelecionados, setFindersSelecionados] = useState<string[]>([]);
   const [datasSelecionadas, setDatasSelecionadas] = useState<string[]>([]);
   const [datasInicializadas, setDatasInicializadas] = useState(false);
