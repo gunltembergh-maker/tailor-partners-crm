@@ -571,6 +571,12 @@ export default function SaldoConsolidado() {
     );
   }
 
+  function toggleAdvisor(a: string) {
+    setAdvisorsSelecionados((prev) =>
+      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a],
+    );
+  }
+
   const totalDatasOpts = dataRefOpts?.length ?? 0;
   const datasParcial =
     datasInicializadas &&
@@ -581,6 +587,7 @@ export default function SaldoConsolidado() {
     busca.trim().length > 0 ||
     (casasOpts ? casasSelecionadas.length !== casasOpts.length : false) ||
     bankersSelecionados.length > 0 ||
+    advisorsSelecionados.length > 0 ||
     findersSelecionados.length > 0 ||
     datasParcial;
 
@@ -589,6 +596,7 @@ export default function SaldoConsolidado() {
     setBuscaDebounced("");
     if (casasOpts) setCasasSelecionadas(casasOpts.map((c) => c.casa));
     setBankersSelecionados([]);
+    setAdvisorsSelecionados([]);
     setFindersSelecionados([]);
     if (dataRefOpts) setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
   }
