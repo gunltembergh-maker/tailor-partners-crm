@@ -31,6 +31,8 @@ interface ViewAsContextType {
   effectiveRole: string | null;
   /** Effective permissoes for menu filtering — simulated when active. */
   effectivePermissoes: Record<string, boolean> | null;
+  /** True when an Admin has Minha Visão active (simulating another user). */
+  isViewingAs: boolean;
   /** @deprecated use viewAsProfile?.user_id */
   viewAsUserId: string | null;
 }
@@ -45,6 +47,7 @@ const ViewAsContext = createContext<ViewAsContextType>({
   effectiveUserId: null,
   effectiveRole: null,
   effectivePermissoes: null,
+  isViewingAs: false,
   viewAsUserId: null,
 });
 
