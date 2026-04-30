@@ -173,8 +173,10 @@ function formatDateTime(d: string | null | undefined): string {
 function durationSeconds(a: string | null | undefined, b: string | null | undefined): string {
   if (!a || !b) return "—";
   const ms = new Date(b).getTime() - new Date(a).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return "—";
-  return `${Math.round(ms / 1000)}s`;
+  if (!Number.isFinite(ms)) return "—";
+  // Garantia contra clock skew (criado_em via default now() server vs finalizado_em via client)
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  return `${seconds}s`;
 }
 
 // ─── Card único reutilizável ───────────────────────────────────────
