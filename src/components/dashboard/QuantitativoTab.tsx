@@ -170,10 +170,12 @@ function pivotDesc<T extends Record<string,any>>(
 interface MatrizNode {key:string;label:string;depth:number;values:Record<string,number>;total:number;children:MatrizNode[];}
 
 /** Build category-level matrix from the lightweight cat RPC */
-function buildMatrizFlat(catData:any[]):{rows:{categoria:string;values:Record<string,number>;total:number}[];meses:string[]} {
+function buildMatrizFlat(catData:any[]):{rows:{categoria:string;values:Record<string,number>;total:number}[];meses:string[];anomes:number[]} {
   const mesesMap=new Map<number,string>();
   catData.forEach(r=>{if(!mesesMap.has(r.anomes))mesesMap.set(r.anomes,r.anomes_nome||String(r.anomes));});
-  const meses=[...mesesMap.entries()].sort((a,b)=>b[0]-a[0]).map(([,n])=>n);
+  const sorted=[...mesesMap.entries()].sort((a,b)=>b[0]-a[0]);
+  const meses=sorted.map(([,n])=>n);
+  const anomes=sorted.map(([k])=>k);
   const catMap=new Map<string,{values:Record<string,number>;total:number}>();
   catData.forEach(r=>{
     const cat=r.categoria||"N/D",mes=r.anomes_nome||String(r.anomes),val=Number(r.valor)||0;
@@ -181,7 +183,7 @@ function buildMatrizFlat(catData:any[]):{rows:{categoria:string;values:Record<st
     const c=catMap.get(cat)!;c.total+=val;c.values[mes]=(c.values[mes]||0)+val;
   });
   const rows=[...catMap.entries()].map(([cat,v])=>({categoria:cat,...v})).sort((a,b)=>b.total-a.total);
-  return {rows,meses};
+  return {rows,meses,anomes};
 }
 
 /** Build detail tree for a single expanded category from the detail RPC */
@@ -386,8 +388,8 @@ export function QuantitativoTab({filters}:Props) {
   const receitaPorCategoriaAll=useMemo(()=>
     receitaTreemap?.map((r:any)=>({name:r.categoria||"Outros",value:Math.abs(Number(r.valor)||0)}))??[],[receitaTreemap]);
 
-  const {rows:matrizRows,meses:matrizMeses}=useMemo(()=>{
-    if(!receitaMatrizCat?.length) return {rows:[] as {categoria:string;values:Record<string,number>;total:number}[],meses:[] as string[]};
+  const {rows:matrizRows,meses:matrizMeses,anomes:matrizAnomes}=useMemo(()=>{
+    if(!receitaMatrizCat?.length) return {rows:[] as {categoria:string;values:Record<string,number>;total:number}[],meses:[] as string[],anomes:[] as number[]};
     return buildMatrizFlat(receitaMatrizCat);
   },[receitaMatrizCat]);
 
@@ -401,14 +403,17 @@ export function QuantitativoTab({filters}:Props) {
   const drillLevel = drillPath.length; // 0=cat, 1=subcat, 2=prod, 3=client
   const LEVEL_LABELS = ["Categoria", "Subcategoria", "Produto", "Cliente"];
 
-  const { data: drilldownData, isLoading: drillLoading } = useReceitaDrilldown(effectiveFilters, drillPath);
+  // Propagate the parent table's full anomes window so the drill header
+  // never shrinks when the drilled slice has fewer months of data.
+  const { data: drilldownData, isLoading: drillLoading } = useReceitaDrilldown(effectiveFilters, drillPath, matrizAnomes);
 
-  // Pivot drilldown data into rows + meses (same format as buildMatrizFlat)
+  // Pivot drilldown data into rows. Header (meses) ALWAYS comes from the
+  // parent table (matrizMeses / matrizAnomes) so the window stays identical
+  // across category → subcategory → product → cliente, even when a slice
+  // has zero rows for a given month.
   const { drillRows, drillMeses } = useMemo(() => {
-    if (!drilldownData?.length) return { drillRows: [] as { categoria: string; values: Record<string, number>; total: number }[], drillMeses: [] as string[] };
-    const mesesMap = new Map<number, string>();
-    drilldownData.forEach((r: any) => { if (!mesesMap.has(r.anomes)) mesesMap.set(r.anomes, r.anomes_nome || String(r.anomes)); });
-    const meses = [...mesesMap.entries()].sort((a, b) => b[0] - a[0]).map(([, n]) => n);
+    const meses = matrizMeses;
+    if (!drilldownData?.length) return { drillRows: [] as { categoria: string; values: Record<string, number>; total: number }[], drillMeses: meses };
     // Pick the label field based on drill level: 1=subcategoria, 2=produto, 3=documento (cliente)
     const labelFields = ["subcategoria", "produto", "documento"];
     const labelField = labelFields[drillLevel - 1] || "categoria";
@@ -420,7 +425,7 @@ export function QuantitativoTab({filters}:Props) {
     });
     const rows = [...catMap.entries()].map(([cat, v]) => ({ categoria: cat, ...v })).sort((a, b) => b.total - a.total);
     return { drillRows: rows, drillMeses: meses };
-  }, [drilldownData, drillLevel]);
+  }, [drilldownData, drillLevel, matrizMeses]);
 
   // Use drill data when path > 0, otherwise existing category data
   const activeRows = drillLevel > 0 ? drillRows : matrizRows;
