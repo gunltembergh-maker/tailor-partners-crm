@@ -898,13 +898,16 @@ export default function SaldoConsolidado() {
             <div className="flex gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-10 gap-2">
+                  <Button variant="outline" className="h-10 gap-2 relative">
                     {exporting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Plus className="h-4 w-4" />
                     )}
                     Ações
+                    {acoesIndicador && (
+                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="end" className="w-72 p-3 space-y-3">
