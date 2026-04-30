@@ -297,6 +297,7 @@ export default function SaldoConsolidado() {
         ? casasSelecionadas
         : null;
     const bankerParam = bankersSelecionados.length > 0 ? bankersSelecionados : null;
+    const advisorParam = advisorsSelecionados.length > 0 ? advisorsSelecionados : null;
     const finderParam = findersSelecionados.length > 0 ? findersSelecionados : null;
     // Limitação: RPCs aceitam p_data_referencia como date único (não array).
     // - 1 data específica selecionada → usa essa data
@@ -309,14 +310,14 @@ export default function SaldoConsolidado() {
         : null;
     return {
       p_banker: bankerParam,
-      p_advisor: null as string[] | null,
+      p_advisor: advisorParam,
       p_finder: finderParam,
       p_documento: null as string[] | null,
       p_casa: casaParam,
       p_data_referencia: dataParam,
       p_busca: buscaDebounced || null,
     };
-  }, [casasSelecionadas, casasOpts, bankersSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced]);
+  }, [casasSelecionadas, casasOpts, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced]);
 
   // ─── KPIs
   const { data: kpis, isLoading: kpisLoading } = useQuery({
