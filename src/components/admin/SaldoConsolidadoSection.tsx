@@ -653,11 +653,11 @@ export function SaldoConsolidadoSection() {
         ))}
       </div>
 
-      {isAdmin && (
+      {canSeeImport && (
         <UltimasCargasTable
           cargas={cargas}
           loading={loadingCargas}
-          onApagar={(c) => setCargaParaApagar(c)}
+          onApagar={isAdmin ? (c) => setCargaParaApagar(c) : undefined}
         />
       )}
 
