@@ -885,77 +885,10 @@ export default function SaldoConsolidado() {
               </PopoverContent>
             </Popover>
 
-            {/* Filtro Data Referência multi-select */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
-                  <span className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Data
-                  </span>
-                  {totalDatasOpts > 0 && datasSelecionadas.length === totalDatasOpts ? (
-                    <span className="text-xs text-muted-foreground">Todas</span>
-                  ) : (
-                    <Badge variant="secondary" className="ml-1">
-                      {datasSelecionadas.length}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2" align="end">
-                {!dataRefOpts ? (
-                  <Skeleton className="h-20 w-full" />
-                ) : dataRefOpts.length === 0 ? (
-                  <p className="text-xs text-muted-foreground px-2 py-3">
-                    Nenhuma data disponível
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (datasSelecionadas.length === dataRefOpts.length) {
-                          setDatasSelecionadas([]);
-                        } else {
-                          setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
-                        }
-                      }}
-                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
-                    >
-                      {datasSelecionadas.length === dataRefOpts.length
-                        ? "Limpar seleção"
-                        : "Selecionar todas"}
-                    </button>
-                    <div className="h-px bg-border my-1" />
-                    <div className="max-h-64 overflow-y-auto space-y-0.5">
-                      {dataRefOpts.map((d) => (
-                        <label
-                          key={d.data_referencia}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
-                        >
-                          <Checkbox
-                            checked={datasSelecionadas.includes(d.data_referencia)}
-                            onCheckedChange={() =>
-                              setDatasSelecionadas((prev) =>
-                                prev.includes(d.data_referencia)
-                                  ? prev.filter((x) => x !== d.data_referencia)
-                                  : [...prev, d.data_referencia],
-                              )
-                            }
-                          />
-                          <span>{d.data_formatada}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
-
             <div className="flex gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="h-10 gap-2" disabled={isEmpty && !exporting}>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-10 gap-2">
                     {exporting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
@@ -963,26 +896,88 @@ export default function SaldoConsolidado() {
                     )}
                     Ações
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 p-3 space-y-3">
+                  {/* Filtro Data Referência (movido para Ações) */}
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-2">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Data
+                      {totalDatasOpts > 0 && datasSelecionadas.length === totalDatasOpts ? (
+                        <span className="text-xs text-muted-foreground normal-case font-normal">(Todas)</span>
+                      ) : (
+                        <Badge variant="secondary" className="ml-1">
+                          {datasSelecionadas.length}
+                        </Badge>
+                      )}
+                    </p>
+                    {!dataRefOpts ? (
+                      <Skeleton className="h-20 w-full" />
+                    ) : dataRefOpts.length === 0 ? (
+                      <p className="text-xs text-muted-foreground py-2">Nenhuma data disponível</p>
+                    ) : (
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (datasSelecionadas.length === dataRefOpts.length) {
+                              setDatasSelecionadas([]);
+                            } else {
+                              setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
+                            }
+                          }}
+                          className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition"
+                        >
+                          {datasSelecionadas.length === dataRefOpts.length
+                            ? "Limpar seleção"
+                            : "Selecionar todas"}
+                        </button>
+                        <div className="max-h-48 overflow-y-auto space-y-0.5">
+                          {dataRefOpts.map((d) => (
+                            <label
+                              key={d.data_referencia}
+                              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                            >
+                              <Checkbox
+                                checked={datasSelecionadas.includes(d.data_referencia)}
+                                onCheckedChange={() =>
+                                  setDatasSelecionadas((prev) =>
+                                    prev.includes(d.data_referencia)
+                                      ? prev.filter((x) => x !== d.data_referencia)
+                                      : [...prev, d.data_referencia],
+                                  )
+                                }
+                              />
+                              <span>{d.data_formatada}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="h-px bg-border" />
+
+                  <button
+                    type="button"
                     onClick={handleExportExcel}
                     disabled={exporting || isEmpty}
-                    className="gap-2 cursor-pointer"
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded text-sm hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <FileSpreadsheet className="h-4 w-4" />
                     Exportar Excel
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleSendEmail}
                     disabled={isEmpty}
-                    className="gap-2 cursor-pointer"
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded text-sm hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Mail className="h-4 w-4" />
                     Enviar por Outlook
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </button>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="ghost"
                 className="h-10 gap-2"
