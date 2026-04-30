@@ -189,6 +189,7 @@ export default function SaldoConsolidado() {
   const [findersSelecionados, setFindersSelecionados] = useState<string[]>([]);
   const [datasSelecionadas, setDatasSelecionadas] = useState<string[]>([]);
   const [datasInicializadas, setDatasInicializadas] = useState(false);
+  const [tiposPessoaSelecionados, setTiposPessoaSelecionados] = useState<string[]>(["PF", "PJ"]);
   const [page, setPage] = useState(0);
 
   // Modal de detalhe
@@ -219,7 +220,7 @@ export default function SaldoConsolidado() {
   // Reset de paginação ao mudar filtros
   useEffect(() => {
     setPage(0);
-  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas]);
+  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas, tiposPessoaSelecionados]);
 
   // ─── Filtros: opções
   const { data: casasOpts } = useQuery({
@@ -302,6 +303,10 @@ export default function SaldoConsolidado() {
       datasSelecionadas.length === 1 && totalDatas > 1
         ? datasSelecionadas[0]
         : null;
+    const tipoPessoaParam =
+      tiposPessoaSelecionados.length === 0 || tiposPessoaSelecionados.length === 2
+        ? null
+        : tiposPessoaSelecionados;
     return {
       p_banker: bankerParam,
       p_advisor: advisorParam,
@@ -310,8 +315,9 @@ export default function SaldoConsolidado() {
       p_casa: casaParam,
       p_data_referencia: dataParam,
       p_busca: buscaDebounced || null,
+      p_tipo_pessoa: tipoPessoaParam,
     };
-  }, [casasSelecionadas, casasOpts, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced]);
+  }, [casasSelecionadas, casasOpts, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced, tiposPessoaSelecionados]);
 
   // ─── KPIs
   const { data: kpis, isLoading: kpisLoading } = useQuery({
@@ -577,13 +583,22 @@ export default function SaldoConsolidado() {
     totalDatasOpts > 0 &&
     datasSelecionadas.length > 0 &&
     datasSelecionadas.length < totalDatasOpts;
+  const tipoPessoaParcial = tiposPessoaSelecionados.length !== 2;
   const hasFiltrosAplicados =
     busca.trim().length > 0 ||
     (casasOpts ? casasSelecionadas.length !== casasOpts.length : false) ||
     bankersSelecionados.length > 0 ||
     advisorsSelecionados.length > 0 ||
     findersSelecionados.length > 0 ||
-    datasParcial;
+    datasParcial ||
+    tipoPessoaParcial;
+  const acoesIndicador = datasParcial || tipoPessoaParcial;
+
+  function toggleTipoPessoa(tp: string) {
+    setTiposPessoaSelecionados((prev) =>
+      prev.includes(tp) ? prev.filter((x) => x !== tp) : [...prev, tp],
+    );
+  }
 
   function handleLimparFiltros() {
     setBusca("");
@@ -593,6 +608,7 @@ export default function SaldoConsolidado() {
     setAdvisorsSelecionados([]);
     setFindersSelecionados([]);
     if (dataRefOpts) setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
+    setTiposPessoaSelecionados(["PF", "PJ"]);
   }
 
   const isEmpty = !listaLoading && (lista?.length ?? 0) === 0;
@@ -882,13 +898,16 @@ export default function SaldoConsolidado() {
             <div className="flex gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-10 gap-2">
+                  <Button variant="outline" className="h-10 gap-2 relative">
                     {exporting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Plus className="h-4 w-4" />
                     )}
                     Ações
+                    {acoesIndicador && (
+                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="end" className="w-72 p-3 space-y-3">
@@ -948,6 +967,37 @@ export default function SaldoConsolidado() {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Filtro Tipo de Pessoa */}
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-2">
+                      <Filter className="h-3.5 w-3.5" />
+                      Tipo de Pessoa
+                      {tiposPessoaSelecionados.length === 2 ? (
+                        <span className="text-xs text-muted-foreground normal-case font-normal">(Todos)</span>
+                      ) : (
+                        <Badge variant="secondary" className="ml-1">
+                          {tiposPessoaSelecionados.length}
+                        </Badge>
+                      )}
+                    </p>
+                    <div className="space-y-0.5">
+                      <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox
+                          checked={tiposPessoaSelecionados.includes("PF")}
+                          onCheckedChange={() => toggleTipoPessoa("PF")}
+                        />
+                        <span>Pessoa Física</span>
+                      </label>
+                      <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox
+                          checked={tiposPessoaSelecionados.includes("PJ")}
+                          onCheckedChange={() => toggleTipoPessoa("PJ")}
+                        />
+                        <span>Pessoa Jurídica</span>
+                      </label>
+                    </div>
                   </div>
 
                   <div className="h-px bg-border" />
