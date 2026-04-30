@@ -62,8 +62,16 @@ const FILE_MAP: Record<string, { sheets: { sheet: string; table: string; require
   },
   'depara': {
     sheets: [
-      { sheet: 'Base CRM', table: 'raw_base_crm', required: true },
-      { sheet: 'DePara',   table: 'raw_depara',    required: true },
+      { sheet: 'DePara',                  table: 'raw_depara',              required: true  },
+      { sheet: 'Base CRM',                table: 'raw_base_crm',            required: true  },
+      { sheet: 'Base Consolidada',        table: 'raw_base_consolidada',    required: true  },
+      { sheet: 'Base Câmbio',             table: 'raw_base_cambio',         required: false },
+      { sheet: 'Base Gestora',            table: 'raw_base_gestora',        required: false },
+      { sheet: 'Base Corporate Seguros',  table: 'raw_base_corp_seguros',   required: false },
+      { sheet: 'Base Avenue',             table: 'raw_base_avenue',         required: false },
+      { sheet: 'F & O',                   table: 'raw_base_fo',             required: false },
+      { sheet: 'Base Lavoro',             table: 'raw_base_lavoro',         required: false },
+      { sheet: 'Desligados',              table: 'raw_desligados',          required: false },
     ]
   },
 };
