@@ -170,10 +170,12 @@ function pivotDesc<T extends Record<string,any>>(
 interface MatrizNode {key:string;label:string;depth:number;values:Record<string,number>;total:number;children:MatrizNode[];}
 
 /** Build category-level matrix from the lightweight cat RPC */
-function buildMatrizFlat(catData:any[]):{rows:{categoria:string;values:Record<string,number>;total:number}[];meses:string[]} {
+function buildMatrizFlat(catData:any[]):{rows:{categoria:string;values:Record<string,number>;total:number}[];meses:string[];anomes:number[]} {
   const mesesMap=new Map<number,string>();
   catData.forEach(r=>{if(!mesesMap.has(r.anomes))mesesMap.set(r.anomes,r.anomes_nome||String(r.anomes));});
-  const meses=[...mesesMap.entries()].sort((a,b)=>b[0]-a[0]).map(([,n])=>n);
+  const sorted=[...mesesMap.entries()].sort((a,b)=>b[0]-a[0]);
+  const meses=sorted.map(([,n])=>n);
+  const anomes=sorted.map(([k])=>k);
   const catMap=new Map<string,{values:Record<string,number>;total:number}>();
   catData.forEach(r=>{
     const cat=r.categoria||"N/D",mes=r.anomes_nome||String(r.anomes),val=Number(r.valor)||0;
@@ -181,7 +183,7 @@ function buildMatrizFlat(catData:any[]):{rows:{categoria:string;values:Record<st
     const c=catMap.get(cat)!;c.total+=val;c.values[mes]=(c.values[mes]||0)+val;
   });
   const rows=[...catMap.entries()].map(([cat,v])=>({categoria:cat,...v})).sort((a,b)=>b.total-a.total);
-  return {rows,meses};
+  return {rows,meses,anomes};
 }
 
 /** Build detail tree for a single expanded category from the detail RPC */
