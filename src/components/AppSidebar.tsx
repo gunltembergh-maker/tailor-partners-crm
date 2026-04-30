@@ -60,12 +60,13 @@ export function AppSidebar() {
   const { effectiveRole, effectivePermissoes } = useViewAs();
 
   // Visibility ALWAYS reflects the simulated profile when Minha Visão is active.
-  // ADMIN/LIDER are auto-granted access by convention (matches what they'd see logging in).
+  // Only ADMIN has auto-grant. LIDER (and all other roles) must respect the
+  // permissions configured in /admin/perfis — that page is the source of truth.
   const role = effectiveRole;
   const permissoes = effectivePermissoes;
-  const isAdminLider = role === "ADMIN" || role === "LIDER";
+  const isAdmin = role === "ADMIN";
 
-  const canSee = (key: string) => isAdminLider || permissoes?.[key] === true;
+  const canSee = (key: string) => isAdmin || permissoes?.[key] === true;
 
   // Filter menu items based on permissions
   const visibleMenuItems = menuItems.filter((item) => canSee(item.key));
