@@ -225,7 +225,7 @@ export default function SaldoConsolidado() {
   // Reset de paginação ao mudar filtros
   useEffect(() => {
     setPage(0);
-  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, findersSelecionados, datasSelecionadas]);
+  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas]);
 
   // ─── Filtros: opções
   const { data: casasOpts } = useQuery({
