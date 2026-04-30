@@ -3916,6 +3916,12 @@ export type Database = {
           total_saldo: number
         }[]
       }
+      rpc_saldo_filtros_advisors: {
+        Args: never
+        Returns: {
+          advisor: string
+        }[]
+      }
       rpc_saldo_filtros_bankers: {
         Args: never
         Returns: {

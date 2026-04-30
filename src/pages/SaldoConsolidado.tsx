@@ -59,12 +59,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Plus } from "lucide-react";
 
 // ─── Tipos ───────────────────────────────────────────────────────────
@@ -141,7 +135,7 @@ function buildHtmlTable(rows: SaldoRow[], dataFormatada: string): string {
     "D+2",
     "D+3",
     "Total",
-    "Banker",
+    "FA",
     "Finder",
     "Advisor",
   ];
@@ -191,6 +185,7 @@ export default function SaldoConsolidado() {
   const [casasSelecionadas, setCasasSelecionadas] = useState<string[]>([]);
   const [casasInicializadas, setCasasInicializadas] = useState(false);
   const [bankersSelecionados, setBankersSelecionados] = useState<string[]>([]);
+  const [advisorsSelecionados, setAdvisorsSelecionados] = useState<string[]>([]);
   const [findersSelecionados, setFindersSelecionados] = useState<string[]>([]);
   const [datasSelecionadas, setDatasSelecionadas] = useState<string[]>([]);
   const [datasInicializadas, setDatasInicializadas] = useState(false);
@@ -224,7 +219,7 @@ export default function SaldoConsolidado() {
   // Reset de paginação ao mudar filtros
   useEffect(() => {
     setPage(0);
-  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, findersSelecionados, datasSelecionadas]);
+  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas]);
 
   // ─── Filtros: opções
   const { data: casasOpts } = useQuery({
@@ -251,6 +246,15 @@ export default function SaldoConsolidado() {
       const { data, error } = await supabase.rpc("rpc_saldo_filtros_bankers" as any);
       if (error) throw error;
       return ((data ?? []) as { banker: string }[]).filter((b) => !!b.banker);
+    },
+  });
+
+  const { data: advisorsOpts } = useQuery({
+    queryKey: ["saldo-filtros-advisors"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_saldo_filtros_advisors" as any);
+      if (error) throw error;
+      return ((data ?? []) as { advisor: string }[]).filter((a) => !!a.advisor);
     },
   });
 
@@ -287,6 +291,7 @@ export default function SaldoConsolidado() {
         ? casasSelecionadas
         : null;
     const bankerParam = bankersSelecionados.length > 0 ? bankersSelecionados : null;
+    const advisorParam = advisorsSelecionados.length > 0 ? advisorsSelecionados : null;
     const finderParam = findersSelecionados.length > 0 ? findersSelecionados : null;
     // Limitação: RPCs aceitam p_data_referencia como date único (não array).
     // - 1 data específica selecionada → usa essa data
@@ -299,14 +304,14 @@ export default function SaldoConsolidado() {
         : null;
     return {
       p_banker: bankerParam,
-      p_advisor: null as string[] | null,
+      p_advisor: advisorParam,
       p_finder: finderParam,
       p_documento: null as string[] | null,
       p_casa: casaParam,
       p_data_referencia: dataParam,
       p_busca: buscaDebounced || null,
     };
-  }, [casasSelecionadas, casasOpts, bankersSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced]);
+  }, [casasSelecionadas, casasOpts, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced]);
 
   // ─── KPIs
   const { data: kpis, isLoading: kpisLoading } = useQuery({
@@ -433,7 +438,7 @@ export default function SaldoConsolidado() {
         "D+2": Number(r.d_mais_2 ?? 0),
         "D+3": Number(r.d_mais_3 ?? 0),
         Total: Number(r.total_saldo ?? 0),
-        Banker: r.banker ?? "",
+        FA: r.banker ?? "",
         Finder: r.finder ?? "",
         Advisor: r.advisor ?? "",
       }));
@@ -467,7 +472,7 @@ export default function SaldoConsolidado() {
         "D+2": Number(r.d_mais_2 ?? 0),
         "D+3": Number(r.d_mais_3 ?? 0),
         Total: Number(r.total_saldo ?? 0),
-        Banker: r.banker ?? "",
+        FA: r.banker ?? "",
         Advisor: r.advisor ?? "",
         Finder: r.finder ?? "",
       }));
@@ -560,6 +565,12 @@ export default function SaldoConsolidado() {
     );
   }
 
+  function toggleAdvisor(a: string) {
+    setAdvisorsSelecionados((prev) =>
+      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a],
+    );
+  }
+
   const totalDatasOpts = dataRefOpts?.length ?? 0;
   const datasParcial =
     datasInicializadas &&
@@ -570,6 +581,7 @@ export default function SaldoConsolidado() {
     busca.trim().length > 0 ||
     (casasOpts ? casasSelecionadas.length !== casasOpts.length : false) ||
     bankersSelecionados.length > 0 ||
+    advisorsSelecionados.length > 0 ||
     findersSelecionados.length > 0 ||
     datasParcial;
 
@@ -578,6 +590,7 @@ export default function SaldoConsolidado() {
     setBuscaDebounced("");
     if (casasOpts) setCasasSelecionadas(casasOpts.map((c) => c.casa));
     setBankersSelecionados([]);
+    setAdvisorsSelecionados([]);
     setFindersSelecionados([]);
     if (dataRefOpts) setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
   }
@@ -704,13 +717,67 @@ export default function SaldoConsolidado() {
               </PopoverContent>
             </Popover>
 
-            {/* Filtro Banker multi-select */}
+            {/* Filtro Advisor multi-select */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
                   <span className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    Banker
+                    Advisor
+                  </span>
+                  {advisorsSelecionados.length > 0 ? (
+                    <Badge variant="secondary" className="ml-1">
+                      {advisorsSelecionados.length}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Todos</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                {!advisorsOpts ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : advisorsOpts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-2 py-3">
+                    Nenhum advisor disponível
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setAdvisorsSelecionados([])}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
+                      disabled={advisorsSelecionados.length === 0}
+                    >
+                      Limpar seleção
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <div className="max-h-64 overflow-y-auto space-y-0.5">
+                      {advisorsOpts.map((a) => (
+                        <label
+                          key={a.advisor}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={advisorsSelecionados.includes(a.advisor)}
+                            onCheckedChange={() => toggleAdvisor(a.advisor)}
+                          />
+                          <span className="truncate">{a.advisor}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Filtro FA (Banker) multi-select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    FA
                   </span>
                   {bankersSelecionados.length > 0 ? (
                     <Badge variant="secondary" className="ml-1">
@@ -726,7 +793,7 @@ export default function SaldoConsolidado() {
                   <Skeleton className="h-20 w-full" />
                 ) : bankersOpts.length === 0 ? (
                   <p className="text-xs text-muted-foreground px-2 py-3">
-                    Nenhum banker disponível
+                    Nenhum FA disponível
                   </p>
                 ) : (
                   <div className="space-y-1">
@@ -812,77 +879,10 @@ export default function SaldoConsolidado() {
               </PopoverContent>
             </Popover>
 
-            {/* Filtro Data Referência multi-select */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
-                  <span className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Data
-                  </span>
-                  {totalDatasOpts > 0 && datasSelecionadas.length === totalDatasOpts ? (
-                    <span className="text-xs text-muted-foreground">Todas</span>
-                  ) : (
-                    <Badge variant="secondary" className="ml-1">
-                      {datasSelecionadas.length}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2" align="end">
-                {!dataRefOpts ? (
-                  <Skeleton className="h-20 w-full" />
-                ) : dataRefOpts.length === 0 ? (
-                  <p className="text-xs text-muted-foreground px-2 py-3">
-                    Nenhuma data disponível
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (datasSelecionadas.length === dataRefOpts.length) {
-                          setDatasSelecionadas([]);
-                        } else {
-                          setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
-                        }
-                      }}
-                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
-                    >
-                      {datasSelecionadas.length === dataRefOpts.length
-                        ? "Limpar seleção"
-                        : "Selecionar todas"}
-                    </button>
-                    <div className="h-px bg-border my-1" />
-                    <div className="max-h-64 overflow-y-auto space-y-0.5">
-                      {dataRefOpts.map((d) => (
-                        <label
-                          key={d.data_referencia}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
-                        >
-                          <Checkbox
-                            checked={datasSelecionadas.includes(d.data_referencia)}
-                            onCheckedChange={() =>
-                              setDatasSelecionadas((prev) =>
-                                prev.includes(d.data_referencia)
-                                  ? prev.filter((x) => x !== d.data_referencia)
-                                  : [...prev, d.data_referencia],
-                              )
-                            }
-                          />
-                          <span>{d.data_formatada}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
-
             <div className="flex gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="h-10 gap-2" disabled={isEmpty && !exporting}>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-10 gap-2">
                     {exporting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
@@ -890,26 +890,88 @@ export default function SaldoConsolidado() {
                     )}
                     Ações
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 p-3 space-y-3">
+                  {/* Filtro Data Referência (movido para Ações) */}
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-2">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Data
+                      {totalDatasOpts > 0 && datasSelecionadas.length === totalDatasOpts ? (
+                        <span className="text-xs text-muted-foreground normal-case font-normal">(Todas)</span>
+                      ) : (
+                        <Badge variant="secondary" className="ml-1">
+                          {datasSelecionadas.length}
+                        </Badge>
+                      )}
+                    </p>
+                    {!dataRefOpts ? (
+                      <Skeleton className="h-20 w-full" />
+                    ) : dataRefOpts.length === 0 ? (
+                      <p className="text-xs text-muted-foreground py-2">Nenhuma data disponível</p>
+                    ) : (
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (datasSelecionadas.length === dataRefOpts.length) {
+                              setDatasSelecionadas([]);
+                            } else {
+                              setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
+                            }
+                          }}
+                          className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition"
+                        >
+                          {datasSelecionadas.length === dataRefOpts.length
+                            ? "Limpar seleção"
+                            : "Selecionar todas"}
+                        </button>
+                        <div className="max-h-48 overflow-y-auto space-y-0.5">
+                          {dataRefOpts.map((d) => (
+                            <label
+                              key={d.data_referencia}
+                              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                            >
+                              <Checkbox
+                                checked={datasSelecionadas.includes(d.data_referencia)}
+                                onCheckedChange={() =>
+                                  setDatasSelecionadas((prev) =>
+                                    prev.includes(d.data_referencia)
+                                      ? prev.filter((x) => x !== d.data_referencia)
+                                      : [...prev, d.data_referencia],
+                                  )
+                                }
+                              />
+                              <span>{d.data_formatada}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="h-px bg-border" />
+
+                  <button
+                    type="button"
                     onClick={handleExportExcel}
                     disabled={exporting || isEmpty}
-                    className="gap-2 cursor-pointer"
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded text-sm hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <FileSpreadsheet className="h-4 w-4" />
                     Exportar Excel
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleSendEmail}
                     disabled={isEmpty}
-                    className="gap-2 cursor-pointer"
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded text-sm hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Mail className="h-4 w-4" />
                     Enviar por Outlook
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </button>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="ghost"
                 className="h-10 gap-2"
@@ -940,9 +1002,9 @@ export default function SaldoConsolidado() {
                     <TableHead className="text-right">D+2</TableHead>
                     <TableHead className="text-right">D+3</TableHead>
                     <TableHead className="text-right">Total</TableHead>
-                    <TableHead>Banker</TableHead>
-                    <TableHead>Finder</TableHead>
+                    <TableHead>FA</TableHead>
                     <TableHead>Advisor</TableHead>
+                    <TableHead>Finder</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -995,8 +1057,8 @@ export default function SaldoConsolidado() {
                           {fmtBRL(r.total_saldo)}
                         </TableCell>
                         <TableCell className="text-xs">{r.banker}</TableCell>
-                        <TableCell className="text-xs">{r.finder}</TableCell>
                         <TableCell className="text-xs">{r.advisor}</TableCell>
+                        <TableCell className="text-xs">{r.finder}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -1071,7 +1133,7 @@ export default function SaldoConsolidado() {
               {/* Resumo */}
               <Card className="bg-muted/30">
                 <CardContent className="p-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                  <InfoBox label="Banker" value={detalheHeader?.banker} />
+                  <InfoBox label="FA" value={detalheHeader?.banker} />
                   <InfoBox label="Advisor" value={detalheHeader?.advisor} />
                   <InfoBox label="Finder" value={detalheHeader?.finder} />
                   <InfoBox label="Canal" value={detalheHeader?.canal} />
