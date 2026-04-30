@@ -838,7 +838,36 @@ function PhaseRow({ label, state }: { label: string; state: PhaseState }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, criadoEm }: { status: string; criadoEm?: string | null }) {
+  const isProcessando = status === "PROCESSANDO";
+  const horasAberta = criadoEm
+    ? (Date.now() - new Date(criadoEm).getTime()) / (1000 * 60 * 60)
+    : 0;
+  const isTravada = isProcessando && horasAberta > 1;
+
+  if (isTravada) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border cursor-help",
+                "bg-amber-50 text-amber-700 border-amber-300",
+              )}
+            >
+              <AlertTriangle className="h-3 w-3" />
+              Aguardando há muito tempo
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            Carga pode estar travada. Tente reimportar ou contate o admin.
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   const map: Record<string, { label: string; cls: string; icon?: React.ReactNode }> = {
     CONCLUIDO: { label: "Concluído", cls: "bg-green-50 text-green-700 border-green-200" },
     CONCLUIDO_COM_ALERTA: {
