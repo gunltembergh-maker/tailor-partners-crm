@@ -6,11 +6,13 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { cn } from "@/lib/utils";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -192,6 +194,7 @@ const CARDS: CardConfig[] = [
 
 export function SaldoConsolidadoSection() {
   const { role, user, permissoes } = useAuth();
+  const { effectivePermissoes } = useViewAs();
   const [progress, setProgress] = useState<ProgressState>(initialProgress);
   const [cargas, setCargas] = useState<any[]>([]);
   const [loadingCargas, setLoadingCargas] = useState(false);
@@ -200,30 +203,35 @@ export function SaldoConsolidadoSection() {
   const [apagando, setApagando] = useState(false);
 
   const isAdmin = role === "ADMIN" || role === "LIDER";
-  // Sub-permissões granulares de "Importar Bases".
-  // Admin/Lider sempre podem; demais perfis dependem das chaves no perfil de acesso.
-  const canXP = isAdmin || !!permissoes?.menu_importar_saldo_xp;
-  const canAvenue = isAdmin || !!permissoes?.menu_importar_saldo_avenue;
+  // Sub-permissões granulares de "Importar Bases" — respeita "Minha Visão".
+  const effPerms = effectivePermissoes ?? permissoes;
+  const canXP = isAdmin || !!effPerms?.menu_importar_saldo_xp;
+  const canAvenue = isAdmin || !!effPerms?.menu_importar_saldo_avenue;
   const canAny = canXP || canAvenue;
+  // Qualquer usuário com permissão de import (granular ou admin) vê a tabela de cargas.
+  const canSeeImport = isAdmin || canAny;
 
   useEffect(() => {
-    // Apenas Admin/Líder enxerga o histórico de cargas.
-    if (!isAdmin) return;
+    if (!canSeeImport) return;
     let mounted = true;
     setLoadingCargas(true);
-    supabase
+    let query = supabase
       .from("cargas_saldo" as any)
       .select("*")
       .order("criado_em", { ascending: false })
-      .limit(10)
-      .then(({ data }) => {
-        if (mounted) setCargas((data as any[]) ?? []);
-        setLoadingCargas(false);
-      });
+      .limit(10);
+    // Não-admin vê apenas as próprias cargas
+    if (!isAdmin && user?.id) {
+      query = query.eq("usuario_upload_id", user.id) as any;
+    }
+    query.then(({ data }) => {
+      if (mounted) setCargas((data as any[]) ?? []);
+      setLoadingCargas(false);
+    });
     return () => {
       mounted = false;
     };
-  }, [isAdmin, reloadKey]);
+  }, [canSeeImport, isAdmin, user?.id, reloadKey]);
 
   const setPhase = useCallback((phase: PhaseKey, state: PhaseState) => {
     setProgress((prev) => ({ ...prev, phases: { ...prev.phases, [phase]: state } }));
@@ -445,6 +453,7 @@ export function SaldoConsolidadoSection() {
           total_linhas: linhasEnriquecidas.length,
           status_processamento: "PROCESSANDO",
           usuario_upload_email: user?.email ?? null,
+          usuario_upload_id: user?.id ?? null,
         });
         if (cargaErr) throw new Error(`Falha ao registrar carga: ${cargaErr.message}`);
         inserted = true;
@@ -644,11 +653,11 @@ export function SaldoConsolidadoSection() {
         ))}
       </div>
 
-      {isAdmin && (
+      {canSeeImport && (
         <UltimasCargasTable
           cargas={cargas}
           loading={loadingCargas}
-          onApagar={(c) => setCargaParaApagar(c)}
+          onApagar={isAdmin ? (c) => setCargaParaApagar(c) : undefined}
         />
       )}
 
@@ -829,7 +838,36 @@ function PhaseRow({ label, state }: { label: string; state: PhaseState }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, criadoEm }: { status: string; criadoEm?: string | null }) {
+  const isProcessando = status === "PROCESSANDO";
+  const horasAberta = criadoEm
+    ? (Date.now() - new Date(criadoEm).getTime()) / (1000 * 60 * 60)
+    : 0;
+  const isTravada = isProcessando && horasAberta > 1;
+
+  if (isTravada) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border cursor-help",
+                "bg-amber-50 text-amber-700 border-amber-300",
+              )}
+            >
+              <AlertTriangle className="h-3 w-3" />
+              Aguardando há muito tempo
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            Carga pode estar travada. Tente reimportar ou contate o admin.
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   const map: Record<string, { label: string; cls: string; icon?: React.ReactNode }> = {
     CONCLUIDO: { label: "Concluído", cls: "bg-green-50 text-green-700 border-green-200" },
     CONCLUIDO_COM_ALERTA: {
@@ -879,8 +917,10 @@ function UltimasCargasTable({
 }: {
   cargas: any[];
   loading: boolean;
-  onApagar: (carga: any) => void;
+  onApagar?: (carga: any) => void;
 }) {
+  const showActions = !!onApagar;
+  const colSpan = showActions ? 9 : 8;
   return (
     <Card>
       <CardContent className="p-5">
@@ -902,20 +942,20 @@ function UltimasCargasTable({
                 <TableHead>Upload por</TableHead>
                 <TableHead>Data/hora</TableHead>
                 <TableHead>Duração</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                {showActions && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={colSpan} className="text-center text-muted-foreground py-6">
                     Carregando…
                   </TableCell>
                 </TableRow>
               )}
               {!loading && cargas.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={colSpan} className="text-center text-muted-foreground py-6">
                     Nenhuma carga registrada ainda.
                   </TableCell>
                 </TableRow>
@@ -943,7 +983,7 @@ function UltimasCargasTable({
                       )}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={c.status_processamento} />
+                      <StatusBadge status={c.status_processamento} criadoEm={c.criado_em} />
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-[180px] truncate">
                       {c.usuario_upload_email ?? "—"}
@@ -952,21 +992,23 @@ function UltimasCargasTable({
                     <TableCell className="text-xs">
                       {durationSeconds(c.criado_em, c.finalizado_em)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {(c.status_processamento === "CONCLUIDO" ||
-                        c.status_processamento === "CONCLUIDO_COM_ALERTA" ||
-                        c.status_processamento === "ERRO") && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onApagar(c)}
-                          title="Apagar carga"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </TableCell>
+                    {showActions && (
+                      <TableCell className="text-right">
+                        {(c.status_processamento === "CONCLUIDO" ||
+                          c.status_processamento === "CONCLUIDO_COM_ALERTA" ||
+                          c.status_processamento === "ERRO") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => onApagar!(c)}
+                            title="Apagar carga"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
             </TableBody>
