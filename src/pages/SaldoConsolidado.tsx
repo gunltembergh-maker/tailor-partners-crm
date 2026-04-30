@@ -189,6 +189,7 @@ export default function SaldoConsolidado() {
   const [findersSelecionados, setFindersSelecionados] = useState<string[]>([]);
   const [datasSelecionadas, setDatasSelecionadas] = useState<string[]>([]);
   const [datasInicializadas, setDatasInicializadas] = useState(false);
+  const [tiposPessoaSelecionados, setTiposPessoaSelecionados] = useState<string[]>(["PF", "PJ"]);
   const [page, setPage] = useState(0);
 
   // Modal de detalhe
@@ -219,7 +220,7 @@ export default function SaldoConsolidado() {
   // Reset de paginação ao mudar filtros
   useEffect(() => {
     setPage(0);
-  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas]);
+  }, [buscaDebounced, casasSelecionadas, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas, tiposPessoaSelecionados]);
 
   // ─── Filtros: opções
   const { data: casasOpts } = useQuery({
@@ -302,6 +303,10 @@ export default function SaldoConsolidado() {
       datasSelecionadas.length === 1 && totalDatas > 1
         ? datasSelecionadas[0]
         : null;
+    const tipoPessoaParam =
+      tiposPessoaSelecionados.length === 0 || tiposPessoaSelecionados.length === 2
+        ? null
+        : tiposPessoaSelecionados;
     return {
       p_banker: bankerParam,
       p_advisor: advisorParam,
@@ -310,8 +315,9 @@ export default function SaldoConsolidado() {
       p_casa: casaParam,
       p_data_referencia: dataParam,
       p_busca: buscaDebounced || null,
+      p_tipo_pessoa: tipoPessoaParam,
     };
-  }, [casasSelecionadas, casasOpts, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced]);
+  }, [casasSelecionadas, casasOpts, bankersSelecionados, advisorsSelecionados, findersSelecionados, datasSelecionadas, dataRefOpts, buscaDebounced, tiposPessoaSelecionados]);
 
   // ─── KPIs
   const { data: kpis, isLoading: kpisLoading } = useQuery({
@@ -577,13 +583,22 @@ export default function SaldoConsolidado() {
     totalDatasOpts > 0 &&
     datasSelecionadas.length > 0 &&
     datasSelecionadas.length < totalDatasOpts;
+  const tipoPessoaParcial = tiposPessoaSelecionados.length !== 2;
   const hasFiltrosAplicados =
     busca.trim().length > 0 ||
     (casasOpts ? casasSelecionadas.length !== casasOpts.length : false) ||
     bankersSelecionados.length > 0 ||
     advisorsSelecionados.length > 0 ||
     findersSelecionados.length > 0 ||
-    datasParcial;
+    datasParcial ||
+    tipoPessoaParcial;
+  const acoesIndicador = datasParcial || tipoPessoaParcial;
+
+  function toggleTipoPessoa(tp: string) {
+    setTiposPessoaSelecionados((prev) =>
+      prev.includes(tp) ? prev.filter((x) => x !== tp) : [...prev, tp],
+    );
+  }
 
   function handleLimparFiltros() {
     setBusca("");
@@ -593,6 +608,7 @@ export default function SaldoConsolidado() {
     setAdvisorsSelecionados([]);
     setFindersSelecionados([]);
     if (dataRefOpts) setDatasSelecionadas(dataRefOpts.map((d) => d.data_referencia));
+    setTiposPessoaSelecionados(["PF", "PJ"]);
   }
 
   const isEmpty = !listaLoading && (lista?.length ?? 0) === 0;
