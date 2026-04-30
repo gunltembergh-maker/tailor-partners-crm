@@ -3964,57 +3964,112 @@ export type Database = {
           finder: string
         }[]
       }
-      rpc_saldo_kpis: {
-        Args: {
-          p_advisor?: string[]
-          p_banker?: string[]
-          p_casa?: string[]
-          p_data_referencia?: string
-          p_documento?: string[]
-          p_finder?: string[]
-        }
-        Returns: {
-          qtd_clientes: number
-          qtd_contas: number
-          total_d_mais_1: number
-          total_d_mais_2: number
-          total_d_mais_3: number
-          total_d0: number
-          total_geral: number
-        }[]
-      }
-      rpc_saldo_list: {
-        Args: {
-          p_advisor?: string[]
-          p_banker?: string[]
-          p_busca?: string
-          p_casa?: string[]
-          p_data_referencia?: string
-          p_documento?: string[]
-          p_finder?: string[]
-          p_limit?: number
-          p_offset?: number
-        }
-        Returns: {
-          advisor: string
-          banker: string
-          canal: string
-          casa: string
-          cliente_nome: string
-          conta: string
-          cpf_cnpj: string
-          d_mais_1: number
-          d_mais_2: number
-          d_mais_3: number
-          d0: number
-          data_referencia: string
-          documento_formatado: string
-          finder: string
-          produto: string
-          tipo_cliente: string
-          total_saldo: number
-        }[]
-      }
+      rpc_saldo_kpis:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_data_referencia?: string
+              p_documento?: string[]
+              p_finder?: string[]
+            }
+            Returns: {
+              qtd_clientes: number
+              qtd_contas: number
+              total_d_mais_1: number
+              total_d_mais_2: number
+              total_d_mais_3: number
+              total_d0: number
+              total_geral: number
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_banker?: string[]
+              p_casa?: string[]
+              p_data_referencia?: string
+              p_documento?: string[]
+              p_finder?: string[]
+              p_tipo_pessoa?: string[]
+            }
+            Returns: {
+              qtd_clientes: number
+              qtd_contas: number
+              total_d_mais_1: number
+              total_d_mais_2: number
+              total_d_mais_3: number
+              total_d0: number
+              total_geral: number
+            }[]
+          }
+      rpc_saldo_list:
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_banker?: string[]
+              p_busca?: string
+              p_casa?: string[]
+              p_data_referencia?: string
+              p_documento?: string[]
+              p_finder?: string[]
+              p_limit?: number
+              p_offset?: number
+            }
+            Returns: {
+              advisor: string
+              banker: string
+              canal: string
+              casa: string
+              cliente_nome: string
+              conta: string
+              cpf_cnpj: string
+              d_mais_1: number
+              d_mais_2: number
+              d_mais_3: number
+              d0: number
+              data_referencia: string
+              documento_formatado: string
+              finder: string
+              produto: string
+              tipo_cliente: string
+              total_saldo: number
+            }[]
+          }
+        | {
+            Args: {
+              p_advisor?: string[]
+              p_banker?: string[]
+              p_busca?: string
+              p_casa?: string[]
+              p_data_referencia?: string
+              p_documento?: string[]
+              p_finder?: string[]
+              p_limit?: number
+              p_offset?: number
+              p_tipo_pessoa?: string[]
+            }
+            Returns: {
+              advisor: string
+              banker: string
+              canal: string
+              casa: string
+              cliente_nome: string
+              conta: string
+              cpf_cnpj: string
+              d_mais_1: number
+              d_mais_2: number
+              d_mais_3: number
+              d0: number
+              data_referencia: string
+              documento_formatado: string
+              finder: string
+              produto: string
+              tipo_cliente: string
+              total_saldo: number
+            }[]
+          }
       rpc_saldo_pendencias_list: {
         Args: {
           p_casa?: Database["public"]["Enums"]["tipo_casa_saldo"][]
