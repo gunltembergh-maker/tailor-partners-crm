@@ -363,7 +363,11 @@ export function useReceitaDrilldown(filters: DashboardFilters, drillPath: string
   return useQuery({
     queryKey: ["receita-drilldown", params],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_receita_drilldown", params as any);
+      // Override PostgREST's default 1000-row cap so we don't lose the recent
+      // months on heavy categories (e.g. Assessoria has ~17k detail rows).
+      const { data, error } = await supabase
+        .rpc("rpc_receita_drilldown", params as any)
+        .range(0, 199999);
       if (error) throw error;
       return (data as any[]) ?? [];
     },
