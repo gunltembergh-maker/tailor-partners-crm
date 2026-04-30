@@ -449,6 +449,10 @@ export function SaldoConsolidadoSection() {
 
         // Fase 5: registra carga
         setPhase("inserir", "active");
+        // Fix duracao_segundos negativa: gravamos criado_em do mesmo relógio (client)
+        // que será usado para finalizado_em mais à frente. Antes, criado_em vinha do
+        // default now() do banco e finalizado_em do client → clock skew causava negativo.
+        const criadoEmIso = new Date(startedAt).toISOString();
         const { error: cargaErr } = await supabase.from("cargas_saldo" as any).insert({
           id_carga,
           casa,
@@ -459,6 +463,7 @@ export function SaldoConsolidadoSection() {
           status_processamento: "PROCESSANDO",
           usuario_upload_email: user?.email ?? null,
           usuario_upload_id: user?.id ?? null,
+          criado_em: criadoEmIso,
         });
         if (cargaErr) throw new Error(`Falha ao registrar carga: ${cargaErr.message}`);
         inserted = true;
