@@ -117,28 +117,48 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
     })();
   }, [user]);
 
-  async function fetchPermissoes(userId: string): Promise<Record<string, boolean> | null> {
+  /**
+   * Resolve effective permissoes for the simulated user, replicating the same
+   * logic used by rpc_meu_perfil (which uses auth.uid() and can't be reused here):
+   *   1. profiles.perfil_id -> perfis_acesso.permissoes (explicit override)
+   *   2. fallback: user_roles.role -> perfis_acesso.nome -> permissoes
+   */
+  async function fetchPermissoes(userId: string, fallbackRole?: string | null): Promise<Record<string, boolean> | null> {
     try {
-      // Try RPC first (matches Alessandro's flow)
-      const { data } = await supabase.rpc("rpc_meu_perfil" as any, {} as any);
-      // rpc_meu_perfil uses auth.uid() — won't reflect simulated user. Fallback to direct lookup.
-      // Use profile -> perfil_id -> perfis_acesso.permissoes
       const { data: profile } = await supabase
         .from("profiles")
         .select("perfil_id")
         .eq("user_id", userId)
         .maybeSingle();
-      if (!profile?.perfil_id) {
-        // Fall back to role-based permissions: empty obj — sidebar will use role check
-        void data;
-        return {};
+
+      // 1. Explicit perfil_id override
+      if (profile?.perfil_id) {
+        const { data: perfil } = await supabase
+          .from("perfis_acesso")
+          .select("permissoes")
+          .eq("id", profile.perfil_id)
+          .maybeSingle();
+          if (perfil?.permissoes) return perfil.permissoes as Record<string, boolean>;
       }
-      const { data: perfil } = await supabase
+
+      // 2. Fallback: lookup by role name (matches rpc_meu_perfil JOIN pa.nome = ur.role)
+      let roleName = fallbackRole ?? null;
+      if (!roleName) {
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+        roleName = (roleRow?.role as string | undefined) ?? null;
+      }
+      if (!roleName) return {};
+
+      const { data: perfilByName } = await supabase
         .from("perfis_acesso")
         .select("permissoes")
-        .eq("id", profile.perfil_id)
+        .eq("nome", roleName)
         .maybeSingle();
-      return (perfil?.permissoes as Record<string, boolean>) ?? {};
+      return (perfilByName?.permissoes as Record<string, boolean>) ?? {};
     } catch {
       return {};
     }
