@@ -135,7 +135,7 @@ function buildHtmlTable(rows: SaldoRow[], dataFormatada: string): string {
     "D+2",
     "D+3",
     "Total",
-    "Banker",
+    "FA",
     "Finder",
     "Advisor",
   ];
