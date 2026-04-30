@@ -1139,7 +1139,7 @@ export default function SaldoConsolidado() {
               {/* Resumo */}
               <Card className="bg-muted/30">
                 <CardContent className="p-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                  <InfoBox label="Banker" value={detalheHeader?.banker} />
+                  <InfoBox label="FA" value={detalheHeader?.banker} />
                   <InfoBox label="Advisor" value={detalheHeader?.advisor} />
                   <InfoBox label="Finder" value={detalheHeader?.finder} />
                   <InfoBox label="Canal" value={detalheHeader?.canal} />
