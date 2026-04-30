@@ -723,13 +723,67 @@ export default function SaldoConsolidado() {
               </PopoverContent>
             </Popover>
 
-            {/* Filtro Banker multi-select */}
+            {/* Filtro Advisor multi-select */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
                   <span className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    Banker
+                    Advisor
+                  </span>
+                  {advisorsSelecionados.length > 0 ? (
+                    <Badge variant="secondary" className="ml-1">
+                      {advisorsSelecionados.length}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Todos</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                {!advisorsOpts ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : advisorsOpts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-2 py-3">
+                    Nenhum advisor disponível
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setAdvisorsSelecionados([])}
+                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded hover:bg-muted transition"
+                      disabled={advisorsSelecionados.length === 0}
+                    >
+                      Limpar seleção
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <div className="max-h-64 overflow-y-auto space-y-0.5">
+                      {advisorsOpts.map((a) => (
+                        <label
+                          key={a.advisor}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={advisorsSelecionados.includes(a.advisor)}
+                            onCheckedChange={() => toggleAdvisor(a.advisor)}
+                          />
+                          <span className="truncate">{a.advisor}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Filtro FA (Banker) multi-select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 min-w-[160px] justify-between">
+                  <span className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    FA
                   </span>
                   {bankersSelecionados.length > 0 ? (
                     <Badge variant="secondary" className="ml-1">
@@ -745,7 +799,7 @@ export default function SaldoConsolidado() {
                   <Skeleton className="h-20 w-full" />
                 ) : bankersOpts.length === 0 ? (
                   <p className="text-xs text-muted-foreground px-2 py-3">
-                    Nenhum banker disponível
+                    Nenhum FA disponível
                   </p>
                 ) : (
                   <div className="space-y-1">
