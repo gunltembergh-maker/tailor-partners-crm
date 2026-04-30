@@ -13,8 +13,11 @@ import {
   ChevronDown,
   FilterX,
   Calendar,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { SaldoConsolidadoOnboardingModal } from "@/components/relatorios/SaldoConsolidadoOnboardingModal";
 
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -180,6 +183,8 @@ function buildHtmlTable(rows: SaldoRow[], dataFormatada: string): string {
 // ─── Página ──────────────────────────────────────────────────────────
 
 export default function SaldoConsolidado() {
+  const { user } = useAuth();
+
   // Filtros
   const [busca, setBusca] = useState("");
   const [buscaDebounced, setBuscaDebounced] = useState("");
@@ -195,6 +200,20 @@ export default function SaldoConsolidado() {
   const [detalheCpf, setDetalheCpf] = useState<string | null>(null);
   const [detalheOpen, setDetalheOpen] = useState(false);
   const [produtoOpen, setProdutoOpen] = useState(false);
+
+  // Onboarding modal: abre auto na 1ª vez por usuário (persistência via localStorage)
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `saldo_consolidado_onboarding_${user.id}`;
+    if (!localStorage.getItem(key)) setShowOnboarding(true);
+  }, [user?.id]);
+  const handleCloseOnboarding = () => {
+    if (user?.id) {
+      localStorage.setItem(`saldo_consolidado_onboarding_${user.id}`, "1");
+    }
+    setShowOnboarding(false);
+  };
 
   // Debounce da busca
   useEffect(() => {
@@ -571,6 +590,7 @@ export default function SaldoConsolidado() {
 
   return (
     <AppLayout>
+      <SaldoConsolidadoOnboardingModal open={showOnboarding} onClose={handleCloseOnboarding} />
       <div className="animate-fade-in space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -578,6 +598,15 @@ export default function SaldoConsolidado() {
             <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
               <Wallet className="h-6 w-6 text-primary" />
               Saldo Consolidado
+              <button
+                type="button"
+                onClick={() => setShowOnboarding(true)}
+                className="text-muted-foreground hover:text-primary transition-colors"
+                title="Ver tutorial novamente"
+                aria-label="Ver tutorial novamente"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
               Última atualização: <span className="font-medium">{dataAtualLabel}</span>

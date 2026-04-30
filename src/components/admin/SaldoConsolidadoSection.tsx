@@ -173,8 +173,10 @@ function formatDateTime(d: string | null | undefined): string {
 function durationSeconds(a: string | null | undefined, b: string | null | undefined): string {
   if (!a || !b) return "—";
   const ms = new Date(b).getTime() - new Date(a).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return "—";
-  return `${Math.round(ms / 1000)}s`;
+  if (!Number.isFinite(ms)) return "—";
+  // Garantia contra clock skew (criado_em via default now() server vs finalizado_em via client)
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  return `${seconds}s`;
 }
 
 // ─── Card único reutilizável ───────────────────────────────────────
@@ -447,6 +449,10 @@ export function SaldoConsolidadoSection() {
 
         // Fase 5: registra carga
         setPhase("inserir", "active");
+        // Fix duracao_segundos negativa: gravamos criado_em do mesmo relógio (client)
+        // que será usado para finalizado_em mais à frente. Antes, criado_em vinha do
+        // default now() do banco e finalizado_em do client → clock skew causava negativo.
+        const criadoEmIso = new Date(startedAt).toISOString();
         const { error: cargaErr } = await supabase.from("cargas_saldo" as any).insert({
           id_carga,
           casa,
@@ -457,6 +463,7 @@ export function SaldoConsolidadoSection() {
           status_processamento: "PROCESSANDO",
           usuario_upload_email: user?.email ?? null,
           usuario_upload_id: user?.id ?? null,
+          criado_em: criadoEmIso,
         });
         if (cargaErr) throw new Error(`Falha ao registrar carga: ${cargaErr.message}`);
         inserted = true;

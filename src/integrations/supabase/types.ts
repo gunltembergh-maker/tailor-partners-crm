@@ -3048,6 +3048,7 @@ export type Database = {
       }
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
+      marcar_cargas_zumbis_como_erro: { Args: never; Returns: number }
       move_to_dlq: {
         Args: {
           dlq_name: string
