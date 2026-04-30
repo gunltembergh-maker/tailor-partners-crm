@@ -414,12 +414,12 @@ export function QuantitativoTab({filters}:Props) {
   const { drillRows, drillMeses } = useMemo(() => {
     const meses = matrizMeses;
     if (!drilldownData?.length) return { drillRows: [] as { categoria: string; values: Record<string, number>; total: number }[], drillMeses: meses };
-    // Pick the label field based on drill level: 1=subcategoria, 2=produto, 3=documento (cliente)
-    const labelFields = ["subcategoria", "produto", "documento"];
-    const labelField = labelFields[drillLevel - 1] || "categoria";
+    // The aggregated RPC returns { anomes, anomes_nome, label, valor }, where
+    // `label` is already the correct field for the current drill level
+    // (subcategoria → produto → documento).
     const catMap = new Map<string, { values: Record<string, number>; total: number }>();
     drilldownData.forEach((r: any) => {
-      const cat = r[labelField] || "N/D", mes = r.anomes_nome || String(r.anomes), val = Number(r.valor) || 0;
+      const cat = r.label || "N/D", mes = r.anomes_nome || String(r.anomes), val = Number(r.valor) || 0;
       if (!catMap.has(cat)) catMap.set(cat, { values: {}, total: 0 });
       const c = catMap.get(cat)!; c.total += val; c.values[mes] = (c.values[mes] || 0) + val;
     });
