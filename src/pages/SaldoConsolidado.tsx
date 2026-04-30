@@ -590,6 +590,7 @@ export default function SaldoConsolidado() {
 
   return (
     <AppLayout>
+      <SaldoConsolidadoOnboardingModal open={showOnboarding} onClose={handleCloseOnboarding} />
       <div className="animate-fade-in space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -597,6 +598,15 @@ export default function SaldoConsolidado() {
             <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
               <Wallet className="h-6 w-6 text-primary" />
               Saldo Consolidado
+              <button
+                type="button"
+                onClick={() => setShowOnboarding(true)}
+                className="text-muted-foreground hover:text-primary transition-colors"
+                title="Ver tutorial novamente"
+                aria-label="Ver tutorial novamente"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
               Última atualização: <span className="font-medium">{dataAtualLabel}</span>
