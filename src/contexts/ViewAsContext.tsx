@@ -95,7 +95,7 @@ export function ViewAsProvider({ children }: { children: ReactNode }) {
         const d: any = data;
         if (d.ativo) {
           // Fetch effective permissoes for the simulated user (for sidebar)
-          const perms = await fetchPermissoes(d.target_user_id);
+          const perms = await fetchPermissoes(d.target_user_id, d.target_role);
           setViewAsProfile({
             key: d.target_email,
             user_id: d.target_user_id,
