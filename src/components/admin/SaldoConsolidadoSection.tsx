@@ -193,8 +193,11 @@ const CARDS: CardConfig[] = [
 // ─── Componente principal ─────────────────────────────────────────
 
 export function SaldoConsolidadoSection() {
-  const { role, user, permissoes } = useAuth();
-  const { effectivePermissoes } = useViewAs();
+  // ── Auth: real user (Category B — used for INSERTS, never simulated) ──
+  const { user } = useAuth();
+  // ── ViewAs: effective role/permissões (Category A — UI gating, respects "Minha Visão") ──
+  const { effectiveRole, effectivePermissoes, effectiveUserId, isViewingAs } = useViewAs();
+
   const [progress, setProgress] = useState<ProgressState>(initialProgress);
   const [cargas, setCargas] = useState<any[]>([]);
   const [loadingCargas, setLoadingCargas] = useState(false);
@@ -202,13 +205,11 @@ export function SaldoConsolidadoSection() {
   const [cargaParaApagar, setCargaParaApagar] = useState<any | null>(null);
   const [apagando, setApagando] = useState(false);
 
-  const isAdmin = role === "ADMIN" || role === "LIDER";
-  // Sub-permissões granulares de "Importar Bases" — respeita "Minha Visão".
-  const effPerms = effectivePermissoes ?? permissoes;
-  const canXP = isAdmin || !!effPerms?.menu_importar_saldo_xp;
-  const canAvenue = isAdmin || !!effPerms?.menu_importar_saldo_avenue;
+  // Visibility uses effective role/permissions so that Minha Visão simulates exactly what target sees.
+  const isAdmin = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
+  const canXP = isAdmin || !!effectivePermissoes?.menu_importar_saldo_xp;
+  const canAvenue = isAdmin || !!effectivePermissoes?.menu_importar_saldo_avenue;
   const canAny = canXP || canAvenue;
-  // Qualquer usuário com permissão de import (granular ou admin) vê a tabela de cargas.
   const canSeeImport = isAdmin || canAny;
 
   useEffect(() => {
@@ -220,9 +221,11 @@ export function SaldoConsolidadoSection() {
       .select("*")
       .order("criado_em", { ascending: false })
       .limit(10);
-    // Não-admin vê apenas as próprias cargas
-    if (!isAdmin && user?.id) {
-      query = query.eq("usuario_upload_id", user.id) as any;
+    // Non-admin vê apenas as próprias cargas. Em "Minha Visão" simulando não-admin,
+    // filtramos pelo user simulado para reproduzir exatamente a tela do alvo.
+    if (!isAdmin) {
+      const filterUid = isViewingAs ? effectiveUserId : user?.id;
+      if (filterUid) query = query.eq("usuario_upload_id", filterUid) as any;
     }
     query.then(({ data }) => {
       if (mounted) setCargas((data as any[]) ?? []);
@@ -231,7 +234,7 @@ export function SaldoConsolidadoSection() {
     return () => {
       mounted = false;
     };
-  }, [canSeeImport, isAdmin, user?.id, reloadKey]);
+  }, [canSeeImport, isAdmin, isViewingAs, effectiveUserId, user?.id, reloadKey]);
 
   const setPhase = useCallback((phase: PhaseKey, state: PhaseState) => {
     setProgress((prev) => ({ ...prev, phases: { ...prev.phases, [phase]: state } }));
