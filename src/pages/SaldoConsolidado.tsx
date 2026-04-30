@@ -438,7 +438,7 @@ export default function SaldoConsolidado() {
         "D+2": Number(r.d_mais_2 ?? 0),
         "D+3": Number(r.d_mais_3 ?? 0),
         Total: Number(r.total_saldo ?? 0),
-        Banker: r.banker ?? "",
+        FA: r.banker ?? "",
         Finder: r.finder ?? "",
         Advisor: r.advisor ?? "",
       }));
