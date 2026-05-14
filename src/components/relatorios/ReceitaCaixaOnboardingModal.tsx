@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 const STEPS = [
   { icon: <Calendar className="w-5 h-5" />, title: "Filtro Ano/Mês no topo", subtitle: "Eixo principal da tela", description: "Por padrão abre no mês corrente, mas você pode escolher qualquer mês retroativo. Todos os visuais recalculam automaticamente." },
-  { icon: <Filter className="w-5 h-5" />, title: "Filtros à esquerda", subtitle: "Refinamentos acumulativos", description: "Filtre por FA, Finder, Categoria, Subcategoria e Advisor. Use '+ Ações' para alternar entre PF/PJ." },
+  { icon: <Filter className="w-5 h-5" />, title: "Filtros à esquerda", subtitle: "Refinamentos acumulativos", description: "Use Financial Advisor, Finder, Advisor XP, Canal, Categoria e Subcategoria para refinar sua análise. Os filtros são acumulativos. Em '+ Ações', alterne entre PF/PJ." },
   { icon: <ChevronRight className="w-5 h-5" />, title: "Pivots com drill", subtitle: "Expanda para ver detalhe", description: "Clique no ▶ ao lado da Categoria para expandir e ver as Subcategorias." },
   { icon: <BarChart3 className="w-5 h-5" />, title: "Gráficos temporais", subtitle: "Janela de 12 meses", description: "Mostram sempre os 12 meses anteriores ao mês selecionado no topo." },
 ];

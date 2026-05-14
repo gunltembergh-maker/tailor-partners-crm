@@ -3781,6 +3781,7 @@ export type Database = {
           p_advisor?: string[]
           p_anomes: number
           p_banker?: string[]
+          p_canal?: string[]
           p_categoria?: string[]
           p_finder?: string[]
           p_subcategoria?: string[]
@@ -3797,6 +3798,7 @@ export type Database = {
           p_advisor?: string[]
           p_anomes: number
           p_banker?: string[]
+          p_canal?: string[]
           p_categoria?: string[]
           p_finder?: string[]
           p_subcategoria?: string[]
@@ -3816,6 +3818,7 @@ export type Database = {
           p_advisor?: string[]
           p_anomes: number
           p_banker?: string[]
+          p_canal?: string[]
           p_categoria?: string[]
           p_finder?: string[]
           p_subcategoria?: string[]
@@ -3832,6 +3835,7 @@ export type Database = {
           p_advisor?: string[]
           p_anomes: number
           p_banker?: string[]
+          p_canal?: string[]
           p_categoria?: string[]
           p_finder?: string[]
           p_subcategoria?: string[]
@@ -3847,6 +3851,7 @@ export type Database = {
           p_advisor?: string[]
           p_anomes: number
           p_banker?: string[]
+          p_canal?: string[]
           p_categoria?: string[]
           p_finder?: string[]
           p_subcategoria?: string[]
@@ -3864,6 +3869,7 @@ export type Database = {
           p_advisor?: string[]
           p_anomes: number
           p_banker?: string[]
+          p_canal?: string[]
           p_categoria?: string[]
           p_finder?: string[]
           p_subcategoria?: string[]
