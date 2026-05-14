@@ -748,7 +748,7 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
               onMouseMove={tt.onMove}
               onMouseLeave={tt.onLeave}
             >
-              <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="tabular-nums">{fmtMil(d.total)}</span>
+              <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="tabular-nums">{fmtAdapt(d.total)}</span>
               <div className="w-full flex flex-col-reverse rounded-t overflow-hidden relative"
                 style={{ height: `${heightPct}%`, minHeight: 4, borderTop: isCurrent ? `1px solid ${C.gold}` : "none" }}>
                 {cats.map((c, i) => {
