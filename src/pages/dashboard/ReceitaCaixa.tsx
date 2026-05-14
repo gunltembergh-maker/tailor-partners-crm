@@ -54,7 +54,16 @@ const fmtBR = (n: number | null | undefined, decimals = 2) =>
 const fmtMil = (n: number) => {
   if (!isFinite(n) || n === 0) return "—";
   const v = n / 1000;
-  return v >= 100 ? v.toFixed(0) : v.toFixed(1).replace(".", ",");
+  return Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1).replace(".", ",");
+};
+// "R$ X Mil" formatter for category bar chart values
+const fmtMilLabel = (n: number) => {
+  if (!isFinite(n) || n === 0) return "—";
+  const v = n / 1000;
+  if (Math.abs(v) >= 100) {
+    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)} Mil`;
+  }
+  return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v)} Mil`;
 };
 
 const todayAnomes = (() => { const d = new Date(); return d.getFullYear() * 100 + (d.getMonth() + 1); })();
