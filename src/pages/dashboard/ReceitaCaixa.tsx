@@ -598,9 +598,88 @@ export default function ReceitaCaixa() {
   );
 }
 
+// ── Tooltip helpers ──────────────────────────────────────────────────
+const fmtTooltipValue = (n: number) => {
+  if (Math.abs(n) >= 1000) {
+    const v = n / 1000;
+    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: Math.abs(v) >= 100 ? 0 : 1, maximumFractionDigits: Math.abs(v) >= 100 ? 0 : 1 }).format(v)} Mil`;
+  }
+  return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)}`;
+};
+
+function RichTooltip({
+  pos, mes, label, cats, total, showPct,
+}: {
+  pos: { x: number; y: number };
+  mes: number;
+  label: string;
+  cats: { cat: string; value: number; color: string }[];
+  total: number;
+  showPct: boolean;
+}) {
+  const left = Math.min(pos.x + 16, window.innerWidth - 340);
+  const top = Math.min(pos.y + 16, window.innerHeight - 320);
+  return (
+    <div style={{
+      position: "fixed", top, left,
+      background: "#FFFFFF",
+      border: "0.5px solid rgba(8,37,55,0.15)",
+      borderRadius: 8,
+      padding: "14px 16px",
+      fontSize: 13,
+      boxShadow: "0 4px 16px rgba(8,37,55,0.12)",
+      zIndex: 1000,
+      minWidth: 260,
+      maxWidth: 320,
+      pointerEvents: "none",
+    }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: C.navy900, marginBottom: 8 }}>{label}</div>
+      <div style={{ borderTop: "0.5px solid rgba(8,37,55,0.1)", marginBottom: 8 }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+        {cats.map((c) => {
+          const pct = total > 0 ? (c.value / total) * 100 : 0;
+          return (
+            <div key={c.cat} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#1a1a1a", flex: 1, minWidth: 0 }}>
+                <span style={{ width: 8, height: 8, background: c.color, borderRadius: 2, flexShrink: 0 }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.cat}</span>
+              </span>
+              <span className="tabular-nums" style={{ color: C.navy900, fontWeight: 500, whiteSpace: "nowrap" }}>
+                {showPct && <span style={{ color: C.textMuted, marginRight: 8 }}>{pct.toFixed(0)}%</span>}
+                {fmtTooltipValue(c.value)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ borderTop: "0.5px solid rgba(8,37,55,0.1)", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.navy900 }}>TOTAL</span>
+        <span className="tabular-nums" style={{ fontSize: 13, fontWeight: 600, color: C.navy900 }}>{fmtTooltipValue(total)}</span>
+      </div>
+    </div>
+  );
+}
+
+function useBarTooltip() {
+  const [state, setState] = useState<{ anomes: number; x: number; y: number } | null>(null);
+  const onEnter = (anomes: number) => (e: React.MouseEvent) => setState({ anomes, x: e.clientX, y: e.clientY });
+  const onMove = (e: React.MouseEvent) => setState((s) => (s ? { ...s, x: e.clientX, y: e.clientY } : s));
+  const onLeave = () => setState(null);
+  return { state, onEnter, onMove, onLeave };
+}
+
+function buildTooltipCats(d: any, cats: string[]) {
+  return cats
+    .map((c, i) => ({ cat: c, value: Number(d[c]) || 0, color: colorFor(c, i) }))
+    .filter((x) => x.value > 0)
+    .sort((a, b) => b.value - a.value);
+}
+
 // ── Custom stacked bars (ordem reversa, valor no topo) ──────────────
 function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[]; currentAnomes: number }) {
   const maxTotal = Math.max(...data.map(d => d.total), 1);
+  const tt = useBarTooltip();
+  const hovered = tt.state ? data.find(d => d.anomes === tt.state!.anomes) : null;
   return (
     <div>
       <div className="flex items-end" style={{ height: 320, gap: 10, padding: "0 4px" }}>
@@ -608,7 +687,13 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
           const isCurrent = d.anomes === currentAnomes;
           const heightPct = (d.total / maxTotal) * 100;
           return (
-            <div key={d.anomes} className="flex-1 flex flex-col items-center justify-end h-full">
+            <div
+              key={d.anomes}
+              className="flex-1 flex flex-col items-center justify-end h-full cursor-pointer"
+              onMouseEnter={tt.onEnter(d.anomes)}
+              onMouseMove={tt.onMove}
+              onMouseLeave={tt.onLeave}
+            >
               <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="tabular-nums">{fmtMil(d.total)}</span>
               <div className="w-full flex flex-col-reverse rounded-t overflow-hidden relative"
                 style={{ height: `${heightPct}%`, minHeight: 4, borderTop: isCurrent ? `1px solid ${C.gold}` : "none" }}>
@@ -637,11 +722,23 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
           );
         })}
       </div>
+      {tt.state && hovered && (
+        <RichTooltip
+          pos={{ x: tt.state.x, y: tt.state.y }}
+          mes={hovered.anomes}
+          label={hovered.label}
+          cats={buildTooltipCats(hovered, cats)}
+          total={hovered.total}
+          showPct={false}
+        />
+      )}
     </div>
   );
 }
 
 function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: string[]; currentAnomes: number }) {
+  const tt = useBarTooltip();
+  const hovered = tt.state ? data.find(d => d.anomes === tt.state!.anomes) : null;
   return (
     <div>
       <div className="flex items-end" style={{ height: 300, gap: 10 }}>
@@ -649,8 +746,14 @@ function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: stri
           const isCurrent = d.anomes === currentAnomes;
           if (d.total === 0) return <div key={d.anomes} className="flex-1" />;
           return (
-            <div key={d.anomes} className="flex-1 h-full flex flex-col-reverse rounded overflow-hidden"
-              style={{ border: isCurrent ? `1px solid ${C.gold}` : "none" }}>
+            <div
+              key={d.anomes}
+              className="flex-1 h-full flex flex-col-reverse rounded overflow-hidden cursor-pointer"
+              style={{ border: isCurrent ? `1px solid ${C.gold}` : "none" }}
+              onMouseEnter={tt.onEnter(d.anomes)}
+              onMouseMove={tt.onMove}
+              onMouseLeave={tt.onLeave}
+            >
               {cats.map((c, i) => {
                 const v = Number(d[c]) || 0;
                 if (v === 0) return null;
@@ -679,6 +782,16 @@ function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: stri
           );
         })}
       </div>
+      {tt.state && hovered && (
+        <RichTooltip
+          pos={{ x: tt.state.x, y: tt.state.y }}
+          mes={hovered.anomes}
+          label={hovered.label}
+          cats={buildTooltipCats(hovered, cats)}
+          total={hovered.total}
+          showPct={true}
+        />
+      )}
     </div>
   );
 }
