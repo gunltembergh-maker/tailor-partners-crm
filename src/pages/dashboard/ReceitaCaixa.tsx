@@ -199,7 +199,7 @@ export default function ReceitaCaixa() {
   const catQ     = mkQ<{ categoria: string; total: number }[]>("rc-cat", "rpc_receita_caixa_por_categoria");
   const subQ     = mkQ<{ categoria: string; subcategoria: string; total_subcategoria: number; total_categoria: number }[]>("rc-sub", "rpc_receita_caixa_por_subcategoria");
   const serieQ   = mkQ<{ anomes: number; anomes_label: string; categoria: string; total: number }[]>("rc-serie", "rpc_receita_caixa_serie_temporal");
-  const [papel, setPapel] = useState<"BANKER" | "FINDER">("BANKER");
+  const [papel, setPapel] = useState<"BANKER" | "FINDER" | "CANAL">("BANKER");
   const papelQ = useQuery({
     queryKey: ["rc-papel", papel, rpcParams],
     queryFn: async () => {
