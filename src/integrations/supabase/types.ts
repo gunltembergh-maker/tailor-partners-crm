@@ -3111,6 +3111,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      refresh_mv_caixa_completa: { Args: never; Returns: undefined }
       rpc_admin_aprovar_usuario: {
         Args: { p_notif_id?: string; p_role: string; p_user_id: string }
         Returns: Json
