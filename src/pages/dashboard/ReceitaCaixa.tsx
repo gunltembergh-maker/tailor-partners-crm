@@ -350,49 +350,89 @@ export default function ReceitaCaixa() {
           </aside>
 
           {/* ── MAIN CONTENT ─────────────────────────────────────── */}
-          <div className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-4">
 
             {/* Row 1: KPI principal + Advisor XP */}
-            <div className="grid gap-3.5" style={{ gridTemplateColumns: "1.4fr 1fr" }}>
-              {/* KPI Principal */}
-              <div className="rounded-[10px] p-6" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-                <p className="text-[11px] font-medium uppercase tracking-[1px]" style={{ color: C.textMuted }}>
-                  Receita do Mês {kpis?.anomes_label && `· ${kpis.anomes_label}`}
-                </p>
-                {kpisQ.isLoading ? <Skeleton className="h-12 w-64 mt-2" /> : (
-                  <p className="mt-2" style={{ fontSize: 42, fontWeight: 500, letterSpacing: "-1px", lineHeight: 1, color: C.navy900 }}>
-                    {fmtBRL(kpis?.total_mes ?? 0)}
-                  </p>
-                )}
-                <div className="flex items-center gap-3 mt-4">
+            <div className="grid gap-4" style={{ gridTemplateColumns: "1.4fr 1fr" }}>
+              {/* KPI Principal — dominante */}
+              <div
+                className="rounded-[10px] flex flex-col justify-between"
+                style={{
+                  background: C.bgCard,
+                  border: `0.5px solid ${C.border}`,
+                  padding: "28px 32px",
+                  gap: 16,
+                  minHeight: 240,
+                }}
+              >
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, margin: 0, letterSpacing: "-0.2px" }}>
+                  Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 500 }}>· {kpis.anomes_label}</span>}
+                </h3>
+
+                {kpisQ.isLoading ? (
+                  <Skeleton className="h-16 w-72" />
+                ) : (() => {
+                  const total = kpis?.total_mes ?? 0;
+                  const intPart = Math.trunc(total);
+                  const decPart = Math.abs(total - intPart);
+                  const intStr = `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(intPart)}`;
+                  const decStr = `,${decPart.toFixed(2).slice(2)}`;
+                  return (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                      <span style={{ fontSize: 64, fontWeight: 500, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
+                      <span style={{ fontSize: 18, color: C.textMuted }}>{decStr}</span>
+                    </div>
+                  );
+                })()}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {variacao != null && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium"
-                      style={{ background: isDown ? C.downBg : isUp ? C.upBg : "#eee", color: isDown ? C.downFg : isUp ? C.upFg : C.textMuted }}>
-                      {isDown ? <TrendingDown className="h-3 w-3" /> : isUp ? <TrendingUp className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                      {variacao > 0 ? "+" : ""}{variacao.toFixed(1)}% vs {kpis?.anomes_anterior_label}
+                    <span
+                      style={{
+                        background: isDown ? C.downBg : isUp ? C.upBg : "#eee",
+                        color: isDown ? C.downFg : isUp ? C.upFg : C.textMuted,
+                        padding: "6px 14px",
+                        borderRadius: 6,
+                        fontSize: 16,
+                        fontWeight: 500,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        width: "fit-content",
+                      }}
+                    >
+                      {isDown ? <TrendingDown size={18} /> : isUp ? <TrendingUp size={18} /> : <Minus size={18} />}
+                      {variacao > 0 ? "+" : ""}{variacao.toFixed(1)}%
                     </span>
                   )}
-                  <span className="text-[12px]" style={{ color: C.textMuted }}>
-                    {kpis?.n_clientes_unicos ?? 0} clientes
+                  {kpis?.anomes_anterior_label && (
+                    <span style={{ fontSize: 14, color: C.textMuted }}>
+                      vs {kpis.anomes_anterior_label}: {fmtBRL(kpis.total_mes_anterior ?? 0)}
+                    </span>
+                  )}
+                  <span style={{ fontSize: 14, color: C.textMuted }}>
+                    {kpis?.n_clientes_unicos ?? 0} clientes ativos
                   </span>
                 </div>
               </div>
 
               {/* Advisor XP mini-tabela */}
-              <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-                <p className="text-[11px] font-medium uppercase tracking-[1px] mb-3" style={{ color: C.textMuted }}>Receita Advisor XP</p>
+              <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>
+                  Receita Advisor XP
+                </h3>
                 {advisorQ.isLoading ? <Skeleton className="h-32 w-full" /> : (
                   <table className="w-full">
                     <tbody>
                       {(advisorQ.data || []).map((a) => (
                         <tr key={a.advisor} style={{ borderBottom: `0.5px solid ${C.divider}` }}>
-                          <td className="py-1.5 text-[13px]" style={{ color: C.navy900 }}>{a.advisor}</td>
-                          <td className="py-1.5 text-right text-[13px] tabular-nums" style={{ color: C.navy900 }}>{fmtBR(a.total)}</td>
+                          <td style={{ padding: "10px 0", fontSize: 15, color: "#1a1a1a" }}>{a.advisor}</td>
+                          <td className="text-right tabular-nums" style={{ padding: "10px 0", fontSize: 15, color: C.navy900, fontWeight: 500 }}>{fmtBR(a.total)}</td>
                         </tr>
                       ))}
                       <tr style={{ borderTop: `1px solid ${C.navy900}` }}>
-                        <td className="pt-2 text-[13px] font-medium" style={{ color: C.navy900 }}>Total</td>
-                        <td className="pt-2 text-right text-[13px] font-medium tabular-nums" style={{ color: C.navy900 }}>
+                        <td style={{ padding: "12px 0 0", fontSize: 16, fontWeight: 600, color: C.navy900 }}>Total</td>
+                        <td className="text-right tabular-nums" style={{ padding: "12px 0 0", fontSize: 16, fontWeight: 600, color: C.navy900 }}>
                           {fmtBRL((advisorQ.data || []).reduce((a, r) => a + Number(r.total), 0))}
                         </td>
                       </tr>
