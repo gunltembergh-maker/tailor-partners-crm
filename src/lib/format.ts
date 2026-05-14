@@ -1,3 +1,17 @@
+export const formatMil = (value: number): string => {
+  const mil = value / 1000;
+  if (Math.abs(mil) >= 100) {
+    return `R$ ${new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(mil)} Mil`;
+  }
+  return `R$ ${new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(mil)} Mil`;
+};
+
 export function formatCurrency(value: number | null | undefined): string {
   if (value == null) return "R$ 0,00";
   return new Intl.NumberFormat("pt-BR", {
