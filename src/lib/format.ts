@@ -1,3 +1,30 @@
+/**
+ * Formato adaptativo R$ (entrada em REAIS).
+ * - < 1.000      → "R$ 309"
+ * - < 1.000.000  → "R$ 309 Mil"
+ * - ≥ 1.000.000  → "R$ 1,3 Mi"
+ */
+export const formatAdaptativo = (valor: number): string => {
+  if (!isFinite(valor) || valor === 0) return "—";
+  const abs = Math.abs(valor);
+  if (abs >= 1_000_000) {
+    return `R$ ${new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(valor / 1_000_000)} Mi`;
+  }
+  if (abs >= 1_000) {
+    return `R$ ${new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(valor / 1_000)} Mil`;
+  }
+  return `R$ ${new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(valor)}`;
+};
+
 export const formatMil = (value: number): string => {
   const mil = value / 1000;
   if (Math.abs(mil) >= 100) {

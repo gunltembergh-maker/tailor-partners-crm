@@ -15,15 +15,15 @@ import { Badge } from "@/components/ui/badge";
 import { ReceitaCaixaOnboardingModal } from "@/components/relatorios/ReceitaCaixaOnboardingModal";
 import { cn } from "@/lib/utils";
 
-// ── Paleta executiva (paleta-receita) ───────────────────────────────
+// ── Paleta executiva — Monocromática navy Tailor ────────────────────
 const C = {
   navy900: "#082537",
   navy700: "#1F4A66",
   navy500: "#37708F",
-  navy300: "#5B96B0",
+  navy300: "#5B8EA8",
   navy200: "#88A8B8",
   navy100: "#B0C2CC",
-  gold:    "#BC8B5C",
+  gold:    "#37708F", // accent monocromático (substitui gold/terracotta)
   bgPage:  "#F4F2EC",
   bgCard:  "#FFFFFF",
   textMuted: "#7a8794",
@@ -33,23 +33,26 @@ const C = {
   upBg:    "#E1F5EE", upFg:   "#0F6E56",
 };
 
-// Mapeamento categoria → cor (paleta estendida — suporta até 12+ categorias)
-const CAT_COLORS: Record<string, string> = {
-  "Câmbio": "#082537",
-  "Lavoro": "#BC8B5C",
-  "Consórcio": "#1F4A66",
-  "Assessoria": "#37708F",
-  "Wealth Solutions": "#5B96B0",
-  "Seguro de Vida": "#88A8B8",
-  "Offshore": "#B0C2CC",
-  "Consultoria": "#A4815C",
-  "Corporate & Banking": "#4A8C8C",
-  "Gestora": "#6F9A95",
-};
+// Paleta navy Tailor (12 tons, do mais escuro ao mais claro)
 const FALLBACK_COLORS = [
-  "#082537", "#BC8B5C", "#1F4A66", "#37708F", "#5B96B0", "#88A8B8",
-  "#B0C2CC", "#A4815C", "#4A8C8C", "#6F9A95", "#8E5C4F", "#6B7A8F",
+  "#082537", "#163C54", "#1F4A66", "#2C5F7F", "#37708F", "#5B8EA8",
+  "#7AA0BC", "#9DBED4", "#B5CDE0", "#C3D6E0", "#D4E1E9", "#6F8DA3",
 ];
+
+// Mapeamento explícito categoria → cor
+const CAT_COLORS: Record<string, string> = {
+  "Câmbio":              "#082537",
+  "Lavoro":              "#163C54",
+  "Consórcio":           "#1F4A66",
+  "Assessoria":          "#2C5F7F",
+  "Wealth Solutions":    "#37708F",
+  "Seguro de Vida":      "#5B8EA8",
+  "Offshore":            "#7AA0BC",
+  "Consultoria":         "#9DBED4",
+  "Corporate & Banking": "#B5CDE0",
+  "Gestora":             "#C3D6E0",
+};
+
 const colorFor = (cat: string, idx = 0) => CAT_COLORS[cat] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -57,19 +60,18 @@ const fmtBRL = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 const fmtBR = (n: number | null | undefined, decimals = 2) =>
   n == null ? "—" : new Intl.NumberFormat("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
-const fmtMil = (n: number) => {
+
+// Formato adaptativo: R$ X / R$ X Mil / R$ X,X Mi
+const fmtAdapt = (n: number): string => {
   if (!isFinite(n) || n === 0) return "—";
-  const v = n / 1000;
-  return Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1).replace(".", ",");
-};
-// "R$ X Mil" formatter for category bar chart values
-const fmtMilLabel = (n: number) => {
-  if (!isFinite(n) || n === 0) return "—";
-  const v = n / 1000;
-  if (Math.abs(v) >= 100) {
-    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)} Mil`;
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) {
+    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n / 1_000_000)} Mi`;
   }
-  return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v)} Mil`;
+  if (abs >= 1_000) {
+    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n / 1_000)} Mil`;
+  }
+  return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)}`;
 };
 
 const todayAnomes = (() => { const d = new Date(); return d.getFullYear() * 100 + (d.getMonth() + 1); })();
@@ -197,16 +199,25 @@ export default function ReceitaCaixa() {
   const catQ     = mkQ<{ categoria: string; total: number }[]>("rc-cat", "rpc_receita_caixa_por_categoria");
   const subQ     = mkQ<{ categoria: string; subcategoria: string; total_subcategoria: number; total_categoria: number }[]>("rc-sub", "rpc_receita_caixa_por_subcategoria");
   const serieQ   = mkQ<{ anomes: number; anomes_label: string; categoria: string; total: number }[]>("rc-serie", "rpc_receita_caixa_serie_temporal");
-  const matrizQ  = mkQ<{ banker: string; categoria: string; total: number }[]>("rc-matriz", "rpc_receita_caixa_por_assessor");
+  const [papel, setPapel] = useState<"BANKER" | "FINDER">("BANKER");
+  const papelQ = useQuery({
+    queryKey: ["rc-papel", papel, rpcParams],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_caixa_por_papel" as any, { p_papel: papel, ...rpcParams } as any);
+      if (error) throw error;
+      return data as { papel_nome: string; categoria: string; total: number }[];
+    },
+    enabled,
+  });
   const advisorQ = mkQ<{ advisor: string; total: number }[]>("rc-advisor", "rpc_receita_caixa_advisor_xp");
 
   const kpis = (kpisQ.data && (kpisQ.data as any)[0]) as KPIs | undefined;
 
   useEffect(() => {
-    [kpisQ.error, catQ.error, subQ.error, serieQ.error, matrizQ.error, advisorQ.error].forEach((e) => {
+    [kpisQ.error, catQ.error, subQ.error, serieQ.error, papelQ.error, advisorQ.error].forEach((e) => {
       if (e) toast.error(`Erro ao carregar dados: ${(e as Error).message}`);
     });
-  }, [kpisQ.error, catQ.error, subQ.error, serieQ.error, matrizQ.error, advisorQ.error]);
+  }, [kpisQ.error, catQ.error, subQ.error, serieQ.error, papelQ.error, advisorQ.error]);
 
   // Subcategoria pivot
   const subPivot = useMemo(() => {
@@ -241,30 +252,31 @@ export default function ReceitaCaixa() {
     return Array.from(tot.entries()).sort((a, b) => b[1] - a[1]).map(([c]) => c);
   }, [serieQ.data]);
 
-  // Matriz Banker × Categoria (top 6 + outros)
-  const matriz = useMemo(() => {
-    const cats = new Set<string>();
-    const rows = new Map<string, Record<string, number>>();
-    (matrizQ.data || []).forEach((r) => {
-      cats.add(r.categoria);
-      if (!rows.has(r.banker)) rows.set(r.banker, {});
-      rows.get(r.banker)![r.categoria] = r.total;
+  // Receita por Papel (Banker/Finder) — agregação para stacked horizontal bars
+  const porPapel = useMemo(() => {
+    const map = new Map<string, { categorias: Map<string, number>; total: number }>();
+    (papelQ.data || []).forEach((row) => {
+      const nome = row.papel_nome || "(sem nome)";
+      if (!map.has(nome)) map.set(nome, { categorias: new Map(), total: 0 });
+      const obj = map.get(nome)!;
+      const v = Number(row.total) || 0;
+      obj.categorias.set(row.categoria, (obj.categorias.get(row.categoria) || 0) + v);
+      obj.total += v;
     });
-    const catOrder = ["Câmbio", "Consórcio", "Assessoria", "Lavoro", "Wealth Solutions", "Seguro de Vida", "Offshore"];
-    const catList = Array.from(cats).sort((a, b) => {
-      const ia = catOrder.indexOf(a), ib = catOrder.indexOf(b);
-      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-    });
-    const allRows = Array.from(rows.entries()).map(([banker, vals]) => ({
-      banker, vals, total: catList.reduce((acc, c) => acc + (vals[c] || 0), 0),
-    })).sort((a, b) => b.total - a.total);
-    const totals: Record<string, number> = {};
-    catList.forEach(c => { totals[c] = allRows.reduce((a, r) => a + (r.vals[c] || 0), 0); });
-    const grand = allRows.reduce((a, r) => a + r.total, 0);
-    return { catList, allRows, totals, grand };
-  }, [matrizQ.data]);
+    return Array.from(map.entries())
+      .map(([nome, dados]) => ({ nome, ...dados }))
+      .sort((a, b) => b.total - a.total);
+  }, [papelQ.data]);
 
-  const [showAllBankers, setShowAllBankers] = useState(false);
+  const papelCats = useMemo(() => {
+    const tot = new Map<string, number>();
+    (papelQ.data || []).forEach((r) => tot.set(r.categoria, (tot.get(r.categoria) || 0) + Number(r.total)));
+    return Array.from(tot.entries()).sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  }, [papelQ.data]);
+
+  const papelTotalGeral = porPapel.reduce((s, p) => s + p.total, 0);
+  const papelMaxTotal = Math.max(...porPapel.map(p => p.total), 1);
+  const [showAllPapel, setShowAllPapel] = useState(false);
 
   const handleClearFilters = () => {
     setBankers([]); setFinders([]); setAdvisors([]); setCanais([]); setCategorias([]); setSubcategorias([]); setTiposPessoa(["PF", "PJ"]);
@@ -463,7 +475,7 @@ export default function ReceitaCaixa() {
                           <div style={{ background: "rgba(8,37,55,0.06)", borderRadius: 4, height: 26 }}>
                             <div style={{ background: colorFor(d.categoria, i), width: `${(Number(d.total) / max) * 100}%`, height: "100%", borderRadius: 4 }} />
                           </div>
-                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtMilLabel(Number(d.total))}</span>
+                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtAdapt(Number(d.total))}</span>
                         </div>
                       ))}
                     </div>
@@ -520,58 +532,100 @@ export default function ReceitaCaixa() {
               {serieQ.isLoading ? <Skeleton className="h-80 w-full" /> : <StackedBars data={seriePivot} cats={seriesCats} currentAnomes={selectedAnomes ?? 0} />}
             </div>
 
-            {/* Row 4: Matriz Banker × Categoria */}
+            {/* Row 4: Receita por Financial Advisor / Finder */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-              <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>Receita por Assessor</h3>
-              {matrizQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
-                const visible = showAllBankers ? matriz.allRows : matriz.allRows.slice(0, 6);
-                const hidden = matriz.allRows.slice(6);
-                const otherTotals: Record<string, number> = {};
-                let otherGrand = 0;
-                hidden.forEach(r => { matriz.catList.forEach(c => { otherTotals[c] = (otherTotals[c] || 0) + (r.vals[c] || 0); }); otherGrand += r.total; });
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>
+                  Receita por Financial Advisor / Finder
+                </h3>
+                <div style={{ display: "flex", background: "rgba(8,37,55,0.06)", borderRadius: 6, padding: 3 }}>
+                  {(["BANKER", "FINDER"] as const).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => { setPapel(p); setShowAllPapel(false); }}
+                      style={{
+                        padding: "6px 14px", fontSize: 13, fontWeight: 500, borderRadius: 4,
+                        background: papel === p ? C.navy900 : "transparent",
+                        color: papel === p ? "#fff" : C.navy900,
+                        border: "none", cursor: "pointer",
+                      }}
+                    >
+                      {p === "BANKER" ? "Financial Advisor" : "Finder"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Legenda */}
+              <div style={{ display: "flex", gap: 14, fontSize: 12, color: C.textMuted, flexWrap: "wrap", marginBottom: 18 }}>
+                {papelCats.map((cat, idx) => (
+                  <span key={cat} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ width: 10, height: 10, background: colorFor(cat, idx), borderRadius: 2, display: "inline-block" }} />
+                    {cat}
+                  </span>
+                ))}
+              </div>
+
+              {papelQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
+                const visible = showAllPapel ? porPapel : porPapel.slice(0, 6);
+                const hidden = porPapel.slice(6);
+                const otherTotal = hidden.reduce((s, p) => s + p.total, 0);
+                const otherCats = new Map<string, number>();
+                hidden.forEach((p) => p.categorias.forEach((v, c) => otherCats.set(c, (otherCats.get(c) || 0) + v)));
                 return (
-                  <div className="overflow-auto">
-                    <table className="w-full border-collapse" style={{ fontSize: 14 }}>
-                      <thead>
-                        <tr style={{ borderBottom: `1px solid ${C.navy900}` }}>
-                          <th className="text-left" style={{ padding: "12px 8px", fontSize: 12, color: C.textMuted, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>Banker</th>
-                          {matriz.catList.map((c, i) => (
-                            <th key={c} className="text-right whitespace-nowrap" style={{ padding: "12px 8px", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px", color: colorFor(c, i) }}>{c}</th>
-                          ))}
-                          <th className="text-right" style={{ padding: "12px 8px", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px", color: C.navy900 }}>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visible.map((r) => (
-                          <tr key={r.banker} style={{ borderBottom: `0.5px solid ${C.divider}` }}>
-                            <td style={{ padding: "10px 8px", color: C.navy900 }}>{r.banker}</td>
-                            {matriz.catList.map((c) => (
-                              <td key={c} className="text-right tabular-nums" style={{ padding: "10px 8px", color: C.navy900 }}>
-                                {r.vals[c] ? fmtBR(r.vals[c]) : "—"}
-                              </td>
-                            ))}
-                            <td className="text-right tabular-nums" style={{ padding: "10px 8px", color: C.navy900, fontWeight: 500 }}>{fmtBR(r.total)}</td>
-                          </tr>
-                        ))}
-                        {!showAllBankers && hidden.length > 0 && (
-                          <tr style={{ borderBottom: `0.5px solid ${C.divider}`, color: C.textMuted, cursor: "pointer" }}
-                              onClick={() => setShowAllBankers(true)}>
-                            <td className="italic" style={{ padding: "10px 8px" }}>… outros ({hidden.length}) — clique para expandir</td>
-                            {matriz.catList.map((c) => (
-                              <td key={c} className="text-right tabular-nums" style={{ padding: "10px 8px" }}>{otherTotals[c] ? fmtBR(otherTotals[c]) : "—"}</td>
-                            ))}
-                            <td className="text-right tabular-nums" style={{ padding: "10px 8px" }}>{fmtBR(otherGrand)}</td>
-                          </tr>
-                        )}
-                        <tr style={{ borderTop: `1px solid ${C.navy900}`, background: "rgba(8,37,55,0.025)" }}>
-                          <td style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>Total</td>
-                          {matriz.catList.map((c) => (
-                            <td key={c} className="text-right tabular-nums" style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>{fmtBR(matriz.totals[c] || 0)}</td>
-                          ))}
-                          <td className="text-right tabular-nums" style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>{fmtBR(matriz.grand)}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {visible.map((p) => {
+                      const pctTotal = papelTotalGeral > 0 ? (p.total / papelTotalGeral * 100).toFixed(1) : "0.0";
+                      const larguraBarra = (p.total / papelMaxTotal * 100);
+                      return (
+                        <div key={p.nome} style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, alignItems: "center", fontSize: 14 }}>
+                          <span style={{ color: C.navy900, fontWeight: 500 }} className="truncate">{p.nome}</span>
+                          <div style={{ background: "rgba(8,37,55,0.04)", borderRadius: 4, height: 22 }}>
+                            <div style={{ display: "flex", height: "100%", width: `${larguraBarra}%`, minWidth: 20, borderRadius: 4, overflow: "hidden" }}>
+                              {papelCats.map((cat, idx) => {
+                                const valorCat = p.categorias.get(cat) || 0;
+                                if (valorCat === 0) return null;
+                                const pctNaBarra = (valorCat / p.total * 100);
+                                return (
+                                  <div
+                                    key={cat}
+                                    style={{ background: colorFor(cat, idx), width: `${pctNaBarra}%`, height: "100%" }}
+                                    title={`${cat}: ${fmtAdapt(valorCat)} (${pctNaBarra.toFixed(1)}%)`}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtAdapt(p.total)}</span>
+                          <span className="tabular-nums" style={{ textAlign: "right", color: C.textMuted, fontSize: 13 }}>{pctTotal}%</span>
+                        </div>
+                      );
+                    })}
+                    {!showAllPapel && hidden.length > 0 && (
+                      <div
+                        onClick={() => setShowAllPapel(true)}
+                        style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, alignItems: "center", fontSize: 14, cursor: "pointer", color: C.textMuted, fontStyle: "italic" }}
+                      >
+                        <span>… outros ({hidden.length})</span>
+                        <div style={{ background: "rgba(8,37,55,0.04)", borderRadius: 4, height: 22 }}>
+                          <div style={{ display: "flex", height: "100%", width: `${(otherTotal / papelMaxTotal * 100)}%`, minWidth: 20, borderRadius: 4, overflow: "hidden" }}>
+                            {papelCats.map((cat, idx) => {
+                              const v = otherCats.get(cat) || 0;
+                              if (v === 0) return null;
+                              return <div key={cat} style={{ background: colorFor(cat, idx), width: `${(v / otherTotal * 100)}%`, height: "100%" }} />;
+                            })}
+                          </div>
+                        </div>
+                        <span className="tabular-nums" style={{ textAlign: "right" }}>{fmtAdapt(otherTotal)}</span>
+                        <span className="tabular-nums" style={{ textAlign: "right", fontSize: 13 }}>{papelTotalGeral > 0 ? (otherTotal / papelTotalGeral * 100).toFixed(1) : "0.0"}%</span>
+                      </div>
+                    )}
+                    <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, padding: "12px 0 0", marginTop: 8, borderTop: `1px solid ${C.navy900}`, fontSize: 15, fontWeight: 600, color: C.navy900 }}>
+                      <span>Total</span>
+                      <span></span>
+                      <span className="tabular-nums" style={{ textAlign: "right" }}>{fmtAdapt(papelTotalGeral)}</span>
+                      <span className="tabular-nums" style={{ textAlign: "right" }}>100%</span>
+                    </div>
                   </div>
                 );
               })()}
@@ -694,7 +748,7 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
               onMouseMove={tt.onMove}
               onMouseLeave={tt.onLeave}
             >
-              <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="tabular-nums">{fmtMil(d.total)}</span>
+              <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="tabular-nums">{fmtAdapt(d.total)}</span>
               <div className="w-full flex flex-col-reverse rounded-t overflow-hidden relative"
                 style={{ height: `${heightPct}%`, minHeight: 4, borderTop: isCurrent ? `1px solid ${C.gold}` : "none" }}>
                 {cats.map((c, i) => {
