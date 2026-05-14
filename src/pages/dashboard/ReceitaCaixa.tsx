@@ -123,7 +123,7 @@ function MultiSelect({ options, selected, onChange, placeholder = "Selecionar" }
 }
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <label className="block text-[10px] font-medium uppercase tracking-[1px] text-white/60 mb-1">{children}</label>
+  <label className="block text-[12px] font-medium uppercase tracking-[0.5px] text-white/55 mb-[7px]">{children}</label>
 );
 
 // ── Page ─────────────────────────────────────────────────────────────
