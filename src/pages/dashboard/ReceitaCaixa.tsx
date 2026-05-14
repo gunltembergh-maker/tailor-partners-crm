@@ -475,7 +475,7 @@ export default function ReceitaCaixa() {
                           <div style={{ background: "rgba(8,37,55,0.06)", borderRadius: 4, height: 26 }}>
                             <div style={{ background: colorFor(d.categoria, i), width: `${(Number(d.total) / max) * 100}%`, height: "100%", borderRadius: 4 }} />
                           </div>
-                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtMilLabel(Number(d.total))}</span>
+                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtAdapt(Number(d.total))}</span>
                         </div>
                       ))}
                     </div>
