@@ -273,7 +273,7 @@ export default function ReceitaCaixa() {
     <AppLayout>
       <ReceitaCaixaOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
 
-      <div style={{ background: C.bgPage, margin: -16, padding: 20, minHeight: "calc(100vh - 64px)" }}>
+      <div style={{ background: C.bgPage, margin: -16, padding: 24, minHeight: "calc(100vh - 64px)" }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
