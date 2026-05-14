@@ -2250,6 +2250,25 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_comissoes_caixa_completa: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          categoria: string | null
+          comissao_bruta_tailor: number | null
+          documento: string | null
+          finder: string | null
+          produto: string | null
+          source_origin: string | null
+          source_row_id: number | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
       mv_comissoes_consolidado: {
         Row: {
           advisor: string | null
