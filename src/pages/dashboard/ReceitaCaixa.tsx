@@ -199,7 +199,7 @@ export default function ReceitaCaixa() {
   const catQ     = mkQ<{ categoria: string; total: number }[]>("rc-cat", "rpc_receita_caixa_por_categoria");
   const subQ     = mkQ<{ categoria: string; subcategoria: string; total_subcategoria: number; total_categoria: number }[]>("rc-sub", "rpc_receita_caixa_por_subcategoria");
   const serieQ   = mkQ<{ anomes: number; anomes_label: string; categoria: string; total: number }[]>("rc-serie", "rpc_receita_caixa_serie_temporal");
-  const [papel, setPapel] = useState<"BANKER" | "FINDER">("BANKER");
+  const [papel, setPapel] = useState<"BANKER" | "FINDER" | "CANAL">("BANKER");
   const papelQ = useQuery({
     queryKey: ["rc-papel", papel, rpcParams],
     queryFn: async () => {
@@ -536,21 +536,25 @@ export default function ReceitaCaixa() {
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
               <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
                 <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>
-                  Receita por Financial Advisor / Finder
+                  Receita por Financial Advisor / Finder / Canal
                 </h3>
                 <div style={{ display: "flex", background: "rgba(8,37,55,0.06)", borderRadius: 6, padding: 3 }}>
-                  {(["BANKER", "FINDER"] as const).map((p) => (
+                  {([
+                    { v: "BANKER" as const, l: "Financial Advisor" },
+                    { v: "FINDER" as const, l: "Finder" },
+                    { v: "CANAL" as const, l: "Canal" },
+                  ]).map((opt) => (
                     <button
-                      key={p}
-                      onClick={() => { setPapel(p); setShowAllPapel(false); }}
+                      key={opt.v}
+                      onClick={() => { setPapel(opt.v); setShowAllPapel(false); }}
                       style={{
                         padding: "6px 14px", fontSize: 13, fontWeight: 500, borderRadius: 4,
-                        background: papel === p ? C.navy900 : "transparent",
-                        color: papel === p ? "#fff" : C.navy900,
+                        background: papel === opt.v ? C.navy900 : "transparent",
+                        color: papel === opt.v ? "#fff" : C.navy900,
                         border: "none", cursor: "pointer",
                       }}
                     >
-                      {p === "BANKER" ? "Financial Advisor" : "Finder"}
+                      {opt.l}
                     </button>
                   ))}
                 </div>
@@ -566,7 +570,61 @@ export default function ReceitaCaixa() {
                 ))}
               </div>
 
-              {papelQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
+              {papelQ.isLoading ? <Skeleton className="h-64 w-full" /> : papel === "BANKER" ? (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${C.navy900}` }}>
+                        <th style={{ textAlign: "left", padding: "10px 8px", color: C.textMuted, fontWeight: 500, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", minWidth: 180 }}>
+                          Financial Advisor
+                        </th>
+                        {papelCats.map((cat) => (
+                          <th key={cat} style={{ textAlign: "right", padding: "10px 8px", color: C.textMuted, fontWeight: 500, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>
+                            {cat}
+                          </th>
+                        ))}
+                        <th style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          Total
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {porPapel.map((p) => (
+                        <tr key={p.nome} style={{ borderBottom: "0.5px solid rgba(8,37,55,0.06)" }}>
+                          <td style={{ padding: "10px 8px", color: C.navy900, fontWeight: 500 }}>{p.nome}</td>
+                          {papelCats.map((cat) => {
+                            const v = p.categorias.get(cat) || 0;
+                            return (
+                              <td key={cat} className="tabular-nums" style={{ textAlign: "right", padding: "10px 8px", color: v > 0 ? C.navy900 : "#B0B7BE", whiteSpace: "nowrap" }}>
+                                {v > 0 ? fmtAdapt(v) : "—"}
+                              </td>
+                            );
+                          })}
+                          <td className="tabular-nums" style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
+                            {fmtAdapt(p.total)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr style={{ borderTop: `1px solid ${C.navy900}`, background: "rgba(8,37,55,0.025)" }}>
+                        <td style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>Total</td>
+                        {papelCats.map((cat) => {
+                          const totalCat = porPapel.reduce((s, p) => s + (p.categorias.get(cat) || 0), 0);
+                          return (
+                            <td key={cat} className="tabular-nums" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
+                              {fmtAdapt(totalCat)}
+                            </td>
+                          );
+                        })}
+                        <td className="tabular-nums" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15, whiteSpace: "nowrap" }}>
+                          {fmtAdapt(papelTotalGeral)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ) : (() => {
+                const firstColW = papel === "CANAL" ? 220 : 180;
+                const gridCols = `${firstColW}px 1fr 110px 60px`;
                 const visible = showAllPapel ? porPapel : porPapel.slice(0, 6);
                 const hidden = porPapel.slice(6);
                 const otherTotal = hidden.reduce((s, p) => s + p.total, 0);
@@ -578,7 +636,7 @@ export default function ReceitaCaixa() {
                       const pctTotal = papelTotalGeral > 0 ? (p.total / papelTotalGeral * 100).toFixed(1) : "0.0";
                       const larguraBarra = (p.total / papelMaxTotal * 100);
                       return (
-                        <div key={p.nome} style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, alignItems: "center", fontSize: 14 }}>
+                        <div key={p.nome} style={{ display: "grid", gridTemplateColumns: gridCols, gap: 14, alignItems: "center", fontSize: 14 }}>
                           <span style={{ color: C.navy900, fontWeight: 500 }} className="truncate">{p.nome}</span>
                           <div style={{ background: "rgba(8,37,55,0.04)", borderRadius: 4, height: 22 }}>
                             <div style={{ display: "flex", height: "100%", width: `${larguraBarra}%`, minWidth: 20, borderRadius: 4, overflow: "hidden" }}>
@@ -604,7 +662,7 @@ export default function ReceitaCaixa() {
                     {!showAllPapel && hidden.length > 0 && (
                       <div
                         onClick={() => setShowAllPapel(true)}
-                        style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, alignItems: "center", fontSize: 14, cursor: "pointer", color: C.textMuted, fontStyle: "italic" }}
+                        style={{ display: "grid", gridTemplateColumns: gridCols, gap: 14, alignItems: "center", fontSize: 14, cursor: "pointer", color: C.textMuted, fontStyle: "italic" }}
                       >
                         <span>… outros ({hidden.length})</span>
                         <div style={{ background: "rgba(8,37,55,0.04)", borderRadius: 4, height: 22 }}>
@@ -620,7 +678,7 @@ export default function ReceitaCaixa() {
                         <span className="tabular-nums" style={{ textAlign: "right", fontSize: 13 }}>{papelTotalGeral > 0 ? (otherTotal / papelTotalGeral * 100).toFixed(1) : "0.0"}%</span>
                       </div>
                     )}
-                    <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, padding: "12px 0 0", marginTop: 8, borderTop: `1px solid ${C.navy900}`, fontSize: 15, fontWeight: 600, color: C.navy900 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 14, padding: "12px 0 0", marginTop: 8, borderTop: `1px solid ${C.navy900}`, fontSize: 15, fontWeight: 600, color: C.navy900 }}>
                       <span>Total</span>
                       <span></span>
                       <span className="tabular-nums" style={{ textAlign: "right" }}>{fmtAdapt(papelTotalGeral)}</span>
