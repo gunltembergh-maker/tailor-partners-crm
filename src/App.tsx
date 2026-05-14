@@ -58,6 +58,7 @@ const Relatorios = lazy(() => import("./pages/Relatorios"));
 const SaldoConsolidado = lazy(() => import("./pages/SaldoConsolidado"));
 const DashComercial = lazy(() => import("./pages/DashComercial"));
 const DashboardComercial = lazy(() => import("./pages/DashboardComercial"));
+const ReceitaCaixa = lazy(() => import("./pages/dashboard/ReceitaCaixa"));
 const AuditoriaComercial = lazy(() => import("./pages/AuditoriaComercial"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ImportClients = lazy(() => import("./pages/ImportClients"));
@@ -131,6 +132,7 @@ function AppRoutes() {
         <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
         <Route path="/paineis" element={<ProtectedRoute><Paineis /></ProtectedRoute>} />
         <Route path="/dashboards/comercial" element={<ProtectedRoute><DashboardComercial /></ProtectedRoute>} />
+        <Route path="/dashboard/receita" element={<PermissionRoute permissions={["menu_dashboard_receita"]}><ReceitaCaixa /></PermissionRoute>} />
         <Route path="/relatorios/dash-comercial" element={<ProtectedRoute><DashComercial /></ProtectedRoute>} />
         <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
         <Route path="/relatorios/saldo-consolidado" element={<ProtectedRoute><SaldoConsolidado /></ProtectedRoute>} />
