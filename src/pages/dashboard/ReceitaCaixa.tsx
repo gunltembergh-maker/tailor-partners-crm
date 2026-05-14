@@ -581,8 +581,8 @@ export default function ReceitaCaixa() {
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
                 <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>Fonte da Receita — composição mensal</h3>
-                <div className="flex items-center gap-4 flex-wrap">
-                  {seriesCats.slice(0, 5).map((c, i) => (
+                <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
+                  {seriesCats.map((c, i) => (
                     <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
                       <span className="rounded-sm" style={{ width: 10, height: 10, background: colorFor(c, i), display: "inline-block" }} /> {c}
                     </span>
