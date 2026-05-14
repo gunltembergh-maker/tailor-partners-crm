@@ -214,10 +214,10 @@ export default function ReceitaCaixa() {
   const kpis = (kpisQ.data && (kpisQ.data as any)[0]) as KPIs | undefined;
 
   useEffect(() => {
-    [kpisQ.error, catQ.error, subQ.error, serieQ.error, matrizQ.error, advisorQ.error].forEach((e) => {
+    [kpisQ.error, catQ.error, subQ.error, serieQ.error, papelQ.error, advisorQ.error].forEach((e) => {
       if (e) toast.error(`Erro ao carregar dados: ${(e as Error).message}`);
     });
-  }, [kpisQ.error, catQ.error, subQ.error, serieQ.error, matrizQ.error, advisorQ.error]);
+  }, [kpisQ.error, catQ.error, subQ.error, serieQ.error, papelQ.error, advisorQ.error]);
 
   // Subcategoria pivot
   const subPivot = useMemo(() => {
