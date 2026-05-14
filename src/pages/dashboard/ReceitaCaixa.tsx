@@ -638,7 +638,7 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
 function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: string[]; currentAnomes: number }) {
   return (
     <div>
-      <div className="flex items-end gap-1.5" style={{ height: 220 }}>
+      <div className="flex items-end" style={{ height: 300, gap: 10 }}>
         {data.map((d) => {
           const isCurrent = d.anomes === currentAnomes;
           if (d.total === 0) return <div key={d.anomes} className="flex-1" />;
@@ -651,7 +651,7 @@ function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: stri
                 const pct = (v / d.total) * 100;
                 return (
                   <div key={c} className="flex items-center justify-center" style={{ height: `${pct}%`, background: colorFor(c, i) }}>
-                    {pct >= 6 && <span className="text-[9px] font-medium text-white">{pct.toFixed(0)}%</span>}
+                    {pct >= 6 && <span style={{ fontSize: 12, fontWeight: 500, color: "#fff" }}>{pct.toFixed(0)}%</span>}
                   </div>
                 );
               })}
@@ -659,14 +659,14 @@ function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: stri
           );
         })}
       </div>
-      <div className="flex gap-1.5 mt-2">
+      <div className="flex" style={{ gap: 10, marginTop: 10, borderTop: `0.5px solid ${C.border}`, paddingTop: 8 }}>
         {data.map((d) => {
           const isCurrent = d.anomes === currentAnomes;
           const [mon, yr] = d.label.split("/");
           const showYr = (d.anomes % 100 === 1) || data[0].anomes === d.anomes || data[data.length - 1].anomes === d.anomes;
           return (
             <div key={d.anomes} className="flex-1 text-center">
-              <span className="text-[10px] font-medium" style={{ color: isCurrent ? C.gold : C.textMuted }}>
+              <span style={{ fontSize: 12, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.textMuted }}>
                 {mon.toLowerCase()}{showYr ? `/${yr}` : ""}
               </span>
             </div>
