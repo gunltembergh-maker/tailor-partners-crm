@@ -51,6 +51,7 @@ const menuItems = [
 
 const dashboardItems = [
   { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial", key: "menu_dashboard_comercial" },
+  { title: "Receita", icon: BarChart3, path: "/dashboard/receita", key: "menu_dashboard_receita" },
 ];
 
 export function AppSidebar() {

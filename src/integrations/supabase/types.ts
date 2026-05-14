@@ -2700,6 +2700,25 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_comissoes_caixa_completa: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          categoria: string | null
+          comissao_bruta_tailor: number | null
+          documento: string | null
+          finder: string | null
+          produto: string | null
+          source_origin: string | null
+          source_row_id: number | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Relationships: []
+      }
       vw_contas_total: {
         Row: {
           advisor: string | null
@@ -3736,6 +3755,106 @@ export type Database = {
           permissoes: Json
           primeiro_acesso: boolean
           role: string
+        }[]
+      }
+      rpc_receita_caixa_advisor_xp: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes: number
+          p_banker?: string[]
+          p_categoria?: string[]
+          p_finder?: string[]
+          p_subcategoria?: string[]
+          p_tipo_pessoa?: string[]
+        }
+        Returns: {
+          advisor: string
+          total: number
+        }[]
+      }
+      rpc_receita_caixa_filtros: { Args: never; Returns: Json }
+      rpc_receita_caixa_kpis: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes: number
+          p_banker?: string[]
+          p_categoria?: string[]
+          p_finder?: string[]
+          p_subcategoria?: string[]
+          p_tipo_pessoa?: string[]
+        }
+        Returns: {
+          anomes_anterior_label: string
+          anomes_label: string
+          n_clientes_unicos: number
+          total_mes: number
+          total_mes_anterior: number
+          variacao_pct: number
+        }[]
+      }
+      rpc_receita_caixa_por_assessor: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes: number
+          p_banker?: string[]
+          p_categoria?: string[]
+          p_finder?: string[]
+          p_subcategoria?: string[]
+          p_tipo_pessoa?: string[]
+        }
+        Returns: {
+          banker: string
+          categoria: string
+          total: number
+        }[]
+      }
+      rpc_receita_caixa_por_categoria: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes: number
+          p_banker?: string[]
+          p_categoria?: string[]
+          p_finder?: string[]
+          p_subcategoria?: string[]
+          p_tipo_pessoa?: string[]
+        }
+        Returns: {
+          categoria: string
+          total: number
+        }[]
+      }
+      rpc_receita_caixa_por_subcategoria: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes: number
+          p_banker?: string[]
+          p_categoria?: string[]
+          p_finder?: string[]
+          p_subcategoria?: string[]
+          p_tipo_pessoa?: string[]
+        }
+        Returns: {
+          categoria: string
+          subcategoria: string
+          total_categoria: number
+          total_subcategoria: number
+        }[]
+      }
+      rpc_receita_caixa_serie_temporal: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes: number
+          p_banker?: string[]
+          p_categoria?: string[]
+          p_finder?: string[]
+          p_subcategoria?: string[]
+          p_tipo_pessoa?: string[]
+        }
+        Returns: {
+          anomes: number
+          anomes_label: string
+          categoria: string
+          total: number
         }[]
       }
       rpc_receita_drilldown: {
