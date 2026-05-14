@@ -33,17 +33,23 @@ const C = {
   upBg:    "#E1F5EE", upFg:   "#0F6E56",
 };
 
-// Mapeamento categoria → cor
+// Mapeamento categoria → cor (paleta estendida — suporta até 12+ categorias)
 const CAT_COLORS: Record<string, string> = {
-  "Câmbio": C.navy900,
-  "Consórcio": C.navy700,
-  "Assessoria": C.navy500,
-  "Lavoro": C.gold,
-  "Wealth Solutions": C.navy300,
-  "Seguro de Vida": C.navy200,
-  "Offshore": C.navy100,
+  "Câmbio": "#082537",
+  "Lavoro": "#BC8B5C",
+  "Consórcio": "#1F4A66",
+  "Assessoria": "#37708F",
+  "Wealth Solutions": "#5B96B0",
+  "Seguro de Vida": "#88A8B8",
+  "Offshore": "#B0C2CC",
+  "Consultoria": "#A4815C",
+  "Corporate & Banking": "#4A8C8C",
+  "Gestora": "#6F9A95",
 };
-const FALLBACK_COLORS = [C.navy700, C.navy500, C.navy300, C.navy200, C.navy100, "#9FB6C2", "#C5D2DA"];
+const FALLBACK_COLORS = [
+  "#082537", "#BC8B5C", "#1F4A66", "#37708F", "#5B96B0", "#88A8B8",
+  "#B0C2CC", "#A4815C", "#4A8C8C", "#6F9A95", "#8E5C4F", "#6B7A8F",
+];
 const colorFor = (cat: string, idx = 0) => CAT_COLORS[cat] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 
 // ── Helpers ─────────────────────────────────────────────────────────
