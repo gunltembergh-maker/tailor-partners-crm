@@ -443,52 +443,55 @@ export default function ReceitaCaixa() {
             </div>
 
             {/* Row 2: Bar Categoria + Lista Subcategoria */}
-            <div className="grid gap-3.5" style={{ gridTemplateColumns: "1fr 1fr" }}>
+            <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {/* Bar chart por categoria */}
-              <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-                <p className="text-[14px] font-medium mb-4" style={{ color: C.navy900 }}>Receita por Categoria</p>
+              <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 20, letterSpacing: "-0.2px" }}>Receita por Categoria</h3>
                 {catQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
                   const max = Math.max(...(catQ.data || []).map(d => Number(d.total)), 1);
                   return (
-                    <div className="space-y-2.5">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                       {(catQ.data || []).map((d, i) => (
-                        <div key={d.categoria} className="grid items-center gap-3" style={{ gridTemplateColumns: "100px 1fr 60px" }}>
-                          <span className="text-[11px] text-right truncate" style={{ color: C.navy900 }}>{d.categoria}</span>
-                          <div className="rounded relative" style={{ height: 18, background: "rgba(8,37,55,0.06)" }}>
-                            <div className="rounded h-full" style={{ width: `${(Number(d.total) / max) * 100}%`, background: colorFor(d.categoria, i) }} />
+                        <div key={d.categoria} style={{ display: "grid", gridTemplateColumns: "120px 1fr 100px", alignItems: "center", gap: 14, fontSize: 15 }}>
+                          <span style={{ textAlign: "right", color: "#1a1a1a" }} className="truncate">{d.categoria}</span>
+                          <div style={{ background: "rgba(8,37,55,0.06)", borderRadius: 4, height: 26 }}>
+                            <div style={{ background: colorFor(d.categoria, i), width: `${(Number(d.total) / max) * 100}%`, height: "100%", borderRadius: 4 }} />
                           </div>
-                          <span className="text-[11px] text-right tabular-nums font-medium" style={{ color: C.navy900 }}>{fmtMil(Number(d.total))}</span>
+                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtMilLabel(Number(d.total))}</span>
                         </div>
                       ))}
-                      <p className="text-[10px] mt-3" style={{ color: C.textMuted }}>valores em R$ milhares</p>
                     </div>
                   );
                 })()}
               </div>
 
               {/* Lista subcategoria com drill */}
-              <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-                <p className="text-[14px] font-medium mb-3" style={{ color: C.navy900 }}>Receita por Subcategoria</p>
+              <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>Receita por Subcategoria</h3>
                 {subQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
-                  <div className="max-h-[300px] overflow-auto">
+                  <div className="max-h-[340px] overflow-auto">
                     {subPivot.map((row, i) => (
                       <div key={row.cat}>
-                        <div className="flex items-center justify-between py-1.5 cursor-pointer hover:bg-black/[0.02]" onClick={() => toggleCat(row.cat)}
-                          style={{ borderBottom: `0.5px solid ${C.divider}` }}>
-                          <div className="flex items-center gap-1.5">
-                            {expandedCats.has(row.cat) ? <ChevronDown className="h-3 w-3" style={{ color: C.textMuted }} /> : <ChevronRight className="h-3 w-3" style={{ color: C.textMuted }} />}
-                            <span className="inline-block rounded-full" style={{ width: 7, height: 7, background: colorFor(row.cat, i) }} />
-                            <span className="text-[13px]" style={{ color: C.navy900 }}>{row.cat}</span>
+                        <div className="flex items-center justify-between cursor-pointer hover:bg-black/[0.02]" onClick={() => toggleCat(row.cat)}
+                          style={{ borderBottom: `0.5px solid ${C.divider}`, padding: "12px 0", fontSize: 15 }}>
+                          <div className="flex items-center" style={{ gap: 10 }}>
+                            {expandedCats.has(row.cat) ? <ChevronDown size={16} style={{ color: C.textMuted }} /> : <ChevronRight size={16} style={{ color: C.textMuted }} />}
+                            <span className="inline-block rounded-full" style={{ width: 9, height: 9, background: colorFor(row.cat, i) }} />
+                            <span style={{ fontSize: 15, color: C.navy900 }}>{row.cat}</span>
                           </div>
-                          <span className="text-[13px] font-medium tabular-nums" style={{ color: C.navy900 }}>{fmtBRL(row.total)}</span>
+                          <span className="tabular-nums" style={{ fontSize: 15, color: C.navy900, fontWeight: 500 }}>{fmtBRL(row.total)}</span>
                         </div>
-                        {expandedCats.has(row.cat) && row.subs.map((s) => (
-                          <div key={`${row.cat}-${s.sub}`} className="flex items-center justify-between py-1 pl-7 pr-2"
-                            style={{ background: "rgba(8,37,55,0.025)", borderBottom: `0.5px solid ${C.divider}` }}>
-                            <span className="text-[12px]" style={{ color: "#5F5E5A" }}>{s.sub}</span>
-                            <span className="text-[12px] tabular-nums" style={{ color: "#5F5E5A" }}>{fmtBR(s.total)}</span>
+                        {expandedCats.has(row.cat) && (
+                          <div style={{ padding: "8px 0 8px 36px", background: "rgba(8,37,55,0.025)" }}>
+                            {row.subs.map((s) => (
+                              <div key={`${row.cat}-${s.sub}`} className="flex items-center justify-between"
+                                style={{ padding: "6px 0", fontSize: 14, color: "#5F5E5A" }}>
+                                <span>{s.sub}</span>
+                                <span className="tabular-nums">{fmtBR(s.total)}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
                     ))}
                   </div>
