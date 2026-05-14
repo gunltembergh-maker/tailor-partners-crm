@@ -54,7 +54,16 @@ const fmtBR = (n: number | null | undefined, decimals = 2) =>
 const fmtMil = (n: number) => {
   if (!isFinite(n) || n === 0) return "—";
   const v = n / 1000;
-  return v >= 100 ? v.toFixed(0) : v.toFixed(1).replace(".", ",");
+  return Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1).replace(".", ",");
+};
+// "R$ X Mil" formatter for category bar chart values
+const fmtMilLabel = (n: number) => {
+  if (!isFinite(n) || n === 0) return "—";
+  const v = n / 1000;
+  if (Math.abs(v) >= 100) {
+    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)} Mil`;
+  }
+  return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v)} Mil`;
 };
 
 const todayAnomes = (() => { const d = new Date(); return d.getFullYear() * 100 + (d.getMonth() + 1); })();
@@ -78,13 +87,13 @@ function MultiSelect({ options, selected, onChange, placeholder = "Selecionar" }
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-[11px] text-white/90 hover:bg-white/10 transition"
+          className="w-full flex items-center justify-between rounded-md px-3 py-[11px] text-[14px] text-white/90 hover:bg-white/10 transition"
           style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
         >
           <span className="truncate">
             {selected.length === 0 ? placeholder : `${selected.length} selecionado${selected.length > 1 ? "s" : ""}`}
           </span>
-          <ChevronDown className="h-3 w-3 opacity-60 ml-1 shrink-0" />
+          <ChevronDown className="h-3.5 w-3.5 opacity-60 ml-1 shrink-0" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2" align="start">
@@ -114,7 +123,7 @@ function MultiSelect({ options, selected, onChange, placeholder = "Selecionar" }
 }
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <label className="block text-[10px] font-medium uppercase tracking-[1px] text-white/60 mb-1">{children}</label>
+  <label className="block text-[12px] font-medium uppercase tracking-[0.5px] text-white/55 mb-[7px]">{children}</label>
 );
 
 // ── Page ─────────────────────────────────────────────────────────────
@@ -264,7 +273,7 @@ export default function ReceitaCaixa() {
     <AppLayout>
       <ReceitaCaixaOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
 
-      <div style={{ background: C.bgPage, margin: -16, padding: 20, minHeight: "calc(100vh - 64px)" }}>
+      <div style={{ background: C.bgPage, margin: -16, padding: 24, minHeight: "calc(100vh - 64px)" }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
@@ -291,19 +300,19 @@ export default function ReceitaCaixa() {
           </Button>
         </div>
 
-        <div className="grid gap-3.5" style={{ gridTemplateColumns: "260px 1fr" }}>
+        <div className="grid gap-4" style={{ gridTemplateColumns: "260px 1fr" }}>
           {/* ── SIDEBAR ─────────────────────────────────────────── */}
-          <aside className="rounded-[10px] p-4 h-fit sticky top-4" style={{ background: C.navy900, color: "white" }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-medium uppercase tracking-[1px] text-white/80 flex items-center gap-1.5">
-                <Search className="h-3 w-3" /> Filtros
+          <aside className="rounded-[10px] py-[22px] px-5 h-fit sticky top-4" style={{ background: C.navy900, color: "white" }}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[14px] font-medium uppercase tracking-[0.5px] text-white/85 flex items-center gap-1.5">
+                <Search className="h-3.5 w-3.5" /> Filtros
               </p>
-              <button onClick={handleClearFilters} className="text-[10px] text-white/60 hover:text-white flex items-center gap-1">
+              <button onClick={handleClearFilters} className="text-[11px] text-white/60 hover:text-white flex items-center gap-1">
                 <FilterX className="h-3 w-3" /> Limpar
               </button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3.5">
               <div><FieldLabel>Financial Advisor</FieldLabel>
                 <MultiSelect options={filtrosQ.data?.bankers || []} selected={bankers} onChange={setBankers} /></div>
               <div><FieldLabel>Finder</FieldLabel>
@@ -341,49 +350,89 @@ export default function ReceitaCaixa() {
           </aside>
 
           {/* ── MAIN CONTENT ─────────────────────────────────────── */}
-          <div className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-4">
 
             {/* Row 1: KPI principal + Advisor XP */}
-            <div className="grid gap-3.5" style={{ gridTemplateColumns: "1.4fr 1fr" }}>
-              {/* KPI Principal */}
-              <div className="rounded-[10px] p-6" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-                <p className="text-[11px] font-medium uppercase tracking-[1px]" style={{ color: C.textMuted }}>
-                  Receita do Mês {kpis?.anomes_label && `· ${kpis.anomes_label}`}
-                </p>
-                {kpisQ.isLoading ? <Skeleton className="h-12 w-64 mt-2" /> : (
-                  <p className="mt-2" style={{ fontSize: 42, fontWeight: 500, letterSpacing: "-1px", lineHeight: 1, color: C.navy900 }}>
-                    {fmtBRL(kpis?.total_mes ?? 0)}
-                  </p>
-                )}
-                <div className="flex items-center gap-3 mt-4">
+            <div className="grid gap-4" style={{ gridTemplateColumns: "1.4fr 1fr" }}>
+              {/* KPI Principal — dominante */}
+              <div
+                className="rounded-[10px] flex flex-col justify-between"
+                style={{
+                  background: C.bgCard,
+                  border: `0.5px solid ${C.border}`,
+                  padding: "28px 32px",
+                  gap: 16,
+                  minHeight: 240,
+                }}
+              >
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, margin: 0, letterSpacing: "-0.2px" }}>
+                  Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 500 }}>· {kpis.anomes_label}</span>}
+                </h3>
+
+                {kpisQ.isLoading ? (
+                  <Skeleton className="h-16 w-72" />
+                ) : (() => {
+                  const total = kpis?.total_mes ?? 0;
+                  const intPart = Math.trunc(total);
+                  const decPart = Math.abs(total - intPart);
+                  const intStr = `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(intPart)}`;
+                  const decStr = `,${decPart.toFixed(2).slice(2)}`;
+                  return (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                      <span style={{ fontSize: 64, fontWeight: 500, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
+                      <span style={{ fontSize: 18, color: C.textMuted }}>{decStr}</span>
+                    </div>
+                  );
+                })()}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {variacao != null && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium"
-                      style={{ background: isDown ? C.downBg : isUp ? C.upBg : "#eee", color: isDown ? C.downFg : isUp ? C.upFg : C.textMuted }}>
-                      {isDown ? <TrendingDown className="h-3 w-3" /> : isUp ? <TrendingUp className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                      {variacao > 0 ? "+" : ""}{variacao.toFixed(1)}% vs {kpis?.anomes_anterior_label}
+                    <span
+                      style={{
+                        background: isDown ? C.downBg : isUp ? C.upBg : "#eee",
+                        color: isDown ? C.downFg : isUp ? C.upFg : C.textMuted,
+                        padding: "6px 14px",
+                        borderRadius: 6,
+                        fontSize: 16,
+                        fontWeight: 500,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        width: "fit-content",
+                      }}
+                    >
+                      {isDown ? <TrendingDown size={18} /> : isUp ? <TrendingUp size={18} /> : <Minus size={18} />}
+                      {variacao > 0 ? "+" : ""}{variacao.toFixed(1)}%
                     </span>
                   )}
-                  <span className="text-[12px]" style={{ color: C.textMuted }}>
-                    {kpis?.n_clientes_unicos ?? 0} clientes
+                  {kpis?.anomes_anterior_label && (
+                    <span style={{ fontSize: 14, color: C.textMuted }}>
+                      vs {kpis.anomes_anterior_label}: {fmtBRL(kpis.total_mes_anterior ?? 0)}
+                    </span>
+                  )}
+                  <span style={{ fontSize: 14, color: C.textMuted }}>
+                    {kpis?.n_clientes_unicos ?? 0} clientes ativos
                   </span>
                 </div>
               </div>
 
               {/* Advisor XP mini-tabela */}
-              <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-                <p className="text-[11px] font-medium uppercase tracking-[1px] mb-3" style={{ color: C.textMuted }}>Receita Advisor XP</p>
+              <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>
+                  Receita Advisor XP
+                </h3>
                 {advisorQ.isLoading ? <Skeleton className="h-32 w-full" /> : (
                   <table className="w-full">
                     <tbody>
                       {(advisorQ.data || []).map((a) => (
                         <tr key={a.advisor} style={{ borderBottom: `0.5px solid ${C.divider}` }}>
-                          <td className="py-1.5 text-[13px]" style={{ color: C.navy900 }}>{a.advisor}</td>
-                          <td className="py-1.5 text-right text-[13px] tabular-nums" style={{ color: C.navy900 }}>{fmtBR(a.total)}</td>
+                          <td style={{ padding: "10px 0", fontSize: 15, color: "#1a1a1a" }}>{a.advisor}</td>
+                          <td className="text-right tabular-nums" style={{ padding: "10px 0", fontSize: 15, color: C.navy900, fontWeight: 500 }}>{fmtBR(a.total)}</td>
                         </tr>
                       ))}
                       <tr style={{ borderTop: `1px solid ${C.navy900}` }}>
-                        <td className="pt-2 text-[13px] font-medium" style={{ color: C.navy900 }}>Total</td>
-                        <td className="pt-2 text-right text-[13px] font-medium tabular-nums" style={{ color: C.navy900 }}>
+                        <td style={{ padding: "12px 0 0", fontSize: 16, fontWeight: 600, color: C.navy900 }}>Total</td>
+                        <td className="text-right tabular-nums" style={{ padding: "12px 0 0", fontSize: 16, fontWeight: 600, color: C.navy900 }}>
                           {fmtBRL((advisorQ.data || []).reduce((a, r) => a + Number(r.total), 0))}
                         </td>
                       </tr>
@@ -394,52 +443,55 @@ export default function ReceitaCaixa() {
             </div>
 
             {/* Row 2: Bar Categoria + Lista Subcategoria */}
-            <div className="grid gap-3.5" style={{ gridTemplateColumns: "1fr 1fr" }}>
+            <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {/* Bar chart por categoria */}
-              <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-                <p className="text-[14px] font-medium mb-4" style={{ color: C.navy900 }}>Receita por Categoria</p>
+              <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 20, letterSpacing: "-0.2px" }}>Receita por Categoria</h3>
                 {catQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
                   const max = Math.max(...(catQ.data || []).map(d => Number(d.total)), 1);
                   return (
-                    <div className="space-y-2.5">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                       {(catQ.data || []).map((d, i) => (
-                        <div key={d.categoria} className="grid items-center gap-3" style={{ gridTemplateColumns: "100px 1fr 60px" }}>
-                          <span className="text-[11px] text-right truncate" style={{ color: C.navy900 }}>{d.categoria}</span>
-                          <div className="rounded relative" style={{ height: 18, background: "rgba(8,37,55,0.06)" }}>
-                            <div className="rounded h-full" style={{ width: `${(Number(d.total) / max) * 100}%`, background: colorFor(d.categoria, i) }} />
+                        <div key={d.categoria} style={{ display: "grid", gridTemplateColumns: "120px 1fr 100px", alignItems: "center", gap: 14, fontSize: 15 }}>
+                          <span style={{ textAlign: "right", color: "#1a1a1a" }} className="truncate">{d.categoria}</span>
+                          <div style={{ background: "rgba(8,37,55,0.06)", borderRadius: 4, height: 26 }}>
+                            <div style={{ background: colorFor(d.categoria, i), width: `${(Number(d.total) / max) * 100}%`, height: "100%", borderRadius: 4 }} />
                           </div>
-                          <span className="text-[11px] text-right tabular-nums font-medium" style={{ color: C.navy900 }}>{fmtMil(Number(d.total))}</span>
+                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtMilLabel(Number(d.total))}</span>
                         </div>
                       ))}
-                      <p className="text-[10px] mt-3" style={{ color: C.textMuted }}>valores em R$ milhares</p>
                     </div>
                   );
                 })()}
               </div>
 
               {/* Lista subcategoria com drill */}
-              <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-                <p className="text-[14px] font-medium mb-3" style={{ color: C.navy900 }}>Receita por Subcategoria</p>
+              <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>Receita por Subcategoria</h3>
                 {subQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
-                  <div className="max-h-[300px] overflow-auto">
+                  <div className="max-h-[340px] overflow-auto">
                     {subPivot.map((row, i) => (
                       <div key={row.cat}>
-                        <div className="flex items-center justify-between py-1.5 cursor-pointer hover:bg-black/[0.02]" onClick={() => toggleCat(row.cat)}
-                          style={{ borderBottom: `0.5px solid ${C.divider}` }}>
-                          <div className="flex items-center gap-1.5">
-                            {expandedCats.has(row.cat) ? <ChevronDown className="h-3 w-3" style={{ color: C.textMuted }} /> : <ChevronRight className="h-3 w-3" style={{ color: C.textMuted }} />}
-                            <span className="inline-block rounded-full" style={{ width: 7, height: 7, background: colorFor(row.cat, i) }} />
-                            <span className="text-[13px]" style={{ color: C.navy900 }}>{row.cat}</span>
+                        <div className="flex items-center justify-between cursor-pointer hover:bg-black/[0.02]" onClick={() => toggleCat(row.cat)}
+                          style={{ borderBottom: `0.5px solid ${C.divider}`, padding: "12px 0", fontSize: 15 }}>
+                          <div className="flex items-center" style={{ gap: 10 }}>
+                            {expandedCats.has(row.cat) ? <ChevronDown size={16} style={{ color: C.textMuted }} /> : <ChevronRight size={16} style={{ color: C.textMuted }} />}
+                            <span className="inline-block rounded-full" style={{ width: 9, height: 9, background: colorFor(row.cat, i) }} />
+                            <span style={{ fontSize: 15, color: C.navy900 }}>{row.cat}</span>
                           </div>
-                          <span className="text-[13px] font-medium tabular-nums" style={{ color: C.navy900 }}>{fmtBRL(row.total)}</span>
+                          <span className="tabular-nums" style={{ fontSize: 15, color: C.navy900, fontWeight: 500 }}>{fmtBRL(row.total)}</span>
                         </div>
-                        {expandedCats.has(row.cat) && row.subs.map((s) => (
-                          <div key={`${row.cat}-${s.sub}`} className="flex items-center justify-between py-1 pl-7 pr-2"
-                            style={{ background: "rgba(8,37,55,0.025)", borderBottom: `0.5px solid ${C.divider}` }}>
-                            <span className="text-[12px]" style={{ color: "#5F5E5A" }}>{s.sub}</span>
-                            <span className="text-[12px] tabular-nums" style={{ color: "#5F5E5A" }}>{fmtBR(s.total)}</span>
+                        {expandedCats.has(row.cat) && (
+                          <div style={{ padding: "8px 0 8px 36px", background: "rgba(8,37,55,0.025)" }}>
+                            {row.subs.map((s) => (
+                              <div key={`${row.cat}-${s.sub}`} className="flex items-center justify-between"
+                                style={{ padding: "6px 0", fontSize: 14, color: "#5F5E5A" }}>
+                                <span>{s.sub}</span>
+                                <span className="tabular-nums">{fmtBR(s.total)}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
                     ))}
                   </div>
@@ -447,25 +499,24 @@ export default function ReceitaCaixa() {
               </div>
             </div>
 
-            {/* Row 3: Receita Total — últimos 12 meses (custom stacked, ordem reversa) */}
-            <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <p className="text-[14px] font-medium" style={{ color: C.navy900 }}>Receita Total — últimos 12 meses</p>
-                <div className="flex items-center gap-3 flex-wrap">
+            {/* Row 3: Receita Total — últimos 12 meses */}
+            <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
+              <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>Receita Total — últimos 12 meses</h3>
+                <div className="flex items-center gap-4 flex-wrap">
                   {seriesCats.slice(0, 5).map((c, i) => (
-                    <span key={c} className="text-[10px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
-                      <span className="rounded-full" style={{ width: 7, height: 7, background: colorFor(c, i), display: "inline-block" }} /> {c}
+                    <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
+                      <span className="rounded-sm" style={{ width: 10, height: 10, background: colorFor(c, i), display: "inline-block" }} /> {c}
                     </span>
                   ))}
                 </div>
               </div>
-              {serieQ.isLoading ? <Skeleton className="h-72 w-full" /> : <StackedBars data={seriePivot} cats={seriesCats} currentAnomes={selectedAnomes ?? 0} />}
-              <p className="text-[10px] mt-2 text-right" style={{ color: C.textMuted }}>valores em R$ milhares</p>
+              {serieQ.isLoading ? <Skeleton className="h-80 w-full" /> : <StackedBars data={seriePivot} cats={seriesCats} currentAnomes={selectedAnomes ?? 0} />}
             </div>
 
             {/* Row 4: Matriz Banker × Categoria */}
-            <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-              <p className="text-[14px] font-medium mb-3" style={{ color: C.navy900 }}>Receita por Assessor</p>
+            <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
+              <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>Receita por Assessor</h3>
               {matrizQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
                 const visible = showAllBankers ? matriz.allRows : matriz.allRows.slice(0, 6);
                 const hidden = matriz.allRows.slice(6);
@@ -474,44 +525,44 @@ export default function ReceitaCaixa() {
                 hidden.forEach(r => { matriz.catList.forEach(c => { otherTotals[c] = (otherTotals[c] || 0) + (r.vals[c] || 0); }); otherGrand += r.total; });
                 return (
                   <div className="overflow-auto">
-                    <table className="w-full text-[12px] border-collapse">
+                    <table className="w-full border-collapse" style={{ fontSize: 14 }}>
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${C.navy900}` }}>
-                          <th className="text-left py-2 px-2 text-[11px] uppercase tracking-[1px] font-medium" style={{ color: C.textMuted }}>Banker</th>
+                          <th className="text-left" style={{ padding: "12px 8px", fontSize: 12, color: C.textMuted, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>Banker</th>
                           {matriz.catList.map((c, i) => (
-                            <th key={c} className="text-right py-2 px-2 text-[11px] uppercase tracking-[1px] font-medium whitespace-nowrap" style={{ color: colorFor(c, i) }}>{c}</th>
+                            <th key={c} className="text-right whitespace-nowrap" style={{ padding: "12px 8px", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px", color: colorFor(c, i) }}>{c}</th>
                           ))}
-                          <th className="text-right py-2 px-2 text-[11px] uppercase tracking-[1px] font-medium" style={{ color: C.navy900 }}>Total</th>
+                          <th className="text-right" style={{ padding: "12px 8px", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px", color: C.navy900 }}>Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {visible.map((r) => (
                           <tr key={r.banker} style={{ borderBottom: `0.5px solid ${C.divider}` }}>
-                            <td className="py-1.5 px-2" style={{ color: C.navy900 }}>{r.banker}</td>
+                            <td style={{ padding: "10px 8px", color: C.navy900 }}>{r.banker}</td>
                             {matriz.catList.map((c) => (
-                              <td key={c} className="text-right py-1.5 px-2 tabular-nums" style={{ color: C.navy900 }}>
+                              <td key={c} className="text-right tabular-nums" style={{ padding: "10px 8px", color: C.navy900 }}>
                                 {r.vals[c] ? fmtBR(r.vals[c]) : "—"}
                               </td>
                             ))}
-                            <td className="text-right py-1.5 px-2 tabular-nums font-medium" style={{ color: C.navy900 }}>{fmtBR(r.total)}</td>
+                            <td className="text-right tabular-nums" style={{ padding: "10px 8px", color: C.navy900, fontWeight: 500 }}>{fmtBR(r.total)}</td>
                           </tr>
                         ))}
                         {!showAllBankers && hidden.length > 0 && (
                           <tr style={{ borderBottom: `0.5px solid ${C.divider}`, color: C.textMuted, cursor: "pointer" }}
                               onClick={() => setShowAllBankers(true)}>
-                            <td className="py-1.5 px-2 italic">… outros ({hidden.length}) — clique para expandir</td>
+                            <td className="italic" style={{ padding: "10px 8px" }}>… outros ({hidden.length}) — clique para expandir</td>
                             {matriz.catList.map((c) => (
-                              <td key={c} className="text-right py-1.5 px-2 tabular-nums">{otherTotals[c] ? fmtBR(otherTotals[c]) : "—"}</td>
+                              <td key={c} className="text-right tabular-nums" style={{ padding: "10px 8px" }}>{otherTotals[c] ? fmtBR(otherTotals[c]) : "—"}</td>
                             ))}
-                            <td className="text-right py-1.5 px-2 tabular-nums">{fmtBR(otherGrand)}</td>
+                            <td className="text-right tabular-nums" style={{ padding: "10px 8px" }}>{fmtBR(otherGrand)}</td>
                           </tr>
                         )}
                         <tr style={{ borderTop: `1px solid ${C.navy900}`, background: "rgba(8,37,55,0.025)" }}>
-                          <td className="py-2 px-2 font-medium uppercase text-[11px] tracking-[1px]" style={{ color: C.navy900 }}>Total</td>
+                          <td style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>Total</td>
                           {matriz.catList.map((c) => (
-                            <td key={c} className="text-right py-2 px-2 tabular-nums font-medium" style={{ color: C.navy900 }}>{fmtBR(matriz.totals[c] || 0)}</td>
+                            <td key={c} className="text-right tabular-nums" style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>{fmtBR(matriz.totals[c] || 0)}</td>
                           ))}
-                          <td className="text-right py-2 px-2 tabular-nums font-medium" style={{ color: C.navy900 }}>{fmtBR(matriz.grand)}</td>
+                          <td className="text-right tabular-nums" style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>{fmtBR(matriz.grand)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -521,18 +572,18 @@ export default function ReceitaCaixa() {
             </div>
 
             {/* Row 5: Fonte da Receita — 100% stacked */}
-            <div className="rounded-[10px] p-5" style={{ background: C.bgCard, border: `0.5px solid ${C.border}` }}>
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <p className="text-[14px] font-medium" style={{ color: C.navy900 }}>Fonte da Receita — composição mensal</p>
-                <div className="flex items-center gap-3 flex-wrap">
+            <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
+              <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>Fonte da Receita — composição mensal</h3>
+                <div className="flex items-center gap-4 flex-wrap">
                   {seriesCats.slice(0, 5).map((c, i) => (
-                    <span key={c} className="text-[10px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
-                      <span className="rounded-full" style={{ width: 7, height: 7, background: colorFor(c, i), display: "inline-block" }} /> {c}
+                    <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
+                      <span className="rounded-sm" style={{ width: 10, height: 10, background: colorFor(c, i), display: "inline-block" }} /> {c}
                     </span>
                   ))}
                 </div>
               </div>
-              {serieQ.isLoading ? <Skeleton className="h-64 w-full" /> : <StackedPctBars data={seriePivot} cats={seriesCats} currentAnomes={selectedAnomes ?? 0} />}
+              {serieQ.isLoading ? <Skeleton className="h-72 w-full" /> : <StackedPctBars data={seriePivot} cats={seriesCats} currentAnomes={selectedAnomes ?? 0} />}
             </div>
           </div>
         </div>
@@ -546,15 +597,15 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
   const maxTotal = Math.max(...data.map(d => d.total), 1);
   return (
     <div>
-      <div className="flex items-end gap-1.5" style={{ height: 220 }}>
+      <div className="flex items-end" style={{ height: 320, gap: 10, padding: "0 4px" }}>
         {data.map((d) => {
           const isCurrent = d.anomes === currentAnomes;
           const heightPct = (d.total / maxTotal) * 100;
           return (
             <div key={d.anomes} className="flex-1 flex flex-col items-center justify-end h-full">
-              <span className="text-[10px] mb-1 font-medium tabular-nums" style={{ color: C.navy900 }}>{fmtMil(d.total)}</span>
+              <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="tabular-nums">{fmtMil(d.total)}</span>
               <div className="w-full flex flex-col-reverse rounded-t overflow-hidden relative"
-                style={{ height: `${heightPct}%`, minHeight: 4, borderTop: isCurrent ? `1.5px solid ${C.gold}` : "none" }}>
+                style={{ height: `${heightPct}%`, minHeight: 4, borderTop: isCurrent ? `1px solid ${C.gold}` : "none" }}>
                 {cats.map((c, i) => {
                   const v = Number(d[c]) || 0;
                   if (v === 0 || d.total === 0) return null;
@@ -566,15 +617,14 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
           );
         })}
       </div>
-      <div className="flex gap-1.5 mt-2">
+      <div className="flex" style={{ gap: 10, marginTop: 10, borderTop: `0.5px solid ${C.border}`, paddingTop: 8 }}>
         {data.map((d) => {
           const isCurrent = d.anomes === currentAnomes;
           const [mon, yr] = d.label.split("/");
-          // Mostrar ano apenas no primeiro, último, ou janeiro
           const showYr = (d.anomes % 100 === 1) || data[0].anomes === d.anomes || data[data.length - 1].anomes === d.anomes;
           return (
             <div key={d.anomes} className="flex-1 text-center">
-              <span className="text-[10px] font-medium" style={{ color: isCurrent ? C.gold : C.textMuted }}>
+              <span style={{ fontSize: 12, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.textMuted }}>
                 {mon.toLowerCase()}{showYr ? `/${yr}` : ""}
               </span>
             </div>
@@ -588,7 +638,7 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
 function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: string[]; currentAnomes: number }) {
   return (
     <div>
-      <div className="flex items-end gap-1.5" style={{ height: 220 }}>
+      <div className="flex items-end" style={{ height: 300, gap: 10 }}>
         {data.map((d) => {
           const isCurrent = d.anomes === currentAnomes;
           if (d.total === 0) return <div key={d.anomes} className="flex-1" />;
@@ -601,7 +651,7 @@ function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: stri
                 const pct = (v / d.total) * 100;
                 return (
                   <div key={c} className="flex items-center justify-center" style={{ height: `${pct}%`, background: colorFor(c, i) }}>
-                    {pct >= 6 && <span className="text-[9px] font-medium text-white">{pct.toFixed(0)}%</span>}
+                    {pct >= 6 && <span style={{ fontSize: 12, fontWeight: 500, color: "#fff" }}>{pct.toFixed(0)}%</span>}
                   </div>
                 );
               })}
@@ -609,14 +659,14 @@ function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: stri
           );
         })}
       </div>
-      <div className="flex gap-1.5 mt-2">
+      <div className="flex" style={{ gap: 10, marginTop: 10, borderTop: `0.5px solid ${C.border}`, paddingTop: 8 }}>
         {data.map((d) => {
           const isCurrent = d.anomes === currentAnomes;
           const [mon, yr] = d.label.split("/");
           const showYr = (d.anomes % 100 === 1) || data[0].anomes === d.anomes || data[data.length - 1].anomes === d.anomes;
           return (
             <div key={d.anomes} className="flex-1 text-center">
-              <span className="text-[10px] font-medium" style={{ color: isCurrent ? C.gold : C.textMuted }}>
+              <span style={{ fontSize: 12, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.textMuted }}>
                 {mon.toLowerCase()}{showYr ? `/${yr}` : ""}
               </span>
             </div>
