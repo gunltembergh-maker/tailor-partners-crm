@@ -597,15 +597,15 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
   const maxTotal = Math.max(...data.map(d => d.total), 1);
   return (
     <div>
-      <div className="flex items-end gap-1.5" style={{ height: 220 }}>
+      <div className="flex items-end" style={{ height: 320, gap: 10, padding: "0 4px" }}>
         {data.map((d) => {
           const isCurrent = d.anomes === currentAnomes;
           const heightPct = (d.total / maxTotal) * 100;
           return (
             <div key={d.anomes} className="flex-1 flex flex-col items-center justify-end h-full">
-              <span className="text-[10px] mb-1 font-medium tabular-nums" style={{ color: C.navy900 }}>{fmtMil(d.total)}</span>
+              <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="tabular-nums">{fmtMil(d.total)}</span>
               <div className="w-full flex flex-col-reverse rounded-t overflow-hidden relative"
-                style={{ height: `${heightPct}%`, minHeight: 4, borderTop: isCurrent ? `1.5px solid ${C.gold}` : "none" }}>
+                style={{ height: `${heightPct}%`, minHeight: 4, borderTop: isCurrent ? `1px solid ${C.gold}` : "none" }}>
                 {cats.map((c, i) => {
                   const v = Number(d[c]) || 0;
                   if (v === 0 || d.total === 0) return null;
@@ -617,15 +617,14 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
           );
         })}
       </div>
-      <div className="flex gap-1.5 mt-2">
+      <div className="flex" style={{ gap: 10, marginTop: 10, borderTop: `0.5px solid ${C.border}`, paddingTop: 8 }}>
         {data.map((d) => {
           const isCurrent = d.anomes === currentAnomes;
           const [mon, yr] = d.label.split("/");
-          // Mostrar ano apenas no primeiro, último, ou janeiro
           const showYr = (d.anomes % 100 === 1) || data[0].anomes === d.anomes || data[data.length - 1].anomes === d.anomes;
           return (
             <div key={d.anomes} className="flex-1 text-center">
-              <span className="text-[10px] font-medium" style={{ color: isCurrent ? C.gold : C.textMuted }}>
+              <span style={{ fontSize: 12, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.textMuted }}>
                 {mon.toLowerCase()}{showYr ? `/${yr}` : ""}
               </span>
             </div>
