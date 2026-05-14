@@ -300,19 +300,19 @@ export default function ReceitaCaixa() {
           </Button>
         </div>
 
-        <div className="grid gap-3.5" style={{ gridTemplateColumns: "260px 1fr" }}>
+        <div className="grid gap-4" style={{ gridTemplateColumns: "260px 1fr" }}>
           {/* ── SIDEBAR ─────────────────────────────────────────── */}
-          <aside className="rounded-[10px] p-4 h-fit sticky top-4" style={{ background: C.navy900, color: "white" }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] font-medium uppercase tracking-[1px] text-white/80 flex items-center gap-1.5">
-                <Search className="h-3 w-3" /> Filtros
+          <aside className="rounded-[10px] py-[22px] px-5 h-fit sticky top-4" style={{ background: C.navy900, color: "white" }}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[14px] font-medium uppercase tracking-[0.5px] text-white/85 flex items-center gap-1.5">
+                <Search className="h-3.5 w-3.5" /> Filtros
               </p>
-              <button onClick={handleClearFilters} className="text-[10px] text-white/60 hover:text-white flex items-center gap-1">
+              <button onClick={handleClearFilters} className="text-[11px] text-white/60 hover:text-white flex items-center gap-1">
                 <FilterX className="h-3 w-3" /> Limpar
               </button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3.5">
               <div><FieldLabel>Financial Advisor</FieldLabel>
                 <MultiSelect options={filtrosQ.data?.bankers || []} selected={bankers} onChange={setBankers} /></div>
               <div><FieldLabel>Finder</FieldLabel>
