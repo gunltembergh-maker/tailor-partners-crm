@@ -15,15 +15,15 @@ import { Badge } from "@/components/ui/badge";
 import { ReceitaCaixaOnboardingModal } from "@/components/relatorios/ReceitaCaixaOnboardingModal";
 import { cn } from "@/lib/utils";
 
-// ── Paleta executiva (paleta-receita) ───────────────────────────────
+// ── Paleta executiva — Monocromática navy Tailor ────────────────────
 const C = {
   navy900: "#082537",
   navy700: "#1F4A66",
   navy500: "#37708F",
-  navy300: "#5B96B0",
+  navy300: "#5B8EA8",
   navy200: "#88A8B8",
   navy100: "#B0C2CC",
-  gold:    "#BC8B5C",
+  gold:    "#37708F", // accent monocromático (substitui gold/terracotta)
   bgPage:  "#F4F2EC",
   bgCard:  "#FFFFFF",
   textMuted: "#7a8794",
@@ -33,23 +33,26 @@ const C = {
   upBg:    "#E1F5EE", upFg:   "#0F6E56",
 };
 
-// Mapeamento categoria → cor (paleta estendida — suporta até 12+ categorias)
-const CAT_COLORS: Record<string, string> = {
-  "Câmbio": "#082537",
-  "Lavoro": "#BC8B5C",
-  "Consórcio": "#1F4A66",
-  "Assessoria": "#37708F",
-  "Wealth Solutions": "#5B96B0",
-  "Seguro de Vida": "#88A8B8",
-  "Offshore": "#B0C2CC",
-  "Consultoria": "#A4815C",
-  "Corporate & Banking": "#4A8C8C",
-  "Gestora": "#6F9A95",
-};
+// Paleta navy Tailor (12 tons, do mais escuro ao mais claro)
 const FALLBACK_COLORS = [
-  "#082537", "#BC8B5C", "#1F4A66", "#37708F", "#5B96B0", "#88A8B8",
-  "#B0C2CC", "#A4815C", "#4A8C8C", "#6F9A95", "#8E5C4F", "#6B7A8F",
+  "#082537", "#163C54", "#1F4A66", "#2C5F7F", "#37708F", "#5B8EA8",
+  "#7AA0BC", "#9DBED4", "#B5CDE0", "#C3D6E0", "#D4E1E9", "#6F8DA3",
 ];
+
+// Mapeamento explícito categoria → cor
+const CAT_COLORS: Record<string, string> = {
+  "Câmbio":              "#082537",
+  "Lavoro":              "#163C54",
+  "Consórcio":           "#1F4A66",
+  "Assessoria":          "#2C5F7F",
+  "Wealth Solutions":    "#37708F",
+  "Seguro de Vida":      "#5B8EA8",
+  "Offshore":            "#7AA0BC",
+  "Consultoria":         "#9DBED4",
+  "Corporate & Banking": "#B5CDE0",
+  "Gestora":             "#C3D6E0",
+};
+
 const colorFor = (cat: string, idx = 0) => CAT_COLORS[cat] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -57,19 +60,18 @@ const fmtBRL = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 const fmtBR = (n: number | null | undefined, decimals = 2) =>
   n == null ? "—" : new Intl.NumberFormat("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
-const fmtMil = (n: number) => {
+
+// Formato adaptativo: R$ X / R$ X Mil / R$ X,X Mi
+const fmtAdapt = (n: number): string => {
   if (!isFinite(n) || n === 0) return "—";
-  const v = n / 1000;
-  return Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1).replace(".", ",");
-};
-// "R$ X Mil" formatter for category bar chart values
-const fmtMilLabel = (n: number) => {
-  if (!isFinite(n) || n === 0) return "—";
-  const v = n / 1000;
-  if (Math.abs(v) >= 100) {
-    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)} Mil`;
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) {
+    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n / 1_000_000)} Mi`;
   }
-  return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v)} Mil`;
+  if (abs >= 1_000) {
+    return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n / 1_000)} Mil`;
+  }
+  return `R$ ${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)}`;
 };
 
 const todayAnomes = (() => { const d = new Date(); return d.getFullYear() * 100 + (d.getMonth() + 1); })();
