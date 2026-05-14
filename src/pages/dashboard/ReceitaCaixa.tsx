@@ -252,30 +252,31 @@ export default function ReceitaCaixa() {
     return Array.from(tot.entries()).sort((a, b) => b[1] - a[1]).map(([c]) => c);
   }, [serieQ.data]);
 
-  // Matriz Banker × Categoria (top 6 + outros)
-  const matriz = useMemo(() => {
-    const cats = new Set<string>();
-    const rows = new Map<string, Record<string, number>>();
-    (matrizQ.data || []).forEach((r) => {
-      cats.add(r.categoria);
-      if (!rows.has(r.banker)) rows.set(r.banker, {});
-      rows.get(r.banker)![r.categoria] = r.total;
+  // Receita por Papel (Banker/Finder) — agregação para stacked horizontal bars
+  const porPapel = useMemo(() => {
+    const map = new Map<string, { categorias: Map<string, number>; total: number }>();
+    (papelQ.data || []).forEach((row) => {
+      const nome = row.papel_nome || "(sem nome)";
+      if (!map.has(nome)) map.set(nome, { categorias: new Map(), total: 0 });
+      const obj = map.get(nome)!;
+      const v = Number(row.total) || 0;
+      obj.categorias.set(row.categoria, (obj.categorias.get(row.categoria) || 0) + v);
+      obj.total += v;
     });
-    const catOrder = ["Câmbio", "Consórcio", "Assessoria", "Lavoro", "Wealth Solutions", "Seguro de Vida", "Offshore"];
-    const catList = Array.from(cats).sort((a, b) => {
-      const ia = catOrder.indexOf(a), ib = catOrder.indexOf(b);
-      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-    });
-    const allRows = Array.from(rows.entries()).map(([banker, vals]) => ({
-      banker, vals, total: catList.reduce((acc, c) => acc + (vals[c] || 0), 0),
-    })).sort((a, b) => b.total - a.total);
-    const totals: Record<string, number> = {};
-    catList.forEach(c => { totals[c] = allRows.reduce((a, r) => a + (r.vals[c] || 0), 0); });
-    const grand = allRows.reduce((a, r) => a + r.total, 0);
-    return { catList, allRows, totals, grand };
-  }, [matrizQ.data]);
+    return Array.from(map.entries())
+      .map(([nome, dados]) => ({ nome, ...dados }))
+      .sort((a, b) => b.total - a.total);
+  }, [papelQ.data]);
 
-  const [showAllBankers, setShowAllBankers] = useState(false);
+  const papelCats = useMemo(() => {
+    const tot = new Map<string, number>();
+    (papelQ.data || []).forEach((r) => tot.set(r.categoria, (tot.get(r.categoria) || 0) + Number(r.total)));
+    return Array.from(tot.entries()).sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  }, [papelQ.data]);
+
+  const papelTotalGeral = porPapel.reduce((s, p) => s + p.total, 0);
+  const papelMaxTotal = Math.max(...porPapel.map(p => p.total), 1);
+  const [showAllPapel, setShowAllPapel] = useState(false);
 
   const handleClearFilters = () => {
     setBankers([]); setFinders([]); setAdvisors([]); setCanais([]); setCategorias([]); setSubcategorias([]); setTiposPessoa(["PF", "PJ"]);
