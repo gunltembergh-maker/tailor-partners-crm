@@ -3847,6 +3847,24 @@ export type Database = {
           total: number
         }[]
       }
+      rpc_receita_caixa_por_papel: {
+        Args: {
+          p_advisor?: string[]
+          p_anomes: number
+          p_banker?: string[]
+          p_canal?: string[]
+          p_categoria?: string[]
+          p_finder?: string[]
+          p_papel: string
+          p_subcategoria?: string[]
+          p_tipo_pessoa?: string[]
+        }
+        Returns: {
+          categoria: string
+          papel_nome: string
+          total: number
+        }[]
+      }
       rpc_receita_caixa_por_subcategoria: {
         Args: {
           p_advisor?: string[]
