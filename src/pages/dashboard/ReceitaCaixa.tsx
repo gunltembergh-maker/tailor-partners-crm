@@ -87,13 +87,13 @@ function MultiSelect({ options, selected, onChange, placeholder = "Selecionar" }
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-[11px] text-white/90 hover:bg-white/10 transition"
+          className="w-full flex items-center justify-between rounded-md px-3 py-[11px] text-[14px] text-white/90 hover:bg-white/10 transition"
           style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
         >
           <span className="truncate">
             {selected.length === 0 ? placeholder : `${selected.length} selecionado${selected.length > 1 ? "s" : ""}`}
           </span>
-          <ChevronDown className="h-3 w-3 opacity-60 ml-1 shrink-0" />
+          <ChevronDown className="h-3.5 w-3.5 opacity-60 ml-1 shrink-0" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2" align="start">
