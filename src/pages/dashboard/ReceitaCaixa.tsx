@@ -455,24 +455,22 @@ export default function ReceitaCaixa() {
                   <div className="max-h-[300px] overflow-auto">
                     <table className="w-full text-xs">
                       <tbody>
-                        {subPivot.map((row) => (
-                          <>
-                            <tr key={row.cat} className="border-b cursor-pointer hover:bg-muted/50" onClick={() => toggleCat(row.cat)}>
-                              <td className="py-1.5 font-semibold flex items-center gap-1">
-                                {expandedCats.has(row.cat) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                                <span className="inline-block w-2 h-2 rounded-full" style={{ background: colorFor(row.cat) }} />
-                                {row.cat}
-                              </td>
-                              <td className="py-1.5 text-right font-semibold">{fmtBRL(row.total)}</td>
+                        {subPivot.flatMap((row) => [
+                          <tr key={row.cat} className="border-b cursor-pointer hover:bg-muted/50" onClick={() => toggleCat(row.cat)}>
+                            <td className="py-1.5 font-semibold flex items-center gap-1">
+                              {expandedCats.has(row.cat) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                              <span className="inline-block w-2 h-2 rounded-full" style={{ background: colorFor(row.cat) }} />
+                              {row.cat}
+                            </td>
+                            <td className="py-1.5 text-right font-semibold">{fmtBRL(row.total)}</td>
+                          </tr>,
+                          ...(expandedCats.has(row.cat) ? row.subs.map((s) => (
+                            <tr key={`${row.cat}-${s.sub}`} className="border-b bg-muted/30">
+                              <td className="py-1 pl-8 text-muted-foreground">{s.sub}</td>
+                              <td className="py-1 text-right">{fmtBRL(s.total)}</td>
                             </tr>
-                            {expandedCats.has(row.cat) && row.subs.map((s) => (
-                              <tr key={`${row.cat}-${s.sub}`} className="border-b bg-muted/30">
-                                <td className="py-1 pl-8 text-muted-foreground">{s.sub}</td>
-                                <td className="py-1 text-right">{fmtBRL(s.total)}</td>
-                              </tr>
-                            ))}
-                          </>
-                        ))}
+                          )) : []),
+                        ])}
                       </tbody>
                     </table>
                   </div>
