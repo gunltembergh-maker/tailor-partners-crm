@@ -532,58 +532,100 @@ export default function ReceitaCaixa() {
               {serieQ.isLoading ? <Skeleton className="h-80 w-full" /> : <StackedBars data={seriePivot} cats={seriesCats} currentAnomes={selectedAnomes ?? 0} />}
             </div>
 
-            {/* Row 4: Matriz Banker × Categoria */}
+            {/* Row 4: Receita por Financial Advisor / Finder */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-              <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>Receita por Assessor</h3>
-              {matrizQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
-                const visible = showAllBankers ? matriz.allRows : matriz.allRows.slice(0, 6);
-                const hidden = matriz.allRows.slice(6);
-                const otherTotals: Record<string, number> = {};
-                let otherGrand = 0;
-                hidden.forEach(r => { matriz.catList.forEach(c => { otherTotals[c] = (otherTotals[c] || 0) + (r.vals[c] || 0); }); otherGrand += r.total; });
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>
+                  Receita por Financial Advisor / Finder
+                </h3>
+                <div style={{ display: "flex", background: "rgba(8,37,55,0.06)", borderRadius: 6, padding: 3 }}>
+                  {(["BANKER", "FINDER"] as const).map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => { setPapel(p); setShowAllPapel(false); }}
+                      style={{
+                        padding: "6px 14px", fontSize: 13, fontWeight: 500, borderRadius: 4,
+                        background: papel === p ? C.navy900 : "transparent",
+                        color: papel === p ? "#fff" : C.navy900,
+                        border: "none", cursor: "pointer",
+                      }}
+                    >
+                      {p === "BANKER" ? "Financial Advisor" : "Finder"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Legenda */}
+              <div style={{ display: "flex", gap: 14, fontSize: 12, color: C.textMuted, flexWrap: "wrap", marginBottom: 18 }}>
+                {papelCats.map((cat, idx) => (
+                  <span key={cat} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ width: 10, height: 10, background: colorFor(cat, idx), borderRadius: 2, display: "inline-block" }} />
+                    {cat}
+                  </span>
+                ))}
+              </div>
+
+              {papelQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
+                const visible = showAllPapel ? porPapel : porPapel.slice(0, 6);
+                const hidden = porPapel.slice(6);
+                const otherTotal = hidden.reduce((s, p) => s + p.total, 0);
+                const otherCats = new Map<string, number>();
+                hidden.forEach((p) => p.categorias.forEach((v, c) => otherCats.set(c, (otherCats.get(c) || 0) + v)));
                 return (
-                  <div className="overflow-auto">
-                    <table className="w-full border-collapse" style={{ fontSize: 14 }}>
-                      <thead>
-                        <tr style={{ borderBottom: `1px solid ${C.navy900}` }}>
-                          <th className="text-left" style={{ padding: "12px 8px", fontSize: 12, color: C.textMuted, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>Banker</th>
-                          {matriz.catList.map((c, i) => (
-                            <th key={c} className="text-right whitespace-nowrap" style={{ padding: "12px 8px", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px", color: colorFor(c, i) }}>{c}</th>
-                          ))}
-                          <th className="text-right" style={{ padding: "12px 8px", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px", color: C.navy900 }}>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visible.map((r) => (
-                          <tr key={r.banker} style={{ borderBottom: `0.5px solid ${C.divider}` }}>
-                            <td style={{ padding: "10px 8px", color: C.navy900 }}>{r.banker}</td>
-                            {matriz.catList.map((c) => (
-                              <td key={c} className="text-right tabular-nums" style={{ padding: "10px 8px", color: C.navy900 }}>
-                                {r.vals[c] ? fmtBR(r.vals[c]) : "—"}
-                              </td>
-                            ))}
-                            <td className="text-right tabular-nums" style={{ padding: "10px 8px", color: C.navy900, fontWeight: 500 }}>{fmtBR(r.total)}</td>
-                          </tr>
-                        ))}
-                        {!showAllBankers && hidden.length > 0 && (
-                          <tr style={{ borderBottom: `0.5px solid ${C.divider}`, color: C.textMuted, cursor: "pointer" }}
-                              onClick={() => setShowAllBankers(true)}>
-                            <td className="italic" style={{ padding: "10px 8px" }}>… outros ({hidden.length}) — clique para expandir</td>
-                            {matriz.catList.map((c) => (
-                              <td key={c} className="text-right tabular-nums" style={{ padding: "10px 8px" }}>{otherTotals[c] ? fmtBR(otherTotals[c]) : "—"}</td>
-                            ))}
-                            <td className="text-right tabular-nums" style={{ padding: "10px 8px" }}>{fmtBR(otherGrand)}</td>
-                          </tr>
-                        )}
-                        <tr style={{ borderTop: `1px solid ${C.navy900}`, background: "rgba(8,37,55,0.025)" }}>
-                          <td style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>Total</td>
-                          {matriz.catList.map((c) => (
-                            <td key={c} className="text-right tabular-nums" style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>{fmtBR(matriz.totals[c] || 0)}</td>
-                          ))}
-                          <td className="text-right tabular-nums" style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>{fmtBR(matriz.grand)}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {visible.map((p) => {
+                      const pctTotal = papelTotalGeral > 0 ? (p.total / papelTotalGeral * 100).toFixed(1) : "0.0";
+                      const larguraBarra = (p.total / papelMaxTotal * 100);
+                      return (
+                        <div key={p.nome} style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, alignItems: "center", fontSize: 14 }}>
+                          <span style={{ color: C.navy900, fontWeight: 500 }} className="truncate">{p.nome}</span>
+                          <div style={{ background: "rgba(8,37,55,0.04)", borderRadius: 4, height: 22 }}>
+                            <div style={{ display: "flex", height: "100%", width: `${larguraBarra}%`, minWidth: 20, borderRadius: 4, overflow: "hidden" }}>
+                              {papelCats.map((cat, idx) => {
+                                const valorCat = p.categorias.get(cat) || 0;
+                                if (valorCat === 0) return null;
+                                const pctNaBarra = (valorCat / p.total * 100);
+                                return (
+                                  <div
+                                    key={cat}
+                                    style={{ background: colorFor(cat, idx), width: `${pctNaBarra}%`, height: "100%" }}
+                                    title={`${cat}: ${fmtAdapt(valorCat)} (${pctNaBarra.toFixed(1)}%)`}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtAdapt(p.total)}</span>
+                          <span className="tabular-nums" style={{ textAlign: "right", color: C.textMuted, fontSize: 13 }}>{pctTotal}%</span>
+                        </div>
+                      );
+                    })}
+                    {!showAllPapel && hidden.length > 0 && (
+                      <div
+                        onClick={() => setShowAllPapel(true)}
+                        style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, alignItems: "center", fontSize: 14, cursor: "pointer", color: C.textMuted, fontStyle: "italic" }}
+                      >
+                        <span>… outros ({hidden.length})</span>
+                        <div style={{ background: "rgba(8,37,55,0.04)", borderRadius: 4, height: 22 }}>
+                          <div style={{ display: "flex", height: "100%", width: `${(otherTotal / papelMaxTotal * 100)}%`, minWidth: 20, borderRadius: 4, overflow: "hidden" }}>
+                            {papelCats.map((cat, idx) => {
+                              const v = otherCats.get(cat) || 0;
+                              if (v === 0) return null;
+                              return <div key={cat} style={{ background: colorFor(cat, idx), width: `${(v / otherTotal * 100)}%`, height: "100%" }} />;
+                            })}
+                          </div>
+                        </div>
+                        <span className="tabular-nums" style={{ textAlign: "right" }}>{fmtAdapt(otherTotal)}</span>
+                        <span className="tabular-nums" style={{ textAlign: "right", fontSize: 13 }}>{papelTotalGeral > 0 ? (otherTotal / papelTotalGeral * 100).toFixed(1) : "0.0"}%</span>
+                      </div>
+                    )}
+                    <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 110px 60px", gap: 14, padding: "12px 0 0", marginTop: 8, borderTop: `1px solid ${C.navy900}`, fontSize: 15, fontWeight: 600, color: C.navy900 }}>
+                      <span>Total</span>
+                      <span></span>
+                      <span className="tabular-nums" style={{ textAlign: "right" }}>{fmtAdapt(papelTotalGeral)}</span>
+                      <span className="tabular-nums" style={{ textAlign: "right" }}>100%</span>
+                    </div>
                   </div>
                 );
               })()}
