@@ -199,7 +199,16 @@ export default function ReceitaCaixa() {
   const catQ     = mkQ<{ categoria: string; total: number }[]>("rc-cat", "rpc_receita_caixa_por_categoria");
   const subQ     = mkQ<{ categoria: string; subcategoria: string; total_subcategoria: number; total_categoria: number }[]>("rc-sub", "rpc_receita_caixa_por_subcategoria");
   const serieQ   = mkQ<{ anomes: number; anomes_label: string; categoria: string; total: number }[]>("rc-serie", "rpc_receita_caixa_serie_temporal");
-  const matrizQ  = mkQ<{ banker: string; categoria: string; total: number }[]>("rc-matriz", "rpc_receita_caixa_por_assessor");
+  const [papel, setPapel] = useState<"BANKER" | "FINDER">("BANKER");
+  const papelQ = useQuery({
+    queryKey: ["rc-papel", papel, rpcParams],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_receita_caixa_por_papel" as any, { p_papel: papel, ...rpcParams } as any);
+      if (error) throw error;
+      return data as { papel_nome: string; categoria: string; total: number }[];
+    },
+    enabled,
+  });
   const advisorQ = mkQ<{ advisor: string; total: number }[]>("rc-advisor", "rpc_receita_caixa_advisor_xp");
 
   const kpis = (kpisQ.data && (kpisQ.data as any)[0]) as KPIs | undefined;
