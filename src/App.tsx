@@ -131,8 +131,8 @@ function AppRoutes() {
         <Route path="/prioridades" element={<ProtectedRoute><Prioridades /></ProtectedRoute>} />
         <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
         <Route path="/paineis" element={<ProtectedRoute><Paineis /></ProtectedRoute>} />
-        <Route path="/dashboards/comercial" element={<ProtectedRoute><DashboardComercial /></ProtectedRoute>} />
-        <Route path="/dashboard/receita" element={<PermissionRoute permissions={["menu_dashboard_receita"]}><ReceitaCaixa /></PermissionRoute>} />
+        <Route path="/dashboards/comercial" element={<PermissionRoute permissions={["menu_dashboards", "menu_dashboards_comercial"]}><DashboardComercial /></PermissionRoute>} />
+        <Route path="/dashboard/receita" element={<PermissionRoute permissions={["menu_dashboards", "menu_dashboards_receita"]}><ReceitaCaixa /></PermissionRoute>} />
         <Route path="/relatorios/dash-comercial" element={<ProtectedRoute><DashComercial /></ProtectedRoute>} />
         <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
         <Route path="/relatorios/saldo-consolidado" element={<ProtectedRoute><SaldoConsolidado /></ProtectedRoute>} />
