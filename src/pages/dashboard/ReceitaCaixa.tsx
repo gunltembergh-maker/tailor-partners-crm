@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,45 +16,54 @@ import { Badge } from "@/components/ui/badge";
 import { ReceitaCaixaOnboardingModal } from "@/components/relatorios/ReceitaCaixaOnboardingModal";
 import { cn } from "@/lib/utils";
 
-// ── Paleta executiva — Monocromática navy Tailor ────────────────────
+// ── Paleta executiva — Brand Book Tailor oficial ────────────────────
 const C = {
-  navy900: "#082537",
-  navy700: "#1F4A66",
-  navy500: "#37708F",
-  navy300: "#5B8EA8",
-  navy200: "#88A8B8",
-  navy100: "#B0C2CC",
-  gold:    "#37708F", // accent monocromático (substitui gold/terracotta)
+  navy900: "#0A2337",  // Navy primário ✦
+  navy700: "#1A3A52",
+  navy500: "#4B6D88",  // Azul médio ✦
+  navy300: "#73A7B7",  // Azul claro ✦
+  navy200: "#A8C8D2",
+  navy100: "#D4E1E6",
+  gold:    "#4B6D88",  // accent navy Tailor
   bgPage:  "#F4F2EC",
   bgCard:  "#FFFFFF",
-  textMuted: "#7a8794",
-  border:  "rgba(8,37,55,0.08)",
-  divider: "rgba(8,37,55,0.06)",
+  textMuted: "#5F7A8E",
+  border:  "rgba(75,109,136,0.10)",
+  divider: "rgba(75,109,136,0.10)",
+  zebra:   "rgba(75,109,136,0.04)",
   downBg:  "#FCEBEB", downFg: "#791F1F",
   upBg:    "#E1F5EE", upFg:   "#0F6E56",
 };
 
-// Paleta navy Tailor (12 tons, do mais escuro ao mais claro)
+// Paleta navy Tailor (12 tons baseados nas 4 cores oficiais Tailor)
 const FALLBACK_COLORS = [
-  "#082537", "#163C54", "#1F4A66", "#2C5F7F", "#37708F", "#5B8EA8",
-  "#7AA0BC", "#9DBED4", "#B5CDE0", "#C3D6E0", "#D4E1E9", "#6F8DA3",
+  "#0A2337", "#1A3A52", "#2C5572", "#4B6D88", "#5F8294", "#73A7B7",
+  "#8FB8C5", "#A8C8D2", "#C0D6DD", "#D4E1E6", "#9BAEB8", "#B8C3CB",
 ];
 
-// Mapeamento explícito categoria → cor
+// Mapeamento explícito categoria → cor (oficial Tailor)
 const CAT_COLORS: Record<string, string> = {
-  "Câmbio":              "#082537",
-  "Lavoro":              "#163C54",
-  "Consórcio":           "#1F4A66",
-  "Assessoria":          "#2C5F7F",
-  "Wealth Solutions":    "#37708F",
-  "Seguro de Vida":      "#5B8EA8",
-  "Offshore":            "#7AA0BC",
-  "Consultoria":         "#9DBED4",
-  "Corporate & Banking": "#B5CDE0",
-  "Gestora":             "#C3D6E0",
+  "Câmbio":              "#0A2337",
+  "Lavoro":              "#1A3A52",
+  "Consórcio":           "#2C5572",
+  "Assessoria":          "#4B6D88",
+  "Wealth Solutions":    "#5F8294",
+  "Seguro de Vida":      "#73A7B7",
+  "Offshore":            "#8FB8C5",
+  "Consultoria":         "#A8C8D2",
+  "Corporate & Banking": "#C0D6DD",
+  "Gestora":             "#D4E1E6",
 };
 
 const colorFor = (cat: string, idx = 0) => CAT_COLORS[cat] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+
+// Título de card com triângulo navy (detalhe de marca Tailor)
+const CardTitleTailor = ({ children }: { children: React.ReactNode }) => (
+  <h3 className="title-serif" style={{ fontSize: 22, fontWeight: 400, color: C.navy900, margin: 0, lineHeight: 1.15, display: "flex", alignItems: "center", gap: 10, letterSpacing: "-0.2px" }}>
+    <span aria-hidden style={{ width: 0, height: 0, borderTop: "5px solid transparent", borderBottom: "5px solid transparent", borderLeft: `8px solid ${C.navy900}`, flexShrink: 0 }} />
+    {children}
+  </h3>
+);
 
 // ── Helpers ─────────────────────────────────────────────────────────
 const fmtBRL = (n: number | null | undefined) =>
