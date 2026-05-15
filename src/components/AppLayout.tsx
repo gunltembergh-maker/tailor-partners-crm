@@ -16,8 +16,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { viewAsKey, viewAsProfile, setViewAs, teamMembers, isLider, viewLoading } = useViewAs();
   const firstName = profile?.full_name?.split(" ")[0] || "Usuário";
 
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const v = localStorage.getItem("hub_sidebar_open");
+    return v === null ? true : v === "true";
+  });
+  useEffect(() => {
+    localStorage.setItem("hub_sidebar_open", String(sidebarOpen));
+  }, [sidebarOpen]);
+
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="min-h-screen flex w-full">
         <LoadingOverlay show={viewLoading} />
         <AppSidebar />
