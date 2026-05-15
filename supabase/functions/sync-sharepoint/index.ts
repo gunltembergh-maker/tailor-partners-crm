@@ -287,6 +287,32 @@ async function clearCascadeRunning(arquivo: string): Promise<void> {
   await fetch(url, { method: 'PATCH', headers: { ...rpcHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sucesso: true }) });
 }
 
+// ─── Advisory lock (CAMADA PRIMÁRIA) — atômico do PostgreSQL ──
+async function tryAcquireAdvisoryLock(arquivo: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_try_cascade_advisory_lock`, {
+      method: 'POST', headers: rpcHeaders,
+      body: JSON.stringify({ p_arquivo: arquivo }),
+    });
+    if (!r.ok) return false;
+    const data = await r.json().catch(() => null);
+    return data?.acquired === true;
+  } catch {
+    return false;
+  }
+}
+
+async function releaseAdvisoryLock(arquivo: string): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_release_cascade_advisory_lock`, {
+      method: 'POST', headers: rpcHeaders,
+      body: JSON.stringify({ p_arquivo: arquivo }),
+    });
+  } catch (e) {
+    console.error('Erro ao liberar advisory lock:', e);
+  }
+}
+
 // ─── Graph API helpers ──────────────────────────────────────────────
 
 // Tracks retries for diagnóstico mode (reset per request via resetGraphRetryStats)
@@ -1104,9 +1130,15 @@ Deno.serve(async (req) => {
         await saveLog(`cascade-${fileKey}-${sh.sheet}`, true, dur, 
           [`Cascade complete: ${grandTotal} rows in ${sh.table}`], []);
 
-        // Release cascade lock at the very end of the cascade chain
+        // Release cascade locks at the very end of the cascade chain
         if (body._cascade_lock_arquivo) {
           await clearCascadeRunning(body._cascade_lock_arquivo).catch(() => {});
+          await releaseAdvisoryLock(body._cascade_lock_arquivo);
+          console.log(JSON.stringify({
+            event: 'cascade_advisory_lock_released',
+            arquivo: body._cascade_lock_arquivo,
+            timestamp: new Date().toISOString(),
+          }));
         }
       }
 
@@ -1118,22 +1150,41 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════════════
     const filesToProcess = [arquivo];
 
-    // ─── TEMP GUARD: prevent concurrent external cascade invocations ───
+    // ─── GUARD: prevent concurrent external cascade invocations ───
     // Only applies on the initial external entry (not cascade slices, not orchestrator,
     // not sync_mode flows like m0/m1/historico_chunked). Lock scoped per arquivo.
     const guardEnabled = !isCascadeSlice && arquivo !== 'todos' && !syncMode && !body._orchestrated;
     if (guardEnabled) {
+      // CAMADA 1 (PRIMÁRIA): Advisory lock atômico
+      const acquired = await tryAcquireAdvisoryLock(arquivo);
+      if (!acquired) {
+        console.log(JSON.stringify({
+          event: 'cascade_blocked_by_advisory_lock',
+          arquivo,
+          timestamp: new Date().toISOString(),
+        }));
+        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        log.push(`🚫 Cascade já em execução para ${arquivo} (advisory lock ativo). Recusando para evitar duplicação.`);
+        return Response.json(
+          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by advisory lock`], log, duracao: dur },
+          { status: 409, headers: cors }
+        );
+      }
+      log.push(`🔒 Advisory lock adquirido para ${arquivo}`);
+
+      // CAMADA 2 (SECUNDÁRIA): sync_log lock auditável
       const running = await checkCascadeRunning(arquivo);
       if (running) {
+        await releaseAdvisoryLock(arquivo);
         const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        log.push(`🚫 Cascade já em execução para ${arquivo} (lock < ${CASCADE_LOCK_TTL_MIN}min). Recusando para evitar duplicação.`);
+        log.push(`🚫 Cascade já em execução para ${arquivo} (sync_log lock < ${CASCADE_LOCK_TTL_MIN}min). Recusando.`);
         return Response.json(
           { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by guard`], log, duracao: dur },
           { status: 409, headers: cors }
         );
       }
       await markCascadeRunning(arquivo);
-      log.push(`🔒 Cascade lock adquirido para ${arquivo}`);
+      log.push(`🔒 Sync_log lock adquirido para ${arquivo}`);
     }
 
     log.push('🔐 Autenticando...');
@@ -1239,9 +1290,15 @@ Deno.serve(async (req) => {
       await saveLog(tipo, errors.length === 0, dur, log, errors);
     }
 
-    // Release cascade lock if no async cascade was fired (sync path complete here)
+    // Release cascade locks if no async cascade was fired (sync path complete here)
     if (guardEnabled && !cascadeFired) {
       await clearCascadeRunning(arquivo).catch(() => {});
+      await releaseAdvisoryLock(arquivo);
+      console.log(JSON.stringify({
+        event: 'cascade_advisory_lock_released',
+        arquivo,
+        timestamp: new Date().toISOString(),
+      }));
     }
 
     return Response.json({ success: errors.length === 0, arquivo, duracao: dur, log, errors }, { headers: cors });
@@ -1253,6 +1310,7 @@ Deno.serve(async (req) => {
     // Best-effort lock release on error path (covers MODE 3 initial entry)
     if (typeof arquivo === 'string' && arquivo !== 'todos') {
       await clearCascadeRunning(arquivo).catch(() => {});
+      await releaseAdvisoryLock(arquivo);
     }
     return Response.json({ success: false, error: message, log }, { status: 500, headers: cors });
   }

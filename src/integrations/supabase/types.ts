@@ -4111,6 +4111,10 @@ export type Database = {
         Args: { p_acao: string; p_email: string }
         Returns: Json
       }
+      rpc_release_cascade_advisory_lock: {
+        Args: { p_arquivo: string }
+        Returns: Json
+      }
       rpc_roa_faixa_pl: {
         Args: {
           p_advisor?: string[]
@@ -4547,6 +4551,10 @@ export type Database = {
           tipo_cliente: string
           vencimento: string
         }[]
+      }
+      rpc_try_cascade_advisory_lock: {
+        Args: { p_arquivo: string }
+        Returns: Json
       }
       rpc_validar_dominio: { Args: { p_email: string }; Returns: Json }
       rpc_vencimentos_grafico: {
