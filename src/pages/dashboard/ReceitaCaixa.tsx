@@ -599,10 +599,10 @@ export default function ReceitaCaixa() {
                   <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
                   <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 20, overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4, scrollbarWidth: "thin", maxWidth: "70%" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 16px", width: "100%", marginBottom: 12 }}>
                   {seriesCats.map((c, i) => (
-                    <div key={c} style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", flexShrink: 0 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(c, i), display: "inline-block" }} />
+                    <div key={c} style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(c, i), display: "inline-block", flexShrink: 0 }} />
                       <span style={{ fontSize: 12, color: C.navy900 }}>{c}</span>
                     </div>
                   ))}
