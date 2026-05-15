@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download, Clock, RefreshCw } from "lucide-react";
+import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -316,6 +318,27 @@ export default function ReceitaCaixa() {
   const isDown = variacao != null && variacao < 0;
   const isUp = variacao != null && variacao > 0;
 
+  // Update indicator (mesmo padrão do Dashboard Comercial)
+  const {
+    isRefreshing,
+    isManualRefreshing,
+    manualRefresh,
+    atualizadoEmFormatted,
+    dadosAteFormatted,
+  } = useDashboardRefresh();
+  const [refreshingMV, setRefreshingMV] = useState(false);
+  const handleRefreshReceita = async () => {
+    setRefreshingMV(true);
+    try {
+      await supabase.rpc("refresh_mv_caixa_completa" as any);
+    } catch (e) {
+      // se falhar refresh, segue invalidando queries mesmo assim
+    } finally {
+      await manualRefresh();
+      setRefreshingMV(false);
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────
   return (
     <AppLayout>
@@ -347,9 +370,29 @@ export default function ReceitaCaixa() {
               </Select>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setShowOnboarding(true)} style={{ color: C.textMuted }}>
-            <HelpCircle className="h-4 w-4 mr-1" /> Ajuda
-          </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs flex items-center gap-1" style={{ color: C.textMuted }}>
+              <Clock className="h-3 w-3" />
+              Atualizado {atualizadoEmFormatted}
+            </span>
+            <span className="text-xs flex items-center gap-1" style={{ color: C.textMuted }}>
+              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+              Dados: {dadosAteFormatted}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 text-xs gap-1"
+              onClick={handleRefreshReceita}
+              disabled={isManualRefreshing || refreshingMV}
+            >
+              <RefreshCw className={`h-3 w-3 ${(isManualRefreshing || refreshingMV) ? "animate-spin" : ""}`} />
+              Atualizar Dados
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowOnboarding(true)} style={{ color: C.textMuted }}>
+              <HelpCircle className="h-4 w-4 mr-1" /> Ajuda
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4" style={{ gridTemplateColumns: "260px 1fr" }}>
@@ -556,11 +599,12 @@ export default function ReceitaCaixa() {
                   <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
                   <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4, scrollbarWidth: "thin", maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
-                    <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
-                      <span className="rounded-sm" style={{ width: 10, height: 10, background: colorFor(c, i), display: "inline-block" }} /> {c}
-                    </span>
+                    <div key={c} style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", flexShrink: 0 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(c, i), display: "inline-block" }} />
+                      <span style={{ fontSize: 12, color: C.navy900 }}>{c}</span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -635,30 +679,22 @@ export default function ReceitaCaixa() {
                       </div>
                     </div>
 
-                    {/* Legenda */}
-                    <div style={{ display: "flex", gap: 14, fontSize: 12, color: C.textMuted, flexWrap: "wrap", marginBottom: 18 }}>
-                      {papelCats.map((cat, idx) => (
-                        <span key={cat} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                          <span style={{ width: 10, height: 10, background: colorFor(cat, idx), borderRadius: 2, display: "inline-block" }} />
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
+
 
                     {papelQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
                       <div style={{ overflowX: "auto" }}>
                         <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
                           <thead>
                             <tr style={{ borderBottom: `1px solid ${C.navy900}` }}>
-                              <th style={{ position: "sticky", left: 0, background: C.bgCard, textAlign: "left", padding: "10px 8px", color: C.textMuted, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", minWidth: firstColW, fontFamily: "'Source Sans 3', sans-serif" }}>
+                              <th style={{ position: "sticky", left: 0, background: C.bgCard, textAlign: "left", padding: "10px 8px", color: C.navy500, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", minWidth: firstColW, fontFamily: "'Source Sans 3', sans-serif" }}>
                                 {colunaLabel}
                               </th>
                               {papelCats.map((cat) => (
-                                <th key={cat} style={{ textAlign: "right", padding: "10px 8px", color: C.textMuted, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
+                                <th key={cat} style={{ textAlign: "right", padding: "10px 8px", color: C.navy500, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
                                   {cat}
                                 </th>
                               ))}
-                              <th style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                              <th style={{ textAlign: "right", padding: "10px 8px", color: C.navy500, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px" }}>
                                 Total
                               </th>
                             </tr>
@@ -713,11 +749,12 @@ export default function ReceitaCaixa() {
                   <CardTitleTailor>Fonte da Receita — composição mensal</CardTitleTailor>
                   <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4, scrollbarWidth: "thin", maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
-                    <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
-                      <span className="rounded-sm" style={{ width: 10, height: 10, background: colorFor(c, i), display: "inline-block" }} /> {c}
-                    </span>
+                    <div key={c} style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", flexShrink: 0 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(c, i), display: "inline-block" }} />
+                      <span style={{ fontSize: 12, color: C.navy900 }}>{c}</span>
+                    </div>
                   ))}
                 </div>
               </div>
