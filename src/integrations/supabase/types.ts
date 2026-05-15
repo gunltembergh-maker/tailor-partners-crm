@@ -35,6 +35,60 @@ export type Database = {
         }
         Relationships: []
       }
+      _backup_mv_v2_pre_fix_20260515: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          backup_criado_em: string | null
+          banker: string | null
+          canal: string | null
+          categoria: string | null
+          comissao_bruta_tailor: number | null
+          documento: string | null
+          finder: string | null
+          produto: string | null
+          source_origin: string | null
+          source_row_id: number | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: string | null
+          anomes?: number | null
+          backup_criado_em?: string | null
+          banker?: string | null
+          canal?: string | null
+          categoria?: string | null
+          comissao_bruta_tailor?: number | null
+          documento?: string | null
+          finder?: string | null
+          produto?: string | null
+          source_origin?: string | null
+          source_row_id?: number | null
+          subcategoria?: string | null
+          subproduto?: string | null
+          tipo_cliente?: string | null
+        }
+        Update: {
+          advisor?: string | null
+          anomes?: number | null
+          backup_criado_em?: string | null
+          banker?: string | null
+          canal?: string | null
+          categoria?: string | null
+          comissao_bruta_tailor?: number | null
+          documento?: string | null
+          finder?: string | null
+          produto?: string | null
+          source_origin?: string | null
+          source_row_id?: number | null
+          subcategoria?: string | null
+          subproduto?: string | null
+          tipo_cliente?: string | null
+        }
+        Relationships: []
+      }
       access_logs: {
         Row: {
           duration_minutes: number | null
