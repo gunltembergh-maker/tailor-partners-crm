@@ -60,6 +60,12 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { effectiveRole, effectivePermissoes } = useViewAs();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
+  const navigateAndClose = (path: string) => {
+    navigate(path);
+    if (isMobile) setOpenMobile(false);
+    else setOpen(false);
+  };
 
   // Visibility ALWAYS reflects the simulated profile when Minha Visão is active.
   // Only ADMIN has auto-grant. LIDER (and all other roles) must respect the
