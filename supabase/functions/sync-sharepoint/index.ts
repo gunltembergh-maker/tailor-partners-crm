@@ -631,12 +631,14 @@ async function processChunkedSyncInBackground(params: {
       }
     }
 
+    clearTimeout(timeoutHandle);
     const durationMs = Date.now() - t0;
     const dur = `${(durationMs / 1000).toFixed(1)}s`;
     log.push(`\n⏱️ ${dur}`);
     await saveLog(logType, errors.length === 0, dur, log, errors);
     return { inserted: totalInserted, durationMs, errors };
   } catch (error) {
+    clearTimeout(timeoutHandle);
     const message = getErrorMessage(error);
     errors.push(message);
     log.push(`❌ ${message}`);
