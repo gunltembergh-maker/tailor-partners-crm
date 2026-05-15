@@ -473,22 +473,37 @@ async function readHistoricoRowsGroupedByMonth(
   return { monthlyGroups, rowsWithoutMonth, totalRowsRead };
 }
 
-async function processHistoricoSyncInBackground({
-  tipo,
-  syncMode,
-  monthFilter,
-}: {
-  tipo: string;
-  syncMode: 'historico_completo' | 'historico_mensal';
-  monthFilter: number[] | null;
-}): Promise<void> {
+/**
+ * Generic chunked sync runner.
+ * Designed to be reusable for any large historical raw_ table (Receita Histórica, Captação Histórica, etc.).
+ *
+ * Behavior:
+ *  - Reads the entire source sheet from SharePoint (no hardcoded LIMIT).
+ *  - If `monthFilter` is provided, only rows whose anomes is in the list are kept.
+ *  - If `fullRebuild=true`, the destination table is truncated ONCE at the start, then all rows are inserted.
+ *  - If `fullRebuild=false`, only the months present (from filter or extracted) are deleted, then re-inserted (idempotent).
+ *  - Triggers are disabled during bulk insert (handled by rpc_sync_bulk_insert).
+ *  - At the end, all listed materialized views are refreshed (once).
+ *  - Post-run validation enforces minimum row count + distinct months for receita historico (regression guard).
+ */
+async function processChunkedSyncInBackground(params: {
+  table: string;
+  sourceSheet: string;
+  fileKey: string;
+  fullRebuild: boolean;
+  chunkSize?: number;
+  refreshMVsAtEnd: string[];
+  monthFilter?: number[] | null;
+  logType: string;
+  validate?: { minRows: number; minDistinctMonths: number };
+}): Promise<{ inserted: number; durationMs: number; errors: string[] }> {
   const log: string[] = [];
   const errors: string[] = [];
   const t0 = Date.now();
-  const fileId = FILE_IDS['base_receita'];
-  const sheetName = 'Comissões Histórico';
-  const logType = syncMode === 'historico_completo' ? 'sync-historico-completo' : 'sync-historico-mensal';
-  const fullRebuild = syncMode === 'historico_completo' || !(monthFilter?.length);
+  const { table, sourceSheet, fileKey, fullRebuild, refreshMVsAtEnd, logType, validate } = params;
+  const monthFilter = params.monthFilter ?? null;
+  const fileId = FILE_IDS[fileKey];
+  const sheetName = sourceSheet;
 
   try {
     log.push('🔐 Autenticando...');
