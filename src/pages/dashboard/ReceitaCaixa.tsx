@@ -370,9 +370,29 @@ export default function ReceitaCaixa() {
               </Select>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setShowOnboarding(true)} style={{ color: C.textMuted }}>
-            <HelpCircle className="h-4 w-4 mr-1" /> Ajuda
-          </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs flex items-center gap-1" style={{ color: C.textMuted }}>
+              <Clock className="h-3 w-3" />
+              Atualizado {atualizadoEmFormatted}
+            </span>
+            <span className="text-xs flex items-center gap-1" style={{ color: C.textMuted }}>
+              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+              Dados: {dadosAteFormatted}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 text-xs gap-1"
+              onClick={handleRefreshReceita}
+              disabled={isManualRefreshing || refreshingMV}
+            >
+              <RefreshCw className={`h-3 w-3 ${(isManualRefreshing || refreshingMV) ? "animate-spin" : ""}`} />
+              Atualizar Dados
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowOnboarding(true)} style={{ color: C.textMuted }}>
+              <HelpCircle className="h-4 w-4 mr-1" /> Ajuda
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4" style={{ gridTemplateColumns: "260px 1fr" }}>
