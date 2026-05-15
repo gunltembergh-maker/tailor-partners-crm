@@ -253,32 +253,35 @@ async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], er
   });
 }
 
-// ─── Cascade concurrency guard (TEMPORARY — prevents external double-invocation) ──
-// Uses sync_log with sucesso=NULL as a "running" marker scoped per arquivo.
-// Stale markers (>20min) are ignored so a crashed cascade doesn't permanently lock.
+// ─── Cascade concurrency guard ────────────────────────────────────────
+// Atomic via UNIQUE PARTIAL INDEX uniq_cascade_lock_running on sync_log
+// (tipo) WHERE sucesso IS NULL AND tipo LIKE 'cascade-lock-%'.
+// Stale markers (>20min) are swept so a crashed cascade doesn't permanently lock.
 const CASCADE_LOCK_TTL_MIN = 20;
 
-async function checkCascadeRunning(arquivo: string): Promise<boolean> {
-  const tipo = `cascade-lock-${arquivo}`;
-  const since = new Date(Date.now() - CASCADE_LOCK_TTL_MIN * 60_000).toISOString();
-  const url = `${SUPABASE_URL}/rest/v1/sync_log?tipo=eq.${encodeURIComponent(tipo)}&sucesso=is.null&executado_em=gte.${encodeURIComponent(since)}&select=id&limit=1`;
-  const r = await fetch(url, { headers: rpcHeaders });
-  if (!r.ok) return false;
-  const rows = await r.json().catch(() => []);
-  return Array.isArray(rows) && rows.length > 0;
-}
-
-async function markCascadeRunning(arquivo: string): Promise<void> {
-  await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_salvar_sync_log`, {
-    method: 'POST', headers: rpcHeaders,
+// Atomic INSERT into sync_log. Returns true if lock acquired,
+// false if blocked by uniq_cascade_lock_running (Postgres 23505).
+async function tryMarkCascadeRunning(arquivo: string): Promise<boolean> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/sync_log`, {
+    method: 'POST',
+    headers: { ...rpcHeaders, 'Prefer': 'return=minimal' },
     body: JSON.stringify({
-      p_tipo: `cascade-lock-${arquivo}`,
-      p_sucesso: null,
-      p_duracao: '0s',
-      p_detalhes: [`Cascade lock acquired at ${new Date().toISOString()}`],
-      p_erros: null,
+      tipo: `cascade-lock-${arquivo}`,
+      sucesso: null,
+      duracao: '0s',
+      detalhes: [`Cascade lock acquired at ${new Date().toISOString()}`],
+      erros: null,
     }),
   });
+  if (r.ok) return true;
+  const txt = await r.text().catch(() => '');
+  // PostgREST surfaces unique_violation as HTTP 409 with code "23505"
+  if (r.status === 409 || txt.includes('23505') || txt.includes('uniq_cascade_lock_running')) {
+    return false;
+  }
+  // Other failures: log but treat as acquired so we don't block legitimate runs on transient errors
+  console.error('tryMarkCascadeRunning unexpected error:', r.status, txt.substring(0, 200));
+  return true;
 }
 
 async function clearCascadeRunning(arquivo: string): Promise<void> {
@@ -287,30 +290,12 @@ async function clearCascadeRunning(arquivo: string): Promise<void> {
   await fetch(url, { method: 'PATCH', headers: { ...rpcHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sucesso: true }) });
 }
 
-// ─── Advisory lock (CAMADA PRIMÁRIA) — atômico do PostgreSQL ──
-async function tryAcquireAdvisoryLock(arquivo: string): Promise<boolean> {
-  try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_try_cascade_advisory_lock`, {
-      method: 'POST', headers: rpcHeaders,
-      body: JSON.stringify({ p_arquivo: arquivo }),
-    });
-    if (!r.ok) return false;
-    const data = await r.json().catch(() => null);
-    return data?.acquired === true;
-  } catch {
-    return false;
-  }
-}
-
-async function releaseAdvisoryLock(arquivo: string): Promise<void> {
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_release_cascade_advisory_lock`, {
-      method: 'POST', headers: rpcHeaders,
-      body: JSON.stringify({ p_arquivo: arquivo }),
-    });
-  } catch (e) {
-    console.error('Erro ao liberar advisory lock:', e);
-  }
+// Sweeps stale (>TTL) running locks so a crashed cascade doesn't permanently block.
+async function clearStaleCascadeLock(arquivo: string): Promise<void> {
+  const tipo = `cascade-lock-${arquivo}`;
+  const cutoff = new Date(Date.now() - CASCADE_LOCK_TTL_MIN * 60_000).toISOString();
+  const url = `${SUPABASE_URL}/rest/v1/sync_log?tipo=eq.${encodeURIComponent(tipo)}&sucesso=is.null&executado_em=lt.${encodeURIComponent(cutoff)}`;
+  await fetch(url, { method: 'PATCH', headers: { ...rpcHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sucesso: false }) });
 }
 
 // ─── Graph API helpers ──────────────────────────────────────────────
@@ -1130,12 +1115,11 @@ Deno.serve(async (req) => {
         await saveLog(`cascade-${fileKey}-${sh.sheet}`, true, dur, 
           [`Cascade complete: ${grandTotal} rows in ${sh.table}`], []);
 
-        // Release cascade locks at the very end of the cascade chain
+        // Release cascade lock at the very end of the cascade chain
         if (body._cascade_lock_arquivo) {
           await clearCascadeRunning(body._cascade_lock_arquivo).catch(() => {});
-          await releaseAdvisoryLock(body._cascade_lock_arquivo);
           console.log(JSON.stringify({
-            event: 'cascade_advisory_lock_released',
+            event: 'cascade_lock_released',
             arquivo: body._cascade_lock_arquivo,
             timestamp: new Date().toISOString(),
           }));
@@ -1151,40 +1135,31 @@ Deno.serve(async (req) => {
     const filesToProcess = [arquivo];
 
     // ─── GUARD: prevent concurrent external cascade invocations ───
+    // Atomic via UNIQUE PARTIAL INDEX uniq_cascade_lock_running on sync_log.
     // Only applies on the initial external entry (not cascade slices, not orchestrator,
     // not sync_mode flows like m0/m1/historico_chunked). Lock scoped per arquivo.
     const guardEnabled = !isCascadeSlice && arquivo !== 'todos' && !syncMode && !body._orchestrated;
     if (guardEnabled) {
-      // CAMADA 1 (PRIMÁRIA): Advisory lock atômico
-      const acquired = await tryAcquireAdvisoryLock(arquivo);
+      // Sweep stale (>TTL) running locks first so a crashed cascade doesn't permanently block.
+      await clearStaleCascadeLock(arquivo).catch(() => {});
+
+      // Atomic INSERT — Postgres unique_violation (23505) blocks concurrent cascade.
+      const acquired = await tryMarkCascadeRunning(arquivo);
       if (!acquired) {
         console.log(JSON.stringify({
-          event: 'cascade_blocked_by_advisory_lock',
+          event: 'cascade_blocked_by_unique_index',
           arquivo,
           timestamp: new Date().toISOString(),
+          reason: 'concurrent_lock_atomic_block',
         }));
         const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        log.push(`🚫 Cascade já em execução para ${arquivo} (advisory lock ativo). Recusando para evitar duplicação.`);
+        log.push(`🚫 Cascade já em execução para ${arquivo} (lock atômico ativo). Recusando para evitar duplicação.`);
         return Response.json(
-          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by advisory lock`], log, duracao: dur },
+          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by atomic lock`], log, duracao: dur },
           { status: 409, headers: cors }
         );
       }
-      log.push(`🔒 Advisory lock adquirido para ${arquivo}`);
-
-      // CAMADA 2 (SECUNDÁRIA): sync_log lock auditável
-      const running = await checkCascadeRunning(arquivo);
-      if (running) {
-        await releaseAdvisoryLock(arquivo);
-        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        log.push(`🚫 Cascade já em execução para ${arquivo} (sync_log lock < ${CASCADE_LOCK_TTL_MIN}min). Recusando.`);
-        return Response.json(
-          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by guard`], log, duracao: dur },
-          { status: 409, headers: cors }
-        );
-      }
-      await markCascadeRunning(arquivo);
-      log.push(`🔒 Sync_log lock adquirido para ${arquivo}`);
+      log.push(`🔒 Cascade lock atômico adquirido para ${arquivo}`);
     }
 
     log.push('🔐 Autenticando...');
@@ -1290,12 +1265,11 @@ Deno.serve(async (req) => {
       await saveLog(tipo, errors.length === 0, dur, log, errors);
     }
 
-    // Release cascade locks if no async cascade was fired (sync path complete here)
+    // Release cascade lock if no async cascade was fired (sync path complete here)
     if (guardEnabled && !cascadeFired) {
       await clearCascadeRunning(arquivo).catch(() => {});
-      await releaseAdvisoryLock(arquivo);
       console.log(JSON.stringify({
-        event: 'cascade_advisory_lock_released',
+        event: 'cascade_lock_released',
         arquivo,
         timestamp: new Date().toISOString(),
       }));
@@ -1307,10 +1281,9 @@ Deno.serve(async (req) => {
     const message = getErrorMessage(e);
     const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
     await saveLog('erro', false, dur, log, [message]).catch(() => {});
-    // Best-effort lock release on error path (covers MODE 3 initial entry)
+    // Best-effort lock release on error path
     if (typeof arquivo === 'string' && arquivo !== 'todos') {
       await clearCascadeRunning(arquivo).catch(() => {});
-      await releaseAdvisoryLock(arquivo);
     }
     return Response.json({ success: false, error: message, log }, { status: 500, headers: cors });
   }
