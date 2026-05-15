@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,45 +16,54 @@ import { Badge } from "@/components/ui/badge";
 import { ReceitaCaixaOnboardingModal } from "@/components/relatorios/ReceitaCaixaOnboardingModal";
 import { cn } from "@/lib/utils";
 
-// ── Paleta executiva — Monocromática navy Tailor ────────────────────
+// ── Paleta executiva — Brand Book Tailor oficial ────────────────────
 const C = {
-  navy900: "#082537",
-  navy700: "#1F4A66",
-  navy500: "#37708F",
-  navy300: "#5B8EA8",
-  navy200: "#88A8B8",
-  navy100: "#B0C2CC",
-  gold:    "#37708F", // accent monocromático (substitui gold/terracotta)
+  navy900: "#0A2337",  // Navy primário ✦
+  navy700: "#1A3A52",
+  navy500: "#4B6D88",  // Azul médio ✦
+  navy300: "#73A7B7",  // Azul claro ✦
+  navy200: "#A8C8D2",
+  navy100: "#D4E1E6",
+  gold:    "#4B6D88",  // accent navy Tailor
   bgPage:  "#F4F2EC",
   bgCard:  "#FFFFFF",
-  textMuted: "#7a8794",
-  border:  "rgba(8,37,55,0.08)",
-  divider: "rgba(8,37,55,0.06)",
+  textMuted: "#5F7A8E",
+  border:  "rgba(75,109,136,0.10)",
+  divider: "rgba(75,109,136,0.10)",
+  zebra:   "rgba(75,109,136,0.04)",
   downBg:  "#FCEBEB", downFg: "#791F1F",
   upBg:    "#E1F5EE", upFg:   "#0F6E56",
 };
 
-// Paleta navy Tailor (12 tons, do mais escuro ao mais claro)
+// Paleta navy Tailor (12 tons baseados nas 4 cores oficiais Tailor)
 const FALLBACK_COLORS = [
-  "#082537", "#163C54", "#1F4A66", "#2C5F7F", "#37708F", "#5B8EA8",
-  "#7AA0BC", "#9DBED4", "#B5CDE0", "#C3D6E0", "#D4E1E9", "#6F8DA3",
+  "#0A2337", "#1A3A52", "#2C5572", "#4B6D88", "#5F8294", "#73A7B7",
+  "#8FB8C5", "#A8C8D2", "#C0D6DD", "#D4E1E6", "#9BAEB8", "#B8C3CB",
 ];
 
-// Mapeamento explícito categoria → cor
+// Mapeamento explícito categoria → cor (oficial Tailor)
 const CAT_COLORS: Record<string, string> = {
-  "Câmbio":              "#082537",
-  "Lavoro":              "#163C54",
-  "Consórcio":           "#1F4A66",
-  "Assessoria":          "#2C5F7F",
-  "Wealth Solutions":    "#37708F",
-  "Seguro de Vida":      "#5B8EA8",
-  "Offshore":            "#7AA0BC",
-  "Consultoria":         "#9DBED4",
-  "Corporate & Banking": "#B5CDE0",
-  "Gestora":             "#C3D6E0",
+  "Câmbio":              "#0A2337",
+  "Lavoro":              "#1A3A52",
+  "Consórcio":           "#2C5572",
+  "Assessoria":          "#4B6D88",
+  "Wealth Solutions":    "#5F8294",
+  "Seguro de Vida":      "#73A7B7",
+  "Offshore":            "#8FB8C5",
+  "Consultoria":         "#A8C8D2",
+  "Corporate & Banking": "#C0D6DD",
+  "Gestora":             "#D4E1E6",
 };
 
 const colorFor = (cat: string, idx = 0) => CAT_COLORS[cat] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+
+// Título de card com triângulo navy (detalhe de marca Tailor)
+const CardTitleTailor = ({ children }: { children: React.ReactNode }) => (
+  <h3 className="title-serif" style={{ fontSize: 22, fontWeight: 400, color: C.navy900, margin: 0, lineHeight: 1.15, display: "flex", alignItems: "center", gap: 10, letterSpacing: "-0.2px" }}>
+    <span aria-hidden style={{ width: 0, height: 0, borderTop: "5px solid transparent", borderBottom: "5px solid transparent", borderLeft: `8px solid ${C.navy900}`, flexShrink: 0 }} />
+    {children}
+  </h3>
+);
 
 // ── Helpers ─────────────────────────────────────────────────────────
 const fmtBRL = (n: number | null | undefined) =>
@@ -291,11 +301,15 @@ export default function ReceitaCaixa() {
     <AppLayout>
       <ReceitaCaixaOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
 
-      <div style={{ background: C.bgPage, margin: -16, padding: 24, minHeight: "calc(100vh - 64px)" }}>
+      <style>{`
+        .dashboard-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #0A2337; }
+        .dashboard-receita .title-serif, .dashboard-receita h1.title-serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; color: #0A2337; }
+      `}</style>
+      <div className="dashboard-receita" style={{ background: C.bgPage, margin: -16, padding: 24, minHeight: "calc(100vh - 64px)" }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-[26px] font-medium" style={{ color: C.navy900, letterSpacing: "-0.5px" }}>Receita</h1>
+            <h1 className="title-serif" style={{ fontSize: 32, fontWeight: 400, color: C.navy900, letterSpacing: "-0.5px", margin: 0 }}>Receita</h1>
             <ChevronRight className="h-4 w-4" style={{ color: C.textMuted }} />
             <span className="text-[18px] font-normal" style={{ color: C.textMuted }}>Caixa</span>
             <ChevronRight className="h-4 w-4" style={{ color: C.textMuted }} />
@@ -383,9 +397,9 @@ export default function ReceitaCaixa() {
                   minHeight: 240,
                 }}
               >
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, margin: 0, letterSpacing: "-0.2px" }}>
-                  Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 500 }}>· {kpis.anomes_label}</span>}
-                </h3>
+                <CardTitleTailor>
+                  Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 400, fontSize: 18, fontFamily: "'Source Sans 3', sans-serif" }}>· {kpis.anomes_label}</span>}
+                </CardTitleTailor>
 
                 {kpisQ.isLoading ? (
                   <Skeleton className="h-16 w-72" />
@@ -397,7 +411,7 @@ export default function ReceitaCaixa() {
                   const decStr = `,${decPart.toFixed(2).slice(2)}`;
                   return (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                      <span style={{ fontSize: 64, fontWeight: 500, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
+                      <span className="title-serif" style={{ fontSize: 60, fontWeight: 400, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
                       <span style={{ fontSize: 18, color: C.textMuted }}>{decStr}</span>
                     </div>
                   );
@@ -436,9 +450,7 @@ export default function ReceitaCaixa() {
 
               {/* Advisor XP mini-tabela */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>
-                  Receita Advisor XP
-                </h3>
+                <div style={{ marginBottom: 18 }}><CardTitleTailor>Receita por Advisor</CardTitleTailor></div>
                 {advisorQ.isLoading ? <Skeleton className="h-32 w-full" /> : (
                   <table className="w-full">
                     <tbody>
@@ -464,7 +476,7 @@ export default function ReceitaCaixa() {
             <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {/* Bar chart por categoria */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 20, letterSpacing: "-0.2px" }}>Receita por Categoria</h3>
+                <div style={{ marginBottom: 20 }}><CardTitleTailor>Receita por Categoria</CardTitleTailor></div>
                 {catQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
                   const max = Math.max(...(catQ.data || []).map(d => Number(d.total)), 1);
                   return (
@@ -485,7 +497,7 @@ export default function ReceitaCaixa() {
 
               {/* Lista subcategoria com drill */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>Receita por Subcategoria</h3>
+                <div style={{ marginBottom: 18 }}><CardTitleTailor>Receita por Subcategoria</CardTitleTailor></div>
                 {subQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
                   <div className="max-h-[340px] overflow-auto">
                     {subPivot.map((row, i) => (
@@ -520,7 +532,7 @@ export default function ReceitaCaixa() {
             {/* Row 3: Receita Total — últimos 12 meses */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>Receita Total — últimos 12 meses</h3>
+                <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
                 <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
                     <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
@@ -532,159 +544,141 @@ export default function ReceitaCaixa() {
               {serieQ.isLoading ? <Skeleton className="h-80 w-full" /> : <StackedBars data={seriePivot} cats={seriesCats} currentAnomes={selectedAnomes ?? 0} />}
             </div>
 
-            {/* Row 4: Receita por Financial Advisor / Finder */}
+            {/* Row 4: Receita por Financial Advisor / Finder / Canal — matriz unificada */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-              <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>
-                  Receita por Financial Advisor / Finder / Canal
-                </h3>
-                <div style={{ display: "flex", background: "rgba(8,37,55,0.06)", borderRadius: 6, padding: 3 }}>
-                  {([
-                    { v: "BANKER" as const, l: "Financial Advisor" },
-                    { v: "FINDER" as const, l: "Finder" },
-                    { v: "CANAL" as const, l: "Canal" },
-                  ]).map((opt) => (
-                    <button
-                      key={opt.v}
-                      onClick={() => { setPapel(opt.v); setShowAllPapel(false); }}
-                      style={{
-                        padding: "6px 14px", fontSize: 13, fontWeight: 500, borderRadius: 4,
-                        background: papel === opt.v ? C.navy900 : "transparent",
-                        color: papel === opt.v ? "#fff" : C.navy900,
-                        border: "none", cursor: "pointer",
-                      }}
-                    >
-                      {opt.l}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Legenda */}
-              <div style={{ display: "flex", gap: 14, fontSize: 12, color: C.textMuted, flexWrap: "wrap", marginBottom: 18 }}>
-                {papelCats.map((cat, idx) => (
-                  <span key={cat} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    <span style={{ width: 10, height: 10, background: colorFor(cat, idx), borderRadius: 2, display: "inline-block" }} />
-                    {cat}
-                  </span>
-                ))}
-              </div>
-
-              {papelQ.isLoading ? <Skeleton className="h-64 w-full" /> : papel === "BANKER" ? (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ borderBottom: `1px solid ${C.navy900}` }}>
-                        <th style={{ textAlign: "left", padding: "10px 8px", color: C.textMuted, fontWeight: 500, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", minWidth: 180 }}>
-                          Financial Advisor
-                        </th>
-                        {papelCats.map((cat) => (
-                          <th key={cat} style={{ textAlign: "right", padding: "10px 8px", color: C.textMuted, fontWeight: 500, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>
-                            {cat}
-                          </th>
-                        ))}
-                        <th style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                          Total
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {porPapel.map((p) => (
-                        <tr key={p.nome} style={{ borderBottom: "0.5px solid rgba(8,37,55,0.06)" }}>
-                          <td style={{ padding: "10px 8px", color: C.navy900, fontWeight: 500 }}>{p.nome}</td>
-                          {papelCats.map((cat) => {
-                            const v = p.categorias.get(cat) || 0;
-                            return (
-                              <td key={cat} className="tabular-nums" style={{ textAlign: "right", padding: "10px 8px", color: v > 0 ? C.navy900 : "#B0B7BE", whiteSpace: "nowrap" }}>
-                                {v > 0 ? fmtAdapt(v) : "—"}
-                              </td>
-                            );
-                          })}
-                          <td className="tabular-nums" style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
-                            {fmtAdapt(p.total)}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr style={{ borderTop: `1px solid ${C.navy900}`, background: "rgba(8,37,55,0.025)" }}>
-                        <td style={{ padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>Total</td>
-                        {papelCats.map((cat) => {
-                          const totalCat = porPapel.reduce((s, p) => s + (p.categorias.get(cat) || 0), 0);
-                          return (
-                            <td key={cat} className="tabular-nums" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
-                              {fmtAdapt(totalCat)}
-                            </td>
-                          );
-                        })}
-                        <td className="tabular-nums" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15, whiteSpace: "nowrap" }}>
-                          {fmtAdapt(papelTotalGeral)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              ) : (() => {
+              {(() => {
+                const colunaLabel = papel === "BANKER" ? "Financial Advisor" : papel === "FINDER" ? "Finder" : "Canal";
                 const firstColW = papel === "CANAL" ? 220 : 180;
-                const gridCols = `${firstColW}px 1fr 110px 60px`;
-                const visible = showAllPapel ? porPapel : porPapel.slice(0, 6);
-                const hidden = porPapel.slice(6);
-                const otherTotal = hidden.reduce((s, p) => s + p.total, 0);
-                const otherCats = new Map<string, number>();
-                hidden.forEach((p) => p.categorias.forEach((v, c) => otherCats.set(c, (otherCats.get(c) || 0) + v)));
+                const handleExportExcel = () => {
+                  const headers = [colunaLabel, ...papelCats, "Total"];
+                  const rows = porPapel.map((p) => [p.nome, ...papelCats.map((cat) => Number(p.categorias.get(cat) || 0)), Number(p.total)]);
+                  const totaisPorCat = papelCats.map((cat) => porPapel.reduce((s, p) => s + (p.categorias.get(cat) || 0), 0));
+                  const linhaTotal = ["Total", ...totaisPorCat, papelTotalGeral];
+                  const aoa = [headers, ...rows, linhaTotal];
+                  const ws = XLSX.utils.aoa_to_sheet(aoa);
+                  const numFormat = 'R$ #,##0.00;[Red]-R$ #,##0.00';
+                  for (let r = 1; r < aoa.length; r++) {
+                    for (let c = 1; c < headers.length; c++) {
+                      const ref = XLSX.utils.encode_cell({ r, c });
+                      if (ws[ref] && typeof ws[ref].v === "number") { ws[ref].t = "n"; ws[ref].z = numFormat; }
+                    }
+                  }
+                  ws["!cols"] = [{ wch: 32 }, ...papelCats.map(() => ({ wch: 18 })), { wch: 18 }];
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, ws, `Receita ${colunaLabel}`.slice(0, 31));
+                  const papelStr = papel === "BANKER" ? "FinancialAdvisor" : papel === "FINDER" ? "Finder" : "Canal";
+                  XLSX.writeFile(wb, `Receita_Por_${papelStr}_${selectedAnomes ?? ""}.xlsx`);
+                };
                 return (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {visible.map((p) => {
-                      const pctTotal = papelTotalGeral > 0 ? (p.total / papelTotalGeral * 100).toFixed(1) : "0.0";
-                      const larguraBarra = (p.total / papelMaxTotal * 100);
-                      return (
-                        <div key={p.nome} style={{ display: "grid", gridTemplateColumns: gridCols, gap: 14, alignItems: "center", fontSize: 14 }}>
-                          <span style={{ color: C.navy900, fontWeight: 500 }} className="truncate">{p.nome}</span>
-                          <div style={{ background: "rgba(8,37,55,0.04)", borderRadius: 4, height: 22 }}>
-                            <div style={{ display: "flex", height: "100%", width: `${larguraBarra}%`, minWidth: 20, borderRadius: 4, overflow: "hidden" }}>
-                              {papelCats.map((cat, idx) => {
-                                const valorCat = p.categorias.get(cat) || 0;
-                                if (valorCat === 0) return null;
-                                const pctNaBarra = (valorCat / p.total * 100);
+                  <>
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+                      <CardTitleTailor>Receita por Financial Advisor / Finder / Canal</CardTitleTailor>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        <div style={{ display: "flex", background: C.zebra, borderRadius: 6, padding: 3 }}>
+                          {([
+                            { v: "BANKER" as const, l: "Financial Advisor" },
+                            { v: "FINDER" as const, l: "Finder" },
+                            { v: "CANAL" as const, l: "Canal" },
+                          ]).map((opt) => (
+                            <button
+                              key={opt.v}
+                              onClick={() => setPapel(opt.v)}
+                              style={{
+                                padding: "6px 14px", fontSize: 13, fontWeight: 500, borderRadius: 4,
+                                background: papel === opt.v ? C.navy900 : "transparent",
+                                color: papel === opt.v ? "#fff" : C.navy900,
+                                border: "none", cursor: "pointer", fontFamily: "'Source Sans 3', sans-serif",
+                              }}
+                            >
+                              {opt.l}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={handleExportExcel}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                            padding: "7px 14px", fontSize: 13, fontWeight: 500, borderRadius: 4,
+                            background: "transparent", color: C.navy500,
+                            border: `1px solid ${C.navy500}`, cursor: "pointer",
+                            fontFamily: "'Source Sans 3', sans-serif", transition: "all 0.15s",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = C.navy500; e.currentTarget.style.color = "#fff"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.navy500; }}
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Exportar Excel
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Legenda */}
+                    <div style={{ display: "flex", gap: 14, fontSize: 12, color: C.textMuted, flexWrap: "wrap", marginBottom: 18 }}>
+                      {papelCats.map((cat, idx) => (
+                        <span key={cat} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          <span style={{ width: 10, height: 10, background: colorFor(cat, idx), borderRadius: 2, display: "inline-block" }} />
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+
+                    {papelQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
+                          <thead>
+                            <tr style={{ borderBottom: `1px solid ${C.navy900}` }}>
+                              <th style={{ position: "sticky", left: 0, background: C.bgCard, textAlign: "left", padding: "10px 8px", color: C.textMuted, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", minWidth: firstColW, fontFamily: "'Source Sans 3', sans-serif" }}>
+                                {colunaLabel}
+                              </th>
+                              {papelCats.map((cat) => (
+                                <th key={cat} style={{ textAlign: "right", padding: "10px 8px", color: C.textMuted, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
+                                  {cat}
+                                </th>
+                              ))}
+                              <th style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                                Total
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {porPapel.map((p, rowIdx) => {
+                              const zebraBg = rowIdx % 2 === 1 ? C.zebra : "transparent";
+                              return (
+                                <tr key={p.nome} style={{ background: zebraBg }}>
+                                  <td style={{ position: "sticky", left: 0, background: zebraBg === "transparent" ? C.bgCard : zebraBg, padding: "10px 8px", color: C.navy900, fontWeight: 500 }}>{p.nome}</td>
+                                  {papelCats.map((cat) => {
+                                    const v = p.categorias.get(cat) || 0;
+                                    return (
+                                      <td key={cat} className="tabular-nums" style={{ textAlign: "right", padding: "10px 8px", color: v > 0 ? C.navy900 : "#B8C3CB", whiteSpace: "nowrap", fontWeight: 500 }}>
+                                        {v > 0 ? fmtAdapt(v) : "—"}
+                                      </td>
+                                    );
+                                  })}
+                                  <td className="tabular-nums" style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                    {fmtAdapt(p.total)}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            <tr style={{ borderTop: `1px solid ${C.navy900}`, background: "rgba(10,35,55,0.04)" }}>
+                              <td style={{ position: "sticky", left: 0, background: "#F4EFE3", padding: "12px 8px", color: C.navy900, fontWeight: 600, fontSize: 15 }}>Total</td>
+                              {papelCats.map((cat) => {
+                                const totalCat = porPapel.reduce((s, p) => s + (p.categorias.get(cat) || 0), 0);
                                 return (
-                                  <div
-                                    key={cat}
-                                    style={{ background: colorFor(cat, idx), width: `${pctNaBarra}%`, height: "100%" }}
-                                    title={`${cat}: ${fmtAdapt(valorCat)} (${pctNaBarra.toFixed(1)}%)`}
-                                  />
+                                  <td key={cat} className="tabular-nums" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                    {fmtAdapt(totalCat)}
+                                  </td>
                                 );
                               })}
-                            </div>
-                          </div>
-                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtAdapt(p.total)}</span>
-                          <span className="tabular-nums" style={{ textAlign: "right", color: C.textMuted, fontSize: 13 }}>{pctTotal}%</span>
-                        </div>
-                      );
-                    })}
-                    {!showAllPapel && hidden.length > 0 && (
-                      <div
-                        onClick={() => setShowAllPapel(true)}
-                        style={{ display: "grid", gridTemplateColumns: gridCols, gap: 14, alignItems: "center", fontSize: 14, cursor: "pointer", color: C.textMuted, fontStyle: "italic" }}
-                      >
-                        <span>… outros ({hidden.length})</span>
-                        <div style={{ background: "rgba(8,37,55,0.04)", borderRadius: 4, height: 22 }}>
-                          <div style={{ display: "flex", height: "100%", width: `${(otherTotal / papelMaxTotal * 100)}%`, minWidth: 20, borderRadius: 4, overflow: "hidden" }}>
-                            {papelCats.map((cat, idx) => {
-                              const v = otherCats.get(cat) || 0;
-                              if (v === 0) return null;
-                              return <div key={cat} style={{ background: colorFor(cat, idx), width: `${(v / otherTotal * 100)}%`, height: "100%" }} />;
-                            })}
-                          </div>
-                        </div>
-                        <span className="tabular-nums" style={{ textAlign: "right" }}>{fmtAdapt(otherTotal)}</span>
-                        <span className="tabular-nums" style={{ textAlign: "right", fontSize: 13 }}>{papelTotalGeral > 0 ? (otherTotal / papelTotalGeral * 100).toFixed(1) : "0.0"}%</span>
+                              <td className="tabular-nums" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap" }}>
+                                {fmtAdapt(papelTotalGeral)}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     )}
-                    <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 14, padding: "12px 0 0", marginTop: 8, borderTop: `1px solid ${C.navy900}`, fontSize: 15, fontWeight: 600, color: C.navy900 }}>
-                      <span>Total</span>
-                      <span></span>
-                      <span className="tabular-nums" style={{ textAlign: "right" }}>{fmtAdapt(papelTotalGeral)}</span>
-                      <span className="tabular-nums" style={{ textAlign: "right" }}>100%</span>
-                    </div>
-                  </div>
+                  </>
                 );
               })()}
             </div>
@@ -692,7 +686,7 @@ export default function ReceitaCaixa() {
             {/* Row 5: Fonte da Receita — 100% stacked */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>Fonte da Receita — composição mensal</h3>
+                <CardTitleTailor>Fonte da Receita — composição mensal</CardTitleTailor>
                 <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
                     <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
