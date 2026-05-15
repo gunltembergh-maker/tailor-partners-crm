@@ -325,9 +325,7 @@ async function readRange(
 
   for (let r = startRow; r <= endRow; r += READ_CHUNK) {
     const end = Math.min(r + READ_CHUNK - 1, endRow);
-    const dataResp = await fetch(`${base}/range(address='A${r}:${lastCol}${end}')?$select=values`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const dataResp = await graphFetch(`${base}/range(address='A${r}:${lastCol}${end}')?$select=values`, token);
     if (!dataResp.ok) throw new Error(`Range A${r}: ${dataResp.status}`);
 
     const values: unknown[][] = (await dataResp.json()).values || [];
