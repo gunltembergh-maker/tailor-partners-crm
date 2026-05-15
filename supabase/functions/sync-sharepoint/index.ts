@@ -1144,22 +1144,41 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════════════
     const filesToProcess = [arquivo];
 
-    // ─── TEMP GUARD: prevent concurrent external cascade invocations ───
+    // ─── GUARD: prevent concurrent external cascade invocations ───
     // Only applies on the initial external entry (not cascade slices, not orchestrator,
     // not sync_mode flows like m0/m1/historico_chunked). Lock scoped per arquivo.
     const guardEnabled = !isCascadeSlice && arquivo !== 'todos' && !syncMode && !body._orchestrated;
     if (guardEnabled) {
+      // CAMADA 1 (PRIMÁRIA): Advisory lock atômico
+      const acquired = await tryAcquireAdvisoryLock(arquivo);
+      if (!acquired) {
+        console.log(JSON.stringify({
+          event: 'cascade_blocked_by_advisory_lock',
+          arquivo,
+          timestamp: new Date().toISOString(),
+        }));
+        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        log.push(`🚫 Cascade já em execução para ${arquivo} (advisory lock ativo). Recusando para evitar duplicação.`);
+        return Response.json(
+          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by advisory lock`], log, duracao: dur },
+          { status: 409, headers: cors }
+        );
+      }
+      log.push(`🔒 Advisory lock adquirido para ${arquivo}`);
+
+      // CAMADA 2 (SECUNDÁRIA): sync_log lock auditável
       const running = await checkCascadeRunning(arquivo);
       if (running) {
+        await releaseAdvisoryLock(arquivo);
         const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        log.push(`🚫 Cascade já em execução para ${arquivo} (lock < ${CASCADE_LOCK_TTL_MIN}min). Recusando para evitar duplicação.`);
+        log.push(`🚫 Cascade já em execução para ${arquivo} (sync_log lock < ${CASCADE_LOCK_TTL_MIN}min). Recusando.`);
         return Response.json(
           { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by guard`], log, duracao: dur },
           { status: 409, headers: cors }
         );
       }
       await markCascadeRunning(arquivo);
-      log.push(`🔒 Cascade lock adquirido para ${arquivo}`);
+      log.push(`🔒 Sync_log lock adquirido para ${arquivo}`);
     }
 
     log.push('🔐 Autenticando...');
