@@ -150,7 +150,7 @@ async function getToken(): Promise<string> {
 
 // ─── DB helpers ─────────────────────────────────────────────────────
 
-const RPC_TABLES = new Set(['raw_comissoes_m0', 'raw_comissoes_historico']);
+const RPC_TABLES = new Set(['raw_comissoes_m0', 'raw_comissoes_historico', 'raw_comissoes_historico_staging']);
 const rpcHeaders = { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` };
 
 const RPC_BATCH = 500;
