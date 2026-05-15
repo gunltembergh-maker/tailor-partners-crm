@@ -1194,7 +1194,9 @@ Deno.serve(async (req) => {
                 _cascade: true,
                 _cascade_total_rows: firstTotal,
                 _refresh_mv: fileKey === 'base_receita' && !body._orchestrated,
+                _cascade_lock_arquivo: guardEnabled ? arquivo : null,
               });
+              cascadeFired = true;
             }
 
             if (fileKey === 'base_receita') needsMVRefresh = false;
