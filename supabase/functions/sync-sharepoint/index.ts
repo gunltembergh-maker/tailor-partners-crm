@@ -1144,40 +1144,31 @@ Deno.serve(async (req) => {
     const filesToProcess = [arquivo];
 
     // ─── GUARD: prevent concurrent external cascade invocations ───
+    // Atomic via UNIQUE PARTIAL INDEX uniq_cascade_lock_running on sync_log.
     // Only applies on the initial external entry (not cascade slices, not orchestrator,
     // not sync_mode flows like m0/m1/historico_chunked). Lock scoped per arquivo.
     const guardEnabled = !isCascadeSlice && arquivo !== 'todos' && !syncMode && !body._orchestrated;
     if (guardEnabled) {
-      // CAMADA 1 (PRIMÁRIA): Advisory lock atômico
-      const acquired = await tryAcquireAdvisoryLock(arquivo);
+      // Sweep stale (>TTL) running locks first so a crashed cascade doesn't permanently block.
+      await clearStaleCascadeLock(arquivo).catch(() => {});
+
+      // Atomic INSERT — Postgres unique_violation (23505) blocks concurrent cascade.
+      const acquired = await tryMarkCascadeRunning(arquivo);
       if (!acquired) {
         console.log(JSON.stringify({
-          event: 'cascade_blocked_by_advisory_lock',
+          event: 'cascade_blocked_by_unique_index',
           arquivo,
           timestamp: new Date().toISOString(),
+          reason: 'concurrent_lock_atomic_block',
         }));
         const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        log.push(`🚫 Cascade já em execução para ${arquivo} (advisory lock ativo). Recusando para evitar duplicação.`);
+        log.push(`🚫 Cascade já em execução para ${arquivo} (lock atômico ativo). Recusando para evitar duplicação.`);
         return Response.json(
-          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by advisory lock`], log, duracao: dur },
+          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by atomic lock`], log, duracao: dur },
           { status: 409, headers: cors }
         );
       }
-      log.push(`🔒 Advisory lock adquirido para ${arquivo}`);
-
-      // CAMADA 2 (SECUNDÁRIA): sync_log lock auditável
-      const running = await checkCascadeRunning(arquivo);
-      if (running) {
-        await releaseAdvisoryLock(arquivo);
-        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        log.push(`🚫 Cascade já em execução para ${arquivo} (sync_log lock < ${CASCADE_LOCK_TTL_MIN}min). Recusando.`);
-        return Response.json(
-          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by guard`], log, duracao: dur },
-          { status: 409, headers: cors }
-        );
-      }
-      await markCascadeRunning(arquivo);
-      log.push(`🔒 Sync_log lock adquirido para ${arquivo}`);
+      log.push(`🔒 Cascade lock atômico adquirido para ${arquivo}`);
     }
 
     log.push('🔐 Autenticando...');
