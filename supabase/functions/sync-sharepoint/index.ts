@@ -253,6 +253,40 @@ async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], er
   });
 }
 
+// ─── Cascade concurrency guard (TEMPORARY — prevents external double-invocation) ──
+// Uses sync_log with sucesso=NULL as a "running" marker scoped per arquivo.
+// Stale markers (>20min) are ignored so a crashed cascade doesn't permanently lock.
+const CASCADE_LOCK_TTL_MIN = 20;
+
+async function checkCascadeRunning(arquivo: string): Promise<boolean> {
+  const tipo = `cascade-lock-${arquivo}`;
+  const since = new Date(Date.now() - CASCADE_LOCK_TTL_MIN * 60_000).toISOString();
+  const url = `${SUPABASE_URL}/rest/v1/sync_log?tipo=eq.${encodeURIComponent(tipo)}&sucesso=is.null&executado_em=gte.${encodeURIComponent(since)}&select=id&limit=1`;
+  const r = await fetch(url, { headers: rpcHeaders });
+  if (!r.ok) return false;
+  const rows = await r.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function markCascadeRunning(arquivo: string): Promise<void> {
+  await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_salvar_sync_log`, {
+    method: 'POST', headers: rpcHeaders,
+    body: JSON.stringify({
+      p_tipo: `cascade-lock-${arquivo}`,
+      p_sucesso: null,
+      p_duracao: '0s',
+      p_detalhes: [`Cascade lock acquired at ${new Date().toISOString()}`],
+      p_erros: null,
+    }),
+  });
+}
+
+async function clearCascadeRunning(arquivo: string): Promise<void> {
+  const tipo = `cascade-lock-${arquivo}`;
+  const url = `${SUPABASE_URL}/rest/v1/sync_log?tipo=eq.${encodeURIComponent(tipo)}&sucesso=is.null`;
+  await fetch(url, { method: 'PATCH', headers: { ...rpcHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sucesso: true }) });
+}
+
 // ─── Graph API helpers ──────────────────────────────────────────────
 
 // Tracks retries for diagnóstico mode (reset per request via resetGraphRetryStats)
@@ -1055,6 +1089,7 @@ Deno.serve(async (req) => {
           _cascade: true,
           _cascade_total_rows: (body._cascade_total_rows || 0) + total,
           _refresh_mv: body._refresh_mv || false,
+          _cascade_lock_arquivo: body._cascade_lock_arquivo || null,
         });
       } else {
         const grandTotal = (body._cascade_total_rows || 0) + total;
@@ -1068,6 +1103,11 @@ Deno.serve(async (req) => {
         const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
         await saveLog(`cascade-${fileKey}-${sh.sheet}`, true, dur, 
           [`Cascade complete: ${grandTotal} rows in ${sh.table}`], []);
+
+        // Release cascade lock at the very end of the cascade chain
+        if (body._cascade_lock_arquivo) {
+          await clearCascadeRunning(body._cascade_lock_arquivo).catch(() => {});
+        }
       }
 
       return Response.json({ success: true, totalRows: total, log }, { headers: cors });
@@ -1078,11 +1118,30 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════════════
     const filesToProcess = [arquivo];
 
+    // ─── TEMP GUARD: prevent concurrent external cascade invocations ───
+    // Only applies on the initial external entry (not cascade slices, not orchestrator,
+    // not sync_mode flows like m0/m1/historico_chunked). Lock scoped per arquivo.
+    const guardEnabled = !isCascadeSlice && arquivo !== 'todos' && !syncMode && !body._orchestrated;
+    if (guardEnabled) {
+      const running = await checkCascadeRunning(arquivo);
+      if (running) {
+        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        log.push(`🚫 Cascade já em execução para ${arquivo} (lock < ${CASCADE_LOCK_TTL_MIN}min). Recusando para evitar duplicação.`);
+        return Response.json(
+          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by guard`], log, duracao: dur },
+          { status: 409, headers: cors }
+        );
+      }
+      await markCascadeRunning(arquivo);
+      log.push(`🔒 Cascade lock adquirido para ${arquivo}`);
+    }
+
     log.push('🔐 Autenticando...');
     const token = await getToken();
     log.push('✅ Token obtido');
 
     let needsMVRefresh = false;
+    let cascadeFired = false;
 
     for (const fileKey of filesToProcess) {
       const fc = FILE_MAP[fileKey], fileId = FILE_IDS[fileKey];
@@ -1141,7 +1200,9 @@ Deno.serve(async (req) => {
                 _cascade: true,
                 _cascade_total_rows: firstTotal,
                 _refresh_mv: fileKey === 'base_receita' && !body._orchestrated,
+                _cascade_lock_arquivo: guardEnabled ? arquivo : null,
               });
+              cascadeFired = true;
             }
 
             if (fileKey === 'base_receita') needsMVRefresh = false;
@@ -1178,12 +1239,21 @@ Deno.serve(async (req) => {
       await saveLog(tipo, errors.length === 0, dur, log, errors);
     }
 
+    // Release cascade lock if no async cascade was fired (sync path complete here)
+    if (guardEnabled && !cascadeFired) {
+      await clearCascadeRunning(arquivo).catch(() => {});
+    }
+
     return Response.json({ success: errors.length === 0, arquivo, duracao: dur, log, errors }, { headers: cors });
 
   } catch (e) {
     const message = getErrorMessage(e);
     const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
     await saveLog('erro', false, dur, log, [message]).catch(() => {});
+    // Best-effort lock release on error path (covers MODE 3 initial entry)
+    if (typeof arquivo === 'string' && arquivo !== 'todos') {
+      await clearCascadeRunning(arquivo).catch(() => {});
+    }
     return Response.json({ success: false, error: message, log }, { status: 500, headers: cors });
   }
 });
