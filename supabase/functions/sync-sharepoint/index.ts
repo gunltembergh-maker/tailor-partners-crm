@@ -255,13 +255,52 @@ async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], er
 
 // ─── Graph API helpers ──────────────────────────────────────────────
 
+// Tracks retries for diagnóstico mode (reset per request via resetGraphRetryStats)
+let __graphRetryStats: Array<{ url: string; attempts: number; finalStatus: number }> = [];
+function resetGraphRetryStats() { __graphRetryStats = []; }
+function getGraphRetryStats() { return __graphRetryStats; }
+
+/**
+ * Resilient fetch wrapper for Microsoft Graph.
+ * - Retries 429/5xx with exponential backoff (capped at 15s)
+ * - Honors Retry-After header on 429 (Microsoft Graph standard)
+ * - Structured logs per retry for post-mortem debugging
+ */
+async function graphFetch(url: string, token: string, attempt = 1): Promise<Response> {
+  const MAX_ATTEMPTS = 5;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (r.ok || r.status === 404) {
+    if (attempt > 1) __graphRetryStats.push({ url: url.substring(0, 120), attempts: attempt, finalStatus: r.status });
+    return r;
+  }
+
+  // 429: respect Retry-After header
+  if (r.status === 429 && attempt <= MAX_ATTEMPTS) {
+    const retryAfterRaw = r.headers.get('Retry-After');
+    const wait = retryAfterRaw ? Math.min(parseInt(retryAfterRaw, 10) * 1000 || 5000, 30_000) : 5000;
+    console.log(JSON.stringify({ event: 'graph_retry', url: url.substring(0, 100), attempt, status: 429, wait_ms: wait, reason: 'rate_limit' }));
+    await new Promise(res => setTimeout(res, wait));
+    return graphFetch(url, token, attempt + 1);
+  }
+
+  // 5xx: exponential backoff
+  if ([500, 502, 503, 504].includes(r.status) && attempt <= MAX_ATTEMPTS) {
+    const wait = Math.min(2 ** attempt * 500, 15_000); // 1s, 2s, 4s, 8s, 15s
+    console.log(JSON.stringify({ event: 'graph_retry', url: url.substring(0, 100), attempt, status: r.status, wait_ms: wait, reason: 'transient_5xx' }));
+    await new Promise(res => setTimeout(res, wait));
+    return graphFetch(url, token, attempt + 1);
+  }
+
+  // Non-retryable or attempts exhausted
+  __graphRetryStats.push({ url: url.substring(0, 120), attempts: attempt, finalStatus: r.status });
+  return r;
+}
+
 async function getSheetDimensions(token: string, fileId: string, sheetName: string): Promise<{ rowCount: number; columnCount: number; headers: string[] } | null> {
   const enc  = encodeURIComponent(sheetName);
   const base = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}/workbook/worksheets/${enc}`;
 
-  const dimResp = await fetch(`${base}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const dimResp = await graphFetch(`${base}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`, token);
   if (dimResp.status === 404) return null;
   if (!dimResp.ok) throw new Error(`Dim ${sheetName}: ${dimResp.status}`);
 
@@ -269,9 +308,7 @@ async function getSheetDimensions(token: string, fileId: string, sheetName: stri
   if (rowCount < 2) return { rowCount, columnCount, headers: [] };
 
   const lastCol = colToLetter(columnCount);
-  const hdrResp = await fetch(`${base}/range(address='A1:${lastCol}1')?$select=values`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const hdrResp = await graphFetch(`${base}/range(address='A1:${lastCol}1')?$select=values`, token);
   if (!hdrResp.ok) throw new Error(`Headers: ${hdrResp.status}`);
   const headers: string[] = ((await hdrResp.json()).values[0] || []).map((h: unknown) => String(h ?? '').trim());
 
