@@ -255,13 +255,52 @@ async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], er
 
 // ─── Graph API helpers ──────────────────────────────────────────────
 
+// Tracks retries for diagnóstico mode (reset per request via resetGraphRetryStats)
+let __graphRetryStats: Array<{ url: string; attempts: number; finalStatus: number }> = [];
+function resetGraphRetryStats() { __graphRetryStats = []; }
+function getGraphRetryStats() { return __graphRetryStats; }
+
+/**
+ * Resilient fetch wrapper for Microsoft Graph.
+ * - Retries 429/5xx with exponential backoff (capped at 15s)
+ * - Honors Retry-After header on 429 (Microsoft Graph standard)
+ * - Structured logs per retry for post-mortem debugging
+ */
+async function graphFetch(url: string, token: string, attempt = 1): Promise<Response> {
+  const MAX_ATTEMPTS = 5;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (r.ok || r.status === 404) {
+    if (attempt > 1) __graphRetryStats.push({ url: url.substring(0, 120), attempts: attempt, finalStatus: r.status });
+    return r;
+  }
+
+  // 429: respect Retry-After header
+  if (r.status === 429 && attempt <= MAX_ATTEMPTS) {
+    const retryAfterRaw = r.headers.get('Retry-After');
+    const wait = retryAfterRaw ? Math.min(parseInt(retryAfterRaw, 10) * 1000 || 5000, 30_000) : 5000;
+    console.log(JSON.stringify({ event: 'graph_retry', url: url.substring(0, 100), attempt, status: 429, wait_ms: wait, reason: 'rate_limit' }));
+    await new Promise(res => setTimeout(res, wait));
+    return graphFetch(url, token, attempt + 1);
+  }
+
+  // 5xx: exponential backoff
+  if ([500, 502, 503, 504].includes(r.status) && attempt <= MAX_ATTEMPTS) {
+    const wait = Math.min(2 ** attempt * 500, 15_000); // 1s, 2s, 4s, 8s, 15s
+    console.log(JSON.stringify({ event: 'graph_retry', url: url.substring(0, 100), attempt, status: r.status, wait_ms: wait, reason: 'transient_5xx' }));
+    await new Promise(res => setTimeout(res, wait));
+    return graphFetch(url, token, attempt + 1);
+  }
+
+  // Non-retryable or attempts exhausted
+  __graphRetryStats.push({ url: url.substring(0, 120), attempts: attempt, finalStatus: r.status });
+  return r;
+}
+
 async function getSheetDimensions(token: string, fileId: string, sheetName: string): Promise<{ rowCount: number; columnCount: number; headers: string[] } | null> {
   const enc  = encodeURIComponent(sheetName);
   const base = `https://graph.microsoft.com/v1.0/drives/${DRIVE_ID}/items/${fileId}/workbook/worksheets/${enc}`;
 
-  const dimResp = await fetch(`${base}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const dimResp = await graphFetch(`${base}/usedRange(valuesOnly=false)?$select=rowCount,columnCount`, token);
   if (dimResp.status === 404) return null;
   if (!dimResp.ok) throw new Error(`Dim ${sheetName}: ${dimResp.status}`);
 
@@ -269,9 +308,7 @@ async function getSheetDimensions(token: string, fileId: string, sheetName: stri
   if (rowCount < 2) return { rowCount, columnCount, headers: [] };
 
   const lastCol = colToLetter(columnCount);
-  const hdrResp = await fetch(`${base}/range(address='A1:${lastCol}1')?$select=values`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const hdrResp = await graphFetch(`${base}/range(address='A1:${lastCol}1')?$select=values`, token);
   if (!hdrResp.ok) throw new Error(`Headers: ${hdrResp.status}`);
   const headers: string[] = ((await hdrResp.json()).values[0] || []).map((h: unknown) => String(h ?? '').trim());
 
@@ -288,9 +325,7 @@ async function readRange(
 
   for (let r = startRow; r <= endRow; r += READ_CHUNK) {
     const end = Math.min(r + READ_CHUNK - 1, endRow);
-    const dataResp = await fetch(`${base}/range(address='A${r}:${lastCol}${end}')?$select=values`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const dataResp = await graphFetch(`${base}/range(address='A${r}:${lastCol}${end}')?$select=values`, token);
     if (!dataResp.ok) throw new Error(`Range A${r}: ${dataResp.status}`);
 
     const values: unknown[][] = (await dataResp.json()).values || [];
@@ -322,9 +357,7 @@ async function readAndInsertRange(
 
   for (let r = startRow; r <= endRow; r += READ_CHUNK) {
     const end = Math.min(r + READ_CHUNK - 1, endRow);
-    const dataResp = await fetch(`${base}/range(address='A${r}:${lastCol}${end}')?$select=values`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const dataResp = await graphFetch(`${base}/range(address='A${r}:${lastCol}${end}')?$select=values`, token);
     if (!dataResp.ok) throw new Error(`Range A${r}: ${dataResp.status}`);
 
     const values: unknown[][] = (await dataResp.json()).values || [];
@@ -506,6 +539,16 @@ async function processChunkedSyncInBackground(params: {
   const sheetName = sourceSheet;
 
   let totalInserted = 0;
+  const TIMEOUT_MS = 30 * 60 * 1000; // 30min hard cap
+  let timedOut = false;
+  const timeoutHandle = setTimeout(() => { timedOut = true; }, TIMEOUT_MS);
+  const checkTimeout = () => {
+    if (timedOut) {
+      const state = { table, totalInserted, elapsedMs: Date.now() - t0, lastErrors: errors.slice(-3) };
+      console.log(JSON.stringify({ event: 'sync_global_timeout', ...state }));
+      throw new Error(`Timeout global de 30min atingido. State: ${JSON.stringify(state)}`);
+    }
+  };
 
   try {
     log.push('🔐 Autenticando...');
@@ -537,6 +580,7 @@ async function processChunkedSyncInBackground(params: {
       }
 
       for (const anomes of monthsToProcess) {
+        checkTimeout();
         const rows = groupedRows.monthlyGroups.get(anomes) ?? [];
         log.push(`   📅 ${anomes}: ${rows.length} linhas`);
 
@@ -587,12 +631,14 @@ async function processChunkedSyncInBackground(params: {
       }
     }
 
+    clearTimeout(timeoutHandle);
     const durationMs = Date.now() - t0;
     const dur = `${(durationMs / 1000).toFixed(1)}s`;
     log.push(`\n⏱️ ${dur}`);
     await saveLog(logType, errors.length === 0, dur, log, errors);
     return { inserted: totalInserted, durationMs, errors };
   } catch (error) {
+    clearTimeout(timeoutHandle);
     const message = getErrorMessage(error);
     errors.push(message);
     log.push(`❌ ${message}`);
@@ -621,6 +667,64 @@ Deno.serve(async (req) => {
     const skipTruncate: boolean   = body._skip_truncate || false;
     const isCascadeSlice: boolean = body._cascade || false;
     const syncMode: string | null = body.sync_mode || null;
+
+    // ═══════════════════════════════════════════════════════════════
+    // DIAGNÓSTICO READ-ONLY — não escreve nada, só lê + reporta
+    //   body: { tipo:'diagnostico', arquivo:'base_receita', sheet:'Comissões Histórico' }
+    // ═══════════════════════════════════════════════════════════════
+    if (tipo === 'diagnostico') {
+      resetGraphRetryStats();
+      const fileKey: string = body.arquivo || 'base_receita';
+      const sheet: string = body.sheet || 'Comissões Histórico';
+      const maxRows: number = Number(body.max_rows ?? 0); // 0 = ler tudo
+      const fileId = FILE_IDS[fileKey];
+      if (!fileId) return Response.json({ success: false, error: `arquivo desconhecido: ${fileKey}` }, { status: 400, headers: cors });
+
+      const tStart = Date.now();
+      const token = await getToken();
+      const dims = await getSheetDimensions(token, fileId, sheet);
+      if (!dims) {
+        return Response.json({ success: false, error: `Sheet "${sheet}" not found in ${fileKey}` }, { status: 404, headers: cors });
+      }
+
+      const lastCol = colToLetter(dims.columnCount);
+      const targetEnd = maxRows > 0 ? Math.min(maxRows + 1, dims.rowCount) : dims.rowCount;
+      let totalRowsRead = 0;
+      let sampleFirstRow: Record<string, unknown> | null = null;
+      let sampleLastRow: Record<string, unknown> | null = null;
+      const windowsLog: Array<{ from: number; to: number; returned: number; ms: number }> = [];
+
+      for (let r = 2; r <= targetEnd; r += READ_CHUNK) {
+        const end = Math.min(r + READ_CHUNK - 1, targetEnd);
+        const tw = Date.now();
+        const chunk = await readRange(token, fileId, sheet, r, end, dims.headers, lastCol);
+        windowsLog.push({ from: r, to: end, returned: chunk.length, ms: Date.now() - tw });
+        if (chunk.length > 0) {
+          totalRowsRead += chunk.length;
+          if (!sampleFirstRow) sampleFirstRow = chunk[0];
+          sampleLastRow = chunk[chunk.length - 1];
+        }
+      }
+
+      return Response.json({
+        success: true,
+        mode: 'diagnostico',
+        sheet,
+        fileKey,
+        rowCount: dims.rowCount,
+        columnCount: dims.columnCount,
+        targetEnd,
+        capped: maxRows > 0 && dims.rowCount > maxRows + 1,
+        headers: dims.headers,
+        totalRowsRead,
+        windowsCount: windowsLog.length,
+        windows: windowsLog,
+        sampleFirstRow,
+        sampleLastRow,
+        retriesPerFetch: getGraphRetryStats(),
+        durationMs: Date.now() - tStart,
+      }, { headers: cors });
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // RECEITA SYNC MODES (m0, m1, historico_completo, historico_mensal)
