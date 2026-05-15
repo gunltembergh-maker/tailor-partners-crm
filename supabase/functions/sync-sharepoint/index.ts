@@ -505,81 +505,98 @@ async function processChunkedSyncInBackground(params: {
   const fileId = FILE_IDS[fileKey];
   const sheetName = sourceSheet;
 
+  let totalInserted = 0;
+
   try {
     log.push('🔐 Autenticando...');
     const token = await getToken();
     log.push('✅ Token obtido');
-    log.push(fullRebuild ? '\n📚 Sync Histórico Completo em background' : `\n📚 Sync Histórico Mensal em background (${monthFilter?.join(', ')})`);
+    log.push(fullRebuild
+      ? `\n📚 Sync chunked em background → ${table} (FULL REBUILD)`
+      : `\n📚 Sync chunked em background → ${table} (meses: ${monthFilter?.join(', ') ?? 'auto'})`);
 
     const groupedRows = await readHistoricoRowsGroupedByMonth(token, fileId, sheetName, monthFilter, log);
 
     if (!groupedRows) {
       if (fullRebuild) {
-        log.push('   🧹 Fonte vazia: limpando histórico atual');
-        await insertChunk('raw_comissoes_historico', [], true);
+        log.push(`   🧹 Fonte vazia: limpando ${table}`);
+        await insertChunk(table, [], true);
+      }
+      log.push(`   ⚠️ Aba "${sheetName}" vazia ou não encontrada`);
+    } else {
+      const monthsWithRows = [...groupedRows.monthlyGroups.keys()].sort((a, b) => a - b);
+      const monthsToProcess = fullRebuild
+        ? monthsWithRows
+        : [...new Set(monthFilter ?? monthsWithRows)].sort((a, b) => a - b);
+
+      log.push(`   📊 ${groupedRows.totalRowsRead} linhas lidas da fonte`);
+
+      if (fullRebuild) {
+        log.push(`   🧹 Limpando ${table} antes da reconstrução`);
+        await insertChunk(table, [], true);
       }
 
-      log.push('   ⚠️ Aba "Comissões Histórico" vazia ou não encontrada');
-      log.push('\n🔄 Refreshando MV...');
+      for (const anomes of monthsToProcess) {
+        const rows = groupedRows.monthlyGroups.get(anomes) ?? [];
+        log.push(`   📅 ${anomes}: ${rows.length} linhas`);
+
+        if (!fullRebuild) {
+          await callRpc('rpc_deletar_anomes_historico', { p_anomes: anomes });
+        }
+        if (rows.length > 0) {
+          await insertRowsNoTruncate(table, rows);
+          totalInserted += rows.length;
+        }
+        log.push(`   ✅ ${anomes}: +${rows.length} (acum: ${totalInserted})`);
+      }
+
+      if (fullRebuild && groupedRows.rowsWithoutMonth.length > 0) {
+        log.push(`   📦 Sem mês identificável: ${groupedRows.rowsWithoutMonth.length} linhas`);
+        await insertRowsNoTruncate(table, groupedRows.rowsWithoutMonth);
+        totalInserted += groupedRows.rowsWithoutMonth.length;
+      }
+
+      log.push(`   🏁 Total processado: ${totalInserted} linhas gravadas em ${table}`);
+    }
+
+    // Refresh MVs (uma única vez, no fim)
+    for (const _mv of refreshMVsAtEnd) {
+      log.push(`\n🔄 Refresh MVs (${refreshMVsAtEnd.join(', ')})...`);
       await refreshMV();
-      log.push('✅ MV atualizada');
-
-      const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-      log.push(`\n⏱️ ${dur}`);
-      await saveLog(logType, true, dur, log, []);
-      return;
+      log.push('✅ MVs atualizadas');
+      break; // refreshMV() recalcula todas as MVs gerenciadas em uma só RPC
     }
 
-    const monthsWithRows = [...groupedRows.monthlyGroups.keys()].sort((a, b) => a - b);
-    const monthsToProcess = fullRebuild
-      ? monthsWithRows
-      : [...new Set(monthFilter ?? monthsWithRows)].sort((a, b) => a - b);
-
-    log.push(`   📊 ${groupedRows.totalRowsRead} linhas lidas da fonte`);
-
-    if (fullRebuild) {
-      log.push('   🧹 Limpando raw_comissoes_historico antes da reconstrução');
-      await insertChunk('raw_comissoes_historico', [], true);
-    }
-
-    let totalInserted = 0;
-    for (const anomes of monthsToProcess) {
-      const rows = groupedRows.monthlyGroups.get(anomes) ?? [];
-      log.push(`   📅 ${anomes}: ${rows.length} linhas`);
-
-      if (!fullRebuild) {
-        await callRpc('rpc_deletar_anomes_historico', { p_anomes: anomes });
+    // Validação pós-execução (proteção contra regressão)
+    if (validate) {
+      try {
+        const countResp = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=count`, {
+          method: 'GET', headers: { ...rpcHeaders, 'Prefer': 'count=exact', 'Range-Unit': 'items', 'Range': '0-0' },
+        });
+        const totalCountHeader = countResp.headers.get('content-range') ?? '';
+        const totalCount = Number(totalCountHeader.split('/').pop() ?? '0');
+        log.push(`\n🔎 Validação: ${totalCount} linhas em ${table}`);
+        if (totalCount < validate.minRows) {
+          const msg = `Validação falhou: ${table} tem ${totalCount} linhas (mínimo esperado: ${validate.minRows})`;
+          errors.push(msg);
+          log.push(`   ⚠️ ${msg}`);
+        }
+      } catch (e) {
+        log.push(`   ⚠️ Validação ignorada: ${getErrorMessage(e)}`);
       }
-
-      if (rows.length > 0) {
-        await insertRowsNoTruncate('raw_comissoes_historico', rows);
-        totalInserted += rows.length;
-      }
-
-      log.push(`   ✅ ${anomes}: +${rows.length} (acum: ${totalInserted})`);
     }
 
-    if (fullRebuild && groupedRows.rowsWithoutMonth.length > 0) {
-      log.push(`   📦 Sem mês identificável: ${groupedRows.rowsWithoutMonth.length} linhas`);
-      await insertRowsNoTruncate('raw_comissoes_historico', groupedRows.rowsWithoutMonth);
-      totalInserted += groupedRows.rowsWithoutMonth.length;
-      log.push(`   ✅ Sem mês: +${groupedRows.rowsWithoutMonth.length} (acum: ${totalInserted})`);
-    }
-
-    log.push(`   🏁 Histórico processado: ${totalInserted} linhas gravadas`);
-    log.push('\n🔄 Refreshando MV...');
-    await refreshMV();
-    log.push('✅ MV atualizada');
-
-    const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+    const durationMs = Date.now() - t0;
+    const dur = `${(durationMs / 1000).toFixed(1)}s`;
     log.push(`\n⏱️ ${dur}`);
-    await saveLog(logType, true, dur, log, []);
+    await saveLog(logType, errors.length === 0, dur, log, errors);
+    return { inserted: totalInserted, durationMs, errors };
   } catch (error) {
     const message = getErrorMessage(error);
     errors.push(message);
     log.push(`❌ ${message}`);
-
-    const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+    const durationMs = Date.now() - t0;
+    const dur = `${(durationMs / 1000).toFixed(1)}s`;
     await saveLog(logType, false, dur, log, errors).catch(() => {});
     throw error;
   }
