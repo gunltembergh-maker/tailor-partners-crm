@@ -244,7 +244,8 @@ export default function ReceitaCaixa() {
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const toggleCat = (c: string) => setExpandedCats(s => { const n = new Set(s); n.has(c) ? n.delete(c) : n.add(c); return n; });
 
-  // Série temporal pivotada (ordem reversa: mês mais recente à esquerda)
+  // Série temporal pivotada — sempre 12 slots mensais (preenche zeros).
+  // Ordem reversa: mês mais recente (selectedAnomes) à esquerda → 11 meses atrás à direita.
   const seriePivot = useMemo(() => {
     const months = new Map<number, { anomes: number; label: string; total: number; [k: string]: any }>();
     (serieQ.data || []).forEach((r) => {
@@ -253,8 +254,27 @@ export default function ReceitaCaixa() {
       m[r.categoria] = r.total;
       m.total += Number(r.total) || 0;
     });
-    return Array.from(months.values()).sort((a, b) => b.anomes - a.anomes); // reverso
-  }, [serieQ.data]);
+    // Gera 12 slots a partir do anomes selecionado (ou último disponível) — recente → antigo.
+    const anchor = selectedAnomes ?? (serieQ.data && serieQ.data.length
+      ? Math.max(...serieQ.data.map((r) => r.anomes))
+      : todayAnomes);
+    const MES_PT = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+    const slots: { anomes: number; label: string; total: number; [k: string]: any }[] = [];
+    let y = Math.floor(anchor / 100);
+    let m = anchor % 100;
+    for (let i = 0; i < 12; i++) {
+      const am = y * 100 + m;
+      const existing = months.get(am);
+      if (existing) {
+        slots.push(existing);
+      } else {
+        slots.push({ anomes: am, label: `${MES_PT[m - 1]}/${String(y).slice(-2)}`, total: 0 });
+      }
+      m -= 1;
+      if (m === 0) { m = 12; y -= 1; }
+    }
+    return slots; // já em ordem reversa (recente → antigo)
+  }, [serieQ.data, selectedAnomes]);
 
   const seriesCats = useMemo(() => {
     const tot = new Map<string, number>();
