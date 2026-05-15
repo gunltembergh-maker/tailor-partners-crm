@@ -669,6 +669,59 @@ Deno.serve(async (req) => {
     const syncMode: string | null = body.sync_mode || null;
 
     // ═══════════════════════════════════════════════════════════════
+    // DIAGNÓSTICO READ-ONLY — não escreve nada, só lê + reporta
+    //   body: { tipo:'diagnostico', arquivo:'base_receita', sheet:'Comissões Histórico' }
+    // ═══════════════════════════════════════════════════════════════
+    if (tipo === 'diagnostico') {
+      resetGraphRetryStats();
+      const fileKey: string = body.arquivo || 'base_receita';
+      const sheet: string = body.sheet || 'Comissões Histórico';
+      const fileId = FILE_IDS[fileKey];
+      if (!fileId) return Response.json({ success: false, error: `arquivo desconhecido: ${fileKey}` }, { status: 400, headers: cors });
+
+      const tStart = Date.now();
+      const token = await getToken();
+      const dims = await getSheetDimensions(token, fileId, sheet);
+      if (!dims) {
+        return Response.json({ success: false, error: `Sheet "${sheet}" not found in ${fileKey}` }, { status: 404, headers: cors });
+      }
+
+      const lastCol = colToLetter(dims.columnCount);
+      let totalRowsRead = 0;
+      let sampleFirstRow: Record<string, unknown> | null = null;
+      let sampleLastRow: Record<string, unknown> | null = null;
+      const windowsLog: Array<{ from: number; to: number; returned: number }> = [];
+
+      for (let r = 2; r <= dims.rowCount; r += READ_CHUNK) {
+        const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
+        const chunk = await readRange(token, fileId, sheet, r, end, dims.headers, lastCol);
+        windowsLog.push({ from: r, to: end, returned: chunk.length });
+        if (chunk.length > 0) {
+          totalRowsRead += chunk.length;
+          if (!sampleFirstRow) sampleFirstRow = chunk[0];
+          sampleLastRow = chunk[chunk.length - 1];
+        }
+      }
+
+      return Response.json({
+        success: true,
+        mode: 'diagnostico',
+        sheet,
+        fileKey,
+        rowCount: dims.rowCount,
+        columnCount: dims.columnCount,
+        headers: dims.headers,
+        totalRowsRead,
+        windowsCount: windowsLog.length,
+        windows: windowsLog,
+        sampleFirstRow,
+        sampleLastRow,
+        retriesPerFetch: getGraphRetryStats(),
+        durationMs: Date.now() - tStart,
+      }, { headers: cors });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // RECEITA SYNC MODES (m0, m1, historico_completo, historico_mensal)
     // ═══════════════════════════════════════════════════════════════
     if (arquivo === 'base_receita' && syncMode) {
