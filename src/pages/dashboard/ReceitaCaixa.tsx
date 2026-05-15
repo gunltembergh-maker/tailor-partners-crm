@@ -318,6 +318,27 @@ export default function ReceitaCaixa() {
   const isDown = variacao != null && variacao < 0;
   const isUp = variacao != null && variacao > 0;
 
+  // Update indicator (mesmo padrão do Dashboard Comercial)
+  const {
+    isRefreshing,
+    isManualRefreshing,
+    manualRefresh,
+    atualizadoEmFormatted,
+    dadosAteFormatted,
+  } = useDashboardRefresh();
+  const [refreshingMV, setRefreshingMV] = useState(false);
+  const handleRefreshReceita = async () => {
+    setRefreshingMV(true);
+    try {
+      await supabase.rpc("refresh_mv_caixa_completa" as any);
+    } catch (e) {
+      // se falhar refresh, segue invalidando queries mesmo assim
+    } finally {
+      await manualRefresh();
+      setRefreshingMV(false);
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────
   return (
     <AppLayout>
