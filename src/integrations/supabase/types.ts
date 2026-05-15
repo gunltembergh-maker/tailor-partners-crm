@@ -1182,7 +1182,7 @@ export type Database = {
         }
         Insert: {
           data: Json
-          id: number
+          id?: number
           ingested_at?: string
           mes_ano?: string | null
         }
