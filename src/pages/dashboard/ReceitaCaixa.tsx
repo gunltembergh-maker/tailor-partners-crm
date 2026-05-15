@@ -678,15 +678,7 @@ export default function ReceitaCaixa() {
                       </div>
                     </div>
 
-                    {/* Legenda */}
-                    <div style={{ display: "flex", gap: 14, fontSize: 12, color: C.textMuted, flexWrap: "wrap", marginBottom: 18 }}>
-                      {papelCats.map((cat, idx) => (
-                        <span key={cat} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                          <span style={{ width: 10, height: 10, background: colorFor(cat, idx), borderRadius: 2, display: "inline-block" }} />
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
+
 
                     {papelQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
                       <div style={{ overflowX: "auto" }}>
