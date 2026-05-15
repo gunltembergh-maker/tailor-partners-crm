@@ -268,17 +268,29 @@ async function checkCascadeRunning(arquivo: string): Promise<boolean> {
   return Array.isArray(rows) && rows.length > 0;
 }
 
-async function markCascadeRunning(arquivo: string): Promise<void> {
-  await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_salvar_sync_log`, {
-    method: 'POST', headers: rpcHeaders,
+// Atomic INSERT into sync_log. Returns true if lock acquired,
+// false if blocked by uniq_cascade_lock_running (Postgres 23505).
+async function tryMarkCascadeRunning(arquivo: string): Promise<boolean> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/sync_log`, {
+    method: 'POST',
+    headers: { ...rpcHeaders, 'Prefer': 'return=minimal' },
     body: JSON.stringify({
-      p_tipo: `cascade-lock-${arquivo}`,
-      p_sucesso: null,
-      p_duracao: '0s',
-      p_detalhes: [`Cascade lock acquired at ${new Date().toISOString()}`],
-      p_erros: null,
+      tipo: `cascade-lock-${arquivo}`,
+      sucesso: null,
+      duracao: '0s',
+      detalhes: [`Cascade lock acquired at ${new Date().toISOString()}`],
+      erros: null,
     }),
   });
+  if (r.ok) return true;
+  const txt = await r.text().catch(() => '');
+  // PostgREST surfaces unique_violation as HTTP 409 with code "23505"
+  if (r.status === 409 || txt.includes('23505') || txt.includes('uniq_cascade_lock_running')) {
+    return false;
+  }
+  // Other failures: log but treat as acquired so we don't block legitimate runs on transient errors
+  console.error('tryMarkCascadeRunning unexpected error:', r.status, txt.substring(0, 200));
+  return true;
 }
 
 async function clearCascadeRunning(arquivo: string): Promise<void> {
@@ -287,30 +299,12 @@ async function clearCascadeRunning(arquivo: string): Promise<void> {
   await fetch(url, { method: 'PATCH', headers: { ...rpcHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sucesso: true }) });
 }
 
-// ─── Advisory lock (CAMADA PRIMÁRIA) — atômico do PostgreSQL ──
-async function tryAcquireAdvisoryLock(arquivo: string): Promise<boolean> {
-  try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_try_cascade_advisory_lock`, {
-      method: 'POST', headers: rpcHeaders,
-      body: JSON.stringify({ p_arquivo: arquivo }),
-    });
-    if (!r.ok) return false;
-    const data = await r.json().catch(() => null);
-    return data?.acquired === true;
-  } catch {
-    return false;
-  }
-}
-
-async function releaseAdvisoryLock(arquivo: string): Promise<void> {
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_release_cascade_advisory_lock`, {
-      method: 'POST', headers: rpcHeaders,
-      body: JSON.stringify({ p_arquivo: arquivo }),
-    });
-  } catch (e) {
-    console.error('Erro ao liberar advisory lock:', e);
-  }
+// Sweeps stale (>TTL) running locks so a crashed cascade doesn't permanently block.
+async function clearStaleCascadeLock(arquivo: string): Promise<void> {
+  const tipo = `cascade-lock-${arquivo}`;
+  const cutoff = new Date(Date.now() - CASCADE_LOCK_TTL_MIN * 60_000).toISOString();
+  const url = `${SUPABASE_URL}/rest/v1/sync_log?tipo=eq.${encodeURIComponent(tipo)}&sucesso=is.null&executado_em=lt.${encodeURIComponent(cutoff)}`;
+  await fetch(url, { method: 'PATCH', headers: { ...rpcHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sucesso: false }) });
 }
 
 // ─── Graph API helpers ──────────────────────────────────────────────
