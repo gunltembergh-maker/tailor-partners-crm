@@ -50,9 +50,18 @@ const menuItems = [
   { title: "Saldo Consolidado", icon: Wallet, path: "/relatorios/saldo-consolidado", key: "menu_relatorios", indent: true },
 ];
 
+// Padrão de granularização pai/filho (igual ao Importar Bases).
+// Adicionar nova permissão = atualizar esta lista + PermissionRoute em App.tsx +
+// GestaoProfiles.tsx + jsonb_build_object da migration de backfill.
+const DASHBOARDS_PERMISSIONS = [
+  "menu_dashboards",
+  "menu_dashboards_comercial",
+  "menu_dashboards_receita",
+];
+
 const dashboardItems = [
-  { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial", key: "menu_dashboard_comercial" },
-  { title: "Receita", icon: BarChart3, path: "/dashboard/receita", key: "menu_dashboard_receita" },
+  { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial", keys: ["menu_dashboards_comercial", "menu_dashboards"] },
+  { title: "Receita", icon: BarChart3, path: "/dashboard/receita", keys: ["menu_dashboards_receita", "menu_dashboards"] },
 ];
 
 export function AppSidebar() {
