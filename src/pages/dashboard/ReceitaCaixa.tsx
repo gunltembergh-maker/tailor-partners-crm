@@ -301,11 +301,15 @@ export default function ReceitaCaixa() {
     <AppLayout>
       <ReceitaCaixaOnboardingModal open={showOnboarding} onClose={() => setShowOnboarding(false)} />
 
-      <div style={{ background: C.bgPage, margin: -16, padding: 24, minHeight: "calc(100vh - 64px)" }}>
+      <style>{`
+        .dashboard-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #0A2337; }
+        .dashboard-receita .title-serif, .dashboard-receita h1.title-serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; color: #0A2337; }
+      `}</style>
+      <div className="dashboard-receita" style={{ background: C.bgPage, margin: -16, padding: 24, minHeight: "calc(100vh - 64px)" }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-[26px] font-medium" style={{ color: C.navy900, letterSpacing: "-0.5px" }}>Receita</h1>
+            <h1 className="title-serif" style={{ fontSize: 32, fontWeight: 400, color: C.navy900, letterSpacing: "-0.5px", margin: 0 }}>Receita</h1>
             <ChevronRight className="h-4 w-4" style={{ color: C.textMuted }} />
             <span className="text-[18px] font-normal" style={{ color: C.textMuted }}>Caixa</span>
             <ChevronRight className="h-4 w-4" style={{ color: C.textMuted }} />
