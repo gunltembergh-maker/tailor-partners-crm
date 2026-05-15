@@ -287,6 +287,32 @@ async function clearCascadeRunning(arquivo: string): Promise<void> {
   await fetch(url, { method: 'PATCH', headers: { ...rpcHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sucesso: true }) });
 }
 
+// ─── Advisory lock (CAMADA PRIMÁRIA) — atômico do PostgreSQL ──
+async function tryAcquireAdvisoryLock(arquivo: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_try_cascade_advisory_lock`, {
+      method: 'POST', headers: rpcHeaders,
+      body: JSON.stringify({ p_arquivo: arquivo }),
+    });
+    if (!r.ok) return false;
+    const data = await r.json().catch(() => null);
+    return data?.acquired === true;
+  } catch {
+    return false;
+  }
+}
+
+async function releaseAdvisoryLock(arquivo: string): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_release_cascade_advisory_lock`, {
+      method: 'POST', headers: rpcHeaders,
+      body: JSON.stringify({ p_arquivo: arquivo }),
+    });
+  } catch (e) {
+    console.error('Erro ao liberar advisory lock:', e);
+  }
+}
+
 // ─── Graph API helpers ──────────────────────────────────────────────
 
 // Tracks retries for diagnóstico mode (reset per request via resetGraphRetryStats)
