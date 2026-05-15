@@ -249,6 +249,16 @@ export default function ImportarBases() {
     anoMesM0: number | null;
   }>({ historicoCount: null, m0Count: null, dentroPeriodoM1: null, anoMesM1: null, anoMesM0: null });
 
+  // ─── Chunked Sync Cursor (Histórico) ────────────────────────────
+  const [chunkedCursor, setChunkedCursor] = useState<any>(null);
+
+  const loadChunkedCursor = useCallback(() => {
+    supabase.rpc('rpc_sync_cursor_status' as any, { p_sync_name: 'historico_completo' } as any)
+      .then(({ data }: any) => {
+        if (Array.isArray(data) && data.length > 0) setChunkedCursor(data[0]);
+      });
+  }, []);
+
   useEffect(() => {
     if (canSeeLegacy) {
       // Load last sync log
@@ -272,8 +282,12 @@ export default function ImportarBases() {
           anoMesM0: m0AmRes.data ?? null,
         });
       });
+
+      loadChunkedCursor();
+      const t = setInterval(loadChunkedCursor, 60_000); // refresca a cada 60s
+      return () => clearInterval(t);
     }
-  }, [canSeeLegacy]);
+  }, [canSeeLegacy, loadChunkedCursor]);
 
   async function handleSyncMode(mode: string) {
     setSyncingMode(mode);
