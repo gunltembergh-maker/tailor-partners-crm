@@ -34,6 +34,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const menuItems = [
@@ -59,6 +60,12 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { effectiveRole, effectivePermissoes } = useViewAs();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
+  const navigateAndClose = (path: string) => {
+    navigate(path);
+    if (isMobile) setOpenMobile(false);
+    else setOpen(false);
+  };
 
   // Visibility ALWAYS reflects the simulated profile when Minha Visão is active.
   // Only ADMIN has auto-grant. LIDER (and all other roles) must respect the
@@ -129,7 +136,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     isActive={location.pathname === item.path}
-                    onClick={() => navigate(item.path)}
+                    onClick={() => navigateAndClose(item.path)}
                     tooltip={item.title}
                     className={(item as any).indent ? "pl-8 text-[13px]" : ""}
                   >
@@ -154,7 +161,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     isActive={location.pathname === item.path}
-                    onClick={() => navigate(item.path)}
+                    onClick={() => navigateAndClose(item.path)}
                     tooltip={item.title}
                   >
                     <item.icon className="h-4 w-4" />
@@ -178,7 +185,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={location.pathname === item.path}
-                      onClick={() => navigate(item.path)}
+                      onClick={() => navigateAndClose(item.path)}
                       tooltip={item.title}
                     >
                       <item.icon className="h-4 w-4" />

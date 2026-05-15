@@ -162,7 +162,7 @@ export default function ReceitaCaixa() {
 
   useEffect(() => {
     if (!user?.id) return;
-    const key = `dashboard_receita_onboarding_${user.id}`;
+    const key = `receita_caixa_onboarding_${user.id}`;
     if (!localStorage.getItem(key)) { setShowOnboarding(true); localStorage.setItem(key, "1"); }
   }, [user?.id]);
 
