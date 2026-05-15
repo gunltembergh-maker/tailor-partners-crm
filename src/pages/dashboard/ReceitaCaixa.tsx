@@ -397,9 +397,9 @@ export default function ReceitaCaixa() {
                   minHeight: 240,
                 }}
               >
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, margin: 0, letterSpacing: "-0.2px" }}>
-                  Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 500 }}>· {kpis.anomes_label}</span>}
-                </h3>
+                <CardTitleTailor>
+                  Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 400, fontSize: 18, fontFamily: "'Source Sans 3', sans-serif" }}>· {kpis.anomes_label}</span>}
+                </CardTitleTailor>
 
                 {kpisQ.isLoading ? (
                   <Skeleton className="h-16 w-72" />
@@ -411,7 +411,7 @@ export default function ReceitaCaixa() {
                   const decStr = `,${decPart.toFixed(2).slice(2)}`;
                   return (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                      <span style={{ fontSize: 64, fontWeight: 500, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
+                      <span className="title-serif" style={{ fontSize: 60, fontWeight: 400, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
                       <span style={{ fontSize: 18, color: C.textMuted }}>{decStr}</span>
                     </div>
                   );
@@ -450,9 +450,7 @@ export default function ReceitaCaixa() {
 
               {/* Advisor XP mini-tabela */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>
-                  Receita Advisor XP
-                </h3>
+                <div style={{ marginBottom: 18 }}><CardTitleTailor>Receita por Advisor</CardTitleTailor></div>
                 {advisorQ.isLoading ? <Skeleton className="h-32 w-full" /> : (
                   <table className="w-full">
                     <tbody>
@@ -478,7 +476,7 @@ export default function ReceitaCaixa() {
             <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {/* Bar chart por categoria */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 20, letterSpacing: "-0.2px" }}>Receita por Categoria</h3>
+                <div style={{ marginBottom: 20 }}><CardTitleTailor>Receita por Categoria</CardTitleTailor></div>
                 {catQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
                   const max = Math.max(...(catQ.data || []).map(d => Number(d.total)), 1);
                   return (
@@ -499,7 +497,7 @@ export default function ReceitaCaixa() {
 
               {/* Lista subcategoria com drill */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, marginBottom: 18, letterSpacing: "-0.2px" }}>Receita por Subcategoria</h3>
+                <div style={{ marginBottom: 18 }}><CardTitleTailor>Receita por Subcategoria</CardTitleTailor></div>
                 {subQ.isLoading ? <Skeleton className="h-64 w-full" /> : (
                   <div className="max-h-[340px] overflow-auto">
                     {subPivot.map((row, i) => (
@@ -534,7 +532,7 @@ export default function ReceitaCaixa() {
             {/* Row 3: Receita Total — últimos 12 meses */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>Receita Total — últimos 12 meses</h3>
+                <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
                 <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
                     <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
@@ -706,7 +704,7 @@ export default function ReceitaCaixa() {
             {/* Row 5: Fonte da Receita — 100% stacked */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-                <h3 style={{ fontSize: 18, fontWeight: 600, color: C.navy900, letterSpacing: "-0.2px" }}>Fonte da Receita — composição mensal</h3>
+                <CardTitleTailor>Fonte da Receita — composição mensal</CardTitleTailor>
                 <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
                     <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
