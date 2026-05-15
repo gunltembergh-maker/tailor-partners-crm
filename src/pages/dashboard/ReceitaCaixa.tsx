@@ -685,15 +685,15 @@ export default function ReceitaCaixa() {
                         <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
                           <thead>
                             <tr style={{ borderBottom: `1px solid ${C.navy900}` }}>
-                              <th style={{ position: "sticky", left: 0, background: C.bgCard, textAlign: "left", padding: "10px 8px", color: C.textMuted, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", minWidth: firstColW, fontFamily: "'Source Sans 3', sans-serif" }}>
+                              <th style={{ position: "sticky", left: 0, background: C.bgCard, textAlign: "left", padding: "10px 8px", color: C.navy500, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", minWidth: firstColW, fontFamily: "'Source Sans 3', sans-serif" }}>
                                 {colunaLabel}
                               </th>
                               {papelCats.map((cat) => (
-                                <th key={cat} style={{ textAlign: "right", padding: "10px 8px", color: C.textMuted, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
+                                <th key={cat} style={{ textAlign: "right", padding: "10px 8px", color: C.navy500, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px", whiteSpace: "nowrap" }}>
                                   {cat}
                                 </th>
                               ))}
-                              <th style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                              <th style={{ textAlign: "right", padding: "10px 8px", color: C.navy500, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.8px" }}>
                                 Total
                               </th>
                             </tr>
