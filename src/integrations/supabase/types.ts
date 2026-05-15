@@ -1173,6 +1173,27 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_comissoes_historico_staging: {
+        Row: {
+          data: Json
+          id: number
+          ingested_at: string
+          mes_ano: string | null
+        }
+        Insert: {
+          data: Json
+          id: number
+          ingested_at?: string
+          mes_ano?: string | null
+        }
+        Update: {
+          data?: Json
+          id?: number
+          ingested_at?: string
+          mes_ano?: string | null
+        }
+        Relationships: []
+      }
       raw_comissoes_m0: {
         Row: {
           data: Json
@@ -1503,6 +1524,57 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
+        }
+        Relationships: []
+      }
+      sync_cursor: {
+        Row: {
+          attempts: number
+          claimed_by: string | null
+          claimed_until: string | null
+          completed_at: string | null
+          error: string | null
+          last_heartbeat: string
+          metadata: Json
+          next_window_start: number
+          started_at: string
+          status: string
+          sync_name: string
+          total_rows_seen: number
+          total_rows_target: number | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_by?: string | null
+          claimed_until?: string | null
+          completed_at?: string | null
+          error?: string | null
+          last_heartbeat?: string
+          metadata?: Json
+          next_window_start?: number
+          started_at?: string
+          status?: string
+          sync_name: string
+          total_rows_seen?: number
+          total_rows_target?: number | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          claimed_by?: string | null
+          claimed_until?: string | null
+          completed_at?: string | null
+          error?: string | null
+          last_heartbeat?: string
+          metadata?: Json
+          next_window_start?: number
+          started_at?: string
+          status?: string
+          sync_name?: string
+          total_rows_seen?: number
+          total_rows_target?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -4349,6 +4421,64 @@ export type Database = {
       rpc_sync_bulk_insert: {
         Args: { p_rows: Json; p_table: string; p_truncate?: boolean }
         Returns: Json
+      }
+      rpc_sync_cursor_claim: { Args: { p_sync_name: string }; Returns: Json }
+      rpc_sync_cursor_complete_swap: {
+        Args: {
+          p_claim: string
+          p_staging_table: string
+          p_sync_name: string
+          p_target_table: string
+        }
+        Returns: Json
+      }
+      rpc_sync_cursor_fail: {
+        Args: { p_claim: string; p_error: string; p_sync_name: string }
+        Returns: boolean
+      }
+      rpc_sync_cursor_heartbeat: {
+        Args: {
+          p_claim: string
+          p_next_window_start: number
+          p_sync_name: string
+          p_total_rows_seen: number
+          p_total_rows_target?: number
+        }
+        Returns: boolean
+      }
+      rpc_sync_cursor_init_daily: {
+        Args: { p_sync_name: string }
+        Returns: Json
+      }
+      rpc_sync_cursor_mark_stale: { Args: never; Returns: number }
+      rpc_sync_cursor_release: {
+        Args: { p_claim: string; p_sync_name: string }
+        Returns: boolean
+      }
+      rpc_sync_cursor_status: {
+        Args: { p_sync_name?: string }
+        Returns: {
+          attempts: number
+          claimed_by: string | null
+          claimed_until: string | null
+          completed_at: string | null
+          error: string | null
+          last_heartbeat: string
+          metadata: Json
+          next_window_start: number
+          started_at: string
+          status: string
+          sync_name: string
+          total_rows_seen: number
+          total_rows_target: number | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "sync_cursor"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       rpc_tabela_clientes: {
         Args: {
