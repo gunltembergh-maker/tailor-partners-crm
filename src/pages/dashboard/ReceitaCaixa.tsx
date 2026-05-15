@@ -597,7 +597,6 @@ export default function ReceitaCaixa() {
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
-                  <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 16px", width: "100%", marginBottom: 12 }}>
                   {seriesCats.map((c, i) => (
@@ -747,7 +746,6 @@ export default function ReceitaCaixa() {
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <CardTitleTailor>Fonte da Receita — composição mensal</CardTitleTailor>
-                  <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 16px", width: "100%", marginBottom: 12 }}>
                   {seriesCats.map((c, i) => (
