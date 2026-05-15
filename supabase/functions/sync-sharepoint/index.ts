@@ -559,12 +559,13 @@ async function processChunkedSyncInBackground(params: {
       log.push(`   🏁 Total processado: ${totalInserted} linhas gravadas em ${table}`);
     }
 
-    // Refresh MVs (uma única vez, no fim)
-    for (const _mv of refreshMVsAtEnd) {
+    // Refresh MVs (uma única vez, no fim).
+    // refreshMV() chama rpc_refresh_mv_comissoes que já recalcula:
+    //   mv_comissoes_consolidado_v2, mv_dimensoes_filtro e mv_comissoes_caixa_completa.
+    if (refreshMVsAtEnd.length > 0) {
       log.push(`\n🔄 Refresh MVs (${refreshMVsAtEnd.join(', ')})...`);
       await refreshMV();
       log.push('✅ MVs atualizadas');
-      break; // refreshMV() recalcula todas as MVs gerenciadas em uma só RPC
     }
 
     // Validação pós-execução (proteção contra regressão)
