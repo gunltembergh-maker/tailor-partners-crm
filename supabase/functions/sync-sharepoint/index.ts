@@ -253,6 +253,40 @@ async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], er
   });
 }
 
+// ─── Cascade concurrency guard (TEMPORARY — prevents external double-invocation) ──
+// Uses sync_log with sucesso=NULL as a "running" marker scoped per arquivo.
+// Stale markers (>20min) are ignored so a crashed cascade doesn't permanently lock.
+const CASCADE_LOCK_TTL_MIN = 20;
+
+async function checkCascadeRunning(arquivo: string): Promise<boolean> {
+  const tipo = `cascade-lock-${arquivo}`;
+  const since = new Date(Date.now() - CASCADE_LOCK_TTL_MIN * 60_000).toISOString();
+  const url = `${SUPABASE_URL}/rest/v1/sync_log?tipo=eq.${encodeURIComponent(tipo)}&sucesso=is.null&executado_em=gte.${encodeURIComponent(since)}&select=id&limit=1`;
+  const r = await fetch(url, { headers: rpcHeaders });
+  if (!r.ok) return false;
+  const rows = await r.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function markCascadeRunning(arquivo: string): Promise<void> {
+  await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_salvar_sync_log`, {
+    method: 'POST', headers: rpcHeaders,
+    body: JSON.stringify({
+      p_tipo: `cascade-lock-${arquivo}`,
+      p_sucesso: null,
+      p_duracao: '0s',
+      p_detalhes: [`Cascade lock acquired at ${new Date().toISOString()}`],
+      p_erros: null,
+    }),
+  });
+}
+
+async function clearCascadeRunning(arquivo: string): Promise<void> {
+  const tipo = `cascade-lock-${arquivo}`;
+  const url = `${SUPABASE_URL}/rest/v1/sync_log?tipo=eq.${encodeURIComponent(tipo)}&sucesso=is.null`;
+  await fetch(url, { method: 'PATCH', headers: { ...rpcHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sucesso: true }) });
+}
+
 // ─── Graph API helpers ──────────────────────────────────────────────
 
 // Tracks retries for diagnóstico mode (reset per request via resetGraphRetryStats)
