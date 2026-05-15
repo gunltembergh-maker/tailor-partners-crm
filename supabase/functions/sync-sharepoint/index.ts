@@ -1274,12 +1274,11 @@ Deno.serve(async (req) => {
       await saveLog(tipo, errors.length === 0, dur, log, errors);
     }
 
-    // Release cascade locks if no async cascade was fired (sync path complete here)
+    // Release cascade lock if no async cascade was fired (sync path complete here)
     if (guardEnabled && !cascadeFired) {
       await clearCascadeRunning(arquivo).catch(() => {});
-      await releaseAdvisoryLock(arquivo);
       console.log(JSON.stringify({
-        event: 'cascade_advisory_lock_released',
+        event: 'cascade_lock_released',
         arquivo,
         timestamp: new Date().toISOString(),
       }));
@@ -1291,10 +1290,9 @@ Deno.serve(async (req) => {
     const message = getErrorMessage(e);
     const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
     await saveLog('erro', false, dur, log, [message]).catch(() => {});
-    // Best-effort lock release on error path (covers MODE 3 initial entry)
+    // Best-effort lock release on error path
     if (typeof arquivo === 'string' && arquivo !== 'todos') {
       await clearCascadeRunning(arquivo).catch(() => {});
-      await releaseAdvisoryLock(arquivo);
     }
     return Response.json({ success: false, error: message, log }, { status: 500, headers: cors });
   }
