@@ -1130,9 +1130,15 @@ Deno.serve(async (req) => {
         await saveLog(`cascade-${fileKey}-${sh.sheet}`, true, dur, 
           [`Cascade complete: ${grandTotal} rows in ${sh.table}`], []);
 
-        // Release cascade lock at the very end of the cascade chain
+        // Release cascade locks at the very end of the cascade chain
         if (body._cascade_lock_arquivo) {
           await clearCascadeRunning(body._cascade_lock_arquivo).catch(() => {});
+          await releaseAdvisoryLock(body._cascade_lock_arquivo);
+          console.log(JSON.stringify({
+            event: 'cascade_advisory_lock_released',
+            arquivo: body._cascade_lock_arquivo,
+            timestamp: new Date().toISOString(),
+          }));
         }
       }
 
