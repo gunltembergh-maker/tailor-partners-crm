@@ -580,6 +580,7 @@ async function processChunkedSyncInBackground(params: {
       }
 
       for (const anomes of monthsToProcess) {
+        checkTimeout();
         const rows = groupedRows.monthlyGroups.get(anomes) ?? [];
         log.push(`   📅 ${anomes}: ${rows.length} linhas`);
 
