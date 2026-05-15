@@ -1112,6 +1112,24 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════════════
     const filesToProcess = [arquivo];
 
+    // ─── TEMP GUARD: prevent concurrent external cascade invocations ───
+    // Only applies on the initial external entry (not cascade slices, not orchestrator,
+    // not sync_mode flows like m0/m1/historico_chunked). Lock scoped per arquivo.
+    const guardEnabled = !isCascadeSlice && arquivo !== 'todos' && !syncMode && !body._orchestrated;
+    if (guardEnabled) {
+      const running = await checkCascadeRunning(arquivo);
+      if (running) {
+        const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        log.push(`🚫 Cascade já em execução para ${arquivo} (lock < ${CASCADE_LOCK_TTL_MIN}min). Recusando para evitar duplicação.`);
+        return Response.json(
+          { success: false, errors: [`Concurrent cascade for ${arquivo} blocked by guard`], log, duracao: dur },
+          { status: 409, headers: cors }
+        );
+      }
+      await markCascadeRunning(arquivo);
+      log.push(`🔒 Cascade lock adquirido para ${arquivo}`);
+    }
+
     log.push('🔐 Autenticando...');
     const token = await getToken();
     log.push('✅ Token obtido');
