@@ -1135,6 +1135,7 @@ Deno.serve(async (req) => {
     log.push('✅ Token obtido');
 
     let needsMVRefresh = false;
+    let cascadeFired = false;
 
     for (const fileKey of filesToProcess) {
       const fc = FILE_MAP[fileKey], fileId = FILE_IDS[fileKey];
