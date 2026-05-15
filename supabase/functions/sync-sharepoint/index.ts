@@ -631,12 +631,22 @@ Deno.serve(async (req) => {
         const monthFilter = normalizeAnomesList(
           body.anomes_list ?? body.anomes ?? body.target_anomes ?? body.target_months,
         );
+        const fullRebuild = syncMode === 'historico_completo' || !(monthFilter?.length);
+        const logType = syncMode === 'historico_completo' ? 'sync-historico-completo' : 'sync-historico-mensal';
 
-        scheduleBackgroundTask(processHistoricoSyncInBackground({
-          tipo,
-          syncMode,
-          monthFilter,
-        }));
+        scheduleBackgroundTask(
+          processChunkedSyncInBackground({
+            table: 'raw_comissoes_historico',
+            sourceSheet: 'Comissões Histórico',
+            fileKey: 'base_receita',
+            fullRebuild,
+            chunkSize: 10000,
+            refreshMVsAtEnd: ['mv_comissoes_consolidado_v2', 'mv_comissoes_caixa_completa'],
+            monthFilter,
+            logType,
+            validate: { minRows: 50000, minDistinctMonths: 25 },
+          }).then(() => {}).catch((e) => console.error('chunked sync failed', e)),
+        );
 
         return Response.json({
           success: true,
