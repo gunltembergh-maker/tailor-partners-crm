@@ -1089,6 +1089,7 @@ Deno.serve(async (req) => {
           _cascade: true,
           _cascade_total_rows: (body._cascade_total_rows || 0) + total,
           _refresh_mv: body._refresh_mv || false,
+          _cascade_lock_arquivo: body._cascade_lock_arquivo || null,
         });
       } else {
         const grandTotal = (body._cascade_total_rows || 0) + total;
@@ -1102,6 +1103,11 @@ Deno.serve(async (req) => {
         const dur = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
         await saveLog(`cascade-${fileKey}-${sh.sheet}`, true, dur, 
           [`Cascade complete: ${grandTotal} rows in ${sh.table}`], []);
+
+        // Release cascade lock at the very end of the cascade chain
+        if (body._cascade_lock_arquivo) {
+          await clearCascadeRunning(body._cascade_lock_arquivo).catch(() => {});
+        }
       }
 
       return Response.json({ success: true, totalRows: total, log }, { headers: cors });
