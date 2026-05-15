@@ -150,7 +150,7 @@ async function getToken(): Promise<string> {
 
 // ─── DB helpers ─────────────────────────────────────────────────────
 
-const RPC_TABLES = new Set(['raw_comissoes_m0', 'raw_comissoes_historico']);
+const RPC_TABLES = new Set(['raw_comissoes_m0', 'raw_comissoes_historico', 'raw_comissoes_historico_staging']);
 const rpcHeaders = { 'Content-Type': 'application/json', 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` };
 
 const RPC_BATCH = 500;
@@ -731,6 +731,113 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════════════
     if (arquivo === 'base_receita' && syncMode) {
       const fileId = FILE_IDS['base_receita'];
+
+      // ── Chunked stateful: INIT (criado por Cron A diário) ──
+      if (syncMode === 'historico_chunked_init') {
+        const initRes = await callRpc('rpc_sync_cursor_init_daily', { p_sync_name: 'historico_completo' });
+        console.log(JSON.stringify({ event: 'chunked_init', result: initRes }));
+        return Response.json({ success: true, syncMode, init: initRes }, { headers: cors });
+      }
+
+      // ── Chunked stateful: RECOVERY (Cron C marca stale) ──
+      if (syncMode === 'historico_chunked_recovery') {
+        const n = await callRpc('rpc_sync_cursor_mark_stale');
+        console.log(JSON.stringify({ event: 'chunked_recovery', stale_marked: n }));
+        return Response.json({ success: true, syncMode, stale_marked: n }, { headers: cors });
+      }
+
+      // ── Chunked stateful: WORKER (Cron B */3min) ──
+      if (syncMode === 'historico_chunked_worker') {
+        const SYNC_NAME = 'historico_completo';
+        const TARGET_TABLE = 'raw_comissoes_historico';
+        const STAGING_TABLE = 'raw_comissoes_historico_staging';
+        const SHEET = 'Comissões Histórico';
+        const WINDOWS_PER_CHUNK = 20; // 20 × 2000 = 40k linhas / invocação (~140s)
+
+        const claim = await callRpc('rpc_sync_cursor_claim', { p_sync_name: SYNC_NAME }) as any;
+        if (!claim?.claimed) {
+          return Response.json({ success: true, syncMode, claimed: false, reason: 'no_work_or_locked' }, { headers: cors });
+        }
+
+        const claimId = claim.claim_id as string;
+        const startRowCursor = Math.max(2, Number(claim.next_window_start) || 2);
+        let totalSeen = Number(claim.total_rows_seen) || 0;
+        const chunkNum = Number(claim.attempts) || 1;
+        const tChunk = Date.now();
+
+        scheduleBackgroundTask((async () => {
+          let nextRow = startRowCursor;
+          let windowsProcessed = 0;
+          let rowsInsertedInChunk = 0;
+          let retriesAtStart = getGraphRetryStats().length;
+          try {
+            const token = await getToken();
+            const dims = await getSheetDimensions(token, FILE_IDS['base_receita'], SHEET);
+            if (!dims || dims.rowCount < 2) {
+              await callRpc('rpc_sync_cursor_fail', { p_sync_name: SYNC_NAME, p_claim: claimId, p_error: 'sheet vazia' });
+              return;
+            }
+            const totalTarget = dims.rowCount;
+            const lastCol = colToLetter(dims.columnCount);
+
+            for (let w = 0; w < WINDOWS_PER_CHUNK && nextRow <= totalTarget; w++) {
+              const end = Math.min(nextRow + READ_CHUNK - 1, totalTarget);
+              const tWin = Date.now();
+              const rows = await readRange(token, FILE_IDS['base_receita'], SHEET, nextRow, end, dims.headers, lastCol);
+              if (rows.length > 0) {
+                await insertRowsNoTruncate(STAGING_TABLE, rows);
+                rowsInsertedInChunk += rows.length;
+                totalSeen += rows.length;
+              }
+              nextRow = end + 1;
+              windowsProcessed++;
+
+              const ok = await callRpc('rpc_sync_cursor_heartbeat', {
+                p_sync_name: SYNC_NAME, p_claim: claimId,
+                p_next_window_start: nextRow, p_total_rows_seen: totalSeen, p_total_rows_target: totalTarget,
+              }) as boolean;
+              if (!ok) {
+                console.log(JSON.stringify({ event: 'chunked_heartbeat_lost', claim: claimId, nextRow }));
+                return; // outro worker assumiu
+              }
+              console.log(JSON.stringify({ event: 'chunked_window', chunk: chunkNum, window: w + 1,
+                from: end - rows.length + 1, to: end, inserted: rows.length, ms: Date.now() - tWin, total_seen: totalSeen }));
+            }
+
+            const reachedEnd = nextRow > totalTarget;
+            if (reachedEnd) {
+              console.log(JSON.stringify({ event: 'chunked_swap_starting', total_seen: totalSeen, target: totalTarget }));
+              const swapRes = await callRpc('rpc_sync_cursor_complete_swap', {
+                p_sync_name: SYNC_NAME, p_claim: claimId,
+                p_target_table: TARGET_TABLE, p_staging_table: STAGING_TABLE,
+              });
+              await refreshMV();
+              await saveLog('sync-historico-chunked', true,
+                `${((Date.now() - tChunk) / 1000).toFixed(1)}s`,
+                [`✅ Swap concluído: ${JSON.stringify(swapRes)}`, `Total: ${totalSeen} linhas`], []);
+              console.log(JSON.stringify({ event: 'chunked_completed', total: totalSeen, swap: swapRes }));
+            } else {
+              await callRpc('rpc_sync_cursor_release', { p_sync_name: SYNC_NAME, p_claim: claimId });
+              console.log(JSON.stringify({ event: 'chunked_chunk_done', chunk: chunkNum,
+                windows_processed: windowsProcessed, rows_inserted: rowsInsertedInChunk,
+                duration_ms: Date.now() - tChunk, retries_in_chunk: getGraphRetryStats().length - retriesAtStart,
+                next_window: nextRow, total_seen: totalSeen, target: totalTarget }));
+            }
+          } catch (err) {
+            const msg = getErrorMessage(err);
+            console.log(JSON.stringify({ event: 'chunked_error', chunk: chunkNum, error: msg, next_row: nextRow }));
+            await callRpc('rpc_sync_cursor_fail', { p_sync_name: SYNC_NAME, p_claim: claimId, p_error: msg }).catch(() => {});
+            await saveLog('sync-historico-chunked', false,
+              `${((Date.now() - tChunk) / 1000).toFixed(1)}s`,
+              [`Chunk ${chunkNum} falhou em row ${nextRow}: ${msg}`], [msg]).catch(() => {});
+          }
+        })());
+
+        return Response.json({
+          success: true, syncMode, claimed: true,
+          chunk: chunkNum, start_row: startRowCursor, total_seen_before: totalSeen,
+        }, { status: 202, headers: cors });
+      }
 
       if (syncMode === 'historico_completo' || syncMode === 'historico_mensal') {
         const monthFilter = normalizeAnomesList(

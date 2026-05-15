@@ -249,6 +249,16 @@ export default function ImportarBases() {
     anoMesM0: number | null;
   }>({ historicoCount: null, m0Count: null, dentroPeriodoM1: null, anoMesM1: null, anoMesM0: null });
 
+  // ─── Chunked Sync Cursor (Histórico) ────────────────────────────
+  const [chunkedCursor, setChunkedCursor] = useState<any>(null);
+
+  const loadChunkedCursor = useCallback(() => {
+    supabase.rpc('rpc_sync_cursor_status' as any, { p_sync_name: 'historico_completo' } as any)
+      .then(({ data }: any) => {
+        if (Array.isArray(data) && data.length > 0) setChunkedCursor(data[0]);
+      });
+  }, []);
+
   useEffect(() => {
     if (canSeeLegacy) {
       // Load last sync log
@@ -272,8 +282,12 @@ export default function ImportarBases() {
           anoMesM0: m0AmRes.data ?? null,
         });
       });
+
+      loadChunkedCursor();
+      const t = setInterval(loadChunkedCursor, 60_000); // refresca a cada 60s
+      return () => clearInterval(t);
     }
-  }, [canSeeLegacy]);
+  }, [canSeeLegacy, loadChunkedCursor]);
 
   async function handleSyncMode(mode: string) {
     setSyncingMode(mode);
@@ -475,6 +489,74 @@ export default function ImportarBases() {
             : 'Use os cards abaixo para importar as bases liberadas para o seu perfil.'}
         </p>
       </div>
+
+      {/* ═══ CHUNKED SYNC BANNER ═══ */}
+      {canSeeLegacy && chunkedCursor && (() => {
+        const status = chunkedCursor.status as string;
+        const lastBeat = chunkedCursor.last_heartbeat ? new Date(chunkedCursor.last_heartbeat) : null;
+        const startedAt = chunkedCursor.started_at ? new Date(chunkedCursor.started_at) : null;
+        const isFailed = status === 'failed' || status === 'stale';
+        const isRunningTooLong = status === 'running' && startedAt && (Date.now() - startedAt.getTime() > 60 * 60 * 1000);
+        const isCompleted = status === 'completed';
+        const isRunning = status === 'running' && !isRunningTooLong;
+        const isPending = status === 'pending';
+
+        if (!(isFailed || isRunningTooLong || isRunning || isPending || isCompleted)) return null;
+
+        const tone = isFailed || isRunningTooLong
+          ? 'border-red-500/50 bg-red-50 text-red-900'
+          : isCompleted
+            ? 'border-green-500/40 bg-green-50 text-green-900'
+            : 'border-blue-500/40 bg-blue-50 text-blue-900';
+
+        const icon = isFailed || isRunningTooLong
+          ? <AlertTriangle className="h-4 w-4" />
+          : isCompleted
+            ? <CheckCircle className="h-4 w-4" />
+            : <Loader2 className="h-4 w-4 animate-spin" />;
+
+        const fmt = (d: Date | null) => d ? d.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+
+        return (
+          <div className={cn("rounded-lg border p-3 flex items-start gap-2 text-sm", tone)}>
+            {icon}
+            <div className="flex-1 space-y-0.5">
+              {(isFailed || isRunningTooLong) && (
+                <>
+                  <p className="font-semibold">⚠ Sync de Receita Histórica {status === 'failed' ? 'falhou' : status === 'stale' ? 'travou' : 'parado há mais de 1h'}</p>
+                  <p className="text-xs">Última tentativa: {fmt(lastBeat)} · Tentativas: {chunkedCursor.attempts ?? 0}</p>
+                  {chunkedCursor.error && <p className="text-xs font-mono opacity-80 break-all">{String(chunkedCursor.error).substring(0, 200)}</p>}
+                  <p className="text-xs">Próxima execução do cron de recovery vai retomar automaticamente.</p>
+                </>
+              )}
+              {isRunning && (
+                <>
+                  <p className="font-semibold">Sync de Receita Histórica em andamento</p>
+                  <p className="text-xs">
+                    Linhas processadas: {Number(chunkedCursor.total_rows_seen ?? 0).toLocaleString('pt-BR')} / {Number(chunkedCursor.total_rows_target ?? 0).toLocaleString('pt-BR')} ·
+                    Próxima janela: linha {chunkedCursor.next_window_start} · Heartbeat: {fmt(lastBeat)}
+                  </p>
+                </>
+              )}
+              {isPending && (
+                <>
+                  <p className="font-semibold">Sync de Receita Histórica iniciado</p>
+                  <p className="text-xs">Worker irá começar a processar no próximo ciclo (a cada 3min).</p>
+                </>
+              )}
+              {isCompleted && (
+                <>
+                  <p className="font-semibold">Sync de Receita Histórica concluído</p>
+                  <p className="text-xs">
+                    {Number(chunkedCursor.total_rows_seen ?? 0).toLocaleString('pt-BR')} linhas em {chunkedCursor.attempts} chunk(s) ·
+                    Concluído: {fmt(chunkedCursor.completed_at ? new Date(chunkedCursor.completed_at) : null)}
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ═══ STATUS PANEL ═══ */}
       {canSeeLegacy && (
