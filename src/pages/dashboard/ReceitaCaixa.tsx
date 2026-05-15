@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download, Clock, RefreshCw } from "lucide-react";
+import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
