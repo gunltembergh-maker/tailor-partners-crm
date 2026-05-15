@@ -63,7 +63,9 @@ const PERMISSION_GROUPS = [
   {
     title: "Dashboards",
     items: [
-      { key: "menu_dashboard_comercial", label: "Dashboard Comercial", desc: "Acesso à página principal de dashboards" },
+      { key: "menu_dashboards", label: "Dashboards", desc: "Acesso à área de Dashboards (controle mestre)" },
+      { key: "menu_dashboards_comercial", label: "↳ Comercial", desc: "Sub-item de Dashboards — Dashboard Comercial (Quantitativo + Qualitativo, Receita Bruta, AUC, Captação)" },
+      { key: "menu_dashboards_receita", label: "↳ Receita", desc: "Sub-item de Dashboards — Dashboard Receita Caixa (receita por categoria, advisor, FA/Finder/Canal)" },
       { key: "menu_quantitativo", label: "Dashboard Quantitativo", desc: "Aba com KPIs de captação, AuC e receita" },
       { key: "menu_qualitativo", label: "Dashboard Qualitativo", desc: "Aba com custódia, ROA e vencimentos" },
     ],
