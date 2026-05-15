@@ -253,20 +253,11 @@ async function saveLog(tipo: string, ok: boolean, dur: string, log: string[], er
   });
 }
 
-// ─── Cascade concurrency guard (TEMPORARY — prevents external double-invocation) ──
-// Uses sync_log with sucesso=NULL as a "running" marker scoped per arquivo.
-// Stale markers (>20min) are ignored so a crashed cascade doesn't permanently lock.
+// ─── Cascade concurrency guard ────────────────────────────────────────
+// Atomic via UNIQUE PARTIAL INDEX uniq_cascade_lock_running on sync_log
+// (tipo) WHERE sucesso IS NULL AND tipo LIKE 'cascade-lock-%'.
+// Stale markers (>20min) are swept so a crashed cascade doesn't permanently lock.
 const CASCADE_LOCK_TTL_MIN = 20;
-
-async function checkCascadeRunning(arquivo: string): Promise<boolean> {
-  const tipo = `cascade-lock-${arquivo}`;
-  const since = new Date(Date.now() - CASCADE_LOCK_TTL_MIN * 60_000).toISOString();
-  const url = `${SUPABASE_URL}/rest/v1/sync_log?tipo=eq.${encodeURIComponent(tipo)}&sucesso=is.null&executado_em=gte.${encodeURIComponent(since)}&select=id&limit=1`;
-  const r = await fetch(url, { headers: rpcHeaders });
-  if (!r.ok) return false;
-  const rows = await r.json().catch(() => []);
-  return Array.isArray(rows) && rows.length > 0;
-}
 
 // Atomic INSERT into sync_log. Returns true if lock acquired,
 // false if blocked by uniq_cascade_lock_running (Postgres 23505).
