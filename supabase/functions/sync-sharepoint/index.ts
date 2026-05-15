@@ -539,6 +539,16 @@ async function processChunkedSyncInBackground(params: {
   const sheetName = sourceSheet;
 
   let totalInserted = 0;
+  const TIMEOUT_MS = 30 * 60 * 1000; // 30min hard cap
+  let timedOut = false;
+  const timeoutHandle = setTimeout(() => { timedOut = true; }, TIMEOUT_MS);
+  const checkTimeout = () => {
+    if (timedOut) {
+      const state = { table, totalInserted, elapsedMs: Date.now() - t0, lastErrors: errors.slice(-3) };
+      console.log(JSON.stringify({ event: 'sync_global_timeout', ...state }));
+      throw new Error(`Timeout global de 30min atingido. State: ${JSON.stringify(state)}`);
+    }
+  };
 
   try {
     log.push('🔐 Autenticando...');
