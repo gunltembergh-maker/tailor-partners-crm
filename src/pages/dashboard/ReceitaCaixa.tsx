@@ -552,7 +552,10 @@ export default function ReceitaCaixa() {
             {/* Row 3: Receita Total — últimos 12 meses */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-                <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
+                <div className="flex items-center gap-2">
+                  <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
+                  <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
+                </div>
                 <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
                     <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
@@ -706,7 +709,10 @@ export default function ReceitaCaixa() {
             {/* Row 5: Fonte da Receita — 100% stacked */}
             <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 28px" }}>
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-                <CardTitleTailor>Fonte da Receita — composição mensal</CardTitleTailor>
+                <div className="flex items-center gap-2">
+                  <CardTitleTailor>Fonte da Receita — composição mensal</CardTitleTailor>
+                  <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
+                </div>
                 <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
                     <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
