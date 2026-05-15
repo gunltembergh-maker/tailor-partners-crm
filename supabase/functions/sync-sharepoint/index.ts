@@ -676,6 +676,7 @@ Deno.serve(async (req) => {
       resetGraphRetryStats();
       const fileKey: string = body.arquivo || 'base_receita';
       const sheet: string = body.sheet || 'Comissões Histórico';
+      const maxRows: number = Number(body.max_rows ?? 0); // 0 = ler tudo
       const fileId = FILE_IDS[fileKey];
       if (!fileId) return Response.json({ success: false, error: `arquivo desconhecido: ${fileKey}` }, { status: 400, headers: cors });
 
@@ -687,15 +688,17 @@ Deno.serve(async (req) => {
       }
 
       const lastCol = colToLetter(dims.columnCount);
+      const targetEnd = maxRows > 0 ? Math.min(maxRows + 1, dims.rowCount) : dims.rowCount;
       let totalRowsRead = 0;
       let sampleFirstRow: Record<string, unknown> | null = null;
       let sampleLastRow: Record<string, unknown> | null = null;
-      const windowsLog: Array<{ from: number; to: number; returned: number }> = [];
+      const windowsLog: Array<{ from: number; to: number; returned: number; ms: number }> = [];
 
-      for (let r = 2; r <= dims.rowCount; r += READ_CHUNK) {
-        const end = Math.min(r + READ_CHUNK - 1, dims.rowCount);
+      for (let r = 2; r <= targetEnd; r += READ_CHUNK) {
+        const end = Math.min(r + READ_CHUNK - 1, targetEnd);
+        const tw = Date.now();
         const chunk = await readRange(token, fileId, sheet, r, end, dims.headers, lastCol);
-        windowsLog.push({ from: r, to: end, returned: chunk.length });
+        windowsLog.push({ from: r, to: end, returned: chunk.length, ms: Date.now() - tw });
         if (chunk.length > 0) {
           totalRowsRead += chunk.length;
           if (!sampleFirstRow) sampleFirstRow = chunk[0];
@@ -710,6 +713,8 @@ Deno.serve(async (req) => {
         fileKey,
         rowCount: dims.rowCount,
         columnCount: dims.columnCount,
+        targetEnd,
+        capped: maxRows > 0 && dims.rowCount > maxRows + 1,
         headers: dims.headers,
         totalRowsRead,
         windowsCount: windowsLog.length,
