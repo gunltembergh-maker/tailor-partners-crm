@@ -94,7 +94,7 @@ export function AppSidebar() {
 
   // Filter menu items based on permissions
   const visibleMenuItems = menuItems.filter((item) => canSee(item.key));
-  const visibleDashboardItems = dashboardItems.filter((item) => canSee(item.key));
+  const visibleDashboardItems = dashboardItems.filter((item) => item.keys.some(canSee));
   const showMainMenu = visibleMenuItems.length > 0;
 
   // Lista de permissões relacionadas a "Importar Bases" (pai + filhos).
