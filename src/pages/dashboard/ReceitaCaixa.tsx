@@ -599,11 +599,12 @@ export default function ReceitaCaixa() {
                   <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
                   <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4, scrollbarWidth: "thin", maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
-                    <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
-                      <span className="rounded-sm" style={{ width: 10, height: 10, background: colorFor(c, i), display: "inline-block" }} /> {c}
-                    </span>
+                    <div key={c} style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", flexShrink: 0 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(c, i), display: "inline-block" }} />
+                      <span style={{ fontSize: 12, color: C.navy900 }}>{c}</span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -748,11 +749,12 @@ export default function ReceitaCaixa() {
                   <CardTitleTailor>Fonte da Receita — composição mensal</CardTitleTailor>
                   <span style={{ fontSize: '11px', color: '#9C7B2F', fontStyle: 'italic', background: 'rgba(252, 211, 77, 0.12)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(252, 211, 77, 0.3)' }}>⚠ Dados em validação</span>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap justify-end" style={{ maxWidth: "70%" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, overflowX: "auto", flexWrap: "nowrap", paddingBottom: 4, scrollbarWidth: "thin", maxWidth: "70%" }}>
                   {seriesCats.map((c, i) => (
-                    <span key={c} className="text-[12px] flex items-center gap-1.5" style={{ color: C.textMuted }}>
-                      <span className="rounded-sm" style={{ width: 10, height: 10, background: colorFor(c, i), display: "inline-block" }} /> {c}
-                    </span>
+                    <div key={c} style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", flexShrink: 0 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: colorFor(c, i), display: "inline-block" }} />
+                      <span style={{ fontSize: 12, color: C.navy900 }}>{c}</span>
+                    </div>
                   ))}
                 </div>
               </div>
