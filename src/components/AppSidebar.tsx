@@ -62,9 +62,16 @@ export function AppSidebar() {
   const { effectiveRole, effectivePermissoes } = useViewAs();
   const { setOpen, setOpenMobile, isMobile } = useSidebar();
   const navigateAndClose = (path: string) => {
+    // Persistimos ANTES de navegar porque cada página remonta seu próprio
+    // AppLayout — sem isso, o useEffect de persistência não chega a rodar
+    // antes do unmount e o sidebar reabre na próxima rota.
+    if (isMobile) {
+      setOpenMobile(false);
+    } else {
+      try { localStorage.setItem("hub_sidebar_open", "false"); } catch {}
+      setOpen(false);
+    }
     navigate(path);
-    if (isMobile) setOpenMobile(false);
-    else setOpen(false);
   };
 
   // Visibility ALWAYS reflects the simulated profile when Minha Visão is active.
