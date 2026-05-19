@@ -443,7 +443,7 @@ export function QualitativoTab({ filters }: Props) {
   /* ─── ROA M0 rows + footer ─── */
   const roaM0Rows = useMemo(() =>
     (roaM0 ?? []).map((r: any) => ({
-      documento: r.documento,
+      documento: maskDoc(r.documento),
       roa: Number(r.roa) || 0,
       faixa_pl: r.faixa_pl,
     }))
