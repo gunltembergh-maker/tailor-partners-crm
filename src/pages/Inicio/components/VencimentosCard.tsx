@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDocumentoMask } from "@/lib/lgpd";
 import { C } from "../Inicio";
 
 const fmtAdapt = (n: number | null | undefined): string => {
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export function VencimentosCard({ vencimentos, isLoading }: Props) {
+  const maskDoc = useDocumentoMask();
   return (
     <article
       className="rounded-lg p-5 h-full flex flex-col transition-shadow hover:shadow-md"
@@ -61,7 +63,7 @@ export function VencimentosCard({ vencimentos, isLoading }: Props) {
                 >
                   <div className="min-w-0">
                     <div style={{ color: C.navy900, fontSize: 13, fontWeight: 500 }} className="truncate">
-                      {v.cliente_nome ?? "—"}
+                      {maskDoc(v.cliente_nome) || "—"}
                     </div>
                     <div style={{ color: C.textMuted, fontSize: 11 }} className="truncate">
                       {v.ativo ?? "—"}
