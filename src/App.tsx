@@ -44,6 +44,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Inicio = lazy(() => import("./pages/Inicio/Inicio"));
 const Leads = lazy(() => import("./pages/Leads"));
 const LeadDetalhe = lazy(() => import("./pages/LeadDetalhe"));
 const Clientes = lazy(() => import("./pages/Clientes"));
@@ -121,6 +122,7 @@ function AppRoutes() {
         <Route path="/auth" element={session ? <Navigate to="/dashboards/comercial" replace /> : <Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<ProtectedRoute><Navigate to="/dashboards/comercial" replace /></ProtectedRoute>} />
+        <Route path="/inicio" element={<PermissionRoute permissions={["menu_inicio"]}><Inicio /></PermissionRoute>} />
         <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
         <Route path="/leads/:id" element={<ProtectedRoute><LeadDetalhe /></ProtectedRoute>} />
         <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
