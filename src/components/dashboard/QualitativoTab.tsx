@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { ChevronUp, ChevronDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
+import { useDocumentoMask } from "@/lib/lgpd";
 import {
   useCustodiaIndexador,
   useCustodiaVeiculo,
@@ -296,11 +297,13 @@ export function QualitativoTab({ filters }: Props) {
   const { data: roaFaixa, isLoading: l9 } = useRoaFaixaPl(filters);
   const { data: roaM0, isLoading: l10 } = useRoaM0Tabela(filters);
   const { data: vencAnoData, isLoading: l11 } = useVencimentosPorAno(filters);
+  // LGPD: máscara CPF/CNPJ (Admin vê completo; demais perfis mascarado)
+  const maskDoc = useDocumentoMask();
 
   /* ─── Tabela Clientes ─── */
   const clienteRows = useMemo(() =>
     (tabelaCli ?? []).map((r: any) => ({
-      documento: r.documento,
+      documento: maskDoc(r.documento),
       cod_cliente: r.cod_cliente,
       d0: Number(r.d0) || 0,
       primeiro_nome: r.primeiro_nome,
@@ -405,7 +408,7 @@ export function QualitativoTab({ filters }: Props) {
   /* ─── Todos os Ativos rows ─── */
   const ativosRows = useMemo(() =>
     (todosAtivos ?? []).map((r: any) => ({
-      documento: r.documento,
+      documento: maskDoc(r.documento),
       conta: r.conta,
       ativo: r.ativo_ajustado,
       net: Number(r.net) || 0,
@@ -421,7 +424,7 @@ export function QualitativoTab({ filters }: Props) {
   /* ─── Vencimentos Detalhado rows ─── */
   const vencRows = useMemo(() =>
     (tabelaVenc ?? []).map((r: any) => ({
-      documento: r.documento,
+      documento: maskDoc(r.documento),
       ativo: r.ativo_ajustado,
       net: Number(r.net) || 0,
       vencimento: r.vencimento,
@@ -440,7 +443,7 @@ export function QualitativoTab({ filters }: Props) {
   /* ─── ROA M0 rows + footer ─── */
   const roaM0Rows = useMemo(() =>
     (roaM0 ?? []).map((r: any) => ({
-      documento: r.documento,
+      documento: maskDoc(r.documento),
       roa: Number(r.roa) || 0,
       faixa_pl: r.faixa_pl,
     }))

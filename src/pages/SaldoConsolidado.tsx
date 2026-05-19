@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
+import { maskDocumento } from "@/lib/lgpd";
 import { SaldoConsolidadoOnboardingModal } from "@/components/relatorios/SaldoConsolidadoOnboardingModal";
 
 import { AppLayout } from "@/components/AppLayout";
@@ -123,7 +125,7 @@ function negClass(value: number | null | undefined): string {
   return Number(value ?? 0) < 0 ? "text-destructive font-medium" : "";
 }
 
-function buildHtmlTable(rows: SaldoRow[], dataFormatada: string): string {
+function buildHtmlTable(rows: SaldoRow[], dataFormatada: string, userRole: string | null | undefined): string {
   const limited = rows.slice(0, 200);
   const head = [
     "Nome",
@@ -143,7 +145,7 @@ function buildHtmlTable(rows: SaldoRow[], dataFormatada: string): string {
     .map(
       (r) => `<tr>
       <td>${r.cliente_nome ?? ""}</td>
-      <td>${r.documento_formatado ?? ""}</td>
+      <td>${maskDocumento(r.cpf_cnpj ?? r.documento_formatado, userRole)}</td>
       <td>${r.casa ?? ""}</td>
       <td>${r.conta ?? ""}</td>
       <td align="right">${fmtBRL(r.d0)}</td>
@@ -177,7 +179,13 @@ function buildHtmlTable(rows: SaldoRow[], dataFormatada: string): string {
 // ─── Página ──────────────────────────────────────────────────────────
 
 export default function SaldoConsolidado() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  // Role REAL (sempre prevalece em EXPORTS — Admin com Minha Visão ainda é Admin)
+  const realRole = role;
+  // Role EFETIVO (respeita Minha Visão — usado em exibições de tela)
+  const { effectiveRole } = useViewAs();
+
+
 
   // Filtros
   const [busca, setBusca] = useState("");
@@ -436,7 +444,8 @@ export default function SaldoConsolidado() {
       }
       const sheetData = rows.map((r) => ({
         Nome: r.cliente_nome ?? "",
-        "CPF/CNPJ": r.documento_formatado ?? "",
+        // Export Excel usa role REAL (não effectiveRole): Admin com Minha Visão simulando outro perfil ainda exporta dados completos.
+        "CPF/CNPJ": maskDocumento(r.cpf_cnpj ?? r.documento_formatado, realRole),
         Casa: r.casa ?? "",
         Conta: r.conta ?? "",
         D0: Number(r.d0 ?? 0),
@@ -507,7 +516,8 @@ export default function SaldoConsolidado() {
     const dataFormatada =
       dataRefOpts?.find((d) => d.data_referencia === dataRefLabel)?.data_formatada ??
       formatDate(dataRefLabel ?? "");
-    const html = buildHtmlTable(lista, dataFormatada);
+    // Email export usa role REAL — Admin com Minha Visão ainda envia dados completos.
+    const html = buildHtmlTable(lista, dataFormatada, realRole);
     const subject = encodeURIComponent(`Saldo em Conta ${dataFormatada}`);
     const body = encodeURIComponent(html);
     const url = `mailto:?subject=${subject}&body=${body}`;
@@ -1088,7 +1098,7 @@ export default function SaldoConsolidado() {
                         <TableCell className="font-medium max-w-[240px] truncate">
                           {r.cliente_nome}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{r.documento_formatado}</TableCell>
+                        <TableCell className="font-mono text-xs">{maskDocumento(r.cpf_cnpj ?? r.documento_formatado, effectiveRole)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={cn("font-medium", casaBadgeClass(r.casa))}>
                             {r.casa}
@@ -1166,7 +1176,7 @@ export default function SaldoConsolidado() {
               {detalheHeader?.cliente_nome ?? "Detalhe do cliente"}
             </DialogTitle>
             <DialogDescription className="flex items-center gap-3 text-xs">
-              <span className="font-mono">{detalheHeader?.documento_formatado ?? "—"}</span>
+              <span className="font-mono">{maskDocumento(detalheHeader?.cpf_cnpj ?? detalheHeader?.documento_formatado, effectiveRole) || "—"}</span>
               {detalheHeader?.tipo_cliente && (
                 <Badge variant="outline">{detalheHeader.tipo_cliente}</Badge>
               )}
