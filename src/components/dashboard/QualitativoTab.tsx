@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { ChevronUp, ChevronDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { DashboardFilters } from "@/hooks/useDashboardFilters";
+import { useDocumentoMask } from "@/lib/lgpd";
 import {
   useCustodiaIndexador,
   useCustodiaVeiculo,
