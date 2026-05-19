@@ -69,7 +69,7 @@ export default function Auth() {
           setLoginError(error.message);
         }
       } else {
-        navigate("/");
+        navigate(fromUrl && fromUrl !== "/auth" ? fromUrl : "/inicio", { replace: true });
       }
     } catch (error: any) {
       setLoginError(error?.message ?? "Erro ao autenticar.");
