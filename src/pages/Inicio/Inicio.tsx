@@ -8,6 +8,7 @@ import { KPIsCards } from "./components/KPIsCards";
 import { MuralCard } from "./components/MuralCard";
 import { AcessoRapidoCard } from "./components/AcessoRapidoCard";
 import { UltimasAtualizacoesCard } from "./components/UltimasAtualizacoesCard";
+import { PopupComunicado } from "@/components/PopupComunicado";
 
 export const C = {
   navy900: "#0A2337",
