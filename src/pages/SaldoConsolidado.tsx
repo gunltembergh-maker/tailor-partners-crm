@@ -1098,7 +1098,7 @@ export default function SaldoConsolidado() {
                         <TableCell className="font-medium max-w-[240px] truncate">
                           {r.cliente_nome}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">{r.documento_formatado}</TableCell>
+                        <TableCell className="font-mono text-xs">{maskDocumento(r.cpf_cnpj ?? r.documento_formatado, effectiveRole)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={cn("font-medium", casaBadgeClass(r.casa))}>
                             {r.casa}
