@@ -80,6 +80,7 @@ export default function Inicio() {
           <UltimasAtualizacoesCard timestamps={data.timestamps} isLoading={isLoading} />
         </div>
       </div>
+      <PopupComunicado />
     </AppLayout>
   );
 }
