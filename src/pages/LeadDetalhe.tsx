@@ -5,10 +5,12 @@ import { DetailLayout } from "@/components/DetailLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate, leadStatusLabels, leadStatusColors, tipoPessoaLabels, porteLabels, canalRelacionamentoLabels } from "@/lib/format";
+import { useDocumentoMask } from "@/lib/lgpd";
 
 export default function LeadDetalhe() {
   const { id } = useParams<{ id: string }>();
   const [lead, setLead] = useState<any>(null);
+  const maskDoc = useDocumentoMask();
 
   useEffect(() => {
     if (!id) return;
