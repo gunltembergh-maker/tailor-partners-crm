@@ -49,7 +49,7 @@ const PERMISSION_GROUPS = [
   {
     title: "Menu Principal (CRM)",
     items: [
-      { key: "menu_inicio", label: "Início", desc: "Página inicial com resumo do CRM" },
+      { key: "menu_inicio", label: "Início", desc: "Tela de boas-vindas com resumo personalizado, lembretes e mural" },
       { key: "menu_prioridades", label: "Prioridades", desc: "Clientes prioritários" },
       { key: "menu_leads", label: "Leads", desc: "Gestão de leads" },
       { key: "menu_contas", label: "Contas", desc: "Clientes e contas" },
