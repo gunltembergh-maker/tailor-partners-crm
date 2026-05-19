@@ -21,12 +21,16 @@ import {
   taskTipoLabels, taskStatusLabels, taskStatusColors,
   opportunityStageLabels, opportunityStageColors,
 } from "@/lib/format";
+import { useDocumentoMask } from "@/lib/lgpd";
 
 export default function ClienteDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const maskDoc = useDocumentoMask();
+
+
 
   const [client, setClient] = useState<any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
