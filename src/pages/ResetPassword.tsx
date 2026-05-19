@@ -84,7 +84,7 @@ export default function ResetPassword() {
       toast.error("Erro ao atualizar senha", { description: error.message });
     } else {
       toast.success("Senha atualizada com sucesso!");
-      navigate("/dashboards/comercial", { replace: true });
+      navigate("/inicio", { replace: true });
     }
     setLoading(false);
   };
