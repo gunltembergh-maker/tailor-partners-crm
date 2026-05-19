@@ -663,6 +663,36 @@ export type Database = {
         }
         Relationships: []
       }
+      market_news_cache: {
+        Row: {
+          capturado_em: string
+          descricao: string | null
+          fonte: string
+          id: string
+          link: string
+          publicado_em: string
+          titulo: string
+        }
+        Insert: {
+          capturado_em?: string
+          descricao?: string | null
+          fonte?: string
+          id?: string
+          link: string
+          publicado_em: string
+          titulo: string
+        }
+        Update: {
+          capturado_em?: string
+          descricao?: string | null
+          fonte?: string
+          id?: string
+          link?: string
+          publicado_em?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           author_id: string
@@ -3879,6 +3909,47 @@ export type Database = {
           mostrar_nome_hub: boolean
           paginas: string[]
           titulo: string
+        }[]
+      }
+      rpc_inicio_mural: {
+        Args: { p_limit?: number }
+        Returns: {
+          conteudo: string
+          cor: string
+          icone: string
+          link: string
+          publicado_em: string
+          tipo: string
+          titulo: string
+        }[]
+      }
+      rpc_inicio_top_saldos: {
+        Args: { p_limit?: number }
+        Returns: {
+          advisor: string
+          casa: string
+          cliente_nome: string
+          cpf_cnpj: string
+          d_mais_1: number
+          d_mais_2: number
+          d_mais_3: number
+          d0: number
+          fa: string
+          finder: string
+          total_saldo: number
+        }[]
+      }
+      rpc_inicio_vencimentos_proximos: {
+        Args: { p_dias?: number; p_limit?: number }
+        Returns: {
+          advisor: string
+          ativo: string
+          banker: string
+          cliente_nome: string
+          data_vencimento: string
+          dias_restantes: number
+          finder: string
+          valor: number
         }[]
       }
       rpc_lista_finders: {
