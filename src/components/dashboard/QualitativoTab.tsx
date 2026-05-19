@@ -408,7 +408,7 @@ export function QualitativoTab({ filters }: Props) {
   /* ─── Todos os Ativos rows ─── */
   const ativosRows = useMemo(() =>
     (todosAtivos ?? []).map((r: any) => ({
-      documento: r.documento,
+      documento: maskDoc(r.documento),
       conta: r.conta,
       ativo: r.ativo_ajustado,
       net: Number(r.net) || 0,
