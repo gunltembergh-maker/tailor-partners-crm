@@ -125,7 +125,7 @@ function negClass(value: number | null | undefined): string {
   return Number(value ?? 0) < 0 ? "text-destructive font-medium" : "";
 }
 
-function buildHtmlTable(rows: SaldoRow[], dataFormatada: string): string {
+function buildHtmlTable(rows: SaldoRow[], dataFormatada: string, userRole: string | null | undefined): string {
   const limited = rows.slice(0, 200);
   const head = [
     "Nome",
