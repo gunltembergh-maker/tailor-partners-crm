@@ -28,7 +28,9 @@ export default function Auth() {
   const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const fromUrl = (location.state as { from?: string } | null)?.from;
   const isBlocked = searchParams.get("blocked") === "true";
   const isDomainBlocked = searchParams.get("blocked") === "dominio";
 
