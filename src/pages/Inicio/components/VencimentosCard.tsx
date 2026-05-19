@@ -63,7 +63,7 @@ export function VencimentosCard({ vencimentos, isLoading }: Props) {
                 >
                   <div className="min-w-0">
                     <div style={{ color: C.navy900, fontSize: 13, fontWeight: 500 }} className="truncate">
-                      {v.cliente_nome ?? "—"}
+                      {maskDoc(v.cliente_nome) || "—"}
                     </div>
                     <div style={{ color: C.textMuted, fontSize: 11 }} className="truncate">
                       {v.ativo ?? "—"}
