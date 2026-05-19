@@ -1,16 +1,15 @@
-/**
- * LGPD — Máscara padronizada para CPF/CNPJ.
- *
- * Regra:
- *  - Apenas perfil ADMIN vê documento completo
- *  - Demais perfis (LIDER, BANKER, FINDER, ASSESSOR, OPERACOES, etc.) sempre veem mascarado
- *
- * Formato:
- *  - CPF  (11 dígitos): 123.***.***-**
- *  - CNPJ (14 dígitos): 12.***.***/****-**
- *
- * IMPORTANTE: máscara é puramente cosmética / frontend. NÃO mexer em RPCs/views/tabelas.
- */
+// LGPD — Máscara padronizada para CPF/CNPJ.
+//
+// Regra:
+//  - Apenas perfil ADMIN vê documento completo
+//  - Demais perfis (LIDER, BANKER, FINDER, ASSESSOR, OPERACOES, etc.) sempre veem mascarado
+//
+// Formato:
+//   CPF  (11 dígitos): 123.x.x-xx   ->  123.***.***-**
+//   CNPJ (14 dígitos): 12.x.x/xxxx-xx -> 12.***.***\/****-**
+//
+// IMPORTANTE: máscara é puramente cosmética / frontend.
+// NÃO mexer em RPCs/views/tabelas.
 import { useViewAs } from "@/contexts/ViewAsContext";
 
 export function maskDocumento(
