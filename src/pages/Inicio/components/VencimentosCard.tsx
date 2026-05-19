@@ -26,6 +26,7 @@ interface Props {
 }
 
 export function VencimentosCard({ vencimentos, isLoading }: Props) {
+  const maskDoc = useDocumentoMask();
   return (
     <article
       className="rounded-lg p-5 h-full flex flex-col transition-shadow hover:shadow-md"
