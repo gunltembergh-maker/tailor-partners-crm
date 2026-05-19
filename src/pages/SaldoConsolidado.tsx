@@ -1176,7 +1176,7 @@ export default function SaldoConsolidado() {
               {detalheHeader?.cliente_nome ?? "Detalhe do cliente"}
             </DialogTitle>
             <DialogDescription className="flex items-center gap-3 text-xs">
-              <span className="font-mono">{detalheHeader?.documento_formatado ?? "—"}</span>
+              <span className="font-mono">{maskDocumento(detalheHeader?.cpf_cnpj ?? detalheHeader?.documento_formatado, effectiveRole) || "—"}</span>
               {detalheHeader?.tipo_cliente && (
                 <Badge variant="outline">{detalheHeader.tipo_cliente}</Badge>
               )}
