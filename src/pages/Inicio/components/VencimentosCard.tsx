@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDocumentoMask } from "@/lib/lgpd";
 import { C } from "../Inicio";
 
 const fmtAdapt = (n: number | null | undefined): string => {
