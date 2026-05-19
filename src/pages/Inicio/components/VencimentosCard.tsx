@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { C } from "../Inicio";
 
@@ -81,6 +83,17 @@ export function VencimentosCard({ vencimentos, isLoading }: Props) {
             })}
           </ul>
         )}
+      </div>
+
+      <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+        <Link
+          to="/dashboards/comercial?tab=qualitativo"
+          className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+          style={{ color: C.navy500 }}
+        >
+          Ver próximos vencimentos completos
+          <ChevronRight className="h-3 w-3" />
+        </Link>
       </div>
     </article>
   );

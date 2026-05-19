@@ -3911,6 +3911,20 @@ export type Database = {
           titulo: string
         }[]
       }
+      rpc_inicio_comunicados_ativos: {
+        Args: never
+        Returns: {
+          botao_label: string
+          cor_fundo: string
+          cor_texto: string
+          data_inicio: string
+          id: string
+          logo_url: string
+          mensagem: string
+          mostrar_nome_hub: boolean
+          titulo: string
+        }[]
+      }
       rpc_inicio_mural: {
         Args: { p_limit?: number }
         Returns: {
