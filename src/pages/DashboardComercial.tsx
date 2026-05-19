@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,9 @@ export default function DashboardComercial() {
     activeChips,
     removeChip,
   } = useDashboardFilters();
-  const [activeTab, setActiveTab] = useState("quantitativo");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "qualitativo" ? "qualitativo" : "quantitativo";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [tabLoading, setTabLoading] = useState(false);
   const [showBoasVindas, setShowBoasVindas] = useState(false);
   const { primeiroAcesso, profile, role, area } = useAuth();
