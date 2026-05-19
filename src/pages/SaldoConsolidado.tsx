@@ -145,7 +145,7 @@ function buildHtmlTable(rows: SaldoRow[], dataFormatada: string, userRole: strin
     .map(
       (r) => `<tr>
       <td>${r.cliente_nome ?? ""}</td>
-      <td>${r.documento_formatado ?? ""}</td>
+      <td>${maskDocumento(r.cpf_cnpj ?? r.documento_formatado, userRole)}</td>
       <td>${r.casa ?? ""}</td>
       <td>${r.conta ?? ""}</td>
       <td align="right">${fmtBRL(r.d0)}</td>
