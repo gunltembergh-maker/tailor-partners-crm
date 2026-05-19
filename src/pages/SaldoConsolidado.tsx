@@ -515,7 +515,8 @@ export default function SaldoConsolidado() {
     const dataFormatada =
       dataRefOpts?.find((d) => d.data_referencia === dataRefLabel)?.data_formatada ??
       formatDate(dataRefLabel ?? "");
-    const html = buildHtmlTable(lista, dataFormatada);
+    // Email export usa role REAL — Admin com Minha Visão ainda envia dados completos.
+    const html = buildHtmlTable(lista, dataFormatada, realRole);
     const subject = encodeURIComponent(`Saldo em Conta ${dataFormatada}`);
     const body = encodeURIComponent(html);
     const url = `mailto:?subject=${subject}&body=${body}`;
