@@ -424,7 +424,7 @@ export function QualitativoTab({ filters }: Props) {
   /* ─── Vencimentos Detalhado rows ─── */
   const vencRows = useMemo(() =>
     (tabelaVenc ?? []).map((r: any) => ({
-      documento: r.documento,
+      documento: maskDoc(r.documento),
       ativo: r.ativo_ajustado,
       net: Number(r.net) || 0,
       vencimento: r.vencimento,
