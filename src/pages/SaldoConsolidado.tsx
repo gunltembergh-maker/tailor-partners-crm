@@ -444,7 +444,8 @@ export default function SaldoConsolidado() {
       }
       const sheetData = rows.map((r) => ({
         Nome: r.cliente_nome ?? "",
-        "CPF/CNPJ": r.documento_formatado ?? "",
+        // Export Excel usa role REAL (não effectiveRole): Admin com Minha Visão simulando outro perfil ainda exporta dados completos.
+        "CPF/CNPJ": maskDocumento(r.cpf_cnpj ?? r.documento_formatado, realRole),
         Casa: r.casa ?? "",
         Conta: r.conta ?? "",
         D0: Number(r.d0 ?? 0),
