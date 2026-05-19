@@ -149,7 +149,7 @@ export default function ClienteDetalhe() {
                     <span className="text-muted-foreground">Tipo</span>
                     <span>{tipoPessoaLabels[client.tipo_pessoa]}</span>
                     <span className="text-muted-foreground">CPF/CNPJ</span>
-                    <span>{client.cpf_cnpj || "-"}</span>
+                    <span>{maskDoc(client.cpf_cnpj) || "-"}</span>
                     <span className="text-muted-foreground">E-mail</span>
                     <span>{client.email || "-"}</span>
                     <span className="text-muted-foreground">Telefone</span>
