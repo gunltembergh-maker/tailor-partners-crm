@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,9 @@ export default function Auth() {
   const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const fromUrl = (location.state as { from?: string } | null)?.from;
   const isBlocked = searchParams.get("blocked") === "true";
   const isDomainBlocked = searchParams.get("blocked") === "dominio";
 
@@ -67,7 +69,7 @@ export default function Auth() {
           setLoginError(error.message);
         }
       } else {
-        navigate("/");
+        navigate(fromUrl && fromUrl !== "/auth" ? fromUrl : "/inicio", { replace: true });
       }
     } catch (error: any) {
       setLoginError(error?.message ?? "Erro ao autenticar.");

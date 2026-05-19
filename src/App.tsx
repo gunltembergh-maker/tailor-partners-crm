@@ -4,7 +4,7 @@ import TailorLoader from "@/components/TailorLoader";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ViewAsProvider, useViewAs } from "@/contexts/ViewAsContext";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
@@ -84,8 +84,9 @@ const queryClient = new QueryClient({
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading, isBlocked } = useAuth();
+  const location = useLocation();
   if (loading) return <TailorLoader />;
-  if (!session) return <Navigate to="/auth" replace />;
+  if (!session) return <Navigate to="/auth" replace state={{ from: location.pathname + location.search }} />;
   if (isBlocked) return <BlockedUserScreen />;
   return <>{children}</>;
 }
@@ -119,9 +120,9 @@ function AppRoutes() {
   return (
     <Suspense fallback={<LoadingOverlay show />}>
       <Routes>
-        <Route path="/auth" element={session ? <Navigate to="/dashboards/comercial" replace /> : <Auth />} />
+        <Route path="/auth" element={session ? <Navigate to="/inicio" replace /> : <Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/" element={<ProtectedRoute><Navigate to="/dashboards/comercial" replace /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute><Navigate to="/inicio" replace /></ProtectedRoute>} />
         <Route path="/inicio" element={<PermissionRoute permissions={["menu_inicio"]}><Inicio /></PermissionRoute>} />
         <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
         <Route path="/leads/:id" element={<ProtectedRoute><LeadDetalhe /></ProtectedRoute>} />
