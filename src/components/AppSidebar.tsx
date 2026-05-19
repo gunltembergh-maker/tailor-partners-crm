@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Início", icon: Home, path: "/", key: "menu_inicio" },
+  { title: "Início", icon: Home, path: "/inicio", key: "menu_inicio" },
   { title: "Prioridades", icon: Star, path: "/prioridades", key: "menu_prioridades" },
   { title: "Leads", icon: Target, path: "/leads", key: "menu_leads" },
   { title: "Contas", icon: Users, path: "/clientes", key: "menu_contas" },
