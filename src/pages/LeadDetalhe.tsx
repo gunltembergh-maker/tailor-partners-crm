@@ -32,7 +32,7 @@ export default function LeadDetalhe() {
             <span className="text-muted-foreground">Tipo</span>
             <span>{tipoPessoaLabels[lead.tipo_pessoa]}</span>
             <span className="text-muted-foreground">CPF/CNPJ</span>
-            <span>{lead.cpf_cnpj || "-"}</span>
+            <span>{maskDoc(lead.cpf_cnpj) || "-"}</span>
             <span className="text-muted-foreground">E-mail</span>
             <span>{lead.email || "-"}</span>
             <span className="text-muted-foreground">Telefone</span>
