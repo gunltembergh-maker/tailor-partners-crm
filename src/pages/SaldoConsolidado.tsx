@@ -179,7 +179,13 @@ function buildHtmlTable(rows: SaldoRow[], dataFormatada: string, userRole: strin
 // ─── Página ──────────────────────────────────────────────────────────
 
 export default function SaldoConsolidado() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  // Role REAL (sempre prevalece em EXPORTS — Admin com Minha Visão ainda é Admin)
+  const realRole = role;
+  // Role EFETIVO (respeita Minha Visão — usado em exibições de tela)
+  const { effectiveRole } = useViewAs();
+
+
 
   // Filtros
   const [busca, setBusca] = useState("");
