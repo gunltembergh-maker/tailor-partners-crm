@@ -297,11 +297,13 @@ export function QualitativoTab({ filters }: Props) {
   const { data: roaFaixa, isLoading: l9 } = useRoaFaixaPl(filters);
   const { data: roaM0, isLoading: l10 } = useRoaM0Tabela(filters);
   const { data: vencAnoData, isLoading: l11 } = useVencimentosPorAno(filters);
+  // LGPD: máscara CPF/CNPJ (Admin vê completo; demais perfis mascarado)
+  const maskDoc = useDocumentoMask();
 
   /* ─── Tabela Clientes ─── */
   const clienteRows = useMemo(() =>
     (tabelaCli ?? []).map((r: any) => ({
-      documento: r.documento,
+      documento: maskDoc(r.documento),
       cod_cliente: r.cod_cliente,
       d0: Number(r.d0) || 0,
       primeiro_nome: r.primeiro_nome,
