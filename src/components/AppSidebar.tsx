@@ -21,6 +21,7 @@ import {
   UsersRound,
   KeyRound,
   Megaphone,
+  Mail,
   Wallet,
 } from "lucide-react";
 import {
@@ -125,6 +126,9 @@ export function AppSidebar() {
   }
   if (canSee("menu_gestao_usuarios")) {
     adminItems.push({ title: "Comunicados", icon: Megaphone, path: "/admin/popups" });
+  }
+  if (isAdmin) {
+    adminItems.push({ title: "Log de Emails", icon: Mail, path: "/admin/emails/log" });
   }
 
   const showAdmin = adminItems.length > 0;

@@ -68,7 +68,9 @@ const GestaoProfiles = lazy(() => import("./pages/admin/GestaoProfiles"));
 const GestaoUsuarios = lazy(() => import("./pages/admin/GestaoUsuarios"));
 const RegrasAcesso = lazy(() => import("./pages/admin/RegrasAcesso"));
 const GerenciarPopups = lazy(() => import("./pages/admin/GerenciarPopups"));
+const EmailsLog = lazy(() => import("./pages/admin/EmailsLog"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -122,6 +124,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/inicio" replace /> : <Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/" element={<ProtectedRoute><Navigate to="/inicio" replace /></ProtectedRoute>} />
         <Route path="/inicio" element={<PermissionRoute permissions={["menu_inicio"]}><Inicio /></PermissionRoute>} />
         <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
@@ -146,6 +149,7 @@ function AppRoutes() {
         <Route path="/admin/usuarios" element={<AdminRoute><GestaoUsuarios /></AdminRoute>} />
         <Route path="/admin/regras-acesso" element={<AdminRoute><RegrasAcesso /></AdminRoute>} />
         <Route path="/admin/popups" element={<AdminRoute><GerenciarPopups /></AdminRoute>} />
+        <Route path="/admin/emails/log" element={<AdminRoute><EmailsLog /></AdminRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

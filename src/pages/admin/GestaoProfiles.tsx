@@ -91,6 +91,14 @@ const PERMISSION_GROUPS = [
       { key: "dados_exportar", label: "Exportar dados", desc: "Pode exportar tabelas e relatórios" },
     ],
   },
+  {
+    title: "Comunicações por Email",
+    items: [
+      { key: "enviar_email_manual", label: "Disparar email manual", desc: "Permite acionar envios transacionais a partir da UI (ex.: Receita Caixa)" },
+      { key: "gerenciar_emails_destinatarios", label: "Gerenciar destinatários", desc: "Configurar listas e destinatários por módulo (admin only)" },
+      { key: "gerenciar_emails_schedules", label: "Gerenciar agendamentos", desc: "Configurar disparos recorrentes / newsletters (admin only)" },
+    ],
+  },
 ];
 
 interface Perfil {

@@ -15,6 +15,12 @@ project_id = "jtlelokzpqkgvlwomfus"
     request_timeout = 400
   [functions.process-email-queue]
     verify_jwt = true
+  [functions.send-transactional-email]
+    verify_jwt = true
+  [functions.handle-email-unsubscribe]
+    verify_jwt = false
+  [functions.handle-email-suppression]
+    verify_jwt = false
   [functions.sync-sharepoint]
     verify_jwt = false
   [functions.sync-sharepoint.options]
