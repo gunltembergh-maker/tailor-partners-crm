@@ -1,84 +1,112 @@
 
+# Scaffold do módulo de Email Transacional
 
-# Plano: Reestruturar Sincronização SharePoint (2 Camadas)
+Reusa 100% da infra já em produção (`pgmq`, `process-email-queue`, `enqueue_email`, `email_send_log`, `email_send_state`). Não toca em nada de auth.
 
-## Resumo
-Separar a sincronização da Base Receita em 3 modos: M0 diário, M-1 condicional (primeiros 10 dias uteis), e Historico completo mensal. Atualizar a UI com 3 botoes distintos e painel de status.
+**Ajuste aplicado:** botão accent do `_template-example.tsx` usa `#0A2337` (navy Tailor), não `#9B6B4A`. Header gradient `#082537 → #0b3d57` mantido.
 
-## Escopo das Mudancas
+---
 
-### 1. Migration SQL — Funcoes de controle e RPCs
+## 1. Migration única
 
-- Criar `fn_dentro_periodo_m1()`, `fn_anomes_m1()`, `fn_anomes_m0()`
-- Criar `rpc_truncar_historico()` (SECURITY DEFINER, service_role only)
-- Criar `rpc_deletar_anomes_historico(p_anomes integer)` (delete linhas de um mes especifico)
-- Criar `rpc_deletar_anomes_lista_historico(p_anomes_list integer[])` (delete por lista de meses — para sync mensal seguro)
-- Atualizar view `comissoes_consolidado_filtrado` conforme especificado (UNION ALL simples sem deduplicacao complexa)
+- `suppressed_emails` (email PK lower-case, reason, metadata jsonb, created_at) — RLS: service_role escreve, ADMIN lê.
+- `email_unsubscribe_tokens` (token PK, email UNIQUE lower-case, created_at, used_at) — mesma RLS.
+- `SELECT pgmq.create('transactional_emails')` + DLQ (idempotente).
+- 3 novas chaves em `perfis_acesso.permissoes` (JSONB): `enviar_email_manual`, `gerenciar_emails_destinatarios`, `gerenciar_emails_schedules` (default true só para ADMIN).
 
-### 2. Edge Function `sync-sharepoint/index.ts` — Nova logica de receita
+---
 
-Adicionar novo modo de invocacao via body params:
-- `sync_mode: "m0"` — Sync apenas aba "Comissoes" para `raw_comissoes_m0` (truncate + insert)
-- `sync_mode: "m1"` — Sync aba "Comissoes Historico", mas deleta apenas linhas do mes M-1 via `rpc_deletar_anomes_historico`, depois insere apenas os dados de M-1
-- `sync_mode: "historico_completo"` — Sync completo em cascade (comportamento atual com chunks)
-- `sync_mode: "historico_mensal"` — Sync seguro chunk por chunk: para cada chunk, identifica anomes, deleta esses meses, insere chunk (sem truncate global)
+## 2. Templates compartilhados
 
-Quando `tipo=automatico` e `arquivo=base_receita`:
-- Sempre faz M0
-- Chama `fn_dentro_periodo_m1()` — se true, faz M-1 tambem
-- NAO faz historico completo
+`supabase/functions/_shared/transactional-email-templates/`:
+- `registry.ts` — `TemplateEntry` + `TEMPLATES`.
+- `_template-example.tsx` — header gradient `#082537 → #0b3d57`, body branco, botão accent **`#0A2337`**, fonte system, footer institucional (sem unsubscribe — é appendado pelo sender).
 
-### 3. Cron Jobs — Reestruturar via insert tool
+---
 
-**Remover jobs antigos:**
-- Unschedule jobs 17-22, 24-25 (historico p1-p7 diarios e o orchestrador)
+## 3. Edge function `send-transactional-email` (verify_jwt = true)
 
-**Criar novos jobs:**
+1. Valida JWT + body (Zod): `templateName`, `recipientEmail`, `idempotencyKey?`, `templateData?`, `label?`.
+2. Resolve template ou 400.
+3. Checa `suppressed_emails` → se suprimido, loga e retorna `{ skipped: true, reason: 'suppressed' }`.
+4. Get-or-create `email_unsubscribe_tokens` para o recipient.
+5. Renderiza HTML via `@react-email/components` + `renderAsync`.
+6. Appenda footer com link `https://hub.tailorpartners.com.br/unsubscribe?token=<token>`.
+7. Insere `email_send_log` `status='pending'`.
+8. `enqueue_email('transactional_emails', { from, sender_domain: "notify.hub.tailorpartners.com.br", to, subject, html, text, purpose: 'transactional', label, message_id, idempotency_key, unsubscribe_token, queued_at })`.
+9. Retorna `{ message_id, queued_at, queued: true }`.
 
-Diarios (07h BRT = 10h UTC):
-- `sync-receita-m0-diario` — 10:00 — `{"tipo":"automatico","arquivo":"base_receita","sync_mode":"m0"}`
-- `sync-receita-m1-diario` — 10:05 — `{"tipo":"automatico","arquivo":"base_receita","sync_mode":"m1"}` (a edge function decide internamente se executa baseado em fn_dentro_periodo_m1)
-- Manter jobs existentes: captacao total (10:08), captacao historico (10:10), positivador (10:05→10:12), diversificador (10:02→10:18), base_contas (10:00→10:08), depara (10:01→10:20)
-- Novo job `refresh-mv-diario` — 10:25 — chama `rpc_refresh_mv_comissoes`
+---
 
-Mensais (dia 1, 06h BRT = 09h UTC):
-- `sync-historico-mensal-p1` — `0 9 1 * *` — `{"tipo":"automatico","arquivo":"base_receita","sync_mode":"historico_mensal","start_row":2,"end_row":40001}`
-- `sync-historico-mensal-p2` — `8 9 1 * *`
-- `sync-historico-mensal-p3` — `16 9 1 * *`
-- `sync-historico-mensal-p4` — `24 9 1 * *` (condicional >120k)
-- `sync-historico-mensal-p5` — `32 9 1 * *` (condicional >160k)
-- `sync-historico-mensal-p6` — `40 9 1 * *` (condicional >200k)
-- `refresh-mv-mensal` — `48 9 1 * *`
+## 4. Edge function `handle-email-unsubscribe` (verify_jwt = false)
 
-### 4. Frontend `ImportarBases.tsx` — 3 botoes + painel de status
+- `GET /?token=...` → HTML estilizado (mesmo branding) com botão "Confirmar descadastro".
+- `POST { token }` → valida token (existe, não usado), em transação marca `used_at` e insere `suppressed_emails (email, reason='unsubscribe')` com ON CONFLICT DO NOTHING.
 
-**Painel de Status:**
-- Busca COUNT de `raw_comissoes_historico`, COUNT de `raw_comissoes_m0`
-- Busca `fn_dentro_periodo_m1()` para mostrar se periodo M-1 esta ativo
-- Busca ultimo sync_log para mostrar ultima sincronizacao
-- Layout visual conforme especificado pelo usuario
+---
 
-**3 Botoes:**
-1. "Atualizar Dados do Dia" (M0) — sempre disponivel, badge "~1 minuto", chama `sync_mode: "m0"`
-2. "Reprocessar Mes Anterior" (M-1) — disponivel apenas se `fn_dentro_periodo_m1()` = true, mostra dias restantes, badge "~2 minutos", chama `sync_mode: "m1"`  
-3. "Sincronizar Historico Completo" — sempre disponivel com alerta de confirmacao, badge "~5 minutos", chama `sync_mode: "historico_completo"`
+## 5. Página `/unsubscribe` (Vite)
 
-Substituir o botao unico "Sincronizar Agora" por esses 3 botoes com cards individuais.
+`src/pages/Unsubscribe.tsx` — rota pública. Lê `?token=`, mostra card no design system do Hub, faz POST para `handle-email-unsubscribe` e exibe sucesso/erro.
 
-### 5. Arquivos modificados
+---
 
-| Arquivo | Tipo de mudanca |
-|---|---|
-| Migration SQL (novo) | Funcoes de controle + RPCs + view atualizada |
-| `supabase/functions/sync-sharepoint/index.ts` | Nova logica sync_mode para receita |
-| `src/pages/ImportarBases.tsx` | 3 botoes + painel de status |
-| Cron jobs (via insert tool) | Remover diarios de historico, criar mensais |
+## 6. Edge function `handle-email-suppression` (verify_jwt = false, shared secret)
 
-### Detalhes Tecnicos
+Webhook genérico: `{ event_type: 'bounce'|'complaint'|'spam', recipient, reason?, metadata? }` → upsert em `suppressed_emails`.
 
-**Sync M-1 seguro:** A edge function chama `fn_dentro_periodo_m1()` via RPC. Se false, retorna imediatamente sem processar. Se true, chama `rpc_deletar_anomes_historico(anomes_m1)` e depois insere apenas as linhas do mes M-1 extraidas do SharePoint (filtrando pelo campo Data).
+---
 
-**Sync mensal seguro (sem truncate):** Para cada chunk, a funcao le os dados do SharePoint, identifica os anomes distintos presentes no chunk, chama `rpc_deletar_anomes_lista_historico(anomes_list)` para deletar apenas esses meses, e depois insere o chunk. Se um chunk falhar, os outros meses permanecem intactos.
+## 7. Permissões (UI)
 
-**View simplificada:** Remove a logica de deduplicacao complexa (subquery que verifica meses do historico para excluir do M0), substituindo por UNION ALL direto — confiando que M0 contem apenas o mes atual e o historico contem tudo ate M-1.
+`src/pages/admin/GestaoProfiles.tsx` — nova seção "Comunicações por Email" com 3 toggles. Default ON para ADMIN, OFF para demais.
 
+---
+
+## 8. Tela `/admin/emails/log`
+
+`src/pages/admin/EmailsLog.tsx` (rota protegida por `AdminRoute`).
+
+Query deduplicada por `message_id` (última linha por `created_at desc`). Filtros: `template_name`, `status` (badges), `recipient_email` (search), período (presets 24h/7d/30d + custom, default 7d). Stats cards: Total / Sent / Failed (dlq) / Suppressed. Tabela paginada 50/pág, sort timestamp desc. Apenas leitura. Item adicionado no `AppSidebar` (seção Admin).
+
+---
+
+## 9. Hardcoded
+
+```ts
+const SENDER_DOMAIN = "notify.hub.tailorpartners.com.br"
+const FROM_DOMAIN   = "hub.tailorpartners.com.br"
+const SITE_NAME     = "Hub Grupo Tailor Partners"
+```
+
+---
+
+## 10. Validação end-to-end pós-deploy
+
+1. Disparo `_template-example` → `alessandro.oliveira@tailorpartners.com.br` com `{ nome: 'Alessandro', mensagem: 'Teste do módulo transacional.' }`.
+2. Confirmar linha `pending` → `sent` em `email_send_log` (cron processa em ≤10s).
+3. Validar email recebido (From correto + footer unsubscribe).
+4. Clicar no link → página `/unsubscribe` → confirmar.
+5. 2º disparo retorna `{ skipped: true, reason: 'suppressed' }` e loga `suppressed`.
+6. Tela `/admin/emails/log` mostra os 2 envios.
+
+---
+
+## Arquivos
+
+**Criados:**
+- Migration única (tabelas + fila + permissões)
+- `supabase/functions/_shared/transactional-email-templates/{registry.ts, _template-example.tsx}`
+- `supabase/functions/send-transactional-email/{index.ts, deno.json}`
+- `supabase/functions/handle-email-unsubscribe/index.ts`
+- `supabase/functions/handle-email-suppression/index.ts`
+- `src/pages/Unsubscribe.tsx`
+- `src/pages/admin/EmailsLog.tsx`
+
+**Editados:**
+- `supabase/config.toml` (3 novas functions)
+- `src/App.tsx` (rotas `/unsubscribe`, `/admin/emails/log`)
+- `src/components/AppSidebar.tsx` (item Admin → Log de Emails)
+- `src/pages/admin/GestaoProfiles.tsx` (seção Email)
+
+**Fora deste scaffold:** templates específicos (Receita Caixa etc.), `email_destinatarios_modulo`, botão de envio manual em Receita, newsletter automática + cron.
