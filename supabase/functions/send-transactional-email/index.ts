@@ -95,22 +95,25 @@ Deno.serve(async (req) => {
 
   // ----- Template-specific payload hydration -----
   // Para receita-caixa-newsletter: SEMPRE recarrega payload do RPC (fonte de verdade).
-  // Caller pode opcionalmente passar { em_validacao_override: boolean } em templateData.
+  // Caller pode opcionalmente passar { anomes_override, em_validacao_override, recipientName } em templateData.
   let resolvedTemplateData: Record<string, any> = templateData ?? {}
   if (templateName === 'receita-caixa-newsletter') {
-    const override = resolvedTemplateData?.em_validacao_override
-    const { data: rpcPayload, error: rpcErr } = await supabase.rpc('rpc_email_receita_payload')
+    const anomesOverride = resolvedTemplateData?.anomes_override ?? null
+    const emValidacaoOverride =
+      typeof resolvedTemplateData?.em_validacao_override === 'boolean'
+        ? resolvedTemplateData.em_validacao_override
+        : null
+    const { data: rpcPayload, error: rpcErr } = await supabase.rpc('rpc_email_receita_payload', {
+      p_anomes_override: anomesOverride,
+      p_em_validacao_override: emValidacaoOverride,
+    })
     if (rpcErr || !rpcPayload) {
       return new Response(JSON.stringify({ error: `Failed to load receita payload: ${rpcErr?.message || 'empty'}` }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    const payload: any = rpcPayload
-    if (typeof override === 'boolean' && payload?.mes_referencia) {
-      payload.mes_referencia.em_validacao = override
-    }
-    resolvedTemplateData = { payload, recipientName: resolvedTemplateData?.recipientName }
+    resolvedTemplateData = { payload: rpcPayload, recipientName: resolvedTemplateData?.recipientName }
   }
 
 
