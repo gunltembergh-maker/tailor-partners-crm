@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
       payload: {
         message_id: messageId,
         to: recipientEmail,
-        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+        from: `Hub Tailor Partners <hub@${FROM_DOMAIN}>`,
         sender_domain: SENDER_DOMAIN,
         subject,
         html,
