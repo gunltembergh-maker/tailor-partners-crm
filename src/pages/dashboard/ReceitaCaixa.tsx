@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download, Clock, RefreshCw } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download, Clock, RefreshCw, Mail } from "lucide-react";
 import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ReceitaCaixaOnboardingModal } from "@/components/relatorios/ReceitaCaixaOnboardingModal";
+import { EnviarEmailReceitaModal } from "@/components/email/EnviarEmailReceitaModal";
 import { cn } from "@/lib/utils";
 
 // ── Paleta executiva — Brand Book Tailor oficial ────────────────────
@@ -149,6 +151,9 @@ const FieldLabel = ({ children }: { children: React.ReactNode }) => (
 // ── Page ─────────────────────────────────────────────────────────────
 export default function ReceitaCaixa() {
   const { user } = useAuth();
+  const { effectivePermissoes } = useViewAs();
+  const podeEnviarEmail = effectivePermissoes?.enviar_email_manual === true;
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const [selectedAnomes, setSelectedAnomes] = useState<number | null>(null);
@@ -389,11 +394,24 @@ export default function ReceitaCaixa() {
               <RefreshCw className={`h-3 w-3 ${(isManualRefreshing || refreshingMV) ? "animate-spin" : ""}`} />
               Atualizar Dados
             </Button>
+            {podeEnviarEmail && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEmailModalOpen(true)}
+                className="h-6 text-xs gap-1 border-[#0A2337] text-[#0A2337] hover:bg-[#0A2337] hover:text-white"
+              >
+                <Mail className="h-3 w-3" />
+                Enviar por E-mail
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={() => setShowOnboarding(true)} style={{ color: C.textMuted }}>
               <HelpCircle className="h-4 w-4 mr-1" /> Ajuda
             </Button>
           </div>
         </div>
+
+        <EnviarEmailReceitaModal open={emailModalOpen} onClose={() => setEmailModalOpen(false)} />
 
         <div className="grid gap-4" style={{ gridTemplateColumns: "260px 1fr" }}>
           {/* ── SIDEBAR ─────────────────────────────────────────── */}
