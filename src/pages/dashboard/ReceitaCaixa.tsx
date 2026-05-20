@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download, Clock, RefreshCw } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, FilterX, HelpCircle, Plus, TrendingDown, TrendingUp, Minus, Search, Download, Clock, RefreshCw, Mail } from "lucide-react";
 import { useDashboardRefresh } from "@/hooks/useDashboardRefresh";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { useViewAs } from "@/contexts/ViewAsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ReceitaCaixaOnboardingModal } from "@/components/relatorios/ReceitaCaixaOnboardingModal";
+import { EnviarEmailReceitaModal } from "@/components/email/EnviarEmailReceitaModal";
 import { cn } from "@/lib/utils";
 
 // ── Paleta executiva — Brand Book Tailor oficial ────────────────────
