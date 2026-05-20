@@ -53,6 +53,9 @@ const variacaoColor = (pct: number | null) =>
   pct === null || pct === undefined ? '#73A7B7' : Number(pct) >= 0 ? '#16A34A' : '#DC2626'
 
 const ReceitaCaixaNewsletter = ({ payload, hubUrl = 'https://hub.tailorpartners.com.br/dashboard/receita' }: Props) => {
+  if (!payload || !payload.mes_referencia || !payload.receita_mes) {
+    throw new Error('[receita-caixa-newsletter] props.payload ausente ou incompleto — caller deve enviar templateData={ payload: {...} } ou deixar a edge function buscar via RPC.')
+  }
   const { mes_referencia, receita_mes, categorias = [], serie_12_meses = [], receita_acumulada_12_meses } = payload
   const mesLabel = `${mes_referencia.mes_nome}/${mes_referencia.ano_int}`
 
