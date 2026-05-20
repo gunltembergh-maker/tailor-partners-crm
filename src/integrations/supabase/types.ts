@@ -3687,6 +3687,16 @@ export type Database = {
               casa: string
             }[]
           }
+      rpc_buscar_usuarios_hub: {
+        Args: { p_busca?: string }
+        Returns: {
+          email: string
+          empresa: string
+          nome: string
+          role: string
+          user_id: string
+        }[]
+      }
       rpc_captacao_agg_mes: {
         Args: {
           p_advisor?: string[]
