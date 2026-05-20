@@ -243,20 +243,18 @@ export const template = {
   displayName: 'Newsletter Receita Caixa',
   previewData: {
     payload: {
-      mes_referencia: { anomes: '2026-05', mes_int: 5, ano_int: 2026, mes_nome: 'Maio', em_validacao: false },
-      receita_mes: { valor: 309243.34, mom_pct: 12.3, yoy_pct: 35.1 },
+      mes_referencia: { anomes: '9999-99', mes_int: 99, ano_int: 9999, mes_nome: 'PREVIEW', em_validacao: true },
+      receita_mes: { valor: 99999999.99, mom_pct: 999, yoy_pct: 999 },
       categorias: [
-        { categoria: 'Câmbio', valor: 120000, percentual: 38.8 },
-        { categoria: 'Consórcio', valor: 80000, percentual: 25.9 },
-        { categoria: 'Seguro de Vida', valor: 50000, percentual: 16.2 },
+        { categoria: 'PREVIEW - NÃO É DADO REAL', valor: 999, percentual: 99 },
       ],
       serie_12_meses: [
-        { anomes: '2025-06', mes_label: 'Jun/25', receita: 280000 },
-        { anomes: '2026-05', mes_label: 'Mai/26', receita: 309243 },
+        { anomes: '9999-99', mes_label: 'PREVIEW', receita: 99999 },
       ],
-      receita_acumulada_12_meses: 3600000,
+      receita_acumulada_12_meses: 99999,
     },
   },
+
 } satisfies TemplateEntry
 
 export default ReceitaCaixaNewsletter
