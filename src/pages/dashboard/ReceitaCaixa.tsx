@@ -394,11 +394,24 @@ export default function ReceitaCaixa() {
               <RefreshCw className={`h-3 w-3 ${(isManualRefreshing || refreshingMV) ? "animate-spin" : ""}`} />
               Atualizar Dados
             </Button>
+            {podeEnviarEmail && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEmailModalOpen(true)}
+                className="h-6 text-xs gap-1 border-[#0A2337] text-[#0A2337] hover:bg-[#0A2337] hover:text-white"
+              >
+                <Mail className="h-3 w-3" />
+                Enviar por E-mail
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={() => setShowOnboarding(true)} style={{ color: C.textMuted }}>
               <HelpCircle className="h-4 w-4 mr-1" /> Ajuda
             </Button>
           </div>
         </div>
+
+        <EnviarEmailReceitaModal open={emailModalOpen} onClose={() => setEmailModalOpen(false)} />
 
         <div className="grid gap-4" style={{ gridTemplateColumns: "260px 1fr" }}>
           {/* ── SIDEBAR ─────────────────────────────────────────── */}
