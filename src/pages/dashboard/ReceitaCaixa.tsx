@@ -151,6 +151,9 @@ const FieldLabel = ({ children }: { children: React.ReactNode }) => (
 // ── Page ─────────────────────────────────────────────────────────────
 export default function ReceitaCaixa() {
   const { user } = useAuth();
+  const { effectivePermissoes } = useViewAs();
+  const podeEnviarEmail = effectivePermissoes?.enviar_email_manual === true;
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const [selectedAnomes, setSelectedAnomes] = useState<number | null>(null);
