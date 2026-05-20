@@ -10,7 +10,9 @@ export interface TemplateEntry {
 }
 
 import { template as templateExample } from './_template-example.tsx'
+import { template as receitaCaixaNewsletter } from './receita-caixa-newsletter.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   '_template-example': templateExample,
+  'receita-caixa-newsletter': receitaCaixaNewsletter,
 }
