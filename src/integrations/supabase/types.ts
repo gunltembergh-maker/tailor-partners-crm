@@ -564,6 +564,30 @@ export type Database = {
         }
         Relationships: []
       }
+      feriados_nacionais: {
+        Row: {
+          criado_em: string | null
+          criado_por: string | null
+          data: string
+          descricao: string
+          tipo: string
+        }
+        Insert: {
+          criado_em?: string | null
+          criado_por?: string | null
+          data: string
+          descricao: string
+          tipo?: string
+        }
+        Update: {
+          criado_em?: string | null
+          criado_por?: string | null
+          data?: string
+          descricao?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           assessor_id: string | null
@@ -3216,6 +3240,16 @@ export type Database = {
     }
     Functions: {
       ban_unauthorized_user: { Args: { p_user_id: string }; Returns: undefined }
+      calcular_mes_referencia_email: {
+        Args: never
+        Returns: {
+          ano_int: number
+          anomes_ref: string
+          dia_util_corrente: number
+          em_validacao: boolean
+          mes_int: number
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -3242,6 +3276,7 @@ export type Database = {
       }
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
+      is_dia_util: { Args: { p_data: string }; Returns: boolean }
       marcar_cargas_zumbis_como_erro: { Args: never; Returns: number }
       move_to_dlq: {
         Args: {
@@ -3256,6 +3291,10 @@ export type Database = {
       normalize_advisor: { Args: { advisor: string }; Returns: string }
       normalize_banker: { Args: { v: string }; Returns: string }
       normalize_tipo_cliente: { Args: { p_tipo: string }; Returns: string }
+      nth_dia_util_do_mes: {
+        Args: { p_ano: number; p_mes: number; p_n: number }
+        Returns: string
+      }
       parse_num: { Args: { v: string }; Returns: number }
       parse_num_any: { Args: { v: string }; Returns: number }
       pode_importar_saldo: { Args: { _user_id: string }; Returns: boolean }
@@ -3789,6 +3828,10 @@ export type Database = {
         Returns: undefined
       }
       rpc_dispensar_popup: { Args: { p_popup_id: string }; Returns: Json }
+      rpc_email_receita_payload: {
+        Args: { p_anomes_override?: string; p_em_validacao_override?: boolean }
+        Returns: Json
+      }
       rpc_empresa_por_dominio: { Args: { p_email: string }; Returns: string }
       rpc_faixa_pl_auc: {
         Args: {
