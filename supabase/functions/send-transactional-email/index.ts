@@ -93,6 +93,27 @@ Deno.serve(async (req) => {
   const messageId = idempotencyKey || crypto.randomUUID()
   const finalLabel = label || templateName
 
+  // ----- Template-specific payload hydration -----
+  // Para receita-caixa-newsletter: SEMPRE recarrega payload do RPC (fonte de verdade).
+  // Caller pode opcionalmente passar { em_validacao_override: boolean } em templateData.
+  let resolvedTemplateData: Record<string, any> = templateData ?? {}
+  if (templateName === 'receita-caixa-newsletter') {
+    const override = resolvedTemplateData?.em_validacao_override
+    const { data: rpcPayload, error: rpcErr } = await supabase.rpc('rpc_email_receita_payload')
+    if (rpcErr || !rpcPayload) {
+      return new Response(JSON.stringify({ error: `Failed to load receita payload: ${rpcErr?.message || 'empty'}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const payload: any = rpcPayload
+    if (typeof override === 'boolean' && payload?.mes_referencia) {
+      payload.mes_referencia.em_validacao = override
+    }
+    resolvedTemplateData = { payload, recipientName: resolvedTemplateData?.recipientName }
+  }
+
+
   try {
     // 1. Idempotência: se já existe envio bem-sucedido com esse message_id, retorna
     if (idempotencyKey) {
