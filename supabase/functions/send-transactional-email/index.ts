@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
 
     // 4. Renderiza HTML + plain text
     const Component = entry.component
-    const props = templateData ?? {}
+    const props = resolvedTemplateData
     const rawHtml = await renderAsync(React.createElement(Component, props))
     const text = await renderAsync(React.createElement(Component, props), { plainText: true })
     const html = appendUnsubscribeFooter(rawHtml, unsubscribeUrl)
