@@ -24,7 +24,7 @@ interface ReceitaPayload {
   categorias: Array<{ categoria: string; valor: number; percentual: number }>
   serie_12_meses: Array<{ anomes: string; mes_label: string; receita: number }>
   receita_acumulada_12_meses: number
-  gerado_em: string
+  gerado_em?: string
 }
 
 interface Props {
@@ -52,8 +52,8 @@ const formatVariacao = (pct: number | null) => {
 const variacaoColor = (pct: number | null) =>
   pct === null || pct === undefined ? '#73A7B7' : Number(pct) >= 0 ? '#16A34A' : '#DC2626'
 
-const ReceitaCaixaNewsletter = ({ payload, recipientName, hubUrl = 'https://hub.tailorpartners.com.br/dashboard/receita' }: Props) => {
-  const { mes_referencia, receita_mes, categorias = [], serie_12_meses = [], receita_acumulada_12_meses, gerado_em } = payload
+const ReceitaCaixaNewsletter = ({ payload, hubUrl = 'https://hub.tailorpartners.com.br/dashboard/receita' }: Props) => {
+  const { mes_referencia, receita_mes, categorias = [], serie_12_meses = [], receita_acumulada_12_meses } = payload
   const mesLabel = `${mes_referencia.mes_nome}/${mes_referencia.ano_int}`
 
   return (
@@ -62,18 +62,22 @@ const ReceitaCaixaNewsletter = ({ payload, recipientName, hubUrl = 'https://hub.
       <Preview>{`Receita Caixa de ${mesLabel} — Hub Tailor Partners`}</Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
-          {/* HEADER */}
+          {/* HEADER — identidade isolada */}
           <Section style={headerStyle}>
             <Img
               src="https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo%20Tailor.png"
               width="140"
               height="auto"
               alt="Tailor Partners"
-              style={{ margin: '0 auto 16px', display: 'block' }}
+              style={{ margin: '0 auto', display: 'block' }}
             />
-            <Heading as="h1" style={headerTitleStyle}>Newsletter Receita Caixa</Heading>
-            <Text style={headerSubtitleStyle}>Hub Grupo Tailor Partners</Text>
+            <div style={dividerLineStyle} />
+            <Text style={headerEyebrowStyle}>HUB GRUPO TAILOR PARTNERS</Text>
+            <Text style={headerSubtitleStyle}>Newsletter Receita Caixa</Text>
           </Section>
+
+          {/* ESPAÇO sand */}
+          <Section style={spacerStyle} />
 
           {/* BADGE EM VALIDAÇÃO */}
           {mes_referencia.em_validacao && (
@@ -83,6 +87,13 @@ const ReceitaCaixaNewsletter = ({ payload, recipientName, hubUrl = 'https://hub.
               </Text>
             </Section>
           )}
+
+          {/* BANNER sutil — email automático */}
+          <Section style={autoBannerStyle}>
+            <Text style={autoBannerTextStyle}>
+              Este e-mail é automático e foi gerado pelo Hub. Para dúvidas, acesse o Hub Tailor Partners.
+            </Text>
+          </Section>
 
           {/* KPI HERO */}
           <Section style={kpiSectionStyle}>
@@ -164,11 +175,11 @@ const ReceitaCaixaNewsletter = ({ payload, recipientName, hubUrl = 'https://hub.
             </Button>
           </Section>
 
-          {/* FOOTER */}
+          {/* FOOTER simplificado */}
           <Hr style={hrStyle} />
           <Section style={footerStyle}>
-            <Text style={footerTextStyle}>Email gerado em {gerado_em} (BRT)</Text>
-            <Text style={footerTextStyle}>Equipe Tailor Partners</Text>
+            <Text style={footerTeamStyle}>Equipe de Dados &amp; AI</Text>
+            <Text style={footerCompanyStyle}>Tailor Partners</Text>
           </Section>
         </Container>
       </Body>
@@ -178,11 +189,20 @@ const ReceitaCaixaNewsletter = ({ payload, recipientName, hubUrl = 'https://hub.
 
 const bodyStyle = { backgroundColor: '#F5F1E8', fontFamily: 'Georgia, serif', margin: 0, padding: 0 } as const
 const containerStyle = { maxWidth: '600px', margin: '0 auto', backgroundColor: '#ffffff' } as const
-const headerStyle = { background: 'linear-gradient(135deg, #082537 0%, #0b3d57 100%)', padding: '32px 24px', textAlign: 'center' as const }
-const headerTitleStyle = { color: '#ffffff', fontSize: '22px', fontWeight: 'bold' as const, margin: 0, fontFamily: 'Georgia, serif' }
-const headerSubtitleStyle = { color: '#A4C4D5', fontSize: '13px', margin: '6px 0 0 0' }
+
+const headerStyle = { background: 'linear-gradient(135deg, #082537 0%, #0b3d57 100%)', padding: '40px 24px', textAlign: 'center' as const }
+const dividerLineStyle = { width: '60px', height: '1px', backgroundColor: 'rgba(255,255,255,0.3)', margin: '24px auto' } as const
+const headerEyebrowStyle = { color: '#A4C4D5', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, margin: 0, fontFamily: 'Arial, sans-serif', fontWeight: 'normal' as const }
+const headerSubtitleStyle = { color: '#ffffff', fontSize: '18px', margin: '6px 0 0 0', fontFamily: 'Georgia, serif' }
+
+const spacerStyle = { backgroundColor: '#F5F1E8', padding: '12px 0', height: '12px', lineHeight: '12px' } as const
+
+const autoBannerStyle = { backgroundColor: '#FAFAFA', padding: '12px 24px', borderBottom: '1px solid #EEEEEE' } as const
+const autoBannerTextStyle = { color: '#73A7B7', fontSize: '12px', margin: 0, textAlign: 'center' as const, fontFamily: 'Arial, sans-serif' }
+
 const validacaoBadgeStyle = { backgroundColor: '#FEF3C7', padding: '12px 24px', borderLeft: '4px solid #D97706' }
 const validacaoTextStyle = { color: '#92400E', fontSize: '13px', margin: 0 }
+
 const kpiSectionStyle = { padding: '32px 24px', textAlign: 'center' as const, borderBottom: '1px solid #E5E7EB' }
 const kpiLabelStyle = { color: '#73A7B7', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase' as const, margin: 0, fontFamily: 'Arial, sans-serif' }
 const kpiMesLabelStyle = { color: '#4B6D88', fontSize: '14px', margin: '4px 0 0 0' }
@@ -190,6 +210,7 @@ const kpiValueStyle = { color: '#0A2337', fontSize: '40px', fontWeight: 'bold' a
 const variacaoColStyle = { width: '50%', textAlign: 'center' as const, padding: '0 8px', verticalAlign: 'top' as const }
 const variacaoLabelStyle = { color: '#4B6D88', fontSize: '11px', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: 0, fontFamily: 'Arial, sans-serif' }
 const variacaoValueBaseStyle = { fontSize: '18px', fontWeight: 'bold' as const, margin: '4px 0 0 0', fontFamily: 'Arial, sans-serif' }
+
 const sectionStyle = { padding: '24px', borderBottom: '1px solid #E5E7EB' }
 const sectionTitleStyle = { color: '#0A2337', fontSize: '18px', margin: '0 0 16px 0', fontFamily: 'Georgia, serif' }
 const tableStyle = { width: '100%', borderCollapse: 'collapse' as const, fontSize: '14px', fontFamily: 'Arial, sans-serif' }
@@ -200,11 +221,14 @@ const tdRightStyle = { ...tdStyle, textAlign: 'right' as const }
 const trEvenStyle = { backgroundColor: '#ffffff' }
 const trOddStyle = { backgroundColor: '#F5F1E8' }
 const acumuladoLabelStyle = { color: '#4B6D88', fontSize: '13px', margin: '0 0 12px 0' }
+
 const ctaSectionStyle = { padding: '32px 24px', textAlign: 'center' as const, backgroundColor: '#F5F1E8' }
 const ctaButtonStyle = { backgroundColor: '#0A2337', color: '#ffffff', padding: '14px 32px', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold' as const, textDecoration: 'none', display: 'inline-block' as const, fontFamily: 'Arial, sans-serif', boxShadow: '0 4px 12px rgba(10, 35, 55, 0.25)' }
+
 const hrStyle = { borderColor: '#E5E7EB', margin: 0 }
 const footerStyle = { padding: '24px', textAlign: 'center' as const, backgroundColor: '#ffffff' }
-const footerTextStyle = { color: '#73A7B7', fontSize: '12px', margin: '4px 0', fontFamily: 'Arial, sans-serif' }
+const footerTeamStyle = { color: '#0A2337', fontSize: '13px', margin: 0, fontWeight: 600 as const, fontFamily: 'Arial, sans-serif' }
+const footerCompanyStyle = { color: '#73A7B7', fontSize: '12px', margin: '2px 0 0 0', fontFamily: 'Arial, sans-serif' }
 
 export const template = {
   component: ReceitaCaixaNewsletter,
@@ -228,9 +252,7 @@ export const template = {
         { anomes: '2026-05', mes_label: 'Mai/26', receita: 309243 },
       ],
       receita_acumulada_12_meses: 3600000,
-      gerado_em: '20/05/2026 14:30',
     },
-    recipientName: 'Conselho',
   },
 } satisfies TemplateEntry
 
