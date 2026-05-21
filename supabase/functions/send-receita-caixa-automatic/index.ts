@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
               idempotencyKey: `auto-${MODULO}-${dataEnvio}-${dest.user_id}`,
               label: `auto-${MODULO}-${dataEnvio}`,
             },
+            headers: { Authorization: `Bearer ${serviceKey}` },
           }
         )
 
