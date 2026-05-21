@@ -150,9 +150,9 @@ export function ConvidarExternoModal({ open, onClose, onSucesso }: Props) {
 
           <div className="space-y-1.5">
             <Label>Perfil de acesso *</Label>
-            <Select value={perfil} onValueChange={setPerfil}>
+            <Select value={perfil} onValueChange={setPerfil} disabled={loadingPerfis}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar perfil..." />
+                <SelectValue placeholder={loadingPerfis ? "Carregando..." : "Selecionar perfil..."} />
               </SelectTrigger>
               <SelectContent>
                 {PERFIS_DISPONIVEIS.map((p) => (
