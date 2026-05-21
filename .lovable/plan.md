@@ -1,112 +1,110 @@
+# Prompt 4 — Newsletter Automática Receita Caixa
 
-# Scaffold do módulo de Email Transacional
-
-Reusa 100% da infra já em produção (`pgmq`, `process-email-queue`, `enqueue_email`, `email_send_log`, `email_send_state`). Não toca em nada de auth.
-
-**Ajuste aplicado:** botão accent do `_template-example.tsx` usa `#0A2337` (navy Tailor), não `#9B6B4A`. Header gradient `#082537 → #0b3d57` mantido.
+Implementação completa do cron diário 08h BRT (Seg-Sex, pulando feriados) com lista solta de destinatários, idempotência, controle pausar/reativar e tela admin.
 
 ---
 
-## 1. Migration única
+## 1. Migration (3 tabelas + 5 RPCs)
 
-- `suppressed_emails` (email PK lower-case, reason, metadata jsonb, created_at) — RLS: service_role escreve, ADMIN lê.
-- `email_unsubscribe_tokens` (token PK, email UNIQUE lower-case, created_at, used_at) — mesma RLS.
-- `SELECT pgmq.create('transactional_emails')` + DLQ (idempotente).
-- 3 novas chaves em `perfis_acesso.permissoes` (JSONB): `enviar_email_manual`, `gerenciar_emails_destinatarios`, `gerenciar_emails_schedules` (default true só para ADMIN).
+**Tabelas novas:**
+- `email_destinatarios_automaticos` — lista solta `(user_id, modulo)` com `ativo`, `adicionado_por`. UNIQUE(user_id, modulo). RLS: ADMIN only.
+- `email_disparos_automaticos` — histórico com UNIQUE(modulo, data_envio) garantindo idempotência. Campos: status, sucessos, falhas, forcado_por, detalhes_erro. RLS SELECT para ADMIN.
+- `email_schedules_config` — controle por módulo (ativo, horario, dias_semana, pausado_por/em/motivo). RLS ADMIN.
 
----
+**Pré-populações:**
+- Alessandro como destinatário ativo de `receita_caixa`.
+- Config `receita_caixa` ativa, 08:00, Seg-Sex.
 
-## 2. Templates compartilhados
+**RPCs SECURITY DEFINER (search_path=public):**
+- `rpc_listar_destinatarios_automaticos(p_modulo)` — join com profiles + user_roles
+- `rpc_adicionar_destinatario_automatico(p_user_id, p_modulo)` — valida ADMIN, upsert
+- `rpc_remover_destinatario_automatico(p_id)` — valida ADMIN, delete hard
+- `rpc_toggle_schedule(p_modulo, p_motivo)` — alterna ativo, registra pausado_por/em
+- `rpc_historico_disparos(p_modulo, p_limit)` — últimos N disparos com nome de quem forçou
 
-`supabase/functions/_shared/transactional-email-templates/`:
-- `registry.ts` — `TemplateEntry` + `TEMPLATES`.
-- `_template-example.tsx` — header gradient `#082537 → #0b3d57`, body branco, botão accent **`#0A2337`**, fonte system, footer institucional (sem unsubscribe — é appendado pelo sender).
-
----
-
-## 3. Edge function `send-transactional-email` (verify_jwt = true)
-
-1. Valida JWT + body (Zod): `templateName`, `recipientEmail`, `idempotencyKey?`, `templateData?`, `label?`.
-2. Resolve template ou 400.
-3. Checa `suppressed_emails` → se suprimido, loga e retorna `{ skipped: true, reason: 'suppressed' }`.
-4. Get-or-create `email_unsubscribe_tokens` para o recipient.
-5. Renderiza HTML via `@react-email/components` + `renderAsync`.
-6. Appenda footer com link `https://hub.tailorpartners.com.br/unsubscribe?token=<token>`.
-7. Insere `email_send_log` `status='pending'`.
-8. `enqueue_email('transactional_emails', { from, sender_domain: "notify.hub.tailorpartners.com.br", to, subject, html, text, purpose: 'transactional', label, message_id, idempotency_key, unsubscribe_token, queued_at })`.
-9. Retorna `{ message_id, queued_at, queued: true }`.
+**Nova permissão granular:** `gerenciar_emails_schedules` adicionada ao `perfis_acesso` (backfill ADMIN=true) seguindo padrão do projeto.
 
 ---
 
-## 4. Edge function `handle-email-unsubscribe` (verify_jwt = false)
+## 2. Edge Function `send-receita-caixa-automatic`
 
-- `GET /?token=...` → HTML estilizado (mesmo branding) com botão "Confirmar descadastro".
-- `POST { token }` → valida token (existe, não usado), em transação marca `used_at` e insere `suppressed_emails (email, reason='unsubscribe')` com ON CONFLICT DO NOTHING.
+`supabase/functions/send-receita-caixa-automatic/index.ts` + entrada em `config.toml` com `verify_jwt = false`.
 
----
+**Fluxo:**
+1. Lê body (opcional): `{ force?: bool, user_id?: uuid }`
+2. Lê config do módulo — se pausado e `!force` → `skipped: schedule_pausado`
+3. Se `!force`, chama `is_dia_util(hoje)` — se não, skip
+4. Verifica `email_disparos_automaticos` por `(modulo, data_envio)` — se existe → `skipped: ja_disparado_hoje`
+5. Busca destinatários ativos com join em profiles
+6. Insere registro `em_processamento` (UNIQUE constraint protege race)
+7. Loop: para cada destinatário invoca `send-transactional-email` com `templateName='receita-caixa-newsletter'`, `idempotencyKey=auto-receita_caixa-{data}-{user_id}`, `label=auto-receita_caixa-{data}`
+8. Atualiza disparo com sucessos/falhas/status (`concluido`/`falha_parcial`/`falha_total`)
+9. Em caso de falha: insere `notificacoes_admin` + dispara `_example` para todos ADMINs ativos
 
-## 5. Página `/unsubscribe` (Vite)
-
-`src/pages/Unsubscribe.tsx` — rota pública. Lê `?token=`, mostra card no design system do Hub, faz POST para `handle-email-unsubscribe` e exibe sucesso/erro.
-
----
-
-## 6. Edge function `handle-email-suppression` (verify_jwt = false, shared secret)
-
-Webhook genérico: `{ event_type: 'bounce'|'complaint'|'spam', recipient, reason?, metadata? }` → upsert em `suppressed_emails`.
-
----
-
-## 7. Permissões (UI)
-
-`src/pages/admin/GestaoProfiles.tsx` — nova seção "Comunicações por Email" com 3 toggles. Default ON para ADMIN, OFF para demais.
+Auth: usa `SUPABASE_SERVICE_ROLE_KEY` para bypassar RLS.
 
 ---
 
-## 8. Tela `/admin/emails/log`
+## 3. Cron pg agendado (via tool `supabase--insert`)
 
-`src/pages/admin/EmailsLog.tsx` (rota protegida por `AdminRoute`).
+Verifica `pg_cron` + `pg_net` habilitados. Cria/atualiza job:
 
-Query deduplicada por `message_id` (última linha por `created_at desc`). Filtros: `template_name`, `status` (badges), `recipient_email` (search), período (presets 24h/7d/30d + custom, default 7d). Stats cards: Total / Sent / Failed (dlq) / Suppressed. Tabela paginada 50/pág, sort timestamp desc. Apenas leitura. Item adicionado no `AppSidebar` (seção Admin).
-
----
-
-## 9. Hardcoded
-
-```ts
-const SENDER_DOMAIN = "notify.hub.tailorpartners.com.br"
-const FROM_DOMAIN   = "hub.tailorpartners.com.br"
-const SITE_NAME     = "Hub Grupo Tailor Partners"
+```
+jobname: send-receita-caixa-automatic-daily
+schedule: 0 11 * * *  (08h BRT)
+cmd: net.http_post(url=.../send-receita-caixa-automatic, 
+     Authorization=Bearer <vault email_queue_service_role_key>, body={})
 ```
 
----
-
-## 10. Validação end-to-end pós-deploy
-
-1. Disparo `_template-example` → `alessandro.oliveira@tailorpartners.com.br` com `{ nome: 'Alessandro', mensagem: 'Teste do módulo transacional.' }`.
-2. Confirmar linha `pending` → `sent` em `email_send_log` (cron processa em ≤10s).
-3. Validar email recebido (From correto + footer unsubscribe).
-4. Clicar no link → página `/unsubscribe` → confirmar.
-5. 2º disparo retorna `{ skipped: true, reason: 'suppressed' }` e loga `suppressed`.
-6. Tela `/admin/emails/log` mostra os 2 envios.
+Se job já existir, faz `cron.unschedule` antes do `cron.schedule`.
 
 ---
 
-## Arquivos
+## 4. Tela `/admin/emails/schedules`
+
+`src/pages/admin/EmailSchedules.tsx` — protegida por `PermissionRoute('gerenciar_emails_schedules')`.
+
+**Componentes:**
+- **Card de status** (Newsletter Receita Caixa): badge Ativo/Pausado, último envio (data + counters), próximo envio calculado client-side (próximo dia útil 08h), horário/dias, botões `Pausar`/`Reativar` (modal motivo) e `Disparar agora` (invoca edge com `force:true, user_id`).
+- **Lista de destinatários**: tabela com nome/email/role/data, botão `+ Adicionar` reusa modal de busca (`rpc_buscar_usuarios_hub` do Prompt 3) — novo componente leve `AdicionarDestinatarioModal`, botão `Remover` com `AlertDialog`.
+- **Histórico**: tabela últimos 30 disparos, badge color-coded por status, indicador manual/automático (forcado_por preenchido), expansível para ver `detalhes_erro`.
+
+**Sidebar:** adicionar entrada "Agendamentos de E-mail" em Admin (visível com `gerenciar_emails_schedules` ou ADMIN). `App.tsx`: registrar rota com `PermissionRoute`.
+
+---
+
+## 5. Arquivos esperados
 
 **Criados:**
-- Migration única (tabelas + fila + permissões)
-- `supabase/functions/_shared/transactional-email-templates/{registry.ts, _template-example.tsx}`
-- `supabase/functions/send-transactional-email/{index.ts, deno.json}`
-- `supabase/functions/handle-email-unsubscribe/index.ts`
-- `supabase/functions/handle-email-suppression/index.ts`
-- `src/pages/Unsubscribe.tsx`
-- `src/pages/admin/EmailsLog.tsx`
+- `supabase/migrations/<timestamp>_email_schedules.sql`
+- `supabase/functions/send-receita-caixa-automatic/index.ts`
+- `src/pages/admin/EmailSchedules.tsx`
+- `src/components/email/AdicionarDestinatarioModal.tsx`
 
 **Editados:**
-- `supabase/config.toml` (3 novas functions)
-- `src/App.tsx` (rotas `/unsubscribe`, `/admin/emails/log`)
-- `src/components/AppSidebar.tsx` (item Admin → Log de Emails)
-- `src/pages/admin/GestaoProfiles.tsx` (seção Email)
+- `supabase/config.toml` — bloco da nova função com `verify_jwt = false`
+- `src/App.tsx` — nova rota
+- `src/components/AppSidebar.tsx` — item "Agendamentos de E-mail"
+- `src/pages/admin/GestaoProfiles.tsx` — checkbox `gerenciar_emails_schedules`
+- `src/integrations/supabase/types.ts` — auto-regenerado
 
-**Fora deste scaffold:** templates específicos (Receita Caixa etc.), `email_destinatarios_modulo`, botão de envio manual em Receita, newsletter automática + cron.
+---
+
+## 6. Validações (executadas após implementação)
+
+1. `SELECT * FROM cron.job WHERE jobname LIKE 'send-receita%'` — confirmar agendamento
+2. Disparo manual via curl → email chega, histórico atualiza
+3. Disparo manual 2x → 2ª retorna `skipped: ja_disparado_hoje`
+4. Pausar via UI → disparo retorna `skipped: schedule_pausado`
+5. Adicionar/remover destinatário via UI
+6. Confirmar Alessandro pré-populado: `SELECT * FROM email_destinatarios_automaticos WHERE modulo='receita_caixa'`
+
+---
+
+## Pontos de atenção
+
+- Race condition: confiamos no UNIQUE(modulo, data_envio) — código trata `errCode=23505` retornando skip
+- Notificação de falha usa `_example` (conforme NÃO FAZER), com mensagem custom
+- Cron usa secret do Vault `email_queue_service_role_key` (já existente, criado pelo email infra setup)
+- Sem mexer em `receita-caixa-newsletter.tsx`, `rpc_email_receita_payload`, ou `EnviarEmailReceitaModal`
+- `forcado_por` NULL quando vier do cron; preenchido quando vier do botão "Disparar agora"
