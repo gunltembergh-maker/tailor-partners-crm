@@ -354,18 +354,19 @@ export default function ReceitaCaixa() {
         .dashboard-receita { font-family: 'Source Sans 3', system-ui, sans-serif; color: #0A2337; }
         .dashboard-receita .title-serif, .dashboard-receita h1.title-serif { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; color: #0A2337; }
       `}</style>
-      <div className="dashboard-receita" style={{ background: C.bgPage, margin: -16, padding: 24, minHeight: "calc(100vh - 64px)" }}>
+      <TailorFrame>
+      <div className="dashboard-receita">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="title-serif" style={{ fontSize: 32, fontWeight: 400, color: C.navy900, letterSpacing: "-0.5px", margin: 0 }}>Receita</h1>
-            <ChevronRight className="h-4 w-4" style={{ color: C.textMuted }} />
-            <span className="text-[18px] font-normal" style={{ color: C.textMuted }}>Caixa</span>
-            <ChevronRight className="h-4 w-4" style={{ color: C.textMuted }} />
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md" style={{ background: C.navy900 }}>
-              <Calendar className="h-3.5 w-3.5" style={{ color: C.bgPage }} />
+            <h1 className="title-serif text-[#DFDBBE]" style={{ fontSize: 32, fontWeight: 400, letterSpacing: "-0.5px", margin: 0 }}>Receita</h1>
+            <ChevronRight className="h-4 w-4 text-[#DFDBBE]/40" />
+            <span className="text-[18px] font-normal text-[#DFDBBE]/70">Caixa</span>
+            <ChevronRight className="h-4 w-4 text-[#DFDBBE]/40" />
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/15">
+              <Calendar className="h-3.5 w-3.5 text-[#73A7B7]" />
               <Select value={selectedAnomes ? String(selectedAnomes) : ""} onValueChange={(v) => setSelectedAnomes(Number(v))}>
-                <SelectTrigger className="bg-transparent border-0 h-6 w-[120px] focus:ring-0 p-0" style={{ color: C.bgPage }}>
+                <SelectTrigger className="bg-transparent border-0 h-6 w-[120px] focus:ring-0 p-0 text-[#DFDBBE]">
                   <SelectValue placeholder="Período…" />
                 </SelectTrigger>
                 <SelectContent>
@@ -377,18 +378,18 @@ export default function ReceitaCaixa() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs flex items-center gap-1" style={{ color: C.textMuted }}>
-              <Clock className="h-3 w-3" />
+            <span className="text-xs flex items-center gap-1 text-[#DFDBBE]/80">
+              <Clock className="h-3 w-3 text-[#73A7B7]" />
               Atualizado {atualizadoEmFormatted}
             </span>
-            <span className="text-xs flex items-center gap-1" style={{ color: C.textMuted }}>
-              <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+            <span className="text-xs flex items-center gap-1 text-[#DFDBBE]/80">
+              <RefreshCw className={`h-3 w-3 text-[#73A7B7] ${isRefreshing ? "animate-spin" : ""}`} />
               Dados: {dadosAteFormatted}
             </span>
             <Button
               variant="outline"
               size="sm"
-              className="h-6 text-xs gap-1"
+              className="h-6 text-xs gap-1 border-[#DFDBBE]/30 text-[#DFDBBE] bg-transparent hover:bg-white/10 hover:text-[#DFDBBE]"
               onClick={handleRefreshReceita}
               disabled={isManualRefreshing || refreshingMV}
             >
@@ -400,17 +401,18 @@ export default function ReceitaCaixa() {
                 variant="outline"
                 size="sm"
                 onClick={() => setEmailModalOpen(true)}
-                className="h-6 text-xs gap-1 border-[#0A2337] text-[#0A2337] hover:bg-[#0A2337] hover:text-white"
+                className="h-6 text-xs gap-1 border-[#DFDBBE]/30 text-[#DFDBBE] bg-transparent hover:bg-white/10 hover:text-[#DFDBBE]"
               >
                 <Mail className="h-3 w-3" />
                 Enviar por E-mail
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setShowOnboarding(true)} style={{ color: C.textMuted }}>
+            <Button variant="ghost" size="sm" onClick={() => setShowOnboarding(true)} className="text-[#DFDBBE] hover:bg-white/10 hover:text-[#DFDBBE]">
               <HelpCircle className="h-4 w-4 mr-1" /> Ajuda
             </Button>
           </div>
         </div>
+
 
         <EnviarEmailReceitaModal open={emailModalOpen} onClose={() => setEmailModalOpen(false)} />
 
