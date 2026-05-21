@@ -144,8 +144,8 @@ export function AdminNotifications() {
               <SelectValue placeholder="Selecione o perfil..." />
             </SelectTrigger>
             <SelectContent>
-              {PERFIS.map((p) => (
-                <SelectItem key={p} value={p}>{p}</SelectItem>
+              {perfisOptions.map((p) => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
