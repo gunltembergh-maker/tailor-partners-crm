@@ -150,6 +150,7 @@ function AppRoutes() {
         <Route path="/admin/regras-acesso" element={<AdminRoute><RegrasAcesso /></AdminRoute>} />
         <Route path="/admin/popups" element={<AdminRoute><GerenciarPopups /></AdminRoute>} />
         <Route path="/admin/emails/log" element={<AdminRoute><EmailsLog /></AdminRoute>} />
+        <Route path="/admin/emails/schedules" element={<PermissionRoute permissions={["gerenciar_emails_schedules"]}><EmailSchedules /></PermissionRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
