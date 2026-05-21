@@ -95,23 +95,15 @@ export function FiltersSidebar({
 
   return (
     <div
-      className="w-56 shrink-0 flex flex-col text-white"
+      className="w-56 shrink-0 flex flex-col text-[#DFDBBE]"
       style={{
-        backgroundColor: "#1B2A3D",
+        backgroundColor: "#082537",
         minHeight: "calc(100vh - 120px)",
       }}
     >
-      {/* Logo */}
-      <div className="px-4 pt-4 pb-2">
-        <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-          Tailor
-        </h1>
-        <p className="text-[9px] tracking-[0.25em] uppercase opacity-60">Partners</p>
-      </div>
-
       {/* Title */}
-      <div className="px-4 pt-2 pb-1">
-        <p className="text-[10px] font-bold uppercase tracking-[0.15em] opacity-80">Filtros</p>
+      <div className="px-4 pt-4 pb-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#DFDBBE]/70">Filtros</p>
       </div>
 
       {/* Filters */}
@@ -246,7 +238,7 @@ export function FiltersSidebar({
           <div className="flex gap-2 pt-1">
             <Button
               size="sm"
-              className="flex-1 h-7 text-[10px] bg-white/20 hover:bg-white/30 text-white border-0"
+              className="flex-1 h-7 text-[10px] bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50"
               onClick={applyFilters}
               disabled={!hasChanges}
             >
@@ -256,7 +248,7 @@ export function FiltersSidebar({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-[10px] text-white/70 hover:text-white hover:bg-white/10"
+              className="h-7 text-[10px] text-[#DFDBBE]/70 hover:text-[#DFDBBE] hover:bg-white/10"
               onClick={resetFilters}
             >
               <RotateCcw className="h-3 w-3 mr-1" />

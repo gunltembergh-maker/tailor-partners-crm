@@ -123,7 +123,7 @@ export default function AuditoriaComercial() {
           <div className="flex-1 min-w-0 p-4">
             <div className="flex items-center justify-between mb-3">
               <h1 className="text-base font-semibold" style={{ color: "#DFDBBE" }}>Auditoria Comercial</h1>
-              <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={exportCSV}>
+              <Button size="sm" variant="outline" className="h-7 text-[11px] bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50 hover:text-[#DFDBBE]" onClick={exportCSV}>
                 <Download className="h-3 w-3 mr-1" /> Exportar CSV
               </Button>
             </div>

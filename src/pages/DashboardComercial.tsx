@@ -102,20 +102,20 @@ export default function DashboardComercial() {
 
           <div className="flex-1 min-w-0 p-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-base font-semibold" style={{ color: "#DFDBBE" }}>Dashboard Comercial</h1>
-                <span className="text-xs flex items-center gap-1" style={{ color: "#9CA3AF" }}>
-                  <Clock className="h-3 w-3" />
+                <span className="text-xs flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-sm border border-white/15 text-[#DFDBBE]">
+                  <Clock className="h-3 w-3 text-[#73A7B7]" />
                   Atualizado {atualizadoEmFormatted}
                 </span>
-                <span className="text-xs flex items-center gap-1" style={{ color: "#9CA3AF" }}>
-                  <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+                <span className="text-xs flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-sm border border-white/15 text-[#DFDBBE]">
+                  <RefreshCw className={`h-3 w-3 text-[#73A7B7] ${isRefreshing ? "animate-spin" : ""}`} />
                   Dados: {dadosAteFormatted}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-xs gap-1"
+                  className="h-6 text-xs gap-1 bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50 hover:text-[#DFDBBE]"
                   onClick={manualRefresh}
                   disabled={isManualRefreshing}
                 >
@@ -142,11 +142,11 @@ export default function DashboardComercial() {
             )}
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="mb-3 h-8 bg-white border border-gray-200">
-                <TabsTrigger value="quantitativo" className="text-xs h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
+              <TabsList className="mb-3 h-8 bg-white/5 border border-white/10 rounded-md p-1">
+                <TabsTrigger value="quantitativo" className="text-xs h-6 text-[#DFDBBE]/60 hover:text-[#DFDBBE]/90 hover:bg-white/5 data-[state=active]:bg-white/15 data-[state=active]:text-[#DFDBBE]">
                   Quantitativo
                 </TabsTrigger>
-                <TabsTrigger value="qualitativo" className="text-xs h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
+                <TabsTrigger value="qualitativo" className="text-xs h-6 text-[#DFDBBE]/60 hover:text-[#DFDBBE]/90 hover:bg-white/5 data-[state=active]:bg-white/15 data-[state=active]:text-[#DFDBBE]">
                   Qualitativo
                 </TabsTrigger>
               </TabsList>

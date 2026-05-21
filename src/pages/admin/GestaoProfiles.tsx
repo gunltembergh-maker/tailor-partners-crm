@@ -301,7 +301,7 @@ export default function GestaoProfiles() {
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button><Plus className="h-4 w-4 mr-1" /> Novo Perfil</Button>
+                <Button variant="outline" className="gap-1 bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50 hover:text-[#DFDBBE]"><Plus className="h-4 w-4 mr-1" /> Novo Perfil</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
