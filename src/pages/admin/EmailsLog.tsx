@@ -131,7 +131,7 @@ export default function EmailsLog() {
                 Histórico de envios institucionais (auth + transacional) — deduplicado por message_id.
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50 hover:text-[#DFDBBE]">
               <RefreshCcw className={`h-4 w-4 mr-1 ${isFetching ? "animate-spin" : ""}`} />
               Atualizar
             </Button>
