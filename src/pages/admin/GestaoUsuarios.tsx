@@ -219,9 +219,11 @@ export default function GestaoUsuarios() {
         (statusFilter === "Pré-cadastrado" && !u.active && !u.blocked) ||
         (statusFilter === "Bloqueado" && u.blocked);
       const matchPerfil = perfilFilter === "Todos" || u.role === perfilFilter;
-      return matchSearch && matchStatus && matchPerfil;
+      const tipo = (u.tipo_usuario || "interno");
+      const matchTipo = tipoFilter === "Todos" || tipo === tipoFilter;
+      return matchSearch && matchStatus && matchPerfil && matchTipo;
     });
-  }, [usuarios, search, statusFilter, perfilFilter]);
+  }, [usuarios, search, statusFilter, perfilFilter, tipoFilter]);
 
   const openCreateModal = useCallback(() => {
     setFormData(null);
