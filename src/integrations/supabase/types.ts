@@ -477,6 +477,111 @@ export type Database = {
         }
         Relationships: []
       }
+      email_destinatarios_automaticos: {
+        Row: {
+          adicionado_por: string | null
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          id: string
+          modulo: string
+          user_id: string
+        }
+        Insert: {
+          adicionado_por?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          modulo: string
+          user_id: string
+        }
+        Update: {
+          adicionado_por?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          modulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_disparos_automaticos: {
+        Row: {
+          data_envio: string
+          detalhes_erro: Json | null
+          disparado_em: string
+          finalizado_em: string | null
+          forcado_por: string | null
+          id: string
+          modulo: string
+          status: string
+          total_destinatarios: number
+          total_falhas: number
+          total_sucessos: number
+        }
+        Insert: {
+          data_envio: string
+          detalhes_erro?: Json | null
+          disparado_em?: string
+          finalizado_em?: string | null
+          forcado_por?: string | null
+          id?: string
+          modulo: string
+          status?: string
+          total_destinatarios: number
+          total_falhas?: number
+          total_sucessos?: number
+        }
+        Update: {
+          data_envio?: string
+          detalhes_erro?: Json | null
+          disparado_em?: string
+          finalizado_em?: string | null
+          forcado_por?: string | null
+          id?: string
+          modulo?: string
+          status?: string
+          total_destinatarios?: number
+          total_falhas?: number
+          total_sucessos?: number
+        }
+        Relationships: []
+      }
+      email_schedules_config: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          dias_semana: number[]
+          horario_envio: string
+          modulo: string
+          motivo_pausa: string | null
+          pausado_em: string | null
+          pausado_por: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          dias_semana?: number[]
+          horario_envio?: string
+          modulo: string
+          motivo_pausa?: string | null
+          pausado_em?: string | null
+          pausado_por?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          dias_semana?: number[]
+          horario_envio?: string
+          modulo?: string
+          motivo_pausa?: string | null
+          pausado_em?: string | null
+          pausado_por?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -3307,6 +3412,10 @@ export type Database = {
         }[]
       }
       refresh_mv_caixa_completa: { Args: never; Returns: undefined }
+      rpc_adicionar_destinatario_automatico: {
+        Args: { p_modulo: string; p_user_id: string }
+        Returns: string
+      }
       rpc_admin_aprovar_usuario: {
         Args: { p_notif_id?: string; p_role: string; p_user_id: string }
         Returns: Json
@@ -3964,6 +4073,21 @@ export type Database = {
           titulo: string
         }[]
       }
+      rpc_historico_disparos: {
+        Args: { p_limit?: number; p_modulo: string }
+        Returns: {
+          data_envio: string
+          detalhes_erro: Json
+          disparado_em: string
+          finalizado_em: string
+          forcado_por_nome: string
+          id: string
+          status: string
+          total_destinatarios: number
+          total_falhas: number
+          total_sucessos: number
+        }[]
+      }
       rpc_inicio_comunicados_ativos: {
         Args: never
         Returns: {
@@ -4023,6 +4147,19 @@ export type Database = {
         Args: never
         Returns: {
           finder: string
+        }[]
+      }
+      rpc_listar_destinatarios_automaticos: {
+        Args: { p_modulo: string }
+        Returns: {
+          adicionado_por_nome: string
+          ativo: boolean
+          criado_em: string
+          email: string
+          id: string
+          nome: string
+          role: string
+          user_id: string
         }[]
       }
       rpc_marcar_primeiro_acesso: { Args: never; Returns: undefined }
@@ -4248,6 +4385,10 @@ export type Database = {
       rpc_registrar_convite: {
         Args: { p_acao: string; p_email: string }
         Returns: Json
+      }
+      rpc_remover_destinatario_automatico: {
+        Args: { p_id: string }
+        Returns: boolean
       }
       rpc_roa_faixa_pl: {
         Args: {
@@ -4685,6 +4826,10 @@ export type Database = {
           tipo_cliente: string
           vencimento: string
         }[]
+      }
+      rpc_toggle_schedule: {
+        Args: { p_modulo: string; p_motivo?: string }
+        Returns: boolean
       }
       rpc_validar_dominio: { Args: { p_email: string }; Returns: Json }
       rpc_vencimentos_grafico: {

@@ -69,6 +69,7 @@ const GestaoUsuarios = lazy(() => import("./pages/admin/GestaoUsuarios"));
 const RegrasAcesso = lazy(() => import("./pages/admin/RegrasAcesso"));
 const GerenciarPopups = lazy(() => import("./pages/admin/GerenciarPopups"));
 const EmailsLog = lazy(() => import("./pages/admin/EmailsLog"));
+const EmailSchedules = lazy(() => import("./pages/admin/EmailSchedules"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 
@@ -150,6 +151,7 @@ function AppRoutes() {
         <Route path="/admin/regras-acesso" element={<AdminRoute><RegrasAcesso /></AdminRoute>} />
         <Route path="/admin/popups" element={<AdminRoute><GerenciarPopups /></AdminRoute>} />
         <Route path="/admin/emails/log" element={<AdminRoute><EmailsLog /></AdminRoute>} />
+        <Route path="/admin/emails/schedules" element={<PermissionRoute permissions={["gerenciar_emails_schedules"]}><EmailSchedules /></PermissionRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

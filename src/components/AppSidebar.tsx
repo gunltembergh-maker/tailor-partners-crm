@@ -130,6 +130,9 @@ export function AppSidebar() {
   if (isAdmin) {
     adminItems.push({ title: "Log de Emails", icon: Mail, path: "/admin/emails/log" });
   }
+  if (isAdmin || canSee("gerenciar_emails_schedules")) {
+    adminItems.push({ title: "Agendamentos de E-mail", icon: CalendarDays, path: "/admin/emails/schedules" });
+  }
 
   const showAdmin = adminItems.length > 0;
 
