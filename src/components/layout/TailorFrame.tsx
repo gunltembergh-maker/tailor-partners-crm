@@ -16,7 +16,7 @@ export function TailorFrame({ children, className = "" }: TailorFrameProps) {
   return (
     <div
       className={`relative -m-6 min-h-[calc(100vh-32px)] ${className}`}
-      style={{ background: "#3088B8", padding: 16 }}
+      style={{ background: "#566E87", padding: 16 }}
     >
       <div className="relative min-h-[calc(100vh-64px)]">
         {/* Interior navy com chanfro triangular à direita */}
