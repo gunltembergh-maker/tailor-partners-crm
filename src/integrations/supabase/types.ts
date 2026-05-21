@@ -3367,6 +3367,7 @@ export type Database = {
       fn_anomes_m0: { Args: never; Returns: number }
       fn_anomes_m1: { Args: never; Returns: number }
       fn_dentro_periodo_m1: { Args: never; Returns: boolean }
+      get_email_queue_jwt: { Args: never; Returns: string }
       get_user_advisor_filter: { Args: never; Returns: string[] }
       get_user_banker_filter: { Args: never; Returns: string[] }
       get_user_canal_filter: { Args: never; Returns: string[] }
@@ -4878,6 +4879,7 @@ export type Database = {
         | "ADMIN"
         | "OPERACOES"
         | "FA ASSISTENTE"
+        | "DIRETORIA"
       client_status: "ATIVO_NET" | "INATIVO_PLD" | "CRITICO"
       lead_status:
         | "NOVO"
@@ -5058,6 +5060,7 @@ export const Constants = {
         "ADMIN",
         "OPERACOES",
         "FA ASSISTENTE",
+        "DIRETORIA",
       ],
       client_status: ["ATIVO_NET", "INATIVO_PLD", "CRITICO"],
       lead_status: [
