@@ -69,16 +69,30 @@ Deno.serve(async (req) => {
       })
     }
 
-    // 4. Destinatários ativos
+    // 4. Destinatários ativos (sem FK declarada → join manual em 2 queries)
     const { data: destRaw, error: errDest } = await supabase
       .from('email_destinatarios_automaticos')
-      .select('user_id, profiles!inner(email, nome_completo, full_name, nome, active)')
+      .select('user_id')
       .eq('modulo', MODULO)
       .eq('ativo', true)
 
     if (errDest) throw errDest
 
-    const destinatarios = (destRaw || []).filter((d: any) => d.profiles?.active && d.profiles?.email)
+    const userIds = (destRaw || []).map((d: any) => d.user_id)
+
+    let profilesById: Record<string, any> = {}
+    if (userIds.length > 0) {
+      const { data: profs, error: errProfs } = await supabase
+        .from('profiles')
+        .select('user_id, email, nome_completo, full_name, nome, active')
+        .in('user_id', userIds)
+      if (errProfs) throw errProfs
+      profilesById = Object.fromEntries((profs || []).map((p: any) => [p.user_id, p]))
+    }
+
+    const destinatarios = (destRaw || [])
+      .map((d: any) => ({ user_id: d.user_id, profiles: profilesById[d.user_id] }))
+      .filter((d: any) => d.profiles?.active && d.profiles?.email)
 
     if (destinatarios.length === 0) {
       return json({ skipped: true, reason: 'sem_destinatarios' })
