@@ -71,6 +71,7 @@ interface Usuario {
   convite_expira_em?: string | null;
   convite_cancelado_em?: string | null;
   convite_reenvios?: number | null;
+  tipo_usuario?: "interno" | "externo" | null;
 }
 
 function maskCpf(cpf: string | null): string {
