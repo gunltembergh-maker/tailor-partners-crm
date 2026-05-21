@@ -1,0 +1,11 @@
+{
+  "name": "Hub Tailor Partners",
+  "short_name": "Hub Tailor",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "theme_color": "#082537",
+  "background_color": "#DFDBBE",
+  "display": "standalone",
+  "start_url": "/inicio"
+}
