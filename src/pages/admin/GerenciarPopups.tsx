@@ -323,11 +323,12 @@ export default function GerenciarPopups() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       <div className="p-6 max-w-7xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Megaphone className="h-5 w-5" style={{ color: "#082537" }} />
-            <h1 className="text-lg font-semibold" style={{ color: "#1B2A3D" }}>
+            <Megaphone className="h-5 w-5 text-[#73A7B7]" />
+            <h1 className="text-lg font-semibold" style={{ color: "#DFDBBE" }}>
               Comunicados
             </h1>
           </div>
@@ -659,6 +660,7 @@ export default function GerenciarPopups() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </TailorFrame>
     </AppLayout>
   );
 }

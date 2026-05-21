@@ -70,6 +70,7 @@ export default function DashboardComercial() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       <PopupComunicado />
       {showBoasVindas && profile && (
         <BoasVindasModal
@@ -102,7 +103,7 @@ export default function DashboardComercial() {
           <div className="flex-1 min-w-0 p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <h1 className="text-base font-semibold" style={{ color: "#1B2A3D" }}>Dashboard Comercial</h1>
+                <h1 className="text-base font-semibold" style={{ color: "#DFDBBE" }}>Dashboard Comercial</h1>
                 <span className="text-xs flex items-center gap-1" style={{ color: "#9CA3AF" }}>
                   <Clock className="h-3 w-3" />
                   Atualizado {atualizadoEmFormatted}
@@ -159,6 +160,7 @@ export default function DashboardComercial() {
           </div>
         </div>
       </div>
+      </TailorFrame>
     </AppLayout>
   );
 }

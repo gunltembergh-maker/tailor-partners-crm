@@ -123,15 +123,16 @@ export default function ClienteDetalhe() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       <div className="animate-fade-in">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/clientes")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/clientes")} className="text-[#DFDBBE] hover:bg-white/10 hover:text-[#DFDBBE]">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">{client.nome_razao}</h1>
-            <p className="text-sm text-muted-foreground">Conta · {clientStatusLabels[client.status]}</p>
+            <h1 style={{ color: "#DFDBBE" }} className="text-2xl font-display font-bold">{client.nome_razao}</h1>
+            <p className="text-sm text-[#DFDBBE]/70">Conta · {clientStatusLabels[client.status]}</p>
           </div>
         </div>
 
@@ -382,6 +383,7 @@ export default function ClienteDetalhe() {
           </TabsContent>
         </Tabs>
       </div>
+      </TailorFrame>
     </AppLayout>
   );
 }

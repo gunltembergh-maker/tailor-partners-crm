@@ -288,10 +288,11 @@ export default function RegrasAcesso() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       <div className="space-y-6 p-6 max-w-6xl mx-auto">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Regras de Acesso</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 style={{ color: "#DFDBBE" }} className="text-2xl font-bold">Regras de Acesso</h1>
+          <p className="text-sm text-[#DFDBBE]/70 mt-1">
             Configure quais dados cada usuário pode visualizar no dashboard
           </p>
         </div>
@@ -487,6 +488,7 @@ export default function RegrasAcesso() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </TailorFrame>
     </AppLayout>
   );
 }

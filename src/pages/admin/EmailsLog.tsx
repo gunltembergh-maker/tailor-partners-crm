@@ -120,13 +120,14 @@ export default function EmailsLog() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       {isLoading && <TailorLoader overlay={false} />}
       {!isLoading && (
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Log de Emails</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 style={{ color: "#DFDBBE" }} className="text-2xl font-bold">Log de Emails</h1>
+              <p className="text-sm text-[#DFDBBE]/70">
                 Histórico de envios institucionais (auth + transacional) — deduplicado por message_id.
               </p>
             </div>
@@ -252,6 +253,7 @@ export default function EmailsLog() {
           </Card>
         </div>
       )}
+      </TailorFrame>
     </AppLayout>
   );
 }

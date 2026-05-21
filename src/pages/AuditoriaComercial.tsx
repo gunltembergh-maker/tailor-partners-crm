@@ -107,6 +107,7 @@ export default function AuditoriaComercial() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       <div style={{ backgroundColor: "#F2F2F2", minHeight: "calc(100vh - 64px)", margin: "-1.5rem", padding: "0" }}>
         <div className="flex">
           <FiltersSidebar
@@ -121,7 +122,7 @@ export default function AuditoriaComercial() {
 
           <div className="flex-1 min-w-0 p-4">
             <div className="flex items-center justify-between mb-3">
-              <h1 className="text-base font-semibold" style={{ color: "#1B2A3D" }}>Auditoria Comercial</h1>
+              <h1 className="text-base font-semibold" style={{ color: "#DFDBBE" }}>Auditoria Comercial</h1>
               <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={exportCSV}>
                 <Download className="h-3 w-3 mr-1" /> Exportar CSV
               </Button>
@@ -217,6 +218,7 @@ export default function AuditoriaComercial() {
           </div>
         </div>
       </div>
+      </TailorFrame>
     </AppLayout>
   );
 }
