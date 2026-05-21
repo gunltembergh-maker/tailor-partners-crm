@@ -81,7 +81,7 @@ export default function DashboardComercial() {
       )}
       <DashboardLoadingScreen isLoading={isCriticalLoading} />
       <LoadingOverlay show={tabLoading} />
-      <div style={{ backgroundColor: "#F2F2F2", minHeight: "calc(100vh - 64px)", margin: "-1.5rem", padding: "0" }}>
+      <div style={{ minHeight: "calc(100vh - 64px)" }}>
         {isRefreshing && (
           <div className="fixed top-0 left-0 right-0 z-50">
             <Progress value={100} className="h-0.5 rounded-none [&>div]:animate-pulse" />

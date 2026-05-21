@@ -108,7 +108,7 @@ export default function AuditoriaComercial() {
   return (
     <AppLayout>
       <TailorFrame>
-      <div style={{ backgroundColor: "#F2F2F2", minHeight: "calc(100vh - 64px)", margin: "-1.5rem", padding: "0" }}>
+      <div style={{ minHeight: "calc(100vh - 64px)" }}>
         <div className="flex">
           <FiltersSidebar
             pendingFilters={pendingFilters}
