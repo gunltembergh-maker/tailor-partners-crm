@@ -168,7 +168,6 @@ export default function Auth() {
   }
 
   const MONTANHA_URL = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/ImagemMontanhaTailor";
-  const LOGO_WORDMARK = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo_Tailor.png";
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
@@ -183,18 +182,14 @@ export default function Auth() {
       {/* Overlay sutil pra reforçar contraste do card */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#082537]/40 via-[#082537]/20 to-[#082537]/50" />
 
-      {/* Logo wordmark Tailor Partners — canto superior esquerdo */}
-      <div className="absolute top-0 left-0 z-20 p-8 lg:p-12">
-        <img
-          src={LOGO_WORDMARK}
-          alt="Tailor Partners"
-          className="h-10 lg:h-12 w-auto"
-        />
-      </div>
-
-      {/* Card de login centralizado */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-6 py-16">
-        <div className="w-full max-w-md animate-fade-in">
+      {/* Card de login centralizado com triangulo brand mark acima */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-6 w-full max-w-md animate-fade-in">
+          <img
+            src="/tailor-logo-white.svg"
+            alt="Tailor Partners"
+            className="h-16 w-auto drop-shadow-lg"
+          />
           {isBlocked && (
             <Alert variant="destructive" className="mb-4">
               <AlertTriangle className="h-4 w-4" />
