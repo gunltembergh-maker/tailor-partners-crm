@@ -142,11 +142,11 @@ export default function DashboardComercial() {
             )}
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="mb-3 h-8 bg-white border border-gray-200">
-                <TabsTrigger value="quantitativo" className="text-xs h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
+              <TabsList className="mb-3 h-8 bg-white/5 border border-white/10 rounded-md p-1">
+                <TabsTrigger value="quantitativo" className="text-xs h-6 text-[#DFDBBE]/60 hover:text-[#DFDBBE]/90 hover:bg-white/5 data-[state=active]:bg-white/15 data-[state=active]:text-[#DFDBBE]">
                   Quantitativo
                 </TabsTrigger>
-                <TabsTrigger value="qualitativo" className="text-xs h-6 data-[state=active]:bg-[#1B2A3D] data-[state=active]:text-white">
+                <TabsTrigger value="qualitativo" className="text-xs h-6 text-[#DFDBBE]/60 hover:text-[#DFDBBE]/90 hover:bg-white/5 data-[state=active]:bg-white/15 data-[state=active]:text-[#DFDBBE]">
                   Qualitativo
                 </TabsTrigger>
               </TabsList>
