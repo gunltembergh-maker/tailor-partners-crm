@@ -946,7 +946,7 @@ function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: stri
                 const pct = (v / d.total) * 100;
                 return (
                   <div key={c} className="flex items-center justify-center" style={{ height: `${pct}%`, background: colorFor(c, i) }}>
-                    {pct >= 6 && <span style={{ fontSize: 12, fontWeight: 500, color: "#fff" }}>{pct.toFixed(0)}%</span>}
+                    {pct >= 6 && <span className="font-numeric" style={{ fontSize: 12, fontWeight: 500, color: "#fff" }}>{pct.toFixed(0)}%</span>}
                   </div>
                 );
               })}
