@@ -297,22 +297,27 @@ export default function RegrasAcesso() {
           </p>
         </div>
 
-        {/* Info Card */}
-        <Card className="border-blue-200 bg-blue-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-blue-800">
-              <Info className="h-4 w-4" />
+        {/* Info Box */}
+        <div
+          style={{ backgroundColor: "rgba(255, 255, 255, 0.06)" }}
+          className="rounded-xl border border-white/15 p-6 backdrop-blur-sm mb-6"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Info className="w-4 h-4 text-[#73A7B7]" />
+            <h3 style={{ color: "#DFDBBE" }} className="text-base font-serif font-semibold">
               Como funciona?
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-blue-700 space-y-1">
-            <p>• <strong>Gestora</strong> → selecione FA: Gestora</p>
-            <p>• <strong>Dois advisors</strong> → selecione FA: Raphael Pereira + Leonardo Burle</p>
-            <p>• <strong>Clientes específicos</strong> → adicione os CPFs no campo Clientes</p>
-            <p>• <strong>Canal XP apenas</strong> → marque somente XP em Canal</p>
-            <p className="pt-1 text-blue-600">Filtros são combinados com AND. Campos vazios = sem restrição.</p>
-          </CardContent>
-        </Card>
+            </h3>
+          </div>
+          <ul className="space-y-1.5 text-sm" style={{ color: "rgba(223, 219, 190, 0.85)" }}>
+            <li><strong style={{ color: "#73A7B7" }}>Gestora</strong> → selecione FA: Gestora</li>
+            <li><strong style={{ color: "#73A7B7" }}>Dois advisors</strong> → selecione FA: Raphael Pereira + Leonardo Burle</li>
+            <li><strong style={{ color: "#73A7B7" }}>Clientes específicos</strong> → adicione os CPFs no campo Clientes</li>
+            <li><strong style={{ color: "#73A7B7" }}>Canal XP apenas</strong> → marque somente XP em Canal</li>
+          </ul>
+          <p className="text-xs mt-3 italic" style={{ color: "rgba(223, 219, 190, 0.5)" }}>
+            Filtros são combinados com AND. Campos vazios = sem restrição.
+          </p>
+        </div>
 
         {/* Search */}
         <div className="relative max-w-sm">

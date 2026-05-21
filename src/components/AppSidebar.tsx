@@ -138,12 +138,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="px-6 py-5">
-        <div className="cursor-pointer" onClick={() => navigate("/")}>
-          <img src={LOGO_DARK_BG} alt="Tailor Partners" className="w-[130px]" />
-          <p className="text-[10px] tracking-[0.2em] text-sidebar-foreground/50 mt-1">
-            Hub - Grupo Tailor Partners
-          </p>
+      <SidebarHeader className="px-4 py-6">
+        <div className="flex items-center justify-center cursor-pointer" onClick={() => navigate("/inicio")}>
+          <img src="/tailor-logo-bege.svg" alt="Tailor Partners" className="h-10 w-auto" />
         </div>
       </SidebarHeader>
 
