@@ -24,8 +24,8 @@ export const C = {
 
 export const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h2
-    className="font-display flex items-center gap-2.5"
-    style={{ fontSize: 20, fontWeight: 500, color: C.navy900, margin: 0, letterSpacing: "-0.2px" }}
+    className="font-display flex items-center gap-2.5 text-[#DFDBBE]"
+    style={{ fontSize: 20, fontWeight: 500, margin: 0, letterSpacing: "-0.2px" }}
   >
     <span
       aria-hidden
@@ -34,7 +34,7 @@ export const SectionTitle = ({ children }: { children: React.ReactNode }) => (
         height: 0,
         borderTop: "5px solid transparent",
         borderBottom: "5px solid transparent",
-        borderLeft: `8px solid ${C.navy900}`,
+        borderLeft: `8px solid #73A7B7`,
         flexShrink: 0,
       }}
     />
