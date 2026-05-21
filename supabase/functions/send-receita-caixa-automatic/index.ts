@@ -17,8 +17,16 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const supabase = createClient(supabaseUrl, serviceKey)
+
+  // Carrega JWT service_role legacy do Vault (gateway exige JWT no Bearer p/ verify_jwt=true).
+  const { data: internalJwt, error: jwtErr } = await supabase.rpc('get_email_queue_jwt')
+  if (jwtErr || !internalJwt) {
+    return new Response(JSON.stringify({ error: `failed_to_load_internal_jwt: ${jwtErr?.message || 'empty'}` }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   try {
     let body: any = {}
@@ -134,7 +142,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${anonKey}`,
+            Authorization: `Bearer ${internalJwt}`,
             apikey: serviceKey,
           },
           body: JSON.stringify({
