@@ -3560,6 +3560,7 @@ export type Database = {
           primeiro_acesso: boolean
           role: string
           tem_conta: boolean
+          tipo_usuario: string
           ultimo_acesso: string
           user_id: string
         }[]
