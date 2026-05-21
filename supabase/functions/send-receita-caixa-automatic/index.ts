@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
               idempotencyKey: `auto-${MODULO}-${dataEnvio}-${dest.user_id}`,
               label: `auto-${MODULO}-${dataEnvio}`,
             },
+            headers: { Authorization: `Bearer ${serviceKey}` },
           }
         )
 
@@ -244,6 +245,7 @@ async function notificarAdmins(
           idempotencyKey: `alerta-falha-${MODULO}-${dataEnvio}-${admin.email}`,
           label: `alerta-falha-disparo-${dataEnvio}`,
         },
+        headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
       })
     }
   } catch (err: any) {
