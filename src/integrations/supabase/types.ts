@@ -444,6 +444,51 @@ export type Database = {
         }
         Relationships: []
       }
+      convites_externos: {
+        Row: {
+          ativado_em: string | null
+          convidado_por: string | null
+          criado_em: string | null
+          email: string
+          empresa: string | null
+          expira_em: string
+          id: string
+          nome: string
+          observacoes: string | null
+          perfil_role: Database["public"]["Enums"]["app_role"]
+          senha_provisoria_hash: string
+          token: string
+        }
+        Insert: {
+          ativado_em?: string | null
+          convidado_por?: string | null
+          criado_em?: string | null
+          email: string
+          empresa?: string | null
+          expira_em?: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          perfil_role: Database["public"]["Enums"]["app_role"]
+          senha_provisoria_hash: string
+          token?: string
+        }
+        Update: {
+          ativado_em?: string | null
+          convidado_por?: string | null
+          criado_em?: string | null
+          email?: string
+          empresa?: string | null
+          expira_em?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          perfil_role?: Database["public"]["Enums"]["app_role"]
+          senha_provisoria_hash?: string
+          token?: string
+        }
+        Relationships: []
+      }
       dashboard_refresh: {
         Row: {
           id: number
@@ -1075,6 +1120,7 @@ export type Database = {
           perfil_id: string | null
           phone: string | null
           primeiro_acesso: boolean | null
+          tipo_usuario: string
           ultimo_acesso: string | null
           updated_at: string
           user_id: string
@@ -1100,6 +1146,7 @@ export type Database = {
           perfil_id?: string | null
           phone?: string | null
           primeiro_acesso?: boolean | null
+          tipo_usuario?: string
           ultimo_acesso?: string | null
           updated_at?: string
           user_id: string
@@ -1125,6 +1172,7 @@ export type Database = {
           perfil_id?: string | null
           phone?: string | null
           primeiro_acesso?: boolean | null
+          tipo_usuario?: string
           ultimo_acesso?: string | null
           updated_at?: string
           user_id?: string
@@ -3383,6 +3431,7 @@ export type Database = {
       increment_dashboard_refresh: { Args: never; Returns: undefined }
       is_admin_or_lider: { Args: { _user_id: string }; Returns: boolean }
       is_dia_util: { Args: { p_data: string }; Returns: boolean }
+      is_dominio_corporativo: { Args: { p_email: string }; Returns: boolean }
       marcar_cargas_zumbis_como_erro: { Args: never; Returns: number }
       move_to_dlq: {
         Args: {
@@ -3441,6 +3490,16 @@ export type Database = {
         Returns: Json
       }
       rpc_admin_clear_view_as: { Args: never; Returns: Json }
+      rpc_admin_convidar_externo: {
+        Args: {
+          p_email: string
+          p_empresa?: string
+          p_nome: string
+          p_observacoes?: string
+          p_perfil_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: Json
+      }
       rpc_admin_criar_perfil: {
         Args: { p_descricao?: string; p_nome: string }
         Returns: Json
@@ -4163,6 +4222,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      rpc_marcar_convite_ativado: {
+        Args: { p_convite_id: string }
+        Returns: undefined
+      }
       rpc_marcar_primeiro_acesso: { Args: never; Returns: undefined }
       rpc_meu_perfil: {
         Args: never
@@ -4832,7 +4895,16 @@ export type Database = {
         Args: { p_modulo: string; p_motivo?: string }
         Returns: boolean
       }
+      rpc_validar_ativacao_dados: {
+        Args: {
+          p_nova_senha: string
+          p_senha_provisoria: string
+          p_token: string
+        }
+        Returns: Json
+      }
       rpc_validar_dominio: { Args: { p_email: string }; Returns: Json }
+      rpc_validar_token_ativacao: { Args: { p_token: string }; Returns: Json }
       rpc_vencimentos_grafico: {
         Args: {
           p_advisor?: string[]
