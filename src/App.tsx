@@ -126,6 +126,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/inicio" replace /> : <Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/ativar-conta" element={<AtivarConta />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/" element={<ProtectedRoute><Navigate to="/inicio" replace /></ProtectedRoute>} />
         <Route path="/inicio" element={<PermissionRoute permissions={["menu_inicio"]}><Inicio /></PermissionRoute>} />
