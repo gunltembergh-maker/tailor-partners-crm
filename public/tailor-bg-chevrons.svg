@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <title>Tailor Background — Chevrons</title>
+  <rect width="100%" height="100%" fill="#082537"/>
+  <g stroke="#1F4B6A" stroke-width="1.2" fill="none" stroke-linejoin="miter" opacity="0.85">
+    <polyline points="0,1030 21.6,1055 0,1080"/>
+    <polyline points="0,990 38.9,1035 0,1080"/>
+    <polyline points="0,950 56.2,1015 0,1080"/>
+    <polyline points="0,910 73.4,995 0,1080"/>
+    <polyline points="0,870 90.7,975 0,1080"/>
+    <polyline points="0,830 108.0,955 0,1080"/>
+    <polyline points="0,790 125.3,935 0,1080"/>
+    <polyline points="0,750 142.6,915 0,1080"/>
+    <polyline points="0,710 159.8,895 0,1080"/>
+    <polyline points="0,670 177.1,875 0,1080"/>
+    <polyline points="0,630 194.4,855 0,1080"/>
+    <polyline points="0,590 211.7,835 0,1080"/>
+    <polyline points="0,550 229.0,815 0,1080"/>
+    <polyline points="0,510 246.2,795 0,1080"/>
+    <polyline points="0,470 263.5,775 0,1080"/>
+    <polyline points="0,430 280.8,755 0,1080"/>
+    <polyline points="0,390 298.1,735 0,1080"/>
+    <polyline points="0,350 315.4,715 0,1080"/>
+    <polyline points="0,310 332.6,695 0,1080"/>
+    <polyline points="0,270 349.9,675 0,1080"/>
+    <polyline points="0,230 367.2,655 0,1080"/>
+    <polyline points="0,190 384.5,635 0,1080"/>
+    <polyline points="0,150 401.8,615 0,1080"/>
+  </g>
+</svg>
