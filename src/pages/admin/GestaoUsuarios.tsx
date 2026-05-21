@@ -127,7 +127,7 @@ function getBankerFinderDisplay(u: Usuario): string {
   return "-";
 }
 
-const PERFIS_FILTER = ["Todos", "ADMIN", "DIRETORIA", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
+
 
 export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
