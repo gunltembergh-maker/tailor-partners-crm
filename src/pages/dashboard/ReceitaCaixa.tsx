@@ -783,6 +783,7 @@ export default function ReceitaCaixa() {
           </div>
         </div>
       </div>
+      </TailorFrame>
     </AppLayout>
   );
 }
