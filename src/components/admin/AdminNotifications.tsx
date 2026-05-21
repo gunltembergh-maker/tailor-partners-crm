@@ -35,6 +35,7 @@ export function AdminNotifications() {
   const [approveNotif, setApproveNotif] = useState<Notif | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [approving, setApproving] = useState(false);
+  const { options: perfisOptions } = usePerfisDisponiveisOptions();
 
   const isAdmin = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
 
