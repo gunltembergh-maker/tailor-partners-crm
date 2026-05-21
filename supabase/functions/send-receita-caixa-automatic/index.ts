@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
       .eq('id', disparo.id)
 
     if (statusFinal !== 'concluido') {
-      await notificarAdmins(supabase, statusFinal, sucessos, falhas, erros, dataEnvio)
+      await notificarAdmins(supabase, supabaseUrl, serviceKey, internalJwt, statusFinal, sucessos, falhas, erros, dataEnvio)
     }
 
     return json({
@@ -215,6 +215,9 @@ function json(body: any, status = 200) {
 
 async function notificarAdmins(
   supabase: any,
+  supabaseUrl: string,
+  serviceKey: string,
+  internalJwt: string,
   status: string,
   sucessos: number,
   falhas: number,
@@ -246,8 +249,14 @@ async function notificarAdmins(
 
     for (const admin of admins || []) {
       if (!admin.email) continue
-      await supabase.functions.invoke('send-transactional-email', {
-        body: {
+      await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${internalJwt}`,
+          apikey: serviceKey,
+        },
+        body: JSON.stringify({
           templateName: '_example',
           recipientEmail: admin.email,
           templateData: {
@@ -256,8 +265,7 @@ async function notificarAdmins(
           },
           idempotencyKey: `alerta-falha-${MODULO}-${dataEnvio}-${admin.email}`,
           label: `alerta-falha-disparo-${dataEnvio}`,
-        },
-        headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+        }),
       })
     }
   } catch (err: any) {
