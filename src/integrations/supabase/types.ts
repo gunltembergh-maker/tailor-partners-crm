@@ -4953,6 +4953,10 @@ export type Database = {
         | "OPERACOES"
         | "FA ASSISTENTE"
         | "DIRETORIA"
+        | "COMERCIAL"
+        | "JURIDICO"
+        | "MARKETING"
+        | "RH"
       client_status: "ATIVO_NET" | "INATIVO_PLD" | "CRITICO"
       lead_status:
         | "NOVO"
@@ -5134,6 +5138,10 @@ export const Constants = {
         "OPERACOES",
         "FA ASSISTENTE",
         "DIRETORIA",
+        "COMERCIAL",
+        "JURIDICO",
+        "MARKETING",
+        "RH",
       ],
       client_status: ["ATIVO_NET", "INATIVO_PLD", "CRITICO"],
       lead_status: [
