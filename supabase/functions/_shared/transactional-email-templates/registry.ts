@@ -12,9 +12,11 @@ export interface TemplateEntry {
 import { template as templateExample } from './_template-example.tsx'
 import { template as receitaCaixaNewsletter } from './receita-caixa-newsletter.tsx'
 import { template as conviteExterno } from './convite-externo.tsx'
+import { template as alertaAdminPendencia } from './alerta-admin-pendencia.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   '_template-example': templateExample,
   'receita-caixa-newsletter': receitaCaixaNewsletter,
   'convite-externo': conviteExterno,
+  'alerta-admin-pendencia': alertaAdminPendencia,
 }
