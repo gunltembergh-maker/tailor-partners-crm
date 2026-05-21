@@ -492,8 +492,8 @@ export default function ReceitaCaixa() {
                   const decStr = `,${decPart.toFixed(2).slice(2)}`;
                   return (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                      <span className="title-serif" style={{ fontSize: 60, fontWeight: 400, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
-                      <span style={{ fontSize: 18, color: C.textMuted }}>{decStr}</span>
+                      <span className="title-serif font-numeric" style={{ fontSize: 60, fontWeight: 400, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
+                      <span className="font-numeric" style={{ fontSize: 18, color: C.textMuted }}>{decStr}</span>
                     </div>
                   );
                 })()}
@@ -501,6 +501,7 @@ export default function ReceitaCaixa() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {variacao != null && (
                     <span
+                      className="font-numeric"
                       style={{
                         background: isDown ? C.downBg : isUp ? C.upBg : "#eee",
                         color: isDown ? C.downFg : isUp ? C.upFg : C.textMuted,
@@ -520,11 +521,11 @@ export default function ReceitaCaixa() {
                   )}
                   {kpis?.anomes_anterior_label && (
                     <span style={{ fontSize: 14, color: C.textMuted }}>
-                      vs {kpis.anomes_anterior_label}: {fmtBRL(kpis.total_mes_anterior ?? 0)}
+                      vs {kpis.anomes_anterior_label}: <span className="font-numeric">{fmtBRL(kpis.total_mes_anterior ?? 0)}</span>
                     </span>
                   )}
                   <span style={{ fontSize: 14, color: C.textMuted }}>
-                    {kpis?.n_clientes_unicos ?? 0} clientes ativos
+                    <span className="font-numeric">{kpis?.n_clientes_unicos ?? 0}</span> clientes ativos
                   </span>
                 </div>
               </div>
