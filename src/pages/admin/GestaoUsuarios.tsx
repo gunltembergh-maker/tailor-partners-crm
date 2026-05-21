@@ -20,12 +20,14 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle, KeyRound, Link2, ChevronDown, LogIn } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle, KeyRound, Link2, ChevronDown, LogIn, UserPlus2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
+import { ConvidarExternoModal } from "@/components/admin/ConvidarExternoModal";
+import { useViewAs } from "@/contexts/ViewAsContext";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
