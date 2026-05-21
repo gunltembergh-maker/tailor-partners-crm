@@ -492,8 +492,8 @@ export default function ReceitaCaixa() {
                   const decStr = `,${decPart.toFixed(2).slice(2)}`;
                   return (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                      <span className="title-serif" style={{ fontSize: 60, fontWeight: 400, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
-                      <span style={{ fontSize: 18, color: C.textMuted }}>{decStr}</span>
+                      <span className="title-serif font-numeric" style={{ fontSize: 60, fontWeight: 400, color: C.navy900, letterSpacing: "-1.2px", lineHeight: 1 }}>{intStr}</span>
+                      <span className="font-numeric" style={{ fontSize: 18, color: C.textMuted }}>{decStr}</span>
                     </div>
                   );
                 })()}
@@ -501,6 +501,7 @@ export default function ReceitaCaixa() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {variacao != null && (
                     <span
+                      className="font-numeric"
                       style={{
                         background: isDown ? C.downBg : isUp ? C.upBg : "#eee",
                         color: isDown ? C.downFg : isUp ? C.upFg : C.textMuted,
@@ -520,11 +521,11 @@ export default function ReceitaCaixa() {
                   )}
                   {kpis?.anomes_anterior_label && (
                     <span style={{ fontSize: 14, color: C.textMuted }}>
-                      vs {kpis.anomes_anterior_label}: {fmtBRL(kpis.total_mes_anterior ?? 0)}
+                      vs {kpis.anomes_anterior_label}: <span className="font-numeric">{fmtBRL(kpis.total_mes_anterior ?? 0)}</span>
                     </span>
                   )}
                   <span style={{ fontSize: 14, color: C.textMuted }}>
-                    {kpis?.n_clientes_unicos ?? 0} clientes ativos
+                    <span className="font-numeric">{kpis?.n_clientes_unicos ?? 0}</span> clientes ativos
                   </span>
                 </div>
               </div>
@@ -538,12 +539,12 @@ export default function ReceitaCaixa() {
                       {(advisorQ.data || []).map((a) => (
                         <tr key={a.advisor} style={{ borderBottom: `0.5px solid ${C.divider}` }}>
                           <td style={{ padding: "10px 0", fontSize: 15, color: "#1a1a1a" }}>{a.advisor}</td>
-                          <td className="text-right tabular-nums" style={{ padding: "10px 0", fontSize: 15, color: C.navy900, fontWeight: 500 }}>{fmtBR(a.total)}</td>
+                          <td className="text-right font-numeric" style={{ padding: "10px 0", fontSize: 15, color: C.navy900, fontWeight: 500 }}>{fmtBR(a.total)}</td>
                         </tr>
                       ))}
                       <tr style={{ borderTop: `1px solid ${C.navy900}` }}>
                         <td style={{ padding: "12px 0 0", fontSize: 16, fontWeight: 600, color: C.navy900 }}>Total</td>
-                        <td className="text-right tabular-nums" style={{ padding: "12px 0 0", fontSize: 16, fontWeight: 600, color: C.navy900 }}>
+                        <td className="text-right font-numeric" style={{ padding: "12px 0 0", fontSize: 16, fontWeight: 600, color: C.navy900 }}>
                           {fmtBRL((advisorQ.data || []).reduce((a, r) => a + Number(r.total), 0))}
                         </td>
                       </tr>
@@ -568,7 +569,7 @@ export default function ReceitaCaixa() {
                           <div style={{ background: "rgba(8,37,55,0.06)", borderRadius: 4, height: 26 }}>
                             <div style={{ background: colorFor(d.categoria, i), width: `${(Number(d.total) / max) * 100}%`, height: "100%", borderRadius: 4 }} />
                           </div>
-                          <span className="tabular-nums" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtAdapt(Number(d.total))}</span>
+                          <span className="font-numeric" style={{ textAlign: "right", color: C.navy900, fontWeight: 500 }}>{fmtAdapt(Number(d.total))}</span>
                         </div>
                       ))}
                     </div>
@@ -590,7 +591,7 @@ export default function ReceitaCaixa() {
                             <span className="inline-block rounded-full" style={{ width: 9, height: 9, background: colorFor(row.cat, i) }} />
                             <span style={{ fontSize: 15, color: C.navy900 }}>{row.cat}</span>
                           </div>
-                          <span className="tabular-nums" style={{ fontSize: 15, color: C.navy900, fontWeight: 500 }}>{fmtBRL(row.total)}</span>
+                          <span className="font-numeric" style={{ fontSize: 15, color: C.navy900, fontWeight: 500 }}>{fmtBRL(row.total)}</span>
                         </div>
                         {expandedCats.has(row.cat) && (
                           <div style={{ padding: "8px 0 8px 36px", background: "rgba(8,37,55,0.025)" }}>
@@ -598,7 +599,7 @@ export default function ReceitaCaixa() {
                               <div key={`${row.cat}-${s.sub}`} className="flex items-center justify-between"
                                 style={{ padding: "6px 0", fontSize: 14, color: "#5F5E5A" }}>
                                 <span>{s.sub}</span>
-                                <span className="tabular-nums">{fmtBR(s.total)}</span>
+                                <span className="font-numeric">{fmtBR(s.total)}</span>
                               </div>
                             ))}
                           </div>
@@ -725,12 +726,12 @@ export default function ReceitaCaixa() {
                                   {papelCats.map((cat) => {
                                     const v = p.categorias.get(cat) || 0;
                                     return (
-                                      <td key={cat} className="tabular-nums" style={{ textAlign: "right", padding: "10px 8px", color: v > 0 ? C.navy900 : "#B8C3CB", whiteSpace: "nowrap", fontWeight: 500 }}>
+                                      <td key={cat} className="font-numeric" style={{ textAlign: "right", padding: "10px 8px", color: v > 0 ? C.navy900 : "#B8C3CB", whiteSpace: "nowrap", fontWeight: 500 }}>
                                         {v > 0 ? fmtAdapt(v) : "—"}
                                       </td>
                                     );
                                   })}
-                                  <td className="tabular-nums" style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                  <td className="font-numeric" style={{ textAlign: "right", padding: "10px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
                                     {fmtAdapt(p.total)}
                                   </td>
                                 </tr>
@@ -741,12 +742,12 @@ export default function ReceitaCaixa() {
                               {papelCats.map((cat) => {
                                 const totalCat = porPapel.reduce((s, p) => s + (p.categorias.get(cat) || 0), 0);
                                 return (
-                                  <td key={cat} className="tabular-nums" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                  <td key={cat} className="font-numeric" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 600, whiteSpace: "nowrap" }}>
                                     {fmtAdapt(totalCat)}
                                   </td>
                                 );
                               })}
-                              <td className="tabular-nums" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap" }}>
+                              <td className="font-numeric" style={{ textAlign: "right", padding: "12px 8px", color: C.navy900, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap" }}>
                                 {fmtAdapt(papelTotalGeral)}
                               </td>
                             </tr>
@@ -829,7 +830,7 @@ function RichTooltip({
                 <span style={{ width: 8, height: 8, background: c.color, borderRadius: 2, flexShrink: 0 }} />
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.cat}</span>
               </span>
-              <span className="tabular-nums" style={{ color: C.navy900, fontWeight: 500, whiteSpace: "nowrap" }}>
+              <span className="font-numeric" style={{ color: C.navy900, fontWeight: 500, whiteSpace: "nowrap" }}>
                 {showPct && <span style={{ color: C.textMuted, marginRight: 8 }}>{pct.toFixed(0)}%</span>}
                 {fmtTooltipValue(c.value)}
               </span>
@@ -839,7 +840,7 @@ function RichTooltip({
       </div>
       <div style={{ borderTop: "0.5px solid rgba(8,37,55,0.1)", marginTop: 8, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: C.navy900 }}>TOTAL</span>
-        <span className="tabular-nums" style={{ fontSize: 13, fontWeight: 600, color: C.navy900 }}>{fmtTooltipValue(total)}</span>
+        <span className="font-numeric" style={{ fontSize: 13, fontWeight: 600, color: C.navy900 }}>{fmtTooltipValue(total)}</span>
       </div>
     </div>
   );
@@ -879,7 +880,7 @@ function StackedBars({ data, cats, currentAnomes }: { data: any[]; cats: string[
               onMouseMove={tt.onMove}
               onMouseLeave={tt.onLeave}
             >
-              <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="tabular-nums">{fmtAdapt(d.total)}</span>
+              <span style={{ fontSize: 13, marginBottom: 6, fontWeight: isCurrent ? 600 : 500, color: isCurrent ? C.gold : C.navy900 }} className="font-numeric">{fmtAdapt(d.total)}</span>
               <div className="w-full flex flex-col-reverse rounded-t overflow-hidden relative"
                 style={{ height: `${heightPct}%`, minHeight: 4, borderTop: isCurrent ? `1px solid ${C.gold}` : "none" }}>
                 {cats.map((c, i) => {
@@ -945,7 +946,7 @@ function StackedPctBars({ data, cats, currentAnomes }: { data: any[]; cats: stri
                 const pct = (v / d.total) * 100;
                 return (
                   <div key={c} className="flex items-center justify-center" style={{ height: `${pct}%`, background: colorFor(c, i) }}>
-                    {pct >= 6 && <span style={{ fontSize: 12, fontWeight: 500, color: "#fff" }}>{pct.toFixed(0)}%</span>}
+                    {pct >= 6 && <span className="font-numeric" style={{ fontSize: 12, fontWeight: 500, color: "#fff" }}>{pct.toFixed(0)}%</span>}
                   </div>
                 );
               })}

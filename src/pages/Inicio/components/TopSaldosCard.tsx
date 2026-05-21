@@ -64,13 +64,13 @@ export function TopSaldosCard({ saldos, isLoading }: Props) {
                       </div>
                     )}
                   </td>
-                  <td className="text-right py-2 px-2 tabular-nums" style={{ color: C.navy700 }}>
+                  <td className="text-right py-2 px-2 font-numeric" style={{ color: C.navy700 }}>
                     {fmtAdapt(s.d0)}
                   </td>
-                  <td className="text-right py-2 px-2 tabular-nums" style={{ color: C.navy700 }}>
+                  <td className="text-right py-2 px-2 font-numeric" style={{ color: C.navy700 }}>
                     {fmtAdapt(s.d_mais_1)}
                   </td>
-                  <td className="text-right py-2 pl-2 tabular-nums" style={{ color: C.navy900, fontWeight: 600 }}>
+                  <td className="text-right py-2 pl-2 font-numeric" style={{ color: C.navy900, fontWeight: 600 }}>
                     {fmtAdapt(s.total_saldo)}
                   </td>
                 </tr>

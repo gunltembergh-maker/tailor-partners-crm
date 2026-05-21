@@ -57,7 +57,7 @@ export function UltimasAtualizacoesCard({ timestamps, isLoading }: Props) {
             {bases.map((b, i) => (
               <li key={i} className="flex items-center justify-between gap-2">
                 <span style={{ color: C.navy900, fontSize: 13 }}>{b.label}</span>
-                <span className="flex items-center gap-1.5 text-[12px]" style={{ color: ageColor(b.iso) }}>
+                <span className="flex items-center gap-1.5 text-[12px] font-numeric" style={{ color: ageColor(b.iso) }}>
                   {formatRelative(b.iso)}
                   <span style={{ color: ageColor(b.iso) }}>●</span>
                 </span>

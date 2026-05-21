@@ -97,7 +97,7 @@ function KpiCard({
         <Skeleton className="h-9 w-32 mt-2" />
       ) : (
         <p
-          className="font-display mt-1"
+          className="font-display font-numeric mt-1"
           style={{ fontSize: 28, fontWeight: 500, color: C.navy900, letterSpacing: "-0.5px" }}
         >
           {value}
@@ -105,7 +105,7 @@ function KpiCard({
       )}
       <div className="flex items-center gap-1 mt-2 text-[11px]" style={{ color: variationColor }}>
         <Icon className="h-3 w-3" />
-        <span>{subtitle ?? (variation != null ? `${Math.abs(variation).toFixed(1)}% vs mês anterior` : "—")}</span>
+        <span className="font-numeric">{subtitle ?? (variation != null ? `${Math.abs(variation).toFixed(1)}% vs mês anterior` : "—")}</span>
       </div>
     </button>
   );

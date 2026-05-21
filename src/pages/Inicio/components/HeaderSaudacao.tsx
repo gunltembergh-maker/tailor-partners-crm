@@ -46,7 +46,7 @@ export function HeaderSaudacao({ fullName, lastUpdated, isFetching, onRefresh }:
         className="flex items-center gap-2 px-3 py-2 rounded-md text-xs transition-colors hover:bg-white"
         style={{ color: C.navy500, border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.6)" }}
       >
-        <span>Atualizado {formatHora(lastUpdated)}</span>
+        <span>Atualizado <span className="font-numeric">{formatHora(lastUpdated)}</span></span>
         <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} style={{ transition: "transform 300ms" }} />
       </button>
     </header>
