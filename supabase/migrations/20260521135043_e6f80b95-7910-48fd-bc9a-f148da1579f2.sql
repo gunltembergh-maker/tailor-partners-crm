@@ -1,0 +1,1 @@
+DELETE FROM email_disparos_automaticos WHERE modulo = 'receita_caixa' AND data_envio = '2026-05-21';
