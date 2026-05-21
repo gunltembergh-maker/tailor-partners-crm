@@ -133,6 +133,8 @@ export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { effectivePermissoes } = useViewAs();
+  const { options: perfisOptions } = usePerfisDisponiveisOptions();
+  const perfisFilter = [{ value: "Todos", label: "Todos os Perfis" }, ...perfisOptions];
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [perfilFilter, setPerfilFilter] = useState("Todos");
