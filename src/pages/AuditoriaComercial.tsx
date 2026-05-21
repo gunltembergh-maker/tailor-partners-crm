@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { FiltersSidebar } from "@/components/dashboard/FiltersSidebar";
 import { useDashboardFilters } from "@/hooks/useDashboardFilters";

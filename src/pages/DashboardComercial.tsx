@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

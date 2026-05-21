@@ -22,6 +22,7 @@ import { maskDocumento } from "@/lib/lgpd";
 import { SaldoConsolidadoOnboardingModal } from "@/components/relatorios/SaldoConsolidadoOnboardingModal";
 
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
