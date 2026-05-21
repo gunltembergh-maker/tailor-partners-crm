@@ -186,9 +186,9 @@ export default function Auth() {
       <div className="relative z-10 min-h-screen flex items-center justify-center p-6">
         <div className="flex flex-col items-center gap-6 w-full max-w-md animate-fade-in">
           <img
-            src="/tailor-logo-white.svg"
+            src="/tailor-wordmark-white.png"
             alt="Tailor Partners"
-            className="h-16 w-auto drop-shadow-lg"
+            className="h-20 w-auto drop-shadow-lg"
           />
           {isBlocked && (
             <Alert variant="destructive" className="mb-4">
