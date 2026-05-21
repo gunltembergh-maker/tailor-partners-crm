@@ -666,17 +666,17 @@ export default function SaldoConsolidado() {
           />
           <KpiCard label="D+2" value={kpis?.total_d_mais_2 ?? 0} loading={kpisLoading} />
           <KpiCard label="D+3" value={kpis?.total_d_mais_3 ?? 0} loading={kpisLoading} />
-          <Card className="border-2 border-primary/40 bg-primary/5">
+          <Card>
             <CardContent className="p-4">
-              <p className="text-xs uppercase tracking-wider text-primary font-semibold">
+              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
                 Total Consolidado
               </p>
               {kpisLoading ? (
-                <Skeleton className="h-8 w-32 mt-2" />
+                <Skeleton className="h-7 w-28 mt-2" />
               ) : (
                 <p
                   key={kpis?.total_geral ?? 0}
-                  className="text-2xl font-bold text-primary mt-1 animate-fade-in"
+                  className="text-xl font-bold text-foreground mt-1 animate-fade-in tabular-nums"
                 >
                   {fmtBRL(kpis?.total_geral)}
                 </p>
