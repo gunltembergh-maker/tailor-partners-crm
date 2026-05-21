@@ -16,7 +16,7 @@ project_id = "jtlelokzpqkgvlwomfus"
   [functions.process-email-queue]
     verify_jwt = true
   [functions.send-transactional-email]
-    verify_jwt = true
+    verify_jwt = false
   [functions.send-receita-caixa-automatic]
     verify_jwt = false
   [functions.handle-email-unsubscribe]
