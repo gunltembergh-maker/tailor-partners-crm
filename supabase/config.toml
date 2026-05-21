@@ -27,6 +27,11 @@ project_id = "jtlelokzpqkgvlwomfus"
     verify_jwt = false
   [functions.sync-sharepoint.options]
     request_timeout = 400
+  [functions.send-convite-externo-email]
+    verify_jwt = true
+  [functions.ativar-conta-externa]
+    verify_jwt = false
+
 
 [auth.email]
 
