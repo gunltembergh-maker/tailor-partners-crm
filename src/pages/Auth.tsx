@@ -208,9 +208,9 @@ export default function Auth() {
             </Alert>
           )}
 
-          <Card className="shadow-2xl border-border/50 rounded-2xl bg-white">
+          <Card className="w-full shadow-2xl border-border/50 rounded-2xl bg-white">
             <CardHeader className="pb-4 text-center">
-              <h2 className="text-lg font-semibold text-foreground">Acessar o Hub</h2>
+              <h2 className="text-lg font-semibold text-foreground">Acessar o Hub Tailor Partners</h2>
             </CardHeader>
             <CardContent>
               {/* Microsoft Button - PRINCIPAL */}
