@@ -644,6 +644,16 @@ export default function GestaoUsuarios() {
         </div>
       )}
 
+      {/* Convidar Externo Modal */}
+      <ConvidarExternoModal
+        open={convidarExternoOpen}
+        onClose={() => setConvidarExternoOpen(false)}
+        onSucesso={() => {
+          setConvidarExternoOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+        }}
+      />
+
       {/* Create/Edit Modal */}
       <UserFormModal
         open={formOpen}
