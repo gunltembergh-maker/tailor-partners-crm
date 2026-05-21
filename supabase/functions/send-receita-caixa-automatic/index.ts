@@ -245,6 +245,7 @@ async function notificarAdmins(
           idempotencyKey: `alerta-falha-${MODULO}-${dataEnvio}-${admin.email}`,
           label: `alerta-falha-disparo-${dataEnvio}`,
         },
+        headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
       })
     }
   } catch (err: any) {
