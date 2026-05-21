@@ -1073,6 +1073,7 @@ export type Database = {
       }
       perfis_acesso: {
         Row: {
+          ativo: boolean
           created_at: string | null
           descricao: string | null
           id: string
@@ -1081,6 +1082,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ativo?: boolean
           created_at?: string | null
           descricao?: string | null
           id?: string
@@ -1089,6 +1091,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ativo?: boolean
           created_at?: string | null
           descricao?: string | null
           id?: string
@@ -4221,6 +4224,14 @@ export type Database = {
           nome: string
           role: string
           user_id: string
+        }[]
+      }
+      rpc_listar_perfis_disponiveis: {
+        Args: never
+        Returns: {
+          descricao: string
+          nome: string
+          ordem: number
         }[]
       }
       rpc_marcar_convite_ativado: {
