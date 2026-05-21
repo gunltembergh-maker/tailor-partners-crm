@@ -38,6 +38,7 @@ export function ConvidarExternoModal({ open, onClose, onSucesso }: Props) {
   const [empresa, setEmpresa] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const { options: PERFIS_DISPONIVEIS, isLoading: loadingPerfis } = usePerfisDisponiveisOptions();
 
   const emailErro = useMemo(() => {
     if (!email) return null;
