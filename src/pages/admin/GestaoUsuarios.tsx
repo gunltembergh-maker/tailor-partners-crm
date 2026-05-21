@@ -417,9 +417,20 @@ export default function GestaoUsuarios() {
               <h1 className="text-2xl font-bold text-foreground">Gestão de Usuários</h1>
               <p className="text-sm text-muted-foreground">Gerencie os usuários e acessos do Hub</p>
             </div>
-            <Button onClick={openCreateModal}>
-              <Plus className="h-4 w-4 mr-1" /> Pré-cadastrar Usuário
-            </Button>
+            <div className="flex items-center gap-2">
+              {podeConvidarExterno && (
+                <Button
+                  variant="outline"
+                  onClick={() => setConvidarExternoOpen(true)}
+                  className="gap-2 border-[#0A2337] text-[#0A2337] hover:bg-[#0A2337] hover:text-white"
+                >
+                  <UserPlus2 className="h-4 w-4" /> Convidar Externo
+                </Button>
+              )}
+              <Button onClick={openCreateModal}>
+                <Plus className="h-4 w-4 mr-1" /> Pré-cadastrar Usuário
+              </Button>
+            </div>
           </div>
 
           {/* Metric Cards */}
