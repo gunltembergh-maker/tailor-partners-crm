@@ -481,167 +481,169 @@ export default function GestaoUsuarios() {
             </Card>
           )}
 
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3">
-            <Input
-              placeholder="Buscar por nome, email ou CPF..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-64"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todos">Todos</SelectItem>
-                <SelectItem value="Ativo">Ativo</SelectItem>
-                <SelectItem value="Nunca acessou">Nunca acessou</SelectItem>
-                <SelectItem value="Pré-cadastrado">Pré-cadastrado</SelectItem>
-                <SelectItem value="Bloqueado">Bloqueado</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={perfilFilter} onValueChange={setPerfilFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERFIS_FILTER.map((p) => (
-                  <SelectItem key={p} value={p}>{p === "Todos" ? "Todos os Perfis" : p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Todos">Todos os Tipos</SelectItem>
-                <SelectItem value="interno">Internos</SelectItem>
-                <SelectItem value="externo">Externos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Filters + Table card */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex flex-wrap items-center gap-3 pb-4 mb-4 border-b border-gray-200">
+              <Input
+                placeholder="Buscar por nome, email ou CPF..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-64"
+              />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos</SelectItem>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Nunca acessou">Nunca acessou</SelectItem>
+                  <SelectItem value="Pré-cadastrado">Pré-cadastrado</SelectItem>
+                  <SelectItem value="Bloqueado">Bloqueado</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={perfilFilter} onValueChange={setPerfilFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PERFIS_FILTER.map((p) => (
+                    <SelectItem key={p} value={p}>{p === "Todos" ? "Todos os Perfis" : p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos os Tipos</SelectItem>
+                  <SelectItem value="interno">Internos</SelectItem>
+                  <SelectItem value="externo">Externos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Table */}
-          <div className="relative w-full overflow-auto border border-border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>CPF</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Perfil</TableHead>
-                  <TableHead>Financial Advisor/Finder</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Convite</TableHead>
-                  <TableHead>Primeiro Acesso</TableHead>
-                  <TableHead>Último Acesso</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((u) => {
-                  const status = getStatusDisplay(u);
-                  const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
-                  const convite = formatConvite(u);
-                  const isInviteLoading = loadingInviteId === u.email;
-                  return (
-                    <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
-                      <TableCell className="font-medium">{u.full_name || "-"}</TableCell>
-                      <TableCell className="text-sm">{u.email}</TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm font-mono">
-                            {revealedCpfs.has(u.email) ? formatCpfFull(u.cpf) : maskCpf(u.cpf)}
-                          </span>
-                          {u.cpf && (
-                            <button onClick={() => toggleCpf(u.email)} className="text-muted-foreground hover:text-foreground">
-                              {revealedCpfs.has(u.email) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                            </button>
+            {/* Table */}
+            <div className="relative w-full overflow-auto border border-border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>E-mail</TableHead>
+                    <TableHead>CPF</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Perfil</TableHead>
+                    <TableHead>Financial Advisor/Finder</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Convite</TableHead>
+                    <TableHead>Primeiro Acesso</TableHead>
+                    <TableHead>Último Acesso</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((u) => {
+                    const status = getStatusDisplay(u);
+                    const badgeClass = BADGE_COLORS[u.role] ?? "bg-slate-500 text-white hover:bg-slate-500";
+                    const convite = formatConvite(u);
+                    const isInviteLoading = loadingInviteId === u.email;
+                    return (
+                      <TableRow key={u.email} className="cursor-pointer" onClick={() => openDetail(u)}>
+                        <TableCell className="font-medium">{u.full_name || "-"}</TableCell>
+                        <TableCell className="text-sm">{u.email}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm font-mono">
+                              {revealedCpfs.has(u.email) ? formatCpfFull(u.cpf) : maskCpf(u.cpf)}
+                            </span>
+                            {u.cpf && (
+                              <button onClick={() => toggleCpf(u.email)} className="text-muted-foreground hover:text-foreground">
+                                {revealedCpfs.has(u.email) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              </button>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {(u.tipo_usuario || "interno") === "externo" ? (
+                            <Badge variant="outline" className="bg-[#FEF3C7] text-[#92400E] border-[#D97706]/30 text-[10px]">EXTERNO</Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-[#F5F1E8] text-[#4B6D88] border-[#0A2337]/20 text-[10px]">Interno</Badge>
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {(u.tipo_usuario || "interno") === "externo" ? (
-                          <Badge variant="outline" className="bg-[#FEF3C7] text-[#92400E] border-[#D97706]/30 text-[10px]">EXTERNO</Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-[#F5F1E8] text-[#4B6D88] border-[#0A2337]/20 text-[10px]">Interno</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {u.role ? <Badge className={badgeClass}>{u.role === "BANKER" ? "FINANCIAL ADVISOR" : u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
-                      </TableCell>
-                      <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={status.className}>{status.icon} {status.label}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={`${convite.className} text-xs`}>{convite.icon} {convite.text}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {u.primeiro_acesso
-                          ? <span className="text-yellow-500">⏳ Aguardando</span>
-                          : <span className="text-green-500">✅ Acessou</span>}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatUltimoAcesso(u.ultimo_acesso)}
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading}
-                                title="Enviar e-mail">
-                                <Mail className="h-3.5 w-3.5 text-blue-500" />
+                        </TableCell>
+                        <TableCell>
+                          {u.role ? <Badge className={badgeClass}>{u.role === "BANKER" ? "FINANCIAL ADVISOR" : u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
+                        </TableCell>
+                        <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={status.className}>{status.icon} {status.label}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={`${convite.className} text-xs`}>{convite.icon} {convite.text}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {u.primeiro_acesso
+                            ? <span className="text-yellow-500">⏳ Aguardando</span>
+                            : <span className="text-green-500">✅ Acessou</span>}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatUltimoAcesso(u.ultimo_acesso)}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditModal(u)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" disabled={isInviteLoading}
+                                  title="Enviar e-mail">
+                                  <Mail className="h-3.5 w-3.5 text-blue-500" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'invite')}>
+                                  <Mail className="h-4 w-4 mr-2 text-blue-500" />
+                                  Enviar Convite
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'recovery')}>
+                                  <KeyRound className="h-4 w-4 mr-2 text-orange-500" />
+                                  Reset de Senha
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'magiclink')}>
+                                  <Link2 className="h-4 w-4 mr-2 text-green-500" />
+                                  Magic Link (Acesso Direto)
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
+                              {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
+                            </Button>
+                            {!u.pre_cadastrado && u.blocked && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setApproveUser(u); setApproveRole(""); }}>
+                                <CheckCircle className="h-3.5 w-3.5 text-green-400" />
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'invite')}>
-                                <Mail className="h-4 w-4 mr-2 text-blue-500" />
-                                Enviar Convite
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'recovery')}>
-                                <KeyRound className="h-4 w-4 mr-2 text-orange-500" />
-                                Reset de Senha
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEnviarEmail(u, 'magiclink')}>
-                                <Link2 className="h-4 w-4 mr-2 text-green-500" />
-                                Magic Link (Acesso Direto)
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBlockUser(u)}>
-                            {u.blocked ? <Unlock className="h-3.5 w-3.5 text-green-400" /> : <Lock className="h-3.5 w-3.5 text-yellow-400" />}
-                          </Button>
-                          {!u.pre_cadastrado && u.blocked && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setApproveUser(u); setApproveRole(""); }}>
-                              <CheckCircle className="h-3.5 w-3.5 text-green-400" />
-                            </Button>
-                          )}
-                          {u.user_id !== user?.id && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir cadastro" onClick={() => setDeleteUser(u)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
+                            )}
+                            {u.user_id !== user?.id && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir cadastro" onClick={() => setDeleteUser(u)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
+                        Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
-                      Nenhum usuário encontrado
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       )}
