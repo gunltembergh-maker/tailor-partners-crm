@@ -1,4 +1,4 @@
-import { LOGO_DARK_BG } from "@/lib/constants";
+import { LOGO_LIGHT_BG } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { LogOut, ShieldAlert, Clock } from "lucide-react";
@@ -12,7 +12,7 @@ export function BlockedUserScreen() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
-      <img src={LOGO_DARK_BG} alt="Tailor Partners" className="w-[180px] mb-8" />
+      <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-[180px] mb-8" />
       <div className="text-center max-w-md space-y-4">
         {isDomainRejected ? (
           <>
