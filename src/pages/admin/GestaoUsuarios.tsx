@@ -130,10 +130,14 @@ const PERFIS_FILTER = ["Todos", "ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR"
 export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { effectivePermissoes } = useViewAs();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [perfilFilter, setPerfilFilter] = useState("Todos");
+  const [tipoFilter, setTipoFilter] = useState("Todos");
   const [revealedCpfs, setRevealedCpfs] = useState<Set<string>>(new Set());
+  const [convidarExternoOpen, setConvidarExternoOpen] = useState(false);
+  const podeConvidarExterno = effectivePermissoes?.convidar_usuario_externo === true;
 
   // Modals
   const [formOpen, setFormOpen] = useState(false);
