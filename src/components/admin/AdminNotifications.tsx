@@ -16,7 +16,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 
-const PERFIS = ["ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
+const PERFIS = ["ADMIN", "DIRETORIA", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
 
 interface Notif {
   id: string;
