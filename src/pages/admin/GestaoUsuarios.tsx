@@ -28,6 +28,7 @@ import {
 import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { ConvidarExternoModal } from "@/components/admin/ConvidarExternoModal";
+import { usePerfisDisponiveisOptions } from "@/hooks/usePerfisDisponiveis";
 import { useViewAs } from "@/contexts/ViewAsContext";
 
 const BADGE_COLORS: Record<string, string> = {
