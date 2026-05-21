@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import { PopupComunicado } from "@/components/PopupComunicado";
 import TailorLoader from "@/components/TailorLoader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -408,14 +409,15 @@ export default function GestaoUsuarios() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       <PopupComunicado />
       {isLoading && <TailorLoader overlay={false} />}
       {!isLoading && (
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Gestão de Usuários</h1>
-              <p className="text-sm text-muted-foreground">Gerencie os usuários e acessos do Hub</p>
+              <h1 style={{ color: "#DFDBBE" }} className="text-2xl font-bold">Gestão de Usuários</h1>
+              <p className="text-sm text-[#DFDBBE]/70">Gerencie os usuários e acessos do Hub</p>
             </div>
             <div className="flex items-center gap-2">
               {podeConvidarExterno && (
@@ -738,6 +740,7 @@ export default function GestaoUsuarios() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </TailorFrame>
     </AppLayout>
   );
 }

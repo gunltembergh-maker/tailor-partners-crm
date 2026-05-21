@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
@@ -479,11 +480,12 @@ export default function ImportarBases() {
   // ─── Render ───────────────────────────────────────────────────
   return (
     <AppLayout>
+    <TailorFrame>
     <PopupComunicado />
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Importar Bases</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 style={{ color: "#DFDBBE" }} className="text-2xl font-bold">Importar Bases</h1>
+        <p className="text-sm text-[#DFDBBE]/70 mt-1">
           {canSeeLegacy
             ? 'Arraste os arquivos Excel. Cada arquivo importa automaticamente todas as abas necessárias.'
             : 'Use os cards abaixo para importar as bases liberadas para o seu perfil.'}
@@ -865,6 +867,7 @@ export default function ImportarBases() {
         </div>
       )}
     </div>
+    </TailorFrame>
     </AppLayout>
   );
 }

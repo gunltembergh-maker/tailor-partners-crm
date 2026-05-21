@@ -22,6 +22,7 @@ import { maskDocumento } from "@/lib/lgpd";
 import { SaldoConsolidadoOnboardingModal } from "@/components/relatorios/SaldoConsolidadoOnboardingModal";
 
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -629,13 +630,14 @@ export default function SaldoConsolidado() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       <SaldoConsolidadoOnboardingModal open={showOnboarding} onClose={handleCloseOnboarding} />
       <div className="animate-fade-in space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-              <Wallet className="h-6 w-6 text-primary" />
+            <h1 style={{ color: "#DFDBBE" }} className="text-2xl font-display font-bold flex items-center gap-2">
+              <Wallet className="h-6 w-6 text-[#73A7B7]" />
               Saldo Consolidado
               <button
                 type="button"
@@ -647,8 +649,8 @@ export default function SaldoConsolidado() {
                 <HelpCircle className="w-5 h-5" />
               </button>
             </h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              Última atualização: <span className="font-medium">{dataAtualLabel}</span>
+            <p className="text-xs text-[#DFDBBE]/70 mt-1">
+              Última atualização: <span className="font-medium text-[#DFDBBE]">{dataAtualLabel}</span>
             </p>
           </div>
         </div>
@@ -1333,6 +1335,7 @@ export default function SaldoConsolidado() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </TailorFrame>
     </AppLayout>
   );
 }

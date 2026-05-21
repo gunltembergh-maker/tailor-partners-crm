@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import TailorLoader from "@/components/TailorLoader";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -288,14 +289,15 @@ export default function GestaoProfiles() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       {isLoading && <TailorLoader overlay={false} />}
       {!isLoading && (
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Perfis de Acesso</h1>
-              <p className="text-sm text-muted-foreground">Defina o que cada perfil pode visualizar no Hub</p>
-              <p className="text-xs text-amber-600 mt-1">⚠ Itens desabilitados ficam ocultos no menu do usuário. O ADMIN sempre tem acesso total.</p>
+              <h1 style={{ color: "#DFDBBE" }} className="text-2xl font-bold">Perfis de Acesso</h1>
+              <p className="text-sm text-[#DFDBBE]/70">Defina o que cada perfil pode visualizar no Hub</p>
+              <p className="text-xs text-amber-300 mt-1">⚠ Itens desabilitados ficam ocultos no menu do usuário. O ADMIN sempre tem acesso total.</p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
@@ -343,6 +345,7 @@ export default function GestaoProfiles() {
           </div>
         </div>
       )}
+      </TailorFrame>
     </AppLayout>
   );
 }

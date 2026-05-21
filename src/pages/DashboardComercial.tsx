@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ export default function DashboardComercial() {
 
   return (
     <AppLayout>
+      <TailorFrame>
       <PopupComunicado />
       {showBoasVindas && profile && (
         <BoasVindasModal
@@ -79,7 +81,7 @@ export default function DashboardComercial() {
       )}
       <DashboardLoadingScreen isLoading={isCriticalLoading} />
       <LoadingOverlay show={tabLoading} />
-      <div style={{ backgroundColor: "#F2F2F2", minHeight: "calc(100vh - 64px)", margin: "-1.5rem", padding: "0" }}>
+      <div style={{ minHeight: "calc(100vh - 64px)" }}>
         {isRefreshing && (
           <div className="fixed top-0 left-0 right-0 z-50">
             <Progress value={100} className="h-0.5 rounded-none [&>div]:animate-pulse" />
@@ -101,7 +103,7 @@ export default function DashboardComercial() {
           <div className="flex-1 min-w-0 p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <h1 className="text-base font-semibold" style={{ color: "#1B2A3D" }}>Dashboard Comercial</h1>
+                <h1 className="text-base font-semibold" style={{ color: "#DFDBBE" }}>Dashboard Comercial</h1>
                 <span className="text-xs flex items-center gap-1" style={{ color: "#9CA3AF" }}>
                   <Clock className="h-3 w-3" />
                   Atualizado {atualizadoEmFormatted}
@@ -158,6 +160,7 @@ export default function DashboardComercial() {
           </div>
         </div>
       </div>
+      </TailorFrame>
     </AppLayout>
   );
 }

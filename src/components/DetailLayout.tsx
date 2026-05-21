@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
+import { TailorFrame } from "@/components/layout/TailorFrame";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,14 +76,15 @@ export function DetailLayout({ title, subtitle, relatedType, relatedId, backTo, 
 
   return (
     <AppLayout>
+      <TailorFrame>
       <div className="animate-fade-in">
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(backTo)} className="text-[#DFDBBE] hover:bg-white/10 hover:text-[#DFDBBE]">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">{title}</h1>
-            {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+            <h1 style={{ color: "#DFDBBE" }} className="text-2xl font-display font-bold">{title}</h1>
+            {subtitle && <p className="text-sm text-[#DFDBBE]/70">{subtitle}</p>}
           </div>
         </div>
 
@@ -170,6 +172,7 @@ export function DetailLayout({ title, subtitle, relatedType, relatedId, backTo, 
           </TabsContent>
         </Tabs>
       </div>
+      </TailorFrame>
     </AppLayout>
   );
 }
