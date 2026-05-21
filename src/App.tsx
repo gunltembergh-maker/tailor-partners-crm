@@ -69,6 +69,7 @@ const GestaoUsuarios = lazy(() => import("./pages/admin/GestaoUsuarios"));
 const RegrasAcesso = lazy(() => import("./pages/admin/RegrasAcesso"));
 const GerenciarPopups = lazy(() => import("./pages/admin/GerenciarPopups"));
 const EmailsLog = lazy(() => import("./pages/admin/EmailsLog"));
+const EmailSchedules = lazy(() => import("./pages/admin/EmailSchedules"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 
