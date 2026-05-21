@@ -359,7 +359,7 @@ export default function ReceitaCaixa() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="title-serif text-[#DFDBBE]" style={{ fontSize: 32, fontWeight: 400, letterSpacing: "-0.5px", margin: 0 }}>Receita</h1>
+            <h1 className="title-serif" style={{ color: "#DFDBBE", fontSize: 32, fontWeight: 400, letterSpacing: "-0.5px", margin: 0 }}>Receita</h1>
             <ChevronRight className="h-4 w-4 text-[#DFDBBE]/40" />
             <span className="text-[18px] font-normal text-[#DFDBBE]/70">Caixa</span>
             <ChevronRight className="h-4 w-4 text-[#DFDBBE]/40" />
