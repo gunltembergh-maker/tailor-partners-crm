@@ -562,6 +562,13 @@ export default function GestaoUsuarios() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {(u.tipo_usuario || "interno") === "externo" ? (
+                          <Badge variant="outline" className="bg-[#FEF3C7] text-[#92400E] border-[#D97706]/30 text-[10px]">EXTERNO</Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-[#F5F1E8] text-[#4B6D88] border-[#0A2337]/20 text-[10px]">Interno</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {u.role ? <Badge className={badgeClass}>{u.role === "BANKER" ? "FINANCIAL ADVISOR" : u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
                       </TableCell>
                       <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
