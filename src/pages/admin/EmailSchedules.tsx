@@ -107,7 +107,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 export default function EmailSchedules() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
 
   const [pauseOpen, setPauseOpen] = useState(false);
   const [motivoPausa, setMotivoPausa] = useState('');
