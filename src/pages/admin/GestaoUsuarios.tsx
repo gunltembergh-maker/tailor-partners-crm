@@ -515,10 +515,6 @@ export default function GestaoUsuarios() {
                   ))}
                 </SelectContent>
               </Select>
-                    <SelectItem key={p} value={p}>{p === "Todos" ? "Todos os Perfis" : p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Select value={tipoFilter} onValueChange={setTipoFilter}>
                 <SelectTrigger className="w-36">
                   <SelectValue />
