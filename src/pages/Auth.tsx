@@ -168,29 +168,33 @@ export default function Auth() {
   }
 
   const MONTANHA_URL = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/ImagemMontanhaTailor";
+  const LOGO_WORDMARK = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/Logo_Tailor.png";
 
   return (
-    <div className="min-h-screen flex">
-      {/* Coluna esquerda — imagem montanha + logo branco (apenas desktop) */}
-      <div
-        className="hidden lg:flex relative w-[60%] bg-cover bg-center"
-        style={{ backgroundImage: `url(${MONTANHA_URL})` }}
+    <div className="min-h-screen w-full relative overflow-hidden">
+      {/* Background: imagem da montanha em tela cheia */}
+      <img
+        src={MONTANHA_URL}
+        alt=""
         aria-hidden="true"
-      >
-        <div className="absolute inset-0 bg-black/15" />
-        <div className="relative z-10 p-10">
-          <img src="/tailor-logo-white.svg" alt="Tailor Partners" className="h-16 w-auto" />
-        </div>
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+
+      {/* Overlay sutil pra reforçar contraste do card */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#082537]/40 via-[#082537]/20 to-[#082537]/50" />
+
+      {/* Logo wordmark Tailor Partners — canto superior esquerdo */}
+      <div className="absolute top-0 left-0 z-20 p-8 lg:p-12">
+        <img
+          src={LOGO_WORDMARK}
+          alt="Tailor Partners"
+          className="h-10 lg:h-12 w-auto"
+        />
       </div>
 
-      {/* Coluna direita — form */}
-      <div className="flex-1 lg:w-[40%] flex items-center justify-center bg-background px-4 py-10">
+      {/* Card de login centralizado */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-6 py-16">
         <div className="w-full max-w-md animate-fade-in">
-          {/* Logo navy apenas em mobile */}
-          <div className="lg:hidden text-center mb-8 flex flex-col items-center">
-            <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-40" />
-          </div>
-
           {isBlocked && (
             <Alert variant="destructive" className="mb-4">
               <AlertTriangle className="h-4 w-4" />
@@ -209,7 +213,7 @@ export default function Auth() {
             </Alert>
           )}
 
-          <Card className="shadow-lg border-border/50">
+          <Card className="shadow-2xl border-border/50 rounded-2xl bg-white">
             <CardHeader className="pb-4 text-center">
               <h2 className="text-lg font-semibold text-foreground">Acessar o Hub</h2>
             </CardHeader>
@@ -306,11 +310,14 @@ export default function Auth() {
               </div>
             </CardContent>
           </Card>
-
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            Acesso restrito a Colaboradores Grupo Tailor Partners © 2026
-          </p>
         </div>
+      </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 text-center pb-6">
+        <p className="text-white/80 text-sm">
+          Acesso restrito a Colaboradores Grupo Tailor Partners © 2026
+        </p>
       </div>
     </div>
   );
