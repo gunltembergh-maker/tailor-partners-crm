@@ -1,8 +1,9 @@
 // Ativa conta de usuário externo:
 // 1) Valida token + senha provisória + nova senha via rpc_validar_ativacao_dados
 // 2) Cria usuário no auth.users com a nova senha (auth.admin.createUser)
-// 3) Insere profile (tipo_usuario='externo') e user_role
-// 4) Marca convite como ativado via rpc_marcar_convite_ativado
+// 3) Remove ban automático aplicado pelo trigger handle_new_user (domínio externo)
+// 4) Upsert profile (tipo_usuario='externo', active=true, blocked=false) e user_role
+// 5) Marca convite como ativado via rpc_marcar_convite_ativado
 // Endpoint público (sem JWT humano) — validação acontece via token único.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -40,7 +41,8 @@ Deno.serve(async (req) => {
 
     const { convite_id, email, nome, perfil_role, empresa } = dados as any
 
-    // 2) Cria auth.user
+    // 2) Cria auth.user — o trigger handle_new_user pode banir o usuário porque
+    // o domínio é externo (não está em dominio_empresa). Removemos o ban a seguir.
     const { data: created, error: createErr } = await supabase.auth.admin.createUser({
       email,
       password: nova_senha,
@@ -59,32 +61,48 @@ Deno.serve(async (req) => {
 
     const userId = created.user.id
 
-    // 3) Insere profile (com tipo_usuario='externo')
-    const { error: profErr } = await supabase.from('profiles').insert({
-      user_id: userId,
-      email,
-      full_name: nome,
-      nome_completo: nome,
-      nome,
-      empresa: empresa || null,
-      tipo_usuario: 'externo',
-      active: true,
-      primeiro_acesso: true,
-    })
+    // 3) Remove ban aplicado pelo trigger handle_new_user (ban_unauthorized_user)
+    const { error: unbanErr } = await supabase.auth.admin.updateUserById(userId, {
+      ban_duration: 'none',
+    } as any)
+    if (unbanErr) {
+      console.error('unban error', unbanErr)
+    }
+
+    // 4) Upsert profile com tipo_usuario='externo' e active=true (sobrepõe trigger)
+    const { error: profErr } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          user_id: userId,
+          id: userId,
+          email,
+          full_name: nome,
+          nome_completo: nome,
+          nome,
+          empresa: empresa || null,
+          tipo_usuario: 'externo',
+          active: true,
+          blocked: false,
+          primeiro_acesso: true,
+        },
+        { onConflict: 'user_id' }
+      )
     if (profErr) {
-      console.error('profile insert error', profErr)
+      console.error('profile upsert error', profErr)
+      return json({ success: false, error: `profile_upsert_failed: ${profErr.message}` }, 500)
     }
 
-    // 4) Insere user_role
-    const { error: roleErr } = await supabase.from('user_roles').insert({
-      user_id: userId,
-      role: perfil_role,
-    })
+    // 5) Upsert user_role (caso trigger tenha criado, sobrepõe com o role do convite)
+    const { error: roleErr } = await supabase
+      .from('user_roles')
+      .upsert({ user_id: userId, role: perfil_role }, { onConflict: 'user_id' })
     if (roleErr) {
-      console.error('user_role insert error', roleErr)
+      console.error('user_role upsert error', roleErr)
+      return json({ success: false, error: `role_upsert_failed: ${roleErr.message}` }, 500)
     }
 
-    // 5) Marca convite como ativado
+    // 6) Marca convite como ativado
     const { error: markErr } = await supabase.rpc('rpc_marcar_convite_ativado', {
       p_convite_id: convite_id,
     })
