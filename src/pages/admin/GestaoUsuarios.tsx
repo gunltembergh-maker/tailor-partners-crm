@@ -424,12 +424,12 @@ export default function GestaoUsuarios() {
                 <Button
                   variant="outline"
                   onClick={() => setConvidarExternoOpen(true)}
-                  className="gap-2 border-[#0A2337] text-[#0A2337] hover:bg-[#0A2337] hover:text-white"
+                  className="gap-2 bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50 hover:text-[#DFDBBE]"
                 >
                   <UserPlus2 className="h-4 w-4" /> Convidar Externo
                 </Button>
               )}
-              <Button onClick={openCreateModal}>
+              <Button onClick={openCreateModal} className="gap-2 bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50 hover:text-[#DFDBBE]">
                 <Plus className="h-4 w-4 mr-1" /> Pré-cadastrar Usuário
               </Button>
             </div>
