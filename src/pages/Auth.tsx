@@ -167,132 +167,150 @@ export default function Auth() {
     );
   }
 
+  const MONTANHA_URL = "https://jtlelokzpqkgvlwomfus.supabase.co/storage/v1/object/public/assets/ImagemMontanhaTailor";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md animate-fade-in">
-        <div className="text-center mb-8 flex flex-col items-center">
-          <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-40" />
+    <div className="min-h-screen flex">
+      {/* Coluna esquerda — imagem montanha + logo branco (apenas desktop) */}
+      <div
+        className="hidden lg:flex relative w-[60%] bg-cover bg-center"
+        style={{ backgroundImage: `url(${MONTANHA_URL})` }}
+        aria-hidden="true"
+      >
+        <div className="absolute inset-0 bg-black/15" />
+        <div className="relative z-10 p-10">
+          <img src="/tailor-logo-white.svg" alt="Tailor Partners" className="h-16 w-auto" />
         </div>
+      </div>
 
-        {isBlocked && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Seu acesso foi revogado. Entre em contato com o administrador.
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Coluna direita — form */}
+      <div className="flex-1 lg:w-[40%] flex items-center justify-center bg-background px-4 py-10">
+        <div className="w-full max-w-md animate-fade-in">
+          {/* Logo navy apenas em mobile */}
+          <div className="lg:hidden text-center mb-8 flex flex-col items-center">
+            <img src={LOGO_LIGHT_BG} alt="Tailor Partners" className="w-40" />
+          </div>
 
-        {isDomainBlocked && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              O domínio do seu e-mail não está autorizado para acessar o Hub. Entre em contato com o administrador.
-            </AlertDescription>
-          </Alert>
-        )}
+          {isBlocked && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Seu acesso foi revogado. Entre em contato com o administrador.
+              </AlertDescription>
+            </Alert>
+          )}
 
-        <Card className="shadow-lg border-border/50">
-          <CardHeader className="pb-4 text-center">
-            <h2 className="text-lg font-semibold text-foreground">Acessar o Hub</h2>
-          </CardHeader>
-          <CardContent>
-            {/* Microsoft Button - PRINCIPAL */}
-            <Button
-              type="button"
-              className="w-full flex items-center gap-3 h-12 text-white font-semibold text-[15px]"
-              style={{ backgroundColor: "#082537" }}
-              onClick={handleMicrosoftLogin}
-              disabled={msLoading}
-            >
-              {msLoading ? (
-                "Conectando..."
-              ) : (
-                <>
-                  <svg width="20" height="20" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
-                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
-                    <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
-                    <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
-                  </svg>
-                  Entrar com Microsoft
-                </>
-              )}
-            </Button>
+          {isDomainBlocked && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                O domínio do seu e-mail não está autorizado para acessar o Hub. Entre em contato com o administrador.
+              </AlertDescription>
+            </Alert>
+          )}
 
-            <p className="text-center text-xs text-muted-foreground mt-2 mb-4">
-              Para colaboradores do Grupo Tailor
-            </p>
-
-            <div className="relative my-5">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
-                ou acesse com senha
-              </span>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail Corporativo</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
-                  placeholder="nome@empresa.com.br"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => { setForgotMode(true); setForgotEmail(email); setLoginError(""); }}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Esqueci minha senha
-                  </button>
-                </div>
-              </div>
-
-              {loginError && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className="text-sm">{loginError}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Carregando..." : "Entrar"}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="pb-4 text-center">
+              <h2 className="text-lg font-semibold text-foreground">Acessar o Hub</h2>
+            </CardHeader>
+            <CardContent>
+              {/* Microsoft Button - PRINCIPAL */}
+              <Button
+                type="button"
+                className="w-full flex items-center gap-3 h-12 text-white font-semibold text-[15px]"
+                style={{ backgroundColor: "#082537" }}
+                onClick={handleMicrosoftLogin}
+                disabled={msLoading}
+              >
+                {msLoading ? (
+                  "Conectando..."
+                ) : (
+                  <>
+                    <svg width="20" height="20" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+                      <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+                      <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+                      <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+                    </svg>
+                    Entrar com Microsoft
+                  </>
+                )}
               </Button>
-            </form>
 
-            <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Lock className="h-3 w-3" />
-              <span>Acesso somente por convite</span>
-            </div>
-          </CardContent>
-        </Card>
+              <p className="text-center text-xs text-muted-foreground mt-2 mb-4">
+                Para colaboradores do Grupo Tailor
+              </p>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Acesso restrito a Colaboradores Grupo Tailor Partners © 2026
-        </p>
+              <div className="relative my-5">
+                <Separator />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
+                  ou acesse com senha
+                </span>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail Corporativo</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
+                    placeholder="nome@empresa.com.br"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
+                      placeholder="••••••••"
+                      required
+                      minLength={6}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => { setForgotMode(true); setForgotEmail(email); setLoginError(""); }}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
+                </div>
+
+                {loginError && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription className="text-sm">{loginError}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Carregando..." : "Entrar"}
+                </Button>
+              </form>
+
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <Lock className="h-3 w-3" />
+                <span>Acesso somente por convite</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            Acesso restrito a Colaboradores Grupo Tailor Partners © 2026
+          </p>
+        </div>
       </div>
     </div>
   );
