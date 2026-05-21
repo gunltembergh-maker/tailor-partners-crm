@@ -732,8 +732,8 @@ export default function GestaoUsuarios() {
               <SelectValue placeholder="Selecione o perfil..." />
             </SelectTrigger>
             <SelectContent>
-              {["ADMIN", "DIRETORIA", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"].map((p) => (
-                <SelectItem key={p} value={p}>{p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
+              {perfisOptions.map((p) => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
