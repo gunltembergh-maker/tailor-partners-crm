@@ -17,8 +17,16 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const supabase = createClient(supabaseUrl, serviceKey)
+
+  // Carrega JWT service_role legacy do Vault (gateway exige JWT no Bearer p/ verify_jwt=true).
+  const { data: internalJwt, error: jwtErr } = await supabase.rpc('get_email_queue_jwt')
+  if (jwtErr || !internalJwt) {
+    return new Response(JSON.stringify({ error: `failed_to_load_internal_jwt: ${jwtErr?.message || 'empty'}` }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   try {
     let body: any = {}
@@ -134,7 +142,7 @@ Deno.serve(async (req) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${anonKey}`,
+            Authorization: `Bearer ${internalJwt}`,
             apikey: serviceKey,
           },
           body: JSON.stringify({
@@ -178,7 +186,7 @@ Deno.serve(async (req) => {
       .eq('id', disparo.id)
 
     if (statusFinal !== 'concluido') {
-      await notificarAdmins(supabase, statusFinal, sucessos, falhas, erros, dataEnvio)
+      await notificarAdmins(supabase, supabaseUrl, serviceKey, internalJwt, statusFinal, sucessos, falhas, erros, dataEnvio)
     }
 
     return json({
@@ -207,6 +215,9 @@ function json(body: any, status = 200) {
 
 async function notificarAdmins(
   supabase: any,
+  supabaseUrl: string,
+  serviceKey: string,
+  internalJwt: string,
   status: string,
   sucessos: number,
   falhas: number,
@@ -238,8 +249,14 @@ async function notificarAdmins(
 
     for (const admin of admins || []) {
       if (!admin.email) continue
-      await supabase.functions.invoke('send-transactional-email', {
-        body: {
+      await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${internalJwt}`,
+          apikey: serviceKey,
+        },
+        body: JSON.stringify({
           templateName: '_example',
           recipientEmail: admin.email,
           templateData: {
@@ -248,8 +265,7 @@ async function notificarAdmins(
           },
           idempotencyKey: `alerta-falha-${MODULO}-${dataEnvio}-${admin.email}`,
           label: `alerta-falha-disparo-${dataEnvio}`,
-        },
-        headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+        }),
       })
     }
   } catch (err: any) {
