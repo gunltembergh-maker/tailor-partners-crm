@@ -53,9 +53,9 @@ export default function Inicio() {
         <div
           className="absolute inset-0 -z-10"
           style={{
-            backgroundImage: "url(/tailor-bg-chevrons.svg)",
+            backgroundImage: "url(/tailor-bg-chevrons.jpg)",
             backgroundSize: "cover",
-            backgroundPosition: "center bottom",
+            backgroundPosition: "left bottom",
             backgroundRepeat: "no-repeat",
             backgroundColor: "#082537",
           }}
