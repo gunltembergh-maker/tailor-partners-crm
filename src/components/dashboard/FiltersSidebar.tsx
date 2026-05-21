@@ -95,23 +95,15 @@ export function FiltersSidebar({
 
   return (
     <div
-      className="w-56 shrink-0 flex flex-col text-white"
+      className="w-56 shrink-0 flex flex-col text-[#DFDBBE]"
       style={{
-        backgroundColor: "#1B2A3D",
+        backgroundColor: "#082537",
         minHeight: "calc(100vh - 120px)",
       }}
     >
-      {/* Logo */}
-      <div className="px-4 pt-4 pb-2">
-        <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-          Tailor
-        </h1>
-        <p className="text-[9px] tracking-[0.25em] uppercase opacity-60">Partners</p>
-      </div>
-
       {/* Title */}
-      <div className="px-4 pt-2 pb-1">
-        <p className="text-[10px] font-bold uppercase tracking-[0.15em] opacity-80">Filtros</p>
+      <div className="px-4 pt-4 pb-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#DFDBBE]/70">Filtros</p>
       </div>
 
       {/* Filters */}
