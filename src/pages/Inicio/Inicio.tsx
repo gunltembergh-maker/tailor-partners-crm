@@ -50,14 +50,16 @@ export default function Inicio() {
   return (
     <AppLayout>
       <div className="relative min-h-full -m-6">
-        <div
-          className="absolute inset-0 -z-10"
+        <div className="absolute inset-0 -z-10" style={{ backgroundColor: "#082537" }} />
+        <img
+          src="/tailor-chevrons.svg"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-0 left-0 select-none opacity-90 -z-10"
           style={{
-            backgroundImage: "url(/tailor-bg-chevrons.jpg)",
-            backgroundSize: "cover",
-            backgroundPosition: "left bottom",
-            backgroundRepeat: "no-repeat",
-            backgroundColor: "#082537",
+            width: 'min(45vw, 567px)',
+            height: 'auto',
+            maxHeight: '80vh',
           }}
         />
         <div className="relative z-0 p-6 md:p-8 lg:p-12">
