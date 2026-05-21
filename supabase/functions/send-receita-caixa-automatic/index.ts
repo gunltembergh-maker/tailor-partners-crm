@@ -17,6 +17,7 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const supabase = createClient(supabaseUrl, serviceKey)
 
   try {
@@ -129,23 +130,26 @@ Deno.serve(async (req) => {
       const nome: string = p.nome_completo || p.full_name || p.nome || 'Usuário'
 
       try {
-        const { data: result, error: errEmail } = await supabase.functions.invoke(
-          'send-transactional-email',
-          {
-            body: {
-              templateName: 'receita-caixa-newsletter',
-              recipientEmail: email,
-              templateData: { recipientName: nome },
-              idempotencyKey: `auto-${MODULO}-${dataEnvio}-${dest.user_id}`,
-              label: `auto-${MODULO}-${dataEnvio}`,
-            },
-            headers: { Authorization: `Bearer ${serviceKey}` },
-          }
-        )
+        const resp = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${anonKey}`,
+            apikey: serviceKey,
+          },
+          body: JSON.stringify({
+            templateName: 'receita-caixa-newsletter',
+            recipientEmail: email,
+            templateData: { recipientName: nome },
+            idempotencyKey: `auto-${MODULO}-${dataEnvio}-${dest.user_id}`,
+            label: `auto-${MODULO}-${dataEnvio}`,
+          }),
+        })
+        const result: any = await resp.json().catch(() => ({}))
 
-        if (errEmail) {
+        if (!resp.ok) {
           falhas++
-          erros.push({ user_id: dest.user_id, email, motivo: errEmail.message })
+          erros.push({ user_id: dest.user_id, email, motivo: `HTTP ${resp.status}: ${result?.error || JSON.stringify(result).slice(0, 200)}` })
         } else if (result?.skipped) {
           falhas++
           erros.push({ user_id: dest.user_id, email, motivo: `skipped: ${result.reason}` })
