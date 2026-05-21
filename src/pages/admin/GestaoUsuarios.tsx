@@ -20,12 +20,14 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle, KeyRound, Link2, ChevronDown, LogIn } from "lucide-react";
+import { Plus, Pencil, Lock, Unlock, Trash2, Eye, EyeOff, Users, UserCheck, Clock, ShieldOff, UserX, CheckCircle, Mail, RotateCcw, XCircle, KeyRound, Link2, ChevronDown, LogIn, UserPlus2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
+import { ConvidarExternoModal } from "@/components/admin/ConvidarExternoModal";
+import { useViewAs } from "@/contexts/ViewAsContext";
 
 const BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-red-600 text-white hover:bg-red-600",
@@ -69,6 +71,7 @@ interface Usuario {
   convite_expira_em?: string | null;
   convite_cancelado_em?: string | null;
   convite_reenvios?: number | null;
+  tipo_usuario?: "interno" | "externo" | null;
 }
 
 function maskCpf(cpf: string | null): string {
@@ -127,10 +130,14 @@ const PERFIS_FILTER = ["Todos", "ADMIN", "LIDER", "BANKER", "FINDER", "ASSESSOR"
 export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { effectivePermissoes } = useViewAs();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [perfilFilter, setPerfilFilter] = useState("Todos");
+  const [tipoFilter, setTipoFilter] = useState("Todos");
   const [revealedCpfs, setRevealedCpfs] = useState<Set<string>>(new Set());
+  const [convidarExternoOpen, setConvidarExternoOpen] = useState(false);
+  const podeConvidarExterno = effectivePermissoes?.convidar_usuario_externo === true;
 
   // Modals
   const [formOpen, setFormOpen] = useState(false);
@@ -212,9 +219,11 @@ export default function GestaoUsuarios() {
         (statusFilter === "Pré-cadastrado" && !u.active && !u.blocked) ||
         (statusFilter === "Bloqueado" && u.blocked);
       const matchPerfil = perfilFilter === "Todos" || u.role === perfilFilter;
-      return matchSearch && matchStatus && matchPerfil;
+      const tipo = (u.tipo_usuario || "interno");
+      const matchTipo = tipoFilter === "Todos" || tipo === tipoFilter;
+      return matchSearch && matchStatus && matchPerfil && matchTipo;
     });
-  }, [usuarios, search, statusFilter, perfilFilter]);
+  }, [usuarios, search, statusFilter, perfilFilter, tipoFilter]);
 
   const openCreateModal = useCallback(() => {
     setFormData(null);
@@ -408,9 +417,20 @@ export default function GestaoUsuarios() {
               <h1 className="text-2xl font-bold text-foreground">Gestão de Usuários</h1>
               <p className="text-sm text-muted-foreground">Gerencie os usuários e acessos do Hub</p>
             </div>
-            <Button onClick={openCreateModal}>
-              <Plus className="h-4 w-4 mr-1" /> Pré-cadastrar Usuário
-            </Button>
+            <div className="flex items-center gap-2">
+              {podeConvidarExterno && (
+                <Button
+                  variant="outline"
+                  onClick={() => setConvidarExternoOpen(true)}
+                  className="gap-2 border-[#0A2337] text-[#0A2337] hover:bg-[#0A2337] hover:text-white"
+                >
+                  <UserPlus2 className="h-4 w-4" /> Convidar Externo
+                </Button>
+              )}
+              <Button onClick={openCreateModal}>
+                <Plus className="h-4 w-4 mr-1" /> Pré-cadastrar Usuário
+              </Button>
+            </div>
           </div>
 
           {/* Metric Cards */}
@@ -489,6 +509,16 @@ export default function GestaoUsuarios() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={tipoFilter} onValueChange={setTipoFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Todos">Todos os Tipos</SelectItem>
+                <SelectItem value="interno">Internos</SelectItem>
+                <SelectItem value="externo">Externos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Table */}
@@ -499,6 +529,7 @@ export default function GestaoUsuarios() {
                   <TableHead>Nome</TableHead>
                   <TableHead>E-mail</TableHead>
                   <TableHead>CPF</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Perfil</TableHead>
                   <TableHead>Financial Advisor/Finder</TableHead>
                   <TableHead>Status</TableHead>
@@ -529,6 +560,13 @@ export default function GestaoUsuarios() {
                             </button>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {(u.tipo_usuario || "interno") === "externo" ? (
+                          <Badge variant="outline" className="bg-[#FEF3C7] text-[#92400E] border-[#D97706]/30 text-[10px]">EXTERNO</Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-[#F5F1E8] text-[#4B6D88] border-[#0A2337]/20 text-[10px]">Interno</Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         {u.role ? <Badge className={badgeClass}>{u.role === "BANKER" ? "FINANCIAL ADVISOR" : u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
@@ -595,7 +633,7 @@ export default function GestaoUsuarios() {
                 })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
                       Nenhum usuário encontrado
                     </TableCell>
                   </TableRow>
@@ -605,6 +643,16 @@ export default function GestaoUsuarios() {
           </div>
         </div>
       )}
+
+      {/* Convidar Externo Modal */}
+      <ConvidarExternoModal
+        open={convidarExternoOpen}
+        onClose={() => setConvidarExternoOpen(false)}
+        onSucesso={() => {
+          setConvidarExternoOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["admin-usuarios"] });
+        }}
+      />
 
       {/* Create/Edit Modal */}
       <UserFormModal
