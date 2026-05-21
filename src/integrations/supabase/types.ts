@@ -3449,6 +3449,15 @@ export type Database = {
       normalize_advisor: { Args: { advisor: string }; Returns: string }
       normalize_banker: { Args: { v: string }; Returns: string }
       normalize_tipo_cliente: { Args: { p_tipo: string }; Returns: string }
+      notificar_admins_por_email: {
+        Args: {
+          p_link_acao?: string
+          p_mensagem: string
+          p_tipo: string
+          p_titulo: string
+        }
+        Returns: undefined
+      }
       nth_dia_util_do_mes: {
         Args: { p_ano: number; p_mes: number; p_n: number }
         Returns: string
