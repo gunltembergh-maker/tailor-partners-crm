@@ -238,7 +238,7 @@ export function FiltersSidebar({
           <div className="flex gap-2 pt-1">
             <Button
               size="sm"
-              className="flex-1 h-7 text-[10px] bg-white/20 hover:bg-white/30 text-white border-0"
+              className="flex-1 h-7 text-[10px] bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50"
               onClick={applyFilters}
               disabled={!hasChanges}
             >
@@ -248,7 +248,7 @@ export function FiltersSidebar({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-[10px] text-white/70 hover:text-white hover:bg-white/10"
+              className="h-7 text-[10px] text-[#DFDBBE]/70 hover:text-[#DFDBBE] hover:bg-white/10"
               onClick={resetFilters}
             >
               <RotateCcw className="h-3 w-3 mr-1" />
