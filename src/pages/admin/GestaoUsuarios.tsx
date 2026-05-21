@@ -510,7 +510,11 @@ export default function GestaoUsuarios() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PERFIS_FILTER.map((p) => (
+                  {perfisFilter.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
                     <SelectItem key={p} value={p}>{p === "Todos" ? "Todos os Perfis" : p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
                   ))}
                 </SelectContent>
