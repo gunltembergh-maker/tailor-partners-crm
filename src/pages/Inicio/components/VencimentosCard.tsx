@@ -70,11 +70,11 @@ export function VencimentosCard({ vencimentos, isLoading }: Props) {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className="tabular-nums" style={{ color: C.navy900, fontSize: 13, fontWeight: 600 }}>
+                    <span className="font-numeric" style={{ color: C.navy900, fontSize: 13, fontWeight: 600 }}>
                       {fmtAdapt(v.valor)}
                     </span>
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums"
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold font-numeric"
                       style={{ background: b.bg, color: b.fg }}
                     >
                       {dias}d
