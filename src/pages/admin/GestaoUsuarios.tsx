@@ -509,6 +509,16 @@ export default function GestaoUsuarios() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={tipoFilter} onValueChange={setTipoFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Todos">Todos os Tipos</SelectItem>
+                <SelectItem value="interno">Internos</SelectItem>
+                <SelectItem value="externo">Externos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Table */}
@@ -519,6 +529,7 @@ export default function GestaoUsuarios() {
                   <TableHead>Nome</TableHead>
                   <TableHead>E-mail</TableHead>
                   <TableHead>CPF</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Perfil</TableHead>
                   <TableHead>Financial Advisor/Finder</TableHead>
                   <TableHead>Status</TableHead>
