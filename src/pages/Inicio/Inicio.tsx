@@ -49,35 +49,47 @@ export default function Inicio() {
 
   return (
     <AppLayout>
-      <div style={{ background: C.bgPage }} className="min-h-full -m-6 p-6 md:p-8">
-        <div className="max-w-[1400px] mx-auto space-y-8 animate-in fade-in duration-500">
-          <HeaderSaudacao
-            fullName={profile?.full_name || "Usuário"}
-            lastUpdated={lastUpdated}
-            isFetching={isFetching}
-            onRefresh={refetch}
-          />
+      <div className="relative min-h-full -m-6">
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            backgroundImage: "url(/tailor-bg-chevrons.svg)",
+            backgroundSize: "cover",
+            backgroundPosition: "center bottom",
+            backgroundRepeat: "no-repeat",
+            backgroundColor: "#082537",
+          }}
+        />
+        <div className="relative z-0 p-6 md:p-8 lg:p-12">
+          <div className="max-w-[1400px] mx-auto space-y-8 animate-in fade-in duration-500">
+            <HeaderSaudacao
+              fullName={profile?.full_name || "Usuário"}
+              lastUpdated={lastUpdated}
+              isFetching={isFetching}
+              onRefresh={refetch}
+            />
 
-          <LembretesInteligentes
-            topSaldos={data.topSaldos}
-            vencimentos={data.vencimentos}
-            isLoading={isLoading}
-            role={effectiveRole}
-            userId={user?.id ?? null}
-          />
+            <LembretesInteligentes
+              topSaldos={data.topSaldos}
+              vencimentos={data.vencimentos}
+              isLoading={isLoading}
+              role={effectiveRole}
+              userId={user?.id ?? null}
+            />
 
-          <KPIsCards role={effectiveRole} />
+            <KPIsCards role={effectiveRole} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <div className="lg:col-span-3">
-              <MuralCard mural={data.mural} isLoading={isLoading} />
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+              <div className="lg:col-span-3">
+                <MuralCard mural={data.mural} isLoading={isLoading} />
+              </div>
+              <div className="lg:col-span-2">
+                <AcessoRapidoCard permissoes={effectivePermissoes} role={effectiveRole} />
+              </div>
             </div>
-            <div className="lg:col-span-2">
-              <AcessoRapidoCard permissoes={effectivePermissoes} role={effectiveRole} />
-            </div>
+
+            <UltimasAtualizacoesCard timestamps={data.timestamps} isLoading={isLoading} />
           </div>
-
-          <UltimasAtualizacoesCard timestamps={data.timestamps} isLoading={isLoading} />
         </div>
       </div>
       <PopupComunicado />
