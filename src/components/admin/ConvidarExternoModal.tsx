@@ -23,15 +23,7 @@ const DOMINIOS_PESSOAIS = new Set([
   "r7.com", "oi.com.br", "globo.com", "globomail.com",
 ]);
 
-const PERFIS_DISPONIVEIS = [
-  { value: "ADMIN", label: "ADMIN" },
-  { value: "DIRETORIA", label: "DIRETORIA" },
-  { value: "LIDER", label: "LIDER" },
-  { value: "BANKER", label: "FINANCIAL ADVISOR" },
-  { value: "FINDER", label: "FINDER" },
-  { value: "OPERACOES", label: "OPERAÇÕES" },
-  { value: "ASSESSOR", label: "ASSESSOR" },
-];
+import { usePerfisDisponiveisOptions } from "@/hooks/usePerfisDisponiveis";
 
 interface Props {
   open: boolean;
