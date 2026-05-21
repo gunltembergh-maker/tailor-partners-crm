@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -119,4 +120,13 @@
   0%   { width: 0%;  margin-left: 0; }
   50%  { width: 70%; margin-left: 15%; }
   100% { width: 0%;  margin-left: 100%; }
+}
+
+@layer utilities {
+  .font-numeric {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'tnum' 1, 'cv11' 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
 }
