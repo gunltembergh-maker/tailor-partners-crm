@@ -332,7 +332,7 @@ export default function GerenciarPopups() {
               Comunicados
             </h1>
           </div>
-          <Button onClick={openNew} size="sm" className="gap-1.5" style={{ backgroundColor: "#082537" }}>
+          <Button onClick={openNew} size="sm" variant="outline" className="gap-1.5 bg-transparent border border-[#DFDBBE]/30 text-[#DFDBBE] hover:bg-white/10 hover:border-[#DFDBBE]/50 hover:text-[#DFDBBE]">
             <Plus className="h-4 w-4" /> Novo Comunicado
           </Button>
         </div>
