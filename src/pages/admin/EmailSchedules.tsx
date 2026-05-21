@@ -189,7 +189,7 @@ export default function EmailSchedules() {
     setDisparando(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-receita-caixa-automatic', {
-        body: { force: true, user_id: profile?.user_id },
+        body: { force: true, user_id: user?.id },
       });
       if (error) throw error;
       if (data?.skipped) {
