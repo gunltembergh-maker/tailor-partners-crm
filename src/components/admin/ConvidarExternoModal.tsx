@@ -23,15 +23,7 @@ const DOMINIOS_PESSOAIS = new Set([
   "r7.com", "oi.com.br", "globo.com", "globomail.com",
 ]);
 
-const PERFIS_DISPONIVEIS = [
-  { value: "ADMIN", label: "ADMIN" },
-  { value: "DIRETORIA", label: "DIRETORIA" },
-  { value: "LIDER", label: "LIDER" },
-  { value: "BANKER", label: "FINANCIAL ADVISOR" },
-  { value: "FINDER", label: "FINDER" },
-  { value: "OPERACOES", label: "OPERAÇÕES" },
-  { value: "ASSESSOR", label: "ASSESSOR" },
-];
+import { usePerfisDisponiveisOptions } from "@/hooks/usePerfisDisponiveis";
 
 interface Props {
   open: boolean;
@@ -46,6 +38,7 @@ export function ConvidarExternoModal({ open, onClose, onSucesso }: Props) {
   const [empresa, setEmpresa] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const { options: PERFIS_DISPONIVEIS, isLoading: loadingPerfis } = usePerfisDisponiveisOptions();
 
   const emailErro = useMemo(() => {
     if (!email) return null;
@@ -157,9 +150,9 @@ export function ConvidarExternoModal({ open, onClose, onSucesso }: Props) {
 
           <div className="space-y-1.5">
             <Label>Perfil de acesso *</Label>
-            <Select value={perfil} onValueChange={setPerfil}>
+            <Select value={perfil} onValueChange={setPerfil} disabled={loadingPerfis}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar perfil..." />
+                <SelectValue placeholder={loadingPerfis ? "Carregando..." : "Selecionar perfil..."} />
               </SelectTrigger>
               <SelectContent>
                 {PERFIS_DISPONIVEIS.map((p) => (

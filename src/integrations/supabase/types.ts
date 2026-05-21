@@ -1073,6 +1073,7 @@ export type Database = {
       }
       perfis_acesso: {
         Row: {
+          ativo: boolean
           created_at: string | null
           descricao: string | null
           id: string
@@ -1081,6 +1082,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ativo?: boolean
           created_at?: string | null
           descricao?: string | null
           id?: string
@@ -1089,6 +1091,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ativo?: boolean
           created_at?: string | null
           descricao?: string | null
           id?: string
@@ -4223,6 +4226,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      rpc_listar_perfis_disponiveis: {
+        Args: never
+        Returns: {
+          descricao: string
+          nome: string
+          ordem: number
+        }[]
+      }
       rpc_marcar_convite_ativado: {
         Args: { p_convite_id: string }
         Returns: undefined
@@ -4953,6 +4964,10 @@ export type Database = {
         | "OPERACOES"
         | "FA ASSISTENTE"
         | "DIRETORIA"
+        | "COMERCIAL"
+        | "JURIDICO"
+        | "MARKETING"
+        | "RH"
       client_status: "ATIVO_NET" | "INATIVO_PLD" | "CRITICO"
       lead_status:
         | "NOVO"
@@ -5134,6 +5149,10 @@ export const Constants = {
         "OPERACOES",
         "FA ASSISTENTE",
         "DIRETORIA",
+        "COMERCIAL",
+        "JURIDICO",
+        "MARKETING",
+        "RH",
       ],
       client_status: ["ATIVO_NET", "INATIVO_PLD", "CRITICO"],
       lead_status: [

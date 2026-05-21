@@ -28,6 +28,7 @@ import {
 import { UserFormModal, type UserFormData } from "@/components/admin/UserFormModal";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { ConvidarExternoModal } from "@/components/admin/ConvidarExternoModal";
+import { usePerfisDisponiveisOptions } from "@/hooks/usePerfisDisponiveis";
 import { useViewAs } from "@/contexts/ViewAsContext";
 
 const BADGE_COLORS: Record<string, string> = {
@@ -126,12 +127,14 @@ function getBankerFinderDisplay(u: Usuario): string {
   return "-";
 }
 
-const PERFIS_FILTER = ["Todos", "ADMIN", "DIRETORIA", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
+
 
 export default function GestaoUsuarios() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { effectivePermissoes } = useViewAs();
+  const { options: perfisOptions } = usePerfisDisponiveisOptions();
+  const perfisFilter = [{ value: "Todos", label: "Todos os Perfis" }, ...perfisOptions];
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [perfilFilter, setPerfilFilter] = useState("Todos");
@@ -507,8 +510,8 @@ export default function GestaoUsuarios() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PERFIS_FILTER.map((p) => (
-                    <SelectItem key={p} value={p}>{p === "Todos" ? "Todos os Perfis" : p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
+                  {perfisFilter.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -729,8 +732,8 @@ export default function GestaoUsuarios() {
               <SelectValue placeholder="Selecione o perfil..." />
             </SelectTrigger>
             <SelectContent>
-              {["ADMIN", "DIRETORIA", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"].map((p) => (
-                <SelectItem key={p} value={p}>{p === "BANKER" ? "FINANCIAL ADVISOR" : p}</SelectItem>
+              {perfisOptions.map((p) => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>

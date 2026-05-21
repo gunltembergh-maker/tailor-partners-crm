@@ -16,7 +16,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 
-const PERFIS = ["ADMIN", "DIRETORIA", "LIDER", "BANKER", "FINDER", "ASSESSOR", "OPERACOES"];
+import { usePerfisDisponiveisOptions } from "@/hooks/usePerfisDisponiveis";
 
 interface Notif {
   id: string;
@@ -35,6 +35,7 @@ export function AdminNotifications() {
   const [approveNotif, setApproveNotif] = useState<Notif | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [approving, setApproving] = useState(false);
+  const { options: perfisOptions } = usePerfisDisponiveisOptions();
 
   const isAdmin = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
 
@@ -143,8 +144,8 @@ export function AdminNotifications() {
               <SelectValue placeholder="Selecione o perfil..." />
             </SelectTrigger>
             <SelectContent>
-              {PERFIS.map((p) => (
-                <SelectItem key={p} value={p}>{p}</SelectItem>
+              {perfisOptions.map((p) => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
