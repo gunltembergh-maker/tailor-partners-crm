@@ -11,7 +11,18 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Info } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { VinculosReceita } from "./VinculosReceita";
+
+const PERFIS_RESTRITOS_RECEITA = [
+  "COMERCIAL",
+  "BANKER",
+  "FA ASSISTENTE",
+  "FINDER",
+  "OPERACOES",
+  "ASSESSOR",
+];
 
 function cpfMask(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -50,6 +61,7 @@ export interface UserFormData {
   isEdit: boolean;
   editProfileId?: string;
   perfilId?: string;
+  userId?: string;
 }
 
 interface Props {
@@ -420,6 +432,30 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
             <Label>Empresa</Label>
             <Input value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Tailor Partners" readOnly={!isEdit && !!empresa && !emailError} />
           </div>
+
+          {isEdit && (initialData as any)?.userId && perfil && (
+            PERFIS_RESTRITOS_RECEITA.includes(perfil) ? (
+              <VinculosReceita userId={(initialData as any).userId} />
+            ) : (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle className="text-sm">Acesso total a Receita</AlertTitle>
+                <AlertDescription className="text-xs">
+                  Perfil <strong>{perfil}</strong> tem acesso total aos dados de Receita — não precisa de vínculos.
+                </AlertDescription>
+              </Alert>
+            )
+          )}
+
+          {!isEdit && perfil && PERFIS_RESTRITOS_RECEITA.includes(perfil) && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle className="text-sm">Vínculos de Receita</AlertTitle>
+              <AlertDescription className="text-xs">
+                Salve o usuário primeiro para cadastrar vínculos de Receita.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
         <DialogFooter>
           <DialogClose asChild>

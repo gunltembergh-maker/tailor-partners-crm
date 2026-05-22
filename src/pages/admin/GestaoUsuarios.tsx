@@ -252,6 +252,7 @@ export default function GestaoUsuarios() {
       empresa: u.empresa || "Tailor Partners",
       isEdit: true,
       editProfileId: u.profile_id,
+      userId: u.user_id,
       perfilId: u.perfil_id || "",
       area: u.area || "",
       gestor: u.gestor || "",
