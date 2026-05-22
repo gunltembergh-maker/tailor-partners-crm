@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  const { templateName, recipientEmail, idempotencyKey, templateData, label } = body ?? {}
+  const { templateName, recipientEmail, idempotencyKey, templateData, label, payload_override } = body ?? {}
 
   if (typeof templateName !== 'string' || !templateName) {
     return new Response(JSON.stringify({ error: 'templateName is required' }), {
@@ -98,20 +98,24 @@ Deno.serve(async (req) => {
   // Caller pode opcionalmente passar { anomes_override, em_validacao_override, recipientName } em templateData.
   let resolvedTemplateData: Record<string, any> = templateData ?? {}
   if (templateName === 'receita-caixa-newsletter') {
-    const anomesOverride = resolvedTemplateData?.anomes_override ?? null
-    const emValidacaoOverride =
-      typeof resolvedTemplateData?.em_validacao_override === 'boolean'
-        ? resolvedTemplateData.em_validacao_override
-        : null
-    const { data: rpcPayload, error: rpcErr } = await supabase.rpc('rpc_email_receita_payload', {
-      p_anomes_override: anomesOverride,
-      p_em_validacao_override: emValidacaoOverride,
-    })
-    if (rpcErr || !rpcPayload) {
-      return new Response(JSON.stringify({ error: `Failed to load receita payload: ${rpcErr?.message || 'empty'}` }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    let rpcPayload: any = payload_override ?? null
+    if (!rpcPayload) {
+      const anomesOverride = resolvedTemplateData?.anomes_override ?? null
+      const emValidacaoOverride =
+        typeof resolvedTemplateData?.em_validacao_override === 'boolean'
+          ? resolvedTemplateData.em_validacao_override
+          : null
+      const { data, error: rpcErr } = await supabase.rpc('rpc_email_receita_payload', {
+        p_anomes_override: anomesOverride,
+        p_em_validacao_override: emValidacaoOverride,
       })
+      if (rpcErr || !data) {
+        return new Response(JSON.stringify({ error: `Failed to load receita payload: ${rpcErr?.message || 'empty'}` }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      rpcPayload = data
     }
     resolvedTemplateData = { payload: rpcPayload, recipientName: resolvedTemplateData?.recipientName }
   }

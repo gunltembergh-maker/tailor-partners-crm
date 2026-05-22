@@ -1,10 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/AppLayout';
 import { TailorFrame } from '@/components/layout/TailorFrame';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -117,6 +121,13 @@ export default function EmailSchedules() {
   const [disparando, setDisparando] = useState(false);
   const [historicoExpandido, setHistoricoExpandido] = useState<string | null>(null);
 
+  // Edição de schedule
+  const [horaEdit, setHoraEdit] = useState<string>('08:30');
+  const [diasEdit, setDiasEdit] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [ativoEdit, setAtivoEdit] = useState<boolean>(true);
+  const [salvando, setSalvando] = useState(false);
+  const [proximaExecucao, setProximaExecucao] = useState<Date | null>(null);
+
   // Config + último disparo
   const { data: config } = useQuery({
     queryKey: ['email-schedule-config', MODULO],
@@ -130,6 +141,29 @@ export default function EmailSchedules() {
       return data;
     },
   });
+
+  // Hidrata estado de edição quando a config carrega
+  useEffect(() => {
+    if (!config) return;
+    const c: any = config;
+    const hora = String(c.hora_brt ?? c.horario_envio ?? '08:30:00').slice(0, 5);
+    setHoraEdit(hora);
+    setDiasEdit((c.dias_semana as number[] | undefined) ?? [1, 2, 3, 4, 5]);
+    setAtivoEdit(!!c.ativo);
+  }, [config]);
+
+  // Próxima execução prevista (server-side)
+  const { data: proxExec, refetch: refetchProx } = useQuery({
+    queryKey: ['email-proxima-execucao', MODULO],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('rpc_proxima_execucao_schedule', { p_modulo: MODULO });
+      if (error) throw error;
+      return data as string | null;
+    },
+  });
+  useEffect(() => {
+    setProximaExecucao(proxExec ? new Date(proxExec) : null);
+  }, [proxExec]);
 
   const { data: destinatarios = [], refetch: refetchDest } = useQuery({
     queryKey: ['email-destinatarios', MODULO],
@@ -223,6 +257,43 @@ export default function EmailSchedules() {
     refetchDest();
   };
 
+  // Detecta alterações pendentes
+  const horaConfig = String((config as any)?.hora_brt ?? (config as any)?.horario_envio ?? '08:30:00').slice(0, 5);
+  const diasConfig = ((config as any)?.dias_semana as number[] | undefined) ?? [];
+  const alterado =
+    horaEdit !== horaConfig ||
+    JSON.stringify([...diasEdit].sort()) !== JSON.stringify([...diasConfig].sort()) ||
+    ativoEdit !== !!(config as any)?.ativo;
+
+  const handleSalvar = async () => {
+    if (diasEdit.length === 0) {
+      toast.error('Selecione ao menos um dia da semana');
+      return;
+    }
+    setSalvando(true);
+    try {
+      const { error } = await supabase.rpc('rpc_atualizar_schedule_config', {
+        p_modulo: MODULO,
+        p_hora_brt: `${horaEdit}:00`,
+        p_dias_semana: diasEdit,
+        p_ativo: ativoEdit,
+      });
+      if (error) throw error;
+      toast.success('Schedule atualizado');
+      await qc.invalidateQueries({ queryKey: ['email-schedule-config', MODULO] });
+      await refetchProx();
+    } catch (err: any) {
+      toast.error(err?.message || 'Falha ao salvar');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const formatDateBR = (d: Date) => {
+    const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    return `${dias[d.getDay()]}, ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} BRT`;
+  };
+
   return (
     <AppLayout>
       <TailorFrame>
@@ -241,68 +312,118 @@ export default function EmailSchedules() {
           </p>
         </div>
 
-        {/* Status do schedule */}
+        {/* Card de configuração do schedule */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle className="text-lg text-[#0A2337]">{MODULO_LABEL}</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">
-                Horário: {String(config?.horario_envio || '08:00:00').slice(0, 5)} BRT ·{' '}
-                {(config?.dias_semana as number[] | undefined)?.map((d) => DIAS_LABEL[d % 7]).join(', ') || '—'} (pulando feriados)
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Disparo automático diário</p>
             </div>
             <Badge
               variant="outline"
               className={
-                ativo
+                ativoEdit
                   ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
                   : 'bg-gray-100 text-gray-700 border-gray-200'
               }
             >
-              {ativo ? '✅ Ativo' : '⏸ Pausado'}
+              {ativoEdit ? '✅ Ativo' : '⏸ Pausado'}
             </Badge>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div className="rounded-md border p-3">
-                <p className="text-xs uppercase text-muted-foreground tracking-wide">Último envio</p>
-                <p className="font-medium text-[#0A2337] mt-1">
-                  {ultimoDisparo ? fmtDataHora(ultimoDisparo.disparado_em) : 'Nenhum disparo registrado'}
-                </p>
-                {ultimoDisparo && (
-                  <div className="flex items-center gap-2 mt-2 text-xs">
-                    <StatusBadge status={ultimoDisparo.status} />
-                    <span className="text-muted-foreground">
-                      {ultimoDisparo.total_sucessos}/{ultimoDisparo.total_destinatarios} sucesso(s), {ultimoDisparo.total_falhas} falha(s)
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="rounded-md border p-3">
-                <p className="text-xs uppercase text-muted-foreground tracking-wide">Próximo envio</p>
-                <p className="font-medium text-[#0A2337] mt-1 capitalize">{proximoEnvio}</p>
-                {!ativo && config?.motivo_pausa && (
-                  <p className="text-xs text-muted-foreground mt-1">Motivo: {config.motivo_pausa}</p>
-                )}
+          <CardContent className="space-y-6">
+            {/* Horário */}
+            <div>
+              <Label>Horário (BRT)</Label>
+              <Input
+                type="time"
+                value={horaEdit}
+                onChange={(e) => setHoraEdit(e.target.value)}
+                className="w-32 mt-1"
+              />
+            </div>
+
+            {/* Dias da semana */}
+            <div>
+              <Label>Dias da semana</Label>
+              <div className="flex gap-4 mt-2">
+                {[
+                  { nome: 'Dom', idx: 0 },
+                  { nome: 'Seg', idx: 1 },
+                  { nome: 'Ter', idx: 2 },
+                  { nome: 'Qua', idx: 3 },
+                  { nome: 'Qui', idx: 4 },
+                  { nome: 'Sex', idx: 5 },
+                  { nome: 'Sáb', idx: 6 },
+                ].map(({ nome, idx }) => (
+                  <label key={idx} className="flex flex-col items-center gap-1 cursor-pointer">
+                    <Checkbox
+                      checked={diasEdit.includes(idx)}
+                      onCheckedChange={(checked) => {
+                        setDiasEdit(
+                          checked
+                            ? [...diasEdit, idx].sort((a, b) => a - b)
+                            : diasEdit.filter((d) => d !== idx),
+                        );
+                      }}
+                    />
+                    <span className="text-xs">{nome}</span>
+                  </label>
+                ))}
               </div>
             </div>
 
-            <div className="flex gap-2 pt-2 border-t">
-              <Button
-                variant={ativo ? 'outline' : 'default'}
-                onClick={handleTogglePausar}
-                className="gap-2"
-              >
-                {ativo ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                {ativo ? 'Pausar' : 'Reativar'}
-              </Button>
+            {/* Ativo */}
+            <div className="flex items-center gap-2">
+              <Switch checked={ativoEdit} onCheckedChange={setAtivoEdit} />
+              <span className="text-sm">{ativoEdit ? 'Ativo' : 'Pausado'}</span>
+            </div>
+
+            {/* Próxima execução */}
+            {proximaExecucao && ativoEdit && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-[#0A2337]">
+                Próxima execução: <strong>{formatDateBR(proximaExecucao)}</strong>
+              </div>
+            )}
+
+            {/* Último envio */}
+            <div className="rounded-md border p-3 text-sm">
+              <p className="text-xs uppercase text-muted-foreground tracking-wide">Último envio</p>
+              <p className="font-medium text-[#0A2337] mt-1">
+                {ultimoDisparo ? fmtDataHora(ultimoDisparo.disparado_em) : 'Nenhum disparo registrado'}
+              </p>
+              {ultimoDisparo && (
+                <div className="flex items-center gap-2 mt-2 text-xs">
+                  <StatusBadge status={ultimoDisparo.status} />
+                  <span className="text-muted-foreground">
+                    {ultimoDisparo.total_sucessos}/{ultimoDisparo.total_destinatarios} sucesso(s), {ultimoDisparo.total_falhas} falha(s)
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Aviso feriado */}
+            <div className="text-xs text-muted-foreground border-l-2 border-amber-300 pl-3">
+              ℹ️ Mesmo nos dias selecionados, o disparo é cancelado em feriados nacionais.
+            </div>
+
+            {/* Ações */}
+            <div className="flex flex-wrap gap-2 justify-between pt-2 border-t">
               <Button
                 onClick={handleDisparar}
                 disabled={disparando}
-                className="gap-2 bg-[#0A2337] hover:bg-[#1A3A52] text-white"
+                variant="outline"
+                className="gap-2"
               >
                 {disparando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 {disparando ? 'Disparando...' : 'Disparar agora'}
+              </Button>
+              <Button
+                onClick={handleSalvar}
+                disabled={!alterado || salvando}
+                className="gap-2 bg-[#0A2337] hover:bg-[#1A3A52] text-white"
+              >
+                {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {salvando ? 'Salvando...' : 'Salvar alterações'}
               </Button>
             </div>
           </CardContent>
