@@ -22,6 +22,7 @@ const PERFIS_RESTRITOS_RECEITA = [
   "FINDER",
   "OPERACOES",
   "ASSESSOR",
+  "LÍDER - ASSESSOR",
 ];
 
 function cpfMask(value: string): string {
