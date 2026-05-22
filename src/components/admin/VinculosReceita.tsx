@@ -84,7 +84,7 @@ export function VinculosReceita({ userId }: Props) {
     const { error } = await supabase.rpc("rpc_adicionar_vinculo" as any, {
       p_user_id: userId,
       p_tipo: novoTipo,
-      p_nome_pessoa: valor,
+      p_valor: valor,
     });
     if (error) {
       toast.error(`Erro: ${error.message}`);
