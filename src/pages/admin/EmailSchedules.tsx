@@ -142,6 +142,29 @@ export default function EmailSchedules() {
     },
   });
 
+  // Hidrata estado de edição quando a config carrega
+  useEffect(() => {
+    if (!config) return;
+    const c: any = config;
+    const hora = String(c.hora_brt ?? c.horario_envio ?? '08:30:00').slice(0, 5);
+    setHoraEdit(hora);
+    setDiasEdit((c.dias_semana as number[] | undefined) ?? [1, 2, 3, 4, 5]);
+    setAtivoEdit(!!c.ativo);
+  }, [config]);
+
+  // Próxima execução prevista (server-side)
+  const { data: proxExec, refetch: refetchProx } = useQuery({
+    queryKey: ['email-proxima-execucao', MODULO],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('rpc_proxima_execucao_schedule', { p_modulo: MODULO });
+      if (error) throw error;
+      return data as string | null;
+    },
+  });
+  useEffect(() => {
+    setProximaExecucao(proxExec ? new Date(proxExec) : null);
+  }, [proxExec]);
+
   const { data: destinatarios = [], refetch: refetchDest } = useQuery({
     queryKey: ['email-destinatarios', MODULO],
     queryFn: async () => {
