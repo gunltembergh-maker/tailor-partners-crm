@@ -11,7 +11,18 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Info } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { VinculosReceita } from "./VinculosReceita";
+
+const PERFIS_RESTRITOS_RECEITA = [
+  "COMERCIAL",
+  "BANKER",
+  "FA ASSISTENTE",
+  "FINDER",
+  "OPERACOES",
+  "ASSESSOR",
+];
 
 function cpfMask(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 11);
