@@ -67,6 +67,7 @@ interface Usuario {
   invited_at: string | null;
   operacao_tipo: string | null;
   perfil_id: string | null;
+  perfil_nome: string | null;
   convite_status?: string | null;
   convite_enviado_em?: string | null;
   convite_aceito_em?: string | null;
@@ -246,7 +247,7 @@ export default function GestaoUsuarios() {
       email: u.email,
       nome: u.full_name,
       cpf: u.cpf || "",
-      perfil: u.role,
+      perfil: u.perfil_nome || u.role,
       banker: u.banker_name || "",
       finder: u.finder_name || "",
       empresa: u.empresa || "Tailor Partners",
@@ -583,7 +584,12 @@ export default function GestaoUsuarios() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {u.role ? <Badge className={badgeClass}>{u.role === "BANKER" ? "FINANCIAL ADVISOR" : u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
+                          {(() => {
+                            const displayPerfil = u.perfil_nome || u.role;
+                            if (!displayPerfil) return <span className="text-muted-foreground text-sm">-</span>;
+                            const label = displayPerfil === "BANKER" ? "FINANCIAL ADVISOR" : displayPerfil;
+                            return <Badge className={badgeClass}>{label}</Badge>;
+                          })()}
                         </TableCell>
                         <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
                         <TableCell>
