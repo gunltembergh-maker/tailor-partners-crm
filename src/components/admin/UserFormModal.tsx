@@ -61,6 +61,7 @@ export interface UserFormData {
   isEdit: boolean;
   editProfileId?: string;
   perfilId?: string;
+  userId?: string;
 }
 
 interface Props {
