@@ -220,7 +220,7 @@ export default function GestaoUsuarios() {
       const matchSearch =
         !searchLower ||
         u.full_name?.toLowerCase().includes(searchLower) ||
-        u.nome?.toLowerCase().includes(searchLower) ||
+        
         u.email?.toLowerCase().includes(searchLower) ||
         (searchDigits.length > 0 && u.cpf?.replace(/\D/g, "").includes(searchDigits));
       const matchStatus = statusFilter === "Todos" ||
