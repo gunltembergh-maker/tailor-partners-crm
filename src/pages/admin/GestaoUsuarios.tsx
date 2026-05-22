@@ -200,8 +200,8 @@ export default function GestaoUsuarios() {
     return {
       total: usuarios.length,
       active: usuarios.filter((u) => !u.primeiro_acesso && u.ultimo_acesso && !u.blocked).length,
-      nuncaAcessou: usuarios.filter((u) => u.primeiro_acesso && u.active && !u.blocked).length,
-      preCadastrado: usuarios.filter((u) => !u.active && !u.blocked).length,
+      nuncaAcessou: usuarios.filter((u) => u.primeiro_acesso && u.active && !u.blocked && !u.pre_cadastrado).length,
+      preCadastrado: usuarios.filter((u) => u.pre_cadastrado && !u.blocked).length,
       blocked: usuarios.filter((u) => u.blocked).length,
     };
   }, [usuarios]);
@@ -226,8 +226,8 @@ export default function GestaoUsuarios() {
         (searchDigits.length > 0 && u.cpf?.replace(/\D/g, "").includes(searchDigits));
       const matchStatus = statusFilter === "Todos" ||
         (statusFilter === "Ativo" && !u.primeiro_acesso && u.active && !u.blocked) ||
-        (statusFilter === "Nunca acessou" && u.primeiro_acesso && u.active && !u.blocked) ||
-        (statusFilter === "Pré-cadastrado" && !u.active && !u.blocked) ||
+        (statusFilter === "Nunca acessou" && u.primeiro_acesso && u.active && !u.blocked && !u.pre_cadastrado) ||
+        (statusFilter === "Pré-cadastrado" && u.pre_cadastrado && !u.blocked) ||
         (statusFilter === "Bloqueado" && u.blocked);
       const matchPerfil = perfilFilter === "Todos" || u.role === perfilFilter;
       const tipo = (u.tipo_usuario || "interno");
