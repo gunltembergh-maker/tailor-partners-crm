@@ -1107,6 +1107,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_vinculos_receita: {
+        Row: {
+          adicionado_por: string | null
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          id: string
+          nome_pessoa: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          adicionado_por?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome_pessoa: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          adicionado_por?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome_pessoa?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
@@ -3478,6 +3511,13 @@ export type Database = {
       }
       parse_num: { Args: { v: string }; Returns: number }
       parse_num_any: { Args: { v: string }; Returns: number }
+      pessoas_vinculadas_usuario: {
+        Args: { p_user_id?: string }
+        Returns: {
+          nome_pessoa: string
+          tipo: string
+        }[]
+      }
       pode_importar_saldo: { Args: { _user_id: string }; Returns: boolean }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
@@ -3490,6 +3530,10 @@ export type Database = {
       refresh_mv_caixa_completa: { Args: never; Returns: undefined }
       rpc_adicionar_destinatario_automatico: {
         Args: { p_modulo: string; p_user_id: string }
+        Returns: string
+      }
+      rpc_adicionar_vinculo: {
+        Args: { p_nome_pessoa: string; p_tipo: string; p_user_id: string }
         Returns: string
       }
       rpc_admin_aprovar_usuario: {
@@ -3893,6 +3937,12 @@ export type Database = {
               casa: string
             }[]
           }
+      rpc_buscar_pessoas_raw: {
+        Args: { p_busca?: string; p_tipo: string }
+        Returns: {
+          nome_pessoa: string
+        }[]
+      }
       rpc_buscar_usuarios_hub: {
         Args: { p_busca?: string }
         Returns: {
@@ -4267,6 +4317,15 @@ export type Database = {
           ordem: number
         }[]
       }
+      rpc_listar_vinculos_usuario: {
+        Args: { p_user_id: string }
+        Returns: {
+          criado_em: string
+          id: string
+          nome_pessoa: string
+          tipo: string
+        }[]
+      }
       rpc_marcar_convite_ativado: {
         Args: { p_convite_id: string }
         Returns: undefined
@@ -4503,6 +4562,7 @@ export type Database = {
         Args: { p_id: string }
         Returns: boolean
       }
+      rpc_remover_vinculo: { Args: { p_id: string }; Returns: boolean }
       rpc_roa_faixa_pl: {
         Args: {
           p_advisor?: string[]
@@ -4990,6 +5050,10 @@ export type Database = {
       }
       truncate_table: { Args: { table_name: string }; Returns: undefined }
       unaccent: { Args: { "": string }; Returns: string }
+      usuario_tem_restricao_receita: {
+        Args: { p_user_id?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
