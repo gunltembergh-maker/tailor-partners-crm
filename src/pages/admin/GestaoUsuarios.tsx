@@ -115,7 +115,8 @@ function formatConvite(u: Usuario): { icon: string; text: string; className: str
 
 function getStatusDisplay(u: Usuario) {
   if (u.blocked) return { label: "Bloqueado", icon: "🔒", className: "bg-red-500/10 text-red-400" };
-  if (!u.active && !u.blocked) return { label: "Pré-cadastrado", icon: "👤", className: "bg-muted text-muted-foreground" };
+  if (u.pre_cadastrado) return { label: "Pré-cadastrado", icon: "👤", className: "bg-muted text-muted-foreground" };
+  if (!u.active) return { label: "Inativo", icon: "⏸", className: "bg-muted text-muted-foreground" };
   if (u.primeiro_acesso) return { label: "Nunca acessou", icon: "⏳", className: "bg-yellow-500/10 text-yellow-400" };
   return { label: "Ativo", icon: "✅", className: "bg-green-500/10 text-green-400" };
 }
