@@ -174,6 +174,7 @@ Deno.serve(async (req) => {
             templateName: 'receita-caixa-newsletter',
             recipientEmail: email,
             templateData: { recipientName: nome },
+            payload_override: payloadCompartilhado,
             idempotencyKey: `auto-${MODULO}-${dataEnvio}-${dest.user_id}`,
             label: `auto-${MODULO}-${dataEnvio}`,
           }),
