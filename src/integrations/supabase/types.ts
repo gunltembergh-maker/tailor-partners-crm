@@ -3287,6 +3287,23 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_email_send_log_consolidado: {
+        Row: {
+          atualizado_em: string | null
+          duracao_processamento_seg: number | null
+          enfileirado_em: string | null
+          error_message: string | null
+          foi_enviado: boolean | null
+          message_id: string | null
+          metadata: Json | null
+          qtd_eventos: number | null
+          recipient_email: string | null
+          status_final: string | null
+          template_name: string | null
+          teve_falha: boolean | null
+        }
+        Relationships: []
+      }
       vw_positivador_total_agrupado: {
         Row: {
           advisor: string | null
