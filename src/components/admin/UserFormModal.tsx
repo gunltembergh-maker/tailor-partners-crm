@@ -252,6 +252,7 @@ export function UserFormModal({ open, onOpenChange, initialData, onSaved }: Prop
           p_blocked: null,
           p_area: area || null,
           p_gestor: gestor || null,
+          p_cpf: digits || null,
         });
         if (error) throw error;
         const result = data as any;
