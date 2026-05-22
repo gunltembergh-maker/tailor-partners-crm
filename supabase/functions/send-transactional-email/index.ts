@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  const { templateName, recipientEmail, idempotencyKey, templateData, label } = body ?? {}
+  const { templateName, recipientEmail, idempotencyKey, templateData, label, payload_override } = body ?? {}
 
   if (typeof templateName !== 'string' || !templateName) {
     return new Response(JSON.stringify({ error: 'templateName is required' }), {
