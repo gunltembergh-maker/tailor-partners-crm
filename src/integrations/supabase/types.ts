@@ -3471,6 +3471,7 @@ export type Database = {
         Args: { p_modulo: string }
         Returns: undefined
       }
+      fn_warmup_mv_comissoes_caixa: { Args: never; Returns: string }
       get_email_queue_jwt: { Args: never; Returns: string }
       get_user_advisor_filter: { Args: never; Returns: string[] }
       get_user_banker_filter: { Args: never; Returns: string[] }
