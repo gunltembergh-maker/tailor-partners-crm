@@ -3496,21 +3496,38 @@ export type Database = {
         Args: { p_notif_id?: string; p_role: string; p_user_id: string }
         Returns: Json
       }
-      rpc_admin_atualizar_usuario: {
-        Args: {
-          p_advisor_name?: string
-          p_area?: string
-          p_banker_name?: string
-          p_blocked?: boolean
-          p_email?: string
-          p_finder_name?: string
-          p_gestor?: string
-          p_nome?: string
-          p_perfil_id?: string
-          p_profile_id: string
-        }
-        Returns: Json
-      }
+      rpc_admin_atualizar_usuario:
+        | {
+            Args: {
+              p_advisor_name?: string
+              p_area?: string
+              p_banker_name?: string
+              p_blocked?: boolean
+              p_email?: string
+              p_finder_name?: string
+              p_gestor?: string
+              p_nome?: string
+              p_perfil_id?: string
+              p_profile_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_advisor_name?: string
+              p_area?: string
+              p_banker_name?: string
+              p_blocked?: boolean
+              p_cpf?: string
+              p_email?: string
+              p_finder_name?: string
+              p_gestor?: string
+              p_nome?: string
+              p_perfil_id?: string
+              p_profile_id: string
+            }
+            Returns: Json
+          }
       rpc_admin_bloquear_usuario: {
         Args: { p_blocked: boolean; p_email: string }
         Returns: Json
