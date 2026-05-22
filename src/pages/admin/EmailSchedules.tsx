@@ -121,6 +121,13 @@ export default function EmailSchedules() {
   const [disparando, setDisparando] = useState(false);
   const [historicoExpandido, setHistoricoExpandido] = useState<string | null>(null);
 
+  // Edição de schedule
+  const [horaEdit, setHoraEdit] = useState<string>('08:30');
+  const [diasEdit, setDiasEdit] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [ativoEdit, setAtivoEdit] = useState<boolean>(true);
+  const [salvando, setSalvando] = useState(false);
+  const [proximaExecucao, setProximaExecucao] = useState<Date | null>(null);
+
   // Config + último disparo
   const { data: config } = useQuery({
     queryKey: ['email-schedule-config', MODULO],
