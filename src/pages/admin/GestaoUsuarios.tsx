@@ -584,7 +584,12 @@ export default function GestaoUsuarios() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {u.role ? <Badge className={badgeClass}>{u.role === "BANKER" ? "FINANCIAL ADVISOR" : u.role}</Badge> : <span className="text-muted-foreground text-sm">-</span>}
+                          {(() => {
+                            const displayPerfil = u.perfil_nome || u.role;
+                            if (!displayPerfil) return <span className="text-muted-foreground text-sm">-</span>;
+                            const label = displayPerfil === "BANKER" ? "FINANCIAL ADVISOR" : displayPerfil;
+                            return <Badge className={badgeClass}>{label}</Badge>;
+                          })()}
                         </TableCell>
                         <TableCell className="text-sm">{getBankerFinderDisplay(u)}</TableCell>
                         <TableCell>
