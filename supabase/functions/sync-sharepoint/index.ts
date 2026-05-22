@@ -875,6 +875,31 @@ Deno.serve(async (req) => {
             await saveLog('sync-historico-chunked', false,
               `${((Date.now() - tChunk) / 1000).toFixed(1)}s`,
               [`Chunk ${chunkNum} falhou em row ${nextRow}: ${msg}`], [msg]).catch(() => {});
+            // Notifica admins via notificacoes_admin (trigger trg_notificacoes_admin_email cuida do email)
+            try {
+              await fetch(`${SUPABASE_URL}/rest/v1/notificacoes_admin`, {
+                method: 'POST',
+                headers: { ...rpcHeaders, 'Prefer': 'return=minimal' },
+                body: JSON.stringify({
+                  tipo: 'sync_historico_falha',
+                  titulo: 'Falha no Sync Receita Histórico',
+                  mensagem: `Sync ${SYNC_NAME} falhou: ${msg}`,
+                  dados: {
+                    sync_name: SYNC_NAME,
+                    error: msg,
+                    chunk: chunkNum,
+                    next_row: nextRow,
+                    total_seen: totalSeen,
+                    claim_id: claimId,
+                    sync_mode: 'historico_chunked_worker',
+                    timestamp_brt: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                  },
+                }),
+              });
+            } catch (notifErr) {
+              console.error('[SyncSharePoint] Falha ao registrar notificacao_admin:', notifErr);
+              // NÃO propagar — falha do log não pode mascarar o erro original
+            }
           }
         })());
 
