@@ -3629,6 +3629,7 @@ export type Database = {
           nome: string
           operacao_tipo: string
           perfil_id: string
+          perfil_nome: string
           pre_cadastrado: boolean
           primeiro_acesso: boolean
           role: string
