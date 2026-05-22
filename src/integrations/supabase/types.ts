@@ -598,7 +598,9 @@ export type Database = {
         Row: {
           ativo: boolean
           atualizado_em: string
+          cron_jobid: number | null
           dias_semana: number[]
+          hora_brt: string
           horario_envio: string
           modulo: string
           motivo_pausa: string | null
@@ -608,7 +610,9 @@ export type Database = {
         Insert: {
           ativo?: boolean
           atualizado_em?: string
+          cron_jobid?: number | null
           dias_semana?: number[]
+          hora_brt?: string
           horario_envio?: string
           modulo: string
           motivo_pausa?: string | null
@@ -618,7 +622,9 @@ export type Database = {
         Update: {
           ativo?: boolean
           atualizado_em?: string
+          cron_jobid?: number | null
           dias_semana?: number[]
+          hora_brt?: string
           horario_envio?: string
           modulo?: string
           motivo_pausa?: string | null
@@ -3418,6 +3424,14 @@ export type Database = {
       fn_anomes_m0: { Args: never; Returns: number }
       fn_anomes_m1: { Args: never; Returns: number }
       fn_dentro_periodo_m1: { Args: never; Returns: boolean }
+      fn_gerar_cron_expression: {
+        Args: { p_dias_semana: number[]; p_hora_brt: string }
+        Returns: string
+      }
+      fn_sincronizar_schedule_com_cron: {
+        Args: { p_modulo: string }
+        Returns: undefined
+      }
       get_email_queue_jwt: { Args: never; Returns: string }
       get_user_advisor_filter: { Args: never; Returns: string[] }
       get_user_banker_filter: { Args: never; Returns: string[] }
@@ -3725,6 +3739,15 @@ export type Database = {
           sucesso: boolean
           tipo: string
         }[]
+      }
+      rpc_atualizar_schedule_config: {
+        Args: {
+          p_ativo: boolean
+          p_dias_semana: number[]
+          p_hora_brt: string
+          p_modulo: string
+        }
+        Returns: Json
       }
       rpc_auc_casa:
         | {
@@ -4262,6 +4285,10 @@ export type Database = {
           primeiro_acesso: boolean
           role: string
         }[]
+      }
+      rpc_proxima_execucao_schedule: {
+        Args: { p_modulo: string }
+        Returns: string
       }
       rpc_receita_caixa_advisor_xp: {
         Args: {
