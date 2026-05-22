@@ -3495,6 +3495,7 @@ export type Database = {
       norm_txt: { Args: { v: string }; Returns: string }
       normalize_advisor: { Args: { advisor: string }; Returns: string }
       normalize_banker: { Args: { v: string }; Returns: string }
+      normalize_nome_pessoa: { Args: { p_nome: string }; Returns: string }
       normalize_tipo_cliente: { Args: { p_tipo: string }; Returns: string }
       notificar_admins_por_email: {
         Args: {
@@ -3512,10 +3513,11 @@ export type Database = {
       parse_num: { Args: { v: string }; Returns: number }
       parse_num_any: { Args: { v: string }; Returns: number }
       pessoas_vinculadas_usuario: {
-        Args: { p_user_id?: string }
+        Args: { p_user_id: string }
         Returns: {
           tipo: string
           valor: string
+          valor_normalizado: string
         }[]
       }
       pode_importar_saldo: { Args: { _user_id: string }; Returns: boolean }
@@ -4859,6 +4861,10 @@ export type Database = {
           p_tipo: string
         }
         Returns: undefined
+      }
+      rpc_sincronizar_vinculos_usuario: {
+        Args: { p_user_id: string; p_vinculos: Json }
+        Returns: Json
       }
       rpc_sync_bases_status: {
         Args: never
