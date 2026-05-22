@@ -127,6 +127,31 @@ Deno.serve(async (req) => {
       throw errDisp
     }
 
+    // 5.5. Pré-carrega payload UMA VEZ por disparo (evita N chamadas redundantes ao RPC pesado)
+    const { data: payloadCompartilhado, error: payloadErr } = await supabase.rpc(
+      'rpc_email_receita_payload',
+      { p_anomes_override: null, p_em_validacao_override: null }
+    )
+    if (payloadErr || !payloadCompartilhado) {
+      await supabase
+        .from('email_disparos_automaticos')
+        .update({
+          total_sucessos: 0,
+          total_falhas: destinatarios.length,
+          status: 'falha_total',
+          detalhes_erro: [{ motivo: `payload_rpc_falhou: ${payloadErr?.message || 'vazio'}` }],
+          finalizado_em: new Date().toISOString(),
+        })
+        .eq('id', disparo.id)
+      await notificarAdmins(
+        supabase, supabaseUrl, serviceKey, internalJwt,
+        'falha_total', 0, destinatarios.length,
+        [{ motivo: `payload_rpc_falhou: ${payloadErr?.message || 'vazio'}` }],
+        dataEnvio,
+      )
+      return json({ error: `payload_rpc_falhou: ${payloadErr?.message || 'vazio'}` }, 500)
+    }
+
     // 6. Loop envios
     let sucessos = 0
     let falhas = 0
