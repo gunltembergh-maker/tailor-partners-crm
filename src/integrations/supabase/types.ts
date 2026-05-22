@@ -1114,9 +1114,9 @@ export type Database = {
           atualizado_em: string
           criado_em: string
           id: string
-          nome_pessoa: string
           tipo: string
           user_id: string
+          valor: string
         }
         Insert: {
           adicionado_por?: string | null
@@ -1124,9 +1124,9 @@ export type Database = {
           atualizado_em?: string
           criado_em?: string
           id?: string
-          nome_pessoa: string
           tipo: string
           user_id: string
+          valor: string
         }
         Update: {
           adicionado_por?: string | null
@@ -1134,9 +1134,9 @@ export type Database = {
           atualizado_em?: string
           criado_em?: string
           id?: string
-          nome_pessoa?: string
           tipo?: string
           user_id?: string
+          valor?: string
         }
         Relationships: []
       }
@@ -3514,8 +3514,8 @@ export type Database = {
       pessoas_vinculadas_usuario: {
         Args: { p_user_id?: string }
         Returns: {
-          nome_pessoa: string
           tipo: string
+          valor: string
         }[]
       }
       pode_importar_saldo: { Args: { _user_id: string }; Returns: boolean }
@@ -3533,7 +3533,7 @@ export type Database = {
         Returns: string
       }
       rpc_adicionar_vinculo: {
-        Args: { p_nome_pessoa: string; p_tipo: string; p_user_id: string }
+        Args: { p_tipo: string; p_user_id: string; p_valor: string }
         Returns: string
       }
       rpc_admin_aprovar_usuario: {
@@ -3940,7 +3940,7 @@ export type Database = {
       rpc_buscar_pessoas_raw: {
         Args: { p_busca?: string; p_tipo: string }
         Returns: {
-          nome_pessoa: string
+          valor: string
         }[]
       }
       rpc_buscar_usuarios_hub: {
@@ -4322,8 +4322,8 @@ export type Database = {
         Returns: {
           criado_em: string
           id: string
-          nome_pessoa: string
           tipo: string
+          valor: string
         }[]
       }
       rpc_marcar_convite_ativado: {
