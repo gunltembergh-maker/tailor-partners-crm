@@ -247,7 +247,7 @@ export default function GestaoUsuarios() {
       email: u.email,
       nome: u.full_name,
       cpf: u.cpf || "",
-      perfil: u.role,
+      perfil: u.perfil_nome || u.role,
       banker: u.banker_name || "",
       finder: u.finder_name || "",
       empresa: u.empresa || "Tailor Partners",
