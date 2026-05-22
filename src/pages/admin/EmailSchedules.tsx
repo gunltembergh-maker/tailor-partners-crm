@@ -257,6 +257,43 @@ export default function EmailSchedules() {
     refetchDest();
   };
 
+  // Detecta alterações pendentes
+  const horaConfig = String((config as any)?.hora_brt ?? (config as any)?.horario_envio ?? '08:30:00').slice(0, 5);
+  const diasConfig = ((config as any)?.dias_semana as number[] | undefined) ?? [];
+  const alterado =
+    horaEdit !== horaConfig ||
+    JSON.stringify([...diasEdit].sort()) !== JSON.stringify([...diasConfig].sort()) ||
+    ativoEdit !== !!(config as any)?.ativo;
+
+  const handleSalvar = async () => {
+    if (diasEdit.length === 0) {
+      toast.error('Selecione ao menos um dia da semana');
+      return;
+    }
+    setSalvando(true);
+    try {
+      const { error } = await supabase.rpc('rpc_atualizar_schedule_config', {
+        p_modulo: MODULO,
+        p_hora_brt: `${horaEdit}:00`,
+        p_dias_semana: diasEdit,
+        p_ativo: ativoEdit,
+      });
+      if (error) throw error;
+      toast.success('Schedule atualizado');
+      await qc.invalidateQueries({ queryKey: ['email-schedule-config', MODULO] });
+      await refetchProx();
+    } catch (err: any) {
+      toast.error(err?.message || 'Falha ao salvar');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const formatDateBR = (d: Date) => {
+    const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    return `${dias[d.getDay()]}, ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} BRT`;
+  };
+
   return (
     <AppLayout>
       <TailorFrame>
