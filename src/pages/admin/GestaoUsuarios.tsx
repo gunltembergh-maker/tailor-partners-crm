@@ -214,9 +214,15 @@ export default function GestaoUsuarios() {
   // Filtered list
   const filtered = useMemo(() => {
     if (!usuarios) return [];
+    const searchLower = search.toLowerCase().trim();
+    const searchDigits = search.replace(/\D/g, "");
     return usuarios.filter((u) => {
-      const searchLower = search.toLowerCase();
-      const matchSearch = !search || (u.full_name?.toLowerCase().includes(searchLower) || u.email?.toLowerCase().includes(searchLower) || u.cpf?.includes(search.replace(/\D/g, "")));
+      const matchSearch =
+        !searchLower ||
+        u.full_name?.toLowerCase().includes(searchLower) ||
+        u.nome?.toLowerCase().includes(searchLower) ||
+        u.email?.toLowerCase().includes(searchLower) ||
+        (searchDigits.length > 0 && u.cpf?.replace(/\D/g, "").includes(searchDigits));
       const matchStatus = statusFilter === "Todos" ||
         (statusFilter === "Ativo" && !u.primeiro_acesso && u.active && !u.blocked) ||
         (statusFilter === "Nunca acessou" && u.primeiro_acesso && u.active && !u.blocked) ||
