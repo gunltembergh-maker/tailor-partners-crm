@@ -3,6 +3,8 @@ import { Session, User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
+const PRIVILEGED_ROLES = new Set(["ADMIN", "LIDER"]);
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -47,13 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let sessionLoggedForUser: string | null = null;
 
     // Safety timeout: never leave user stuck on loading screen.
-    // Also clears null sentinels in role/permissoes so PermissionRoute
-    // doesn't wait forever (it waits while both are null).
     const safetyTimer = setTimeout(() => {
       if (!mounted) return;
       setLoading(false);
-      setRole((prev) => (prev === null ? "BANKER" : prev));
-      setPermissoes((prev) => (prev === null ? {} : prev));
     }, 5000);
 
     // Centralized tracking helper — fire-and-forget, never blocks auth
@@ -124,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Sinaliza que perfil está carregando — evita race com PermissionRoute
         setLoading(true);
         try {
-          await fetchMeuPerfil(session.user.id);
+          await fetchMeuPerfil(session.user.id, session.user);
         } catch (err) {
           console.error('[useAuth] Erro ao carregar perfil pós-login:', err);
         } finally {
@@ -156,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchMeuPerfil(session.user.id);
+          await fetchMeuPerfil(session.user.id, session.user);
           // Also track on initial page load / session restore
           trackLogin(session.user.id, session.user.email);
         }
@@ -176,18 +174,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function fetchMeuPerfil(userId: string) {
+  async function fetchMeuPerfil(userId: string, sessionUser?: User | null) {
     try {
       const { data, error } = await supabase.rpc("rpc_meu_perfil");
       if (error || !data) {
-        await fetchProfileFallback(userId);
+        await fetchProfileFallback(userId, sessionUser);
         return;
       }
 
       // rpc_meu_perfil returns a table (array). Handle both array and object.
       const perfil: any = Array.isArray(data) ? data[0] : data;
       if (!perfil) {
-        await fetchProfileFallback(userId);
+        await fetchProfileFallback(userId, sessionUser);
         return;
       }
 
@@ -215,18 +213,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (profileRow) setProfile(profileRow);
           else setProfile({ full_name: perfil.banker_name || "", email: "", avatar_url: null });
         });
-      setRole(perfil.role ?? null);
+      setRole(perfil.role ?? ((sessionUser?.user_metadata?.perfil as string | undefined) ?? null));
       setPermissoes((perfil.permissoes as Record<string, boolean>) ?? null);
       setBankerName(perfil.banker_name ?? null);
       setFinderName(perfil.finder_name ?? null);
       setPrimeiroAcesso(perfil.primeiro_acesso ?? false);
       setArea(perfil.area ?? null);
     } catch {
-      await fetchProfileFallback(userId);
+      await fetchProfileFallback(userId, sessionUser);
     }
   }
 
-  async function fetchProfileFallback(userId: string) {
+  async function fetchProfileFallback(userId: string, sessionUser?: User | null) {
     try {
       const { data: profileData } = await supabase
         .from("profiles")
@@ -251,9 +249,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
-      // Sempre definir valores não-nulos para destravar PermissionRoute
-      setRole(roleData?.role ?? "BANKER");
-      setPermissoes({});
+
+      const fallbackRole = roleData?.role ?? ((sessionUser?.user_metadata?.perfil as string | undefined) ?? null);
+      setRole(fallbackRole);
+      setPermissoes(fallbackRole && PRIVILEGED_ROLES.has(fallbackRole) ? {} : {});
     } catch (e) {
       console.error("fetchProfileFallback error:", e);
     }
