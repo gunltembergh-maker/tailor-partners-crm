@@ -107,9 +107,10 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 // Permite ADMIN/LIDER OU qualquer usuário cujo perfil tenha PELO MENOS UMA das permissões indicadas (lógica OR).
 // Usa effectiveRole/effectivePermissoes para que a Minha Visão simule corretamente o acesso do perfil alvo.
 function PermissionRoute({ permissions, children }: { permissions: string[]; children: React.ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, permissoes, role } = useAuth();
   const { effectiveRole, effectivePermissoes } = useViewAs();
-  if (loading) return <TailorLoader />;
+  // Aguarda tanto loading explícito quanto perfil ainda não consolidado (evita race pós-login)
+  if (loading || (session && permissoes === null && role === null)) return <TailorLoader />;
   if (!session) return <Navigate to="/auth" replace />;
   const isAdminLider = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
   const hasAnyPerm = permissions.some((p) => !!effectivePermissoes?.[p]);
