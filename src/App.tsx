@@ -122,7 +122,16 @@ function resolveLandingPath(role: string | null, permissoes: Record<string, bool
   };
 
   const allowed = candidates.find((path) => routePermissions[path].some((permission) => !!permissoes?.[permission]));
-  return allowed ?? "/auth";
+  return allowed ?? null;
+}
+
+function AccessDeniedScreen() {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-background px-6 text-center">
+      <p className="text-base font-medium text-foreground">Seu acesso foi autenticado, mas nenhuma tela foi liberada para este perfil.</p>
+      <p className="text-sm text-muted-foreground">Peça ao administrador para revisar suas permissões.</p>
+    </div>
+  );
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -146,14 +155,15 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 // Permite ADMIN/LIDER OU qualquer usuário cujo perfil tenha PELO MENOS UMA das permissões indicadas (lógica OR).
 // Usa effectiveRole/effectivePermissoes para que a Minha Visão simule corretamente o acesso do perfil alvo.
 function PermissionRoute({ permissions, children }: { permissions: string[]; children: React.ReactNode }) {
-  const { session, loading, permissoes, role } = useAuth();
+  const { session, loading } = useAuth();
   const { effectiveRole, effectivePermissoes } = useViewAs();
   if (loading) return <TailorLoader />;
   if (!session) return <Navigate to="/auth" replace />;
   const isAdminLider = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
   const hasAnyPerm = permissions.some((p) => !!effectivePermissoes?.[p]);
   if (!isAdminLider && !hasAnyPerm) {
-    return <Navigate to={resolveLandingPath(effectiveRole, effectivePermissoes)} replace />;
+    const fallbackPath = resolveLandingPath(effectiveRole, effectivePermissoes);
+    return fallbackPath ? <Navigate to={fallbackPath} replace /> : <AccessDeniedScreen />;
   }
   return <>{children}</>;
 }
@@ -167,11 +177,11 @@ function AppRoutes() {
   return (
     <Suspense fallback={<LoadingOverlay show />}>
       <Routes>
-        <Route path="/auth" element={session ? <Navigate to={landingPath} replace /> : <Auth />} />
+        <Route path="/auth" element={session ? (landingPath ? <Navigate to={landingPath} replace /> : <AccessDeniedScreen />) : <Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/ativar-conta" element={<AtivarConta />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
-        <Route path="/" element={<ProtectedRoute><Navigate to={landingPath} replace /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute>{landingPath ? <Navigate to={landingPath} replace /> : <AccessDeniedScreen />}</ProtectedRoute>} />
         <Route path="/inicio" element={<PermissionRoute permissions={["menu_inicio"]}><Inicio /></PermissionRoute>} />
         <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
         <Route path="/leads/:id" element={<ProtectedRoute><LeadDetalhe /></ProtectedRoute>} />
