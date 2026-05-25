@@ -159,6 +159,11 @@ function PermissionRoute({ permissions, children }: { permissions: string[]; chi
   const { effectiveRole, effectivePermissoes } = useViewAs();
   if (loading) return <TailorLoader />;
   if (!session) return <Navigate to="/auth" replace />;
+  // Defesa em profundidade: session ativa mas perfil ainda não consolidou → manter Loader
+  // (evita falso AccessDenied por race condition no useAuth)
+  if (effectiveRole === null && (effectivePermissoes === null || Object.keys(effectivePermissoes).length === 0)) {
+    return <TailorLoader />;
+  }
   const isAdminLider = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
   const hasAnyPerm = permissions.some((p) => !!effectivePermissoes?.[p]);
   if (!isAdminLider && !hasAnyPerm) {
@@ -171,6 +176,10 @@ function PermissionRoute({ permissions, children }: { permissions: string[]; chi
 function AppRoutes() {
   const { session, loading, role, permissoes } = useAuth();
   if (loading) return <TailorLoader />;
+
+  // Defesa em profundidade: session ativa mas perfil ainda não consolidou → Loader
+  const profilePending = !!session && role === null && (permissoes === null || Object.keys(permissoes).length === 0);
+  if (profilePending) return <TailorLoader />;
 
   const landingPath = resolveLandingPath(role, permissoes);
 

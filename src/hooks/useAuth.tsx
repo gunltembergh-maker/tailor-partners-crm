@@ -48,10 +48,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
     let sessionLoggedForUser: string | null = null;
 
-    // Safety timeout: never leave user stuck on loading screen.
+    // Safety timeout: só libera UI se realmente não houver sessão.
+    // Se há session mas perfil carregando, NÃO força loading=false — Loader continua.
     const safetyTimer = setTimeout(() => {
       if (!mounted) return;
-      setLoading(false);
+      setSession(currentSession => {
+        if (!currentSession) {
+          console.warn('[useAuth] Safety timer: sem sessão após 5s, liberando UI');
+          setLoading(false);
+        } else {
+          console.log('[useAuth] Safety timer: sessão existe mas perfil ainda carregando — mantendo Loader');
+        }
+        return currentSession;
+      });
     }, 5000);
 
     // Centralized tracking helper — fire-and-forget, never blocks auth
@@ -150,17 +159,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
-      try {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setLoading(true); // explicitamente sinaliza que perfil está carregando
+        try {
           await fetchMeuPerfil(session.user.id, session.user);
-          // Also track on initial page load / session restore
           trackLogin(session.user.id, session.user.email);
+        } catch (e) {
+          console.error("Error fetching profile on init:", e);
+        } finally {
+          if (mounted) setLoading(false);
         }
-      } catch (e) {
-        console.error("Error fetching profile on init:", e);
-      } finally {
+      } else {
         if (mounted) setLoading(false);
       }
     }).catch(() => {
@@ -251,8 +262,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       const fallbackRole = roleData?.role ?? ((sessionUser?.user_metadata?.perfil as string | undefined) ?? null);
+      if (!fallbackRole) {
+        // Role indeterminado — NÃO zerar permissoes, mantém null pra PermissionRoute renderizar Loader
+        // até que próxima tentativa de fetchMeuPerfil resolva. Evita falso AccessDenied pra ADMIN.
+        console.warn('[useAuth] fetchProfileFallback: role indeterminado — preservando permissoes=null');
+        return;
+      }
       setRole(fallbackRole);
-      setPermissoes(fallbackRole && PRIVILEGED_ROLES.has(fallbackRole) ? {} : {});
+      setPermissoes(PRIVILEGED_ROLES.has(fallbackRole) ? {} : {});
     } catch (e) {
       console.error("fetchProfileFallback error:", e);
     }
