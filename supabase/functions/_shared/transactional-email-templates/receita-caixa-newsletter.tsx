@@ -190,48 +190,48 @@ const ReceitaCaixaNewsletter = ({ payload, hubUrl = 'https://hub.tailorpartners.
   )
 }
 
-const bodyStyle = { backgroundColor: '#F5F1E8', fontFamily: 'Georgia, serif', margin: 0, padding: 0 } as const
+const bodyStyle = { backgroundColor: '#F5F1E8', fontFamily: "'Source Sans 3', Arial, sans-serif", margin: 0, padding: 0 } as const
 const containerStyle = { maxWidth: '600px', margin: '0 auto', backgroundColor: '#ffffff' } as const
 
 const headerStyle = { background: 'linear-gradient(135deg, #082537 0%, #0b3d57 100%)', padding: '40px 24px', textAlign: 'center' as const }
 const dividerLineStyle = { width: '60px', height: '1px', backgroundColor: 'rgba(255,255,255,0.3)', margin: '24px auto' } as const
-const headerEyebrowStyle = { color: '#A4C4D5', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, margin: 0, fontFamily: 'Arial, sans-serif', fontWeight: 'normal' as const }
-const headerSubtitleStyle = { color: '#ffffff', fontSize: '18px', margin: '6px 0 0 0', fontFamily: 'Georgia, serif' }
+const headerEyebrowStyle = { color: '#A4C4D5', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, margin: 0, fontFamily: "'Source Sans 3', Arial, sans-serif", fontWeight: 'normal' as const }
+const headerSubtitleStyle = { color: '#ffffff', fontSize: '18px', margin: '6px 0 0 0', fontFamily: "'Source Sans 3', Arial, sans-serif" }
 
 const spacerStyle = { backgroundColor: '#F5F1E8', padding: '12px 0', height: '12px', lineHeight: '12px' } as const
 
 const autoBannerStyle = { backgroundColor: '#FAFAFA', padding: '12px 24px', borderBottom: '1px solid #EEEEEE' } as const
-const autoBannerTextStyle = { color: '#73A7B7', fontSize: '12px', margin: 0, textAlign: 'center' as const, fontFamily: 'Arial, sans-serif' }
+const autoBannerTextStyle = { color: '#73A7B7', fontSize: '12px', margin: 0, textAlign: 'center' as const, fontFamily: "'Source Sans 3', Arial, sans-serif" }
 
 const validacaoBadgeStyle = { backgroundColor: '#FEF3C7', padding: '12px 24px', borderLeft: '4px solid #D97706' }
 const validacaoTextStyle = { color: '#92400E', fontSize: '13px', margin: 0 }
 
 const kpiSectionStyle = { padding: '32px 24px', textAlign: 'center' as const, borderBottom: '1px solid #E5E7EB' }
-const kpiLabelStyle = { color: '#73A7B7', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase' as const, margin: 0, fontFamily: 'Arial, sans-serif' }
-const kpiMesLabelStyle = { color: '#4B6D88', fontSize: '14px', margin: '4px 0 0 0' }
-const kpiValueStyle = { color: '#0A2337', fontSize: '40px', fontWeight: 'bold' as const, margin: '12px 0 0 0', fontFamily: 'Georgia, serif' }
+const kpiLabelStyle = { color: '#73A7B7', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase' as const, margin: 0, fontFamily: "'Source Sans 3', Arial, sans-serif" }
+const kpiMesLabelStyle = { color: '#4B6D88', fontSize: '14px', margin: '4px 0 0 0', fontFamily: "'Source Sans 3', Arial, sans-serif" }
+const kpiValueStyle = { color: '#082537', fontSize: '40px', fontWeight: 'bold' as const, margin: '12px 0 0 0', fontFamily: "'Source Sans 3', Arial, sans-serif", fontVariantNumeric: 'tabular-nums' as const, fontFeatureSettings: '"tnum"' }
 const variacaoColStyle = { width: '50%', textAlign: 'center' as const, padding: '0 8px', verticalAlign: 'top' as const }
-const variacaoLabelStyle = { color: '#4B6D88', fontSize: '11px', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: 0, fontFamily: 'Arial, sans-serif' }
-const variacaoValueBaseStyle = { fontSize: '18px', fontWeight: 'bold' as const, margin: '4px 0 0 0', fontFamily: 'Arial, sans-serif' }
+const variacaoLabelStyle = { color: '#4B6D88', fontSize: '11px', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: 0, fontFamily: "'Source Sans 3', Arial, sans-serif" }
+const variacaoValueBaseStyle = { fontSize: '18px', fontWeight: 'bold' as const, margin: '4px 0 0 0', fontFamily: "'Source Sans 3', Arial, sans-serif", fontVariantNumeric: 'tabular-nums' as const, fontFeatureSettings: '"tnum"' }
 
 const sectionStyle = { padding: '24px', borderBottom: '1px solid #E5E7EB' }
-const sectionTitleStyle = { color: '#0A2337', fontSize: '18px', margin: '0 0 16px 0', fontFamily: 'Georgia, serif' }
-const tableStyle = { width: '100%', borderCollapse: 'collapse' as const, fontSize: '14px', fontFamily: 'Arial, sans-serif' }
-const thStyle = { textAlign: 'left' as const, padding: '10px 8px', color: '#4B6D88', fontSize: '11px', textTransform: 'uppercase' as const, borderBottom: '2px solid #0A2337', letterSpacing: '0.5px' }
+const sectionTitleStyle = { color: '#082537', fontSize: '18px', margin: '0 0 16px 0', fontFamily: "'Source Sans 3', Arial, sans-serif" }
+const tableStyle = { width: '100%', borderCollapse: 'collapse' as const, fontSize: '14px', fontFamily: "'Source Sans 3', Arial, sans-serif" }
+const thStyle = { textAlign: 'left' as const, padding: '10px 8px', color: '#4B6D88', fontSize: '11px', textTransform: 'uppercase' as const, borderBottom: '2px solid #082537', letterSpacing: '0.5px' }
 const thRightStyle = { ...thStyle, textAlign: 'right' as const }
-const tdStyle = { padding: '10px 8px', color: '#0A2337' }
-const tdRightStyle = { ...tdStyle, textAlign: 'right' as const }
+const tdStyle = { padding: '10px 8px', color: '#082537' }
+const tdRightStyle = { ...tdStyle, textAlign: 'right' as const, fontVariantNumeric: 'tabular-nums' as const, fontFeatureSettings: '"tnum"' }
 const trEvenStyle = { backgroundColor: '#ffffff' }
 const trOddStyle = { backgroundColor: '#F5F1E8' }
 const acumuladoLabelStyle = { color: '#4B6D88', fontSize: '13px', margin: '0 0 12px 0' }
 
 const ctaSectionStyle = { padding: '32px 24px', textAlign: 'center' as const, backgroundColor: '#F5F1E8' }
-const ctaButtonStyle = { backgroundColor: '#0A2337', color: '#ffffff', padding: '14px 32px', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold' as const, textDecoration: 'none', display: 'inline-block' as const, fontFamily: 'Arial, sans-serif', boxShadow: '0 4px 12px rgba(10, 35, 55, 0.25)' }
+const ctaButtonStyle = { backgroundColor: '#082537', color: '#ffffff', padding: '14px 32px', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold' as const, textDecoration: 'none', display: 'inline-block' as const, fontFamily: "'Source Sans 3', Arial, sans-serif", boxShadow: '0 4px 12px rgba(8, 37, 55, 0.25)' }
 
 const hrStyle = { borderColor: '#E5E7EB', margin: 0 }
 const footerStyle = { padding: '24px', textAlign: 'center' as const, backgroundColor: '#ffffff' }
-const footerTeamStyle = { color: '#0A2337', fontSize: '13px', margin: 0, fontWeight: 600 as const, fontFamily: 'Arial, sans-serif' }
-const footerCompanyStyle = { color: '#73A7B7', fontSize: '12px', margin: '2px 0 0 0', fontFamily: 'Arial, sans-serif' }
+const footerTeamStyle = { color: '#082537', fontSize: '13px', margin: 0, fontWeight: 600 as const, fontFamily: "'Source Sans 3', Arial, sans-serif" }
+const footerCompanyStyle = { color: '#73A7B7', fontSize: '12px', margin: '2px 0 0 0', fontFamily: "'Source Sans 3', Arial, sans-serif" }
 
 export const template = {
   component: ReceitaCaixaNewsletter,
