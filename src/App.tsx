@@ -177,6 +177,10 @@ function AppRoutes() {
   const { session, loading, role, permissoes } = useAuth();
   if (loading) return <TailorLoader />;
 
+  // Defesa em profundidade: session ativa mas perfil ainda não consolidou → Loader
+  const profilePending = !!session && role === null && (permissoes === null || Object.keys(permissoes).length === 0);
+  if (profilePending) return <TailorLoader />;
+
   const landingPath = resolveLandingPath(role, permissoes);
 
   return (
