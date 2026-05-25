@@ -86,6 +86,45 @@ const queryClient = new QueryClient({
   },
 });
 
+function resolveLandingPath(role: string | null, permissoes: Record<string, boolean> | null) {
+  if (role === "ADMIN" || role === "LIDER") return "/inicio";
+
+  const candidates = [
+    "/inicio",
+    "/prioridades",
+    "/leads",
+    "/clientes",
+    "/tarefas",
+    "/calendario",
+    "/oportunidades",
+    "/paineis",
+    "/relatorios",
+    "/dashboards/comercial",
+    "/dashboard/receita",
+    "/admin/importar-bases",
+    "/admin/emails/schedules",
+  ] as const;
+
+  const routePermissions: Record<(typeof candidates)[number], string[]> = {
+    "/inicio": ["menu_inicio"],
+    "/prioridades": ["menu_prioridades"],
+    "/leads": ["menu_leads"],
+    "/clientes": ["menu_contas"],
+    "/tarefas": ["menu_tarefas"],
+    "/calendario": ["menu_calendario"],
+    "/oportunidades": ["menu_oportunidades"],
+    "/paineis": ["menu_paineis"],
+    "/relatorios": ["menu_relatorios"],
+    "/dashboards/comercial": ["menu_dashboards", "menu_dashboards_comercial"],
+    "/dashboard/receita": ["menu_dashboards", "menu_dashboards_receita"],
+    "/admin/importar-bases": ["menu_importar_bases", "menu_importar_saldo_xp", "menu_importar_saldo_avenue"],
+    "/admin/emails/schedules": ["gerenciar_emails_schedules"],
+  };
+
+  const allowed = candidates.find((path) => routePermissions[path].some((permission) => !!permissoes?.[permission]));
+  return allowed ?? "/auth";
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading, isBlocked } = useAuth();
   const location = useLocation();
@@ -109,27 +148,30 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function PermissionRoute({ permissions, children }: { permissions: string[]; children: React.ReactNode }) {
   const { session, loading, permissoes, role } = useAuth();
   const { effectiveRole, effectivePermissoes } = useViewAs();
-  // Aguarda tanto loading explícito quanto perfil ainda não consolidado (evita race pós-login)
-  if (loading || (session && permissoes === null && role === null)) return <TailorLoader />;
+  if (loading) return <TailorLoader />;
   if (!session) return <Navigate to="/auth" replace />;
   const isAdminLider = effectiveRole === "ADMIN" || effectiveRole === "LIDER";
   const hasAnyPerm = permissions.some((p) => !!effectivePermissoes?.[p]);
-  if (!isAdminLider && !hasAnyPerm) return <Navigate to="/" replace />;
+  if (!isAdminLider && !hasAnyPerm) {
+    return <Navigate to={resolveLandingPath(effectiveRole, effectivePermissoes)} replace />;
+  }
   return <>{children}</>;
 }
 
 function AppRoutes() {
-  const { session, loading } = useAuth();
+  const { session, loading, role, permissoes } = useAuth();
   if (loading) return <TailorLoader />;
+
+  const landingPath = resolveLandingPath(role, permissoes);
 
   return (
     <Suspense fallback={<LoadingOverlay show />}>
       <Routes>
-        <Route path="/auth" element={session ? <Navigate to="/inicio" replace /> : <Auth />} />
+        <Route path="/auth" element={session ? <Navigate to={landingPath} replace /> : <Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/ativar-conta" element={<AtivarConta />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
-        <Route path="/" element={<ProtectedRoute><Navigate to="/inicio" replace /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute><Navigate to={landingPath} replace /></ProtectedRoute>} />
         <Route path="/inicio" element={<PermissionRoute permissions={["menu_inicio"]}><Inicio /></PermissionRoute>} />
         <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
         <Route path="/leads/:id" element={<ProtectedRoute><LeadDetalhe /></ProtectedRoute>} />
