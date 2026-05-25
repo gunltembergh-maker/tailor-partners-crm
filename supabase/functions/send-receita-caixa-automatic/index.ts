@@ -61,21 +61,40 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 3. Idempotência (UNIQUE constraint protege race)
+    // 3. Idempotência: só bloqueia quando já existe disparo concluído ou em curso.
+    // Falhas (falha_total / falha_parcial) podem ser refeitas — UNIQUE index parcial
+    // (email_disparos_modulo_data_sucesso_idx) garante isso no nível do banco.
     const { data: jaEnviado } = await supabase
       .from('email_disparos_automaticos')
       .select('id, status')
       .eq('modulo', MODULO)
       .eq('data_envio', dataEnvio)
+      .in('status', ['concluido', 'em_processamento'])
       .maybeSingle()
 
     if (jaEnviado) {
       return json({
         skipped: true,
-        reason: 'ja_disparado_hoje',
+        reason: 'ja_disparado_hoje_com_sucesso',
         disparo_id: jaEnviado.id,
         status: jaEnviado.status,
       })
+    }
+
+    // Se houver disparos com falha hoje, loga que estamos refazendo (auditoria).
+    const { data: falhasAnteriores } = await supabase
+      .from('email_disparos_automaticos')
+      .select('id, status, disparado_em')
+      .eq('modulo', MODULO)
+      .eq('data_envio', dataEnvio)
+      .in('status', ['falha_total', 'falha_parcial'])
+      .order('disparado_em', { ascending: false })
+
+    if (falhasAnteriores && falhasAnteriores.length > 0) {
+      console.log(
+        `[receita-caixa] Refazendo apos ${falhasAnteriores.length} falha(s) anterior(es) hoje:`,
+        falhasAnteriores.map((f: any) => `${f.id}:${f.status}`).join(', '),
+      )
     }
 
     // 4. Destinatários ativos (sem FK declarada → join manual em 2 queries)
