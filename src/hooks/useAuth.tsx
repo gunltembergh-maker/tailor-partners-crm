@@ -46,9 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
     let sessionLoggedForUser: string | null = null;
 
-    // Safety timeout: never leave user stuck on loading screen
+    // Safety timeout: never leave user stuck on loading screen.
+    // Also clears null sentinels in role/permissoes so PermissionRoute
+    // doesn't wait forever (it waits while both are null).
     const safetyTimer = setTimeout(() => {
-      if (mounted) setLoading(false);
+      if (!mounted) return;
+      setLoading(false);
+      setRole((prev) => (prev === null ? "BANKER" : prev));
+      setPermissoes((prev) => (prev === null ? {} : prev));
     }, 5000);
 
     // Centralized tracking helper — fire-and-forget, never blocks auth
@@ -246,7 +251,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
-      setRole(roleData?.role ?? null);
+      // Sempre definir valores não-nulos para destravar PermissionRoute
+      setRole(roleData?.role ?? "BANKER");
+      setPermissoes({});
     } catch (e) {
       console.error("fetchProfileFallback error:", e);
     }
