@@ -89,6 +89,27 @@ export type Database = {
         }
         Relationships: []
       }
+      _backup_pre_rename_test_25_05: {
+        Row: {
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+          mes_ano: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          mes_ano?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          mes_ano?: string | null
+        }
+        Relationships: []
+      }
       _backup_raw_comissoes_historico_25_05_duplicado: {
         Row: {
           data: Json | null
