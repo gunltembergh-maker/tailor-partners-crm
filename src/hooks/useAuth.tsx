@@ -48,10 +48,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
     let sessionLoggedForUser: string | null = null;
 
-    // Safety timeout: never leave user stuck on loading screen.
+    // Safety timeout: só libera UI se realmente não houver sessão.
+    // Se há session mas perfil carregando, NÃO força loading=false — Loader continua.
     const safetyTimer = setTimeout(() => {
       if (!mounted) return;
-      setLoading(false);
+      setSession(currentSession => {
+        if (!currentSession) {
+          console.warn('[useAuth] Safety timer: sem sessão após 5s, liberando UI');
+          setLoading(false);
+        } else {
+          console.log('[useAuth] Safety timer: sessão existe mas perfil ainda carregando — mantendo Loader');
+        }
+        return currentSession;
+      });
     }, 5000);
 
     // Centralized tracking helper — fire-and-forget, never blocks auth
