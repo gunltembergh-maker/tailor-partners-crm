@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      _backup_comissoes_historico_pre_dedup_25_05: {
+        Row: {
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+          mes_ano: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          mes_ano?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          mes_ano?: string | null
+        }
+        Relationships: []
+      }
+      _backup_envios_nps_25_05: {
+        Row: {
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+        }
+        Relationships: []
+      }
       _backup_funcoes_minha_visao: {
         Row: {
           backup_em: string
@@ -89,6 +128,42 @@ export type Database = {
         }
         Relationships: []
       }
+      _backup_positivador_total_agrupado_25_05: {
+        Row: {
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+        }
+        Relationships: []
+      }
+      _backup_positivador_total_desagrupado_25_05: {
+        Row: {
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+        }
+        Relationships: []
+      }
       _backup_pre_rename_test_25_05: {
         Row: {
           data: Json | null
@@ -107,6 +182,42 @@ export type Database = {
           id?: number | null
           ingested_at?: string | null
           mes_ano?: string | null
+        }
+        Relationships: []
+      }
+      _backup_raw_captacao_historico_25_05: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: number | null
+        }
+        Relationships: []
+      }
+      _backup_raw_captacao_total_25_05: {
+        Row: {
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
         }
         Relationships: []
       }
@@ -149,6 +260,45 @@ export type Database = {
           id?: number | null
           ingested_at?: string | null
           mes_ano?: string | null
+        }
+        Relationships: []
+      }
+      _backup_raw_comissoes_m0_25_05: {
+        Row: {
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+          mes_ano: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          mes_ano?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+          mes_ano?: string | null
+        }
+        Relationships: []
+      }
+      _backup_raw_contas_total_25_05: {
+        Row: {
+          data: Json | null
+          id: number | null
+          ingested_at: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: number | null
+          ingested_at?: string | null
         }
         Relationships: []
       }
