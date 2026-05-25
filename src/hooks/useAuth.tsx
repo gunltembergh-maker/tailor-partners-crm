@@ -122,24 +122,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })();
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // CRÍTICO: callback SYNC. Nunca usar async/await aqui — causa deadlock com
+      // o lock interno do GoTrue quando fetchMeuPerfil dispara supabase.rpc().
+      // Padrão Supabase: setState inline + fetchMeuPerfil via setTimeout fire-and-forget.
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        const uid = session.user.id;
+        const email = session.user.email;
+        const userObj = session.user;
         // Sinaliza que perfil está carregando — evita race com PermissionRoute
         setLoading(true);
-        try {
-          await fetchMeuPerfil(session.user.id, session.user);
-        } catch (err) {
-          console.error('[useAuth] Erro ao carregar perfil pós-login:', err);
-        } finally {
-          if (mounted) setLoading(false);
-        }
+        // Fire-and-forget — sai do contexto do lock do GoTrue
+        setTimeout(() => {
+          if (!mounted) return;
+          fetchMeuPerfil(uid, userObj)
+            .catch(err => console.error('[useAuth] Erro ao carregar perfil pós-login:', err))
+            .finally(() => {
+              if (mounted) setLoading(false);
+            });
+        }, 0);
         // Track login for all relevant events (fire-and-forget)
         if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || _event === 'INITIAL_SESSION') {
-          trackLogin(session.user.id, session.user.email);
+          trackLogin(uid, email);
         }
       } else {
         if (_event === 'SIGNED_OUT' && user?.id) {
