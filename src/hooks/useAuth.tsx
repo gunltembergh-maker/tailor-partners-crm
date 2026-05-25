@@ -251,7 +251,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
-      setRole(roleData?.role ?? null);
+      // Sempre definir valores não-nulos para destravar PermissionRoute
+      setRole(roleData?.role ?? "BANKER");
+      setPermissoes({});
     } catch (e) {
       console.error("fetchProfileFallback error:", e);
     }
