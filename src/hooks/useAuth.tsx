@@ -110,15 +110,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })();
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Non-blocking profile fetch
-        setTimeout(() => fetchMeuPerfil(session.user.id), 0);
-        // Track login for all relevant events
+        // Sinaliza que perfil está carregando — evita race com PermissionRoute
+        setLoading(true);
+        try {
+          await fetchMeuPerfil(session.user.id);
+        } catch (err) {
+          console.error('[useAuth] Erro ao carregar perfil pós-login:', err);
+        } finally {
+          if (mounted) setLoading(false);
+        }
+        // Track login for all relevant events (fire-and-forget)
         if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || _event === 'INITIAL_SESSION') {
           trackLogin(session.user.id, session.user.email);
         }
