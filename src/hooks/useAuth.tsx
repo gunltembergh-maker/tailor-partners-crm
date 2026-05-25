@@ -262,8 +262,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       const fallbackRole = roleData?.role ?? ((sessionUser?.user_metadata?.perfil as string | undefined) ?? null);
+      if (!fallbackRole) {
+        // Role indeterminado — NÃO zerar permissoes, mantém null pra PermissionRoute renderizar Loader
+        // até que próxima tentativa de fetchMeuPerfil resolva. Evita falso AccessDenied pra ADMIN.
+        console.warn('[useAuth] fetchProfileFallback: role indeterminado — preservando permissoes=null');
+        return;
+      }
       setRole(fallbackRole);
-      setPermissoes(fallbackRole && PRIVILEGED_ROLES.has(fallbackRole) ? {} : {});
+      setPermissoes(PRIVILEGED_ROLES.has(fallbackRole) ? {} : {});
     } catch (e) {
       console.error("fetchProfileFallback error:", e);
     }
