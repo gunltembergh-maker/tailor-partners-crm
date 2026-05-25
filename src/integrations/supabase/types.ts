@@ -5248,6 +5248,7 @@ export type Database = {
         Args: { p_modulo: string; p_motivo?: string }
         Returns: boolean
       }
+      rpc_truncate_staging_historico: { Args: never; Returns: Json }
       rpc_validar_ativacao_dados: {
         Args: {
           p_nova_senha: string
