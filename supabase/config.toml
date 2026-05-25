@@ -1,6 +1,8 @@
 project_id = "jtlelokzpqkgvlwomfus"
 
 [functions]
+  [functions.get-market-news]
+    verify_jwt = false
   [functions.auth-email-hook]
     verify_jwt = false
   [functions.consulta-cnpj]
