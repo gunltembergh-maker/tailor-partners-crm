@@ -159,17 +159,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
-      try {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setLoading(true); // explicitamente sinaliza que perfil está carregando
+        try {
           await fetchMeuPerfil(session.user.id, session.user);
-          // Also track on initial page load / session restore
           trackLogin(session.user.id, session.user.email);
+        } catch (e) {
+          console.error("Error fetching profile on init:", e);
+        } finally {
+          if (mounted) setLoading(false);
         }
-      } catch (e) {
-        console.error("Error fetching profile on init:", e);
-      } finally {
+      } else {
         if (mounted) setLoading(false);
       }
     }).catch(() => {
