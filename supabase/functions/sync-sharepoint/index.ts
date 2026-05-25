@@ -779,9 +779,15 @@ Deno.serve(async (req) => {
 
       // ── Chunked stateful: INIT (criado por Cron A diário) ──
       if (syncMode === 'historico_chunked_init') {
+        // Defesa em profundidade: garantir staging limpa antes de paginar.
+        // Se execução anterior abortou no meio (sem swap), staging pode ter dado residual
+        // que viraria duplicação ao append do worker.
+        const truncateRes = await callRpc('rpc_truncate_staging_historico', {});
+        console.log(JSON.stringify({ event: 'staging_truncated', result: truncateRes }));
+
         const initRes = await callRpc('rpc_sync_cursor_init_daily', { p_sync_name: 'historico_completo' });
         console.log(JSON.stringify({ event: 'chunked_init', result: initRes }));
-        return Response.json({ success: true, syncMode, init: initRes }, { headers: cors });
+        return Response.json({ success: true, syncMode, truncate: truncateRes, init: initRes }, { headers: cors });
       }
 
       // ── Chunked stateful: RECOVERY (Cron C marca stale) ──
