@@ -176,6 +176,57 @@ export type Database = {
         }
         Relationships: []
       }
+      _backup_mv_caixa_completa_27_05_v2: {
+        Row: {
+          advisor: string | null
+          anomes: number | null
+          banker: string | null
+          canal: string | null
+          categoria: string | null
+          comissao_bruta_tailor: number | null
+          documento: string | null
+          finder: string | null
+          produto: string | null
+          source_origin: string | null
+          source_row_id: number | null
+          subcategoria: string | null
+          subproduto: string | null
+          tipo_cliente: string | null
+        }
+        Insert: {
+          advisor?: string | null
+          anomes?: number | null
+          banker?: string | null
+          canal?: string | null
+          categoria?: string | null
+          comissao_bruta_tailor?: number | null
+          documento?: string | null
+          finder?: string | null
+          produto?: string | null
+          source_origin?: string | null
+          source_row_id?: number | null
+          subcategoria?: string | null
+          subproduto?: string | null
+          tipo_cliente?: string | null
+        }
+        Update: {
+          advisor?: string | null
+          anomes?: number | null
+          banker?: string | null
+          canal?: string | null
+          categoria?: string | null
+          comissao_bruta_tailor?: number | null
+          documento?: string | null
+          finder?: string | null
+          produto?: string | null
+          source_origin?: string | null
+          source_row_id?: number | null
+          subcategoria?: string | null
+          subproduto?: string | null
+          tipo_cliente?: string | null
+        }
+        Relationships: []
+      }
       _backup_mv_consolidado_v2_26_05: {
         Row: {
           advisor: string | null
@@ -3885,6 +3936,7 @@ export type Database = {
       norm_txt: { Args: { v: string }; Returns: string }
       normalize_advisor: { Args: { advisor: string }; Returns: string }
       normalize_banker: { Args: { v: string }; Returns: string }
+      normalize_finder: { Args: { finder: string }; Returns: string }
       normalize_nome_pessoa: { Args: { p_nome: string }; Returns: string }
       normalize_tipo_cliente: { Args: { p_tipo: string }; Returns: string }
       notificar_admins_por_email: {
