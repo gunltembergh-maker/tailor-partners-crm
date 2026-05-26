@@ -92,8 +92,8 @@ export function FiltersSidebar({
     updatePendingFilter(key, arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val]);
   };
 
-  // Normalized advisor options: Victor Queiroz, Sem Advisor, João Fontes, Legado
-  const normalizedAdvisors = ["Victor Queiroz", "Sem Advisor", "João Fontes", "Legado"];
+  // Normalized advisor options: Victor Queiroz, Sem Advisor, João Soares, Legado
+  const normalizedAdvisors = ["Victor Queiroz", "Sem Advisor", "João Soares", "Legado"];
 
   // Normalized tipo cliente options
   const normalizedTiposCliente = ["PESSOA FÍSICA", "PESSOA JURÍDICA"];
