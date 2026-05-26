@@ -1623,13 +1623,13 @@ export type Database = {
         }
         Insert: {
           data: Json
-          id?: never
+          id?: number
           ingested_at?: string
           mes_ano?: string | null
         }
         Update: {
           data?: Json
-          id?: never
+          id?: number
           ingested_at?: string
           mes_ano?: string | null
         }
@@ -1644,13 +1644,13 @@ export type Database = {
         }
         Insert: {
           data: Json
-          id?: number
+          id?: never
           ingested_at?: string
           mes_ano?: string | null
         }
         Update: {
           data?: Json
-          id?: number
+          id?: never
           ingested_at?: string
           mes_ano?: string | null
         }
