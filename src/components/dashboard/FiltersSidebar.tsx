@@ -33,13 +33,18 @@ function expandTipoCliente(value: string): string[] {
   return [value];
 }
 
-/** Expand advisor selection to handle João Fontes / Legado grouping */
+/** Expand advisor selection to handle João Soares / Legado grouping */
 function expandAdvisor(value: string, _allAdvisors?: string[]): string[] {
-  if (value === "João Fontes") {
-    return ["João Fontes", "João S"];
+  if (value === "João Soares") {
+    // Cobre o nome novo (normalize_advisor) e os valores legados ainda presentes
+    // em mv_comissoes_consolidado enquanto ela não é refatorada.
+    return ["João Soares", "João Fontes", "João S"];
   }
   if (value === "Legado") {
-    return ["Adonias Noronha", "Rafael Guidi", "Raphael Pereira", "Sem Farmer", "NA"];
+    return ["Legado", "Legado Advisor", "Adonias Noronha", "Rafael Guidi", "Raphael Pereira", "Sem Farmer", "NA"];
+  }
+  if (value === "Sem Advisor") {
+    return ["Sem Advisor", "Legado", "Legado Advisor"];
   }
   return [value];
 }
@@ -87,8 +92,8 @@ export function FiltersSidebar({
     updatePendingFilter(key, arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val]);
   };
 
-  // Normalized advisor options: Victor Queiroz, Sem Advisor, João Fontes, Legado
-  const normalizedAdvisors = ["Victor Queiroz", "Sem Advisor", "João Fontes", "Legado"];
+  // Normalized advisor options: Victor Queiroz, Sem Advisor, João Soares, Legado
+  const normalizedAdvisors = ["Victor Queiroz", "Sem Advisor", "João Soares", "Legado"];
 
   // Normalized tipo cliente options
   const normalizedTiposCliente = ["PESSOA FÍSICA", "PESSOA JURÍDICA"];
