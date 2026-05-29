@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { ReceitaCaixaOnboardingModal } from "@/components/relatorios/ReceitaCaixaOnboardingModal";
 import { EnviarEmailReceitaModal } from "@/components/email/EnviarEmailReceitaModal";
 import { cn } from "@/lib/utils";
+import { DadosEmValidacaoBadge } from "@/components/shared/DadosEmValidacaoBadge";
 
 // ── Paleta executiva — Brand Book Tailor oficial ────────────────────
 const C = {
