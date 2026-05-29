@@ -1212,6 +1212,33 @@ export type Database = {
         }
         Relationships: []
       }
+      hub_admin_settings: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          criado_em: string
+          descricao: string | null
+          key: string
+          value: Json
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          criado_em?: string
+          descricao?: string | null
+          key: string
+          value: Json
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          criado_em?: string
+          descricao?: string | null
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           assessor_id: string | null
@@ -4702,6 +4729,7 @@ export type Database = {
           tipo_cliente: string
         }[]
       }
+      rpc_get_em_validacao: { Args: never; Returns: Json }
       rpc_get_popups_ativos: {
         Args: { p_pagina?: string }
         Returns: {
@@ -5357,6 +5385,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      rpc_set_em_validacao_override: { Args: { p_mode: string }; Returns: Json }
       rpc_sincronizar_vinculos_usuario: {
         Args: { p_user_id: string; p_vinculos: Json }
         Returns: Json
