@@ -73,6 +73,7 @@ const EmailSchedules = lazy(() => import("./pages/admin/EmailSchedules"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const AtivarConta = lazy(() => import("./pages/auth/AtivarConta"));
+const TesteEmValidacao = lazy(() => import("./pages/TesteEmValidacao"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -189,6 +190,7 @@ function AppRoutes() {
         <Route path="/auth" element={session ? (landingPath ? <Navigate to={landingPath} replace /> : <AccessDeniedScreen />) : <Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/ativar-conta" element={<AtivarConta />} />
+        <Route path="/teste-em-validacao" element={<ProtectedRoute><TesteEmValidacao /></ProtectedRoute>} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/" element={<ProtectedRoute>{landingPath ? <Navigate to={landingPath} replace /> : <AccessDeniedScreen />}</ProtectedRoute>} />
         <Route path="/inicio" element={<PermissionRoute permissions={["menu_inicio"]}><Inicio /></PermissionRoute>} />
