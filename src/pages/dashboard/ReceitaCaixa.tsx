@@ -665,7 +665,10 @@ export default function ReceitaCaixa() {
                 return (
                   <>
                     <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
-                      <CardTitleTailor>Receita por Financial Advisor / Finder / Canal</CardTitleTailor>
+                      <div className="flex items-center gap-2">
+                        <CardTitleTailor>Receita por Financial Advisor / Finder / Canal</CardTitleTailor>
+                        <DadosEmValidacaoBadge variant="card-header" />
+                      </div>
                       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                         <div style={{ display: "flex", background: C.zebra, borderRadius: 6, padding: 3 }}>
                           {([
