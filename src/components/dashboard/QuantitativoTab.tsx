@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KpiSkeleton, ChartSkeleton } from "./ChartSkeleton";
 import { MetricCard } from "./MetricCard";
+import { DadosEmValidacaoBadge } from "@/components/shared/DadosEmValidacaoBadge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
