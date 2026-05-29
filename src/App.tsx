@@ -219,6 +219,7 @@ function AppRoutes() {
         <Route path="/admin/popups" element={<AdminRoute><GerenciarPopups /></AdminRoute>} />
         <Route path="/admin/emails/log" element={<AdminRoute><EmailsLog /></AdminRoute>} />
         <Route path="/admin/emails/schedules" element={<PermissionRoute permissions={["gerenciar_emails_schedules"]}><EmailSchedules /></PermissionRoute>} />
+        <Route path="/admin/configuracoes" element={<PermissionRoute permissions={["gerenciar_configuracoes_hub"]}><Configuracoes /></PermissionRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
