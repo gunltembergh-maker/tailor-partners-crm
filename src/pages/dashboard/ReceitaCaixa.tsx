@@ -623,6 +623,7 @@ export default function ReceitaCaixa() {
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
+                  <DadosEmValidacaoBadge variant="card-header" />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 16px", width: "100%", marginBottom: 12 }}>
                   {seriesCats.map((c, i) => (
