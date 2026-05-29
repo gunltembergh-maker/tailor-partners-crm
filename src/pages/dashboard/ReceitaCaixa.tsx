@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { ReceitaCaixaOnboardingModal } from "@/components/relatorios/ReceitaCaixaOnboardingModal";
 import { EnviarEmailReceitaModal } from "@/components/email/EnviarEmailReceitaModal";
 import { cn } from "@/lib/utils";
+import { DadosEmValidacaoBadge } from "@/components/shared/DadosEmValidacaoBadge";
 
 // ── Paleta executiva — Brand Book Tailor oficial ────────────────────
 const C = {
@@ -481,9 +482,12 @@ export default function ReceitaCaixa() {
                   minHeight: 240,
                 }}
               >
-                <CardTitleTailor>
-                  Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 400, fontSize: 18, fontFamily: "'Source Sans 3', sans-serif" }}>· {kpis.anomes_label}</span>}
-                </CardTitleTailor>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitleTailor>
+                    Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 400, fontSize: 18, fontFamily: "'Source Sans 3', sans-serif" }}>· {kpis.anomes_label}</span>}
+                  </CardTitleTailor>
+                  <DadosEmValidacaoBadge variant="card-header" />
+                </div>
 
                 {kpisQ.isLoading ? (
                   <Skeleton className="h-16 w-72" />
@@ -535,7 +539,7 @@ export default function ReceitaCaixa() {
 
               {/* Advisor XP mini-tabela */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <div style={{ marginBottom: 18 }}><CardTitleTailor>Receita por Advisor</CardTitleTailor></div>
+                <div style={{ marginBottom: 18 }} className="flex items-center justify-between gap-2"><CardTitleTailor>Receita por Advisor</CardTitleTailor><DadosEmValidacaoBadge variant="card-header" /></div>
                 {advisorQ.isLoading ? <Skeleton className="h-32 w-full" /> : (
                   <table className="w-full">
                     <tbody>
@@ -561,7 +565,7 @@ export default function ReceitaCaixa() {
             <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {/* Bar chart por categoria */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <div style={{ marginBottom: 20 }}><CardTitleTailor>Receita por Categoria</CardTitleTailor></div>
+                <div style={{ marginBottom: 20 }} className="flex items-center justify-between gap-2"><CardTitleTailor>Receita por Categoria</CardTitleTailor><DadosEmValidacaoBadge variant="card-header" /></div>
                 {catQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
                   const max = Math.max(...(catQ.data || []).map(d => Number(d.total)), 1);
                   return (
@@ -619,6 +623,7 @@ export default function ReceitaCaixa() {
               <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <CardTitleTailor>Receita Total — últimos 12 meses</CardTitleTailor>
+                  <DadosEmValidacaoBadge variant="card-header" />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 16px", width: "100%", marginBottom: 12 }}>
                   {seriesCats.map((c, i) => (
@@ -660,7 +665,10 @@ export default function ReceitaCaixa() {
                 return (
                   <>
                     <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
-                      <CardTitleTailor>Receita por Financial Advisor / Finder / Canal</CardTitleTailor>
+                      <div className="flex items-center gap-2">
+                        <CardTitleTailor>Receita por Financial Advisor / Finder / Canal</CardTitleTailor>
+                        <DadosEmValidacaoBadge variant="card-header" />
+                      </div>
                       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                         <div style={{ display: "flex", background: C.zebra, borderRadius: 6, padding: 3 }}>
                           {([
