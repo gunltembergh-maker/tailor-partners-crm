@@ -539,7 +539,7 @@ export default function ReceitaCaixa() {
 
               {/* Advisor XP mini-tabela */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <div style={{ marginBottom: 18 }}><CardTitleTailor>Receita por Advisor</CardTitleTailor></div>
+                <div style={{ marginBottom: 18 }} className="flex items-center justify-between gap-2"><CardTitleTailor>Receita por Advisor</CardTitleTailor><DadosEmValidacaoBadge variant="card-header" /></div>
                 {advisorQ.isLoading ? <Skeleton className="h-32 w-full" /> : (
                   <table className="w-full">
                     <tbody>
