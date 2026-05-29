@@ -69,12 +69,15 @@ function filterLast12<T extends Record<string,any>>(data: T[] | undefined, anoMe
   return (data ?? []).filter((d: any) => filtered.includes(d[anoMesKey]));
 }
 
-function PbiCard({title,subtitle,children,className}:{title:string;subtitle?:string;children:React.ReactNode;className?:string}) {
+function PbiCard({title,subtitle,children,className,headerRight}:{title:string;subtitle?:string;children:React.ReactNode;className?:string;headerRight?:React.ReactNode}) {
   return (
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${className??""}`}>
-      <div className="px-3 py-1.5 border-b border-gray-100">
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
-        {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+      <div className="px-3 py-1.5 border-b border-gray-100 flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+        </div>
+        {headerRight && <div className="flex-shrink-0">{headerRight}</div>}
       </div>
       <div className="p-2">{children}</div>
     </div>
