@@ -73,6 +73,7 @@ const EmailSchedules = lazy(() => import("./pages/admin/EmailSchedules"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const AtivarConta = lazy(() => import("./pages/auth/AtivarConta"));
+const TesteEmValidacao = lazy(() => import("./pages/TesteEmValidacao"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
