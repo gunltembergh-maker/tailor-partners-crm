@@ -23,6 +23,7 @@ import {
   Megaphone,
   Mail,
   Wallet,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
