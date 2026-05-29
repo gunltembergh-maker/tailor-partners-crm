@@ -23,6 +23,7 @@ import {
   Megaphone,
   Mail,
   Wallet,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -132,6 +133,9 @@ export function AppSidebar() {
   }
   if (isAdmin || canSee("gerenciar_emails_schedules")) {
     adminItems.push({ title: "Agendamentos de E-mail", icon: CalendarDays, path: "/admin/emails/schedules" });
+  }
+  if (isAdmin || canSee("gerenciar_configuracoes_hub")) {
+    adminItems.push({ title: "Configurações", icon: Settings, path: "/admin/configuracoes" });
   }
 
   const showAdmin = adminItems.length > 0;
