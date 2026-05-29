@@ -565,7 +565,7 @@ export default function ReceitaCaixa() {
             <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {/* Bar chart por categoria */}
               <div className="rounded-[10px]" style={{ background: C.bgCard, border: `0.5px solid ${C.border}`, padding: "24px 26px" }}>
-                <div style={{ marginBottom: 20 }}><CardTitleTailor>Receita por Categoria</CardTitleTailor></div>
+                <div style={{ marginBottom: 20 }} className="flex items-center justify-between gap-2"><CardTitleTailor>Receita por Categoria</CardTitleTailor><DadosEmValidacaoBadge variant="card-header" /></div>
                 {catQ.isLoading ? <Skeleton className="h-64 w-full" /> : (() => {
                   const max = Math.max(...(catQ.data || []).map(d => Number(d.total)), 1);
                   return (
