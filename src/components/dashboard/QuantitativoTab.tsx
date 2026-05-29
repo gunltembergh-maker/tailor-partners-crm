@@ -598,9 +598,9 @@ export function QuantitativoTab({filters}:Props) {
         </PbiCard>
       </div>
 
-      <MetricCard title="Receita Bruta Tailor" value={fmtKpi(receitaTotalData?.receita??0)} icon={TrendingUp}/>
+      <MetricCard title="Receita Bruta Tailor" value={fmtKpi(receitaTotalData?.receita??0)} icon={TrendingUp} headerRight={<DadosEmValidacaoBadge variant="card-header" />}/>
 
-      <PbiCard title={drillLevel > 0 ? "Receita Bruta Tailor (estimada) por Categoria" : "Receita Bruta Tailor por Categoria"}>
+      <PbiCard title={drillLevel > 0 ? "Receita Bruta Tailor (estimada) por Categoria" : "Receita Bruta Tailor por Categoria"} headerRight={<DadosEmValidacaoBadge variant="card-header" />}>
         {/* Breadcrumb + Voltar */}
         {drillLevel > 0 && (
           <div className="flex items-center gap-2 px-1 mb-1">
