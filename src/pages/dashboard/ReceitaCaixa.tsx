@@ -482,9 +482,12 @@ export default function ReceitaCaixa() {
                   minHeight: 240,
                 }}
               >
-                <CardTitleTailor>
-                  Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 400, fontSize: 18, fontFamily: "'Source Sans 3', sans-serif" }}>· {kpis.anomes_label}</span>}
-                </CardTitleTailor>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitleTailor>
+                    Receita do mês {kpis?.anomes_label && <span style={{ color: C.textMuted, fontWeight: 400, fontSize: 18, fontFamily: "'Source Sans 3', sans-serif" }}>· {kpis.anomes_label}</span>}
+                  </CardTitleTailor>
+                  <DadosEmValidacaoBadge variant="card-header" />
+                </div>
 
                 {kpisQ.isLoading ? (
                   <Skeleton className="h-16 w-72" />
