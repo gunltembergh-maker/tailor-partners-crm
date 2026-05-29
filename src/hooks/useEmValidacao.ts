@@ -18,7 +18,7 @@ export function useEmValidacao() {
     queryFn: async (): Promise<EmValidacaoData> => {
       const { data, error } = await supabase.rpc('rpc_get_em_validacao');
       if (error) throw error;
-      return data as EmValidacaoData;
+      return (data as unknown) as EmValidacaoData;
     },
     staleTime: 5 * 60 * 1000, // 5 min cache
     refetchOnWindowFocus: true,
