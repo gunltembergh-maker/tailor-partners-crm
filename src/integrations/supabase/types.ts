@@ -5414,6 +5414,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_sync_cursor_execute_pending_swap: { Args: never; Returns: Json }
       rpc_sync_cursor_fail: {
         Args: { p_claim: string; p_error: string; p_sync_name: string }
         Returns: boolean
@@ -5430,6 +5431,15 @@ export type Database = {
       }
       rpc_sync_cursor_init_daily: {
         Args: { p_sync_name: string }
+        Returns: Json
+      }
+      rpc_sync_cursor_mark_ready_for_swap: {
+        Args: {
+          p_claim: string
+          p_staging_table: string
+          p_sync_name: string
+          p_target_table: string
+        }
         Returns: Json
       }
       rpc_sync_cursor_mark_stale: { Args: never; Returns: number }
