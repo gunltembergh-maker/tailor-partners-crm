@@ -857,16 +857,17 @@ Deno.serve(async (req) => {
 
             const reachedEnd = nextRow > totalTarget;
             if (reachedEnd) {
-              console.log(JSON.stringify({ event: 'chunked_swap_starting', total_seen: totalSeen, target: totalTarget }));
-              const swapRes = await callRpc('rpc_sync_cursor_complete_swap', {
+              console.log(JSON.stringify({ event: 'chunked_swap_scheduling', total_seen: totalSeen, target: totalTarget }));
+              // Desacoplado: edge só marca cursor como ready_for_swap.
+              // pg_cron 'sync-historico-execute-pending-swap' (a cada 5min) faz o swap em background, sem timeout HTTP.
+              const markRes = await callRpc('rpc_sync_cursor_mark_ready_for_swap', {
                 p_sync_name: SYNC_NAME, p_claim: claimId,
                 p_target_table: TARGET_TABLE, p_staging_table: STAGING_TABLE,
               });
-              await refreshMV();
               await saveLog('sync-historico-chunked', true,
                 `${((Date.now() - tChunk) / 1000).toFixed(1)}s`,
-                [`✅ Swap concluído: ${JSON.stringify(swapRes)}`, `Total: ${totalSeen} linhas`], []);
-              console.log(JSON.stringify({ event: 'chunked_completed', total: totalSeen, swap: swapRes }));
+                [`✅ Staging completa — swap agendado em background: ${JSON.stringify(markRes)}`, `Total: ${totalSeen} linhas`], []);
+              console.log(JSON.stringify({ event: 'chunked_swap_scheduled', total: totalSeen, mark: markRes }));
             } else {
               await callRpc('rpc_sync_cursor_release', { p_sync_name: SYNC_NAME, p_claim: claimId });
               console.log(JSON.stringify({ event: 'chunked_chunk_done', chunk: chunkNum,
