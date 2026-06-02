@@ -1,0 +1,2 @@
+REFRESH MATERIALIZED VIEW public.mv_comissoes_consolidado_v2;
+REFRESH MATERIALIZED VIEW public.mv_comissoes_caixa_completa;
