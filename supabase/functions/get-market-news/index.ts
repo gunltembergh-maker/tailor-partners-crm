@@ -2,7 +2,10 @@
 // Idempotente — usa unique index em link + Prefer: resolution=ignore-duplicates.
 // Disparado por cron a cada hora cheia.
 
-const RSS_URL = 'https://www.infomoney.com.br/mercados/feed/';
+const RSS_URLS = [
+  'https://www.infomoney.com.br/mercados/feed/',
+  'https://www.infomoney.com.br/feed/',
+];
 const MAX_NEWS = 20;
 
 interface NewsItem {
@@ -58,19 +61,26 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    console.log('[get-market-news] Iniciando fetch RSS InfoMoney...');
-    const response = await fetch(RSS_URL, {
-      headers: { 'User-Agent': 'Hub-Tailor-Partners/1.0' },
-    });
-    if (!response.ok) {
-      throw new Error(`RSS fetch failed: ${response.status}`);
+    let news: NewsItem[] = [];
+    let lastUrl = '';
+    for (const url of RSS_URLS) {
+      lastUrl = url;
+      console.log(`[get-market-news] Tentando ${url}...`);
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Hub-Tailor-Partners/1.0)' },
+      });
+      if (!response.ok) {
+        console.warn(`[get-market-news] ${url} retornou ${response.status}`);
+        continue;
+      }
+      const xml = await response.text();
+      news = parseRSS(xml);
+      console.log(`[get-market-news] ${url} parseou ${news.length} notícias`);
+      if (news.length > 0) break;
     }
-    const xml = await response.text();
-    const news = parseRSS(xml);
-    console.log(`[get-market-news] Parseou ${news.length} notícias`);
 
     if (news.length === 0) {
-      return new Response(JSON.stringify({ success: false, error: 'Nenhuma notícia parseada' }), {
+      return new Response(JSON.stringify({ success: false, error: `Nenhuma notícia parseada (último: ${lastUrl})` }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
