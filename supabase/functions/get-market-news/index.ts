@@ -2,7 +2,10 @@
 // Idempotente — usa unique index em link + Prefer: resolution=ignore-duplicates.
 // Disparado por cron a cada hora cheia.
 
-const RSS_URL = 'https://www.infomoney.com.br/mercados/feed/';
+const RSS_URLS = [
+  'https://www.infomoney.com.br/mercados/feed/',
+  'https://www.infomoney.com.br/feed/',
+];
 const MAX_NEWS = 20;
 
 interface NewsItem {
