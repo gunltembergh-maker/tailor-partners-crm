@@ -816,6 +816,9 @@ export default function ImportarBases() {
       {/* ═══ SALDO CONSOLIDADO — XP & AVENUE ═══ */}
       <SaldoConsolidadoSection />
 
+      {/* ═══ LAVORO SEGUROS — Base Gerencial & Caixa Bradesco ═══ */}
+      <LavoroImportSection />
+
       {/* Resultados — gated por permissão menu_importar_bases */}
       {canSeeLegacy && results.length > 0 && (
         <div className="space-y-3">
