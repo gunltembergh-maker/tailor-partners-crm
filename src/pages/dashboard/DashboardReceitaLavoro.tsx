@@ -95,8 +95,8 @@ function PbiCard({
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${className ?? ""}`}>
       <div className="px-3 py-1.5 border-b border-gray-100 flex items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
-          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+          <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
+          {subtitle && <p className="text-[10px]" style={{ color: "#9CA3AF" }}>{subtitle}</p>}
         </div>
         {headerRight}
       </div>
@@ -104,6 +104,7 @@ function PbiCard({
     </div>
   );
 }
+
 
 // ─── Big destaque card (números grandes em R$ pleno) ────────────────────
 function BigStatCard({
@@ -124,18 +125,19 @@ function BigStatCard({
       className="rounded-lg shadow-sm p-5 border"
       style={{ background: "#fff", borderColor: "#e5e7eb", borderLeft: `4px solid ${accent}` }}
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
-      {subtitle && <p className="text-[11px] text-gray-400 mt-0.5">{subtitle}</p>}
+      <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
+      {subtitle && <p className="text-[10px] mt-0.5" style={{ color: "#9CA3AF" }}>{subtitle}</p>}
       {loading ? (
         <div className="h-10 mt-2 w-40 bg-gray-100 rounded animate-pulse" />
       ) : (
-        <p className="text-3xl font-bold mt-2" style={{ color: "#0A2337" }}>
+        <p className="text-3xl font-bold mt-2" style={{ color: "#1B2A3D" }}>
           {value}
         </p>
       )}
     </div>
   );
 }
+
 
 function VarCard({
   title,
@@ -152,7 +154,8 @@ function VarCard({
   const Icon = up ? TrendingUp : TrendingDown;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+      <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
+
       {loading ? (
         <div className="h-6 mt-1 w-24 bg-gray-100 rounded animate-pulse" />
       ) : (
@@ -232,6 +235,19 @@ export default function DashboardReceitaLavoro() {
     },
   });
 
+  const competenciaYoyQ = useQuery({
+    queryKey: ["lavoro-competencia-yoy", ano],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_comparativo_anual" as any, {
+        p_anos: [ano - 1, ano],
+      });
+      if (error) throw error;
+      return (data || []) as Array<{ ano: number; mes: number; receita_competencia: number }>;
+    },
+  });
+
+
+
   const serieQ = useQuery({
     queryKey: ["lavoro-receita-serie", ano],
     queryFn: async () => {
@@ -297,15 +313,16 @@ export default function DashboardReceitaLavoro() {
   });
 
   const isRefreshing =
-    kpisQ.isFetching || variacoesQ.isFetching || caixaYoyQ.isFetching || vencidosQ.isFetching ||
+    kpisQ.isFetching || variacoesQ.isFetching || caixaYoyQ.isFetching || competenciaYoyQ.isFetching || vencidosQ.isFetching ||
     serieQ.isFetching || comparativoQ.isFetching || canalQ.isFetching || ramoQ.isFetching;
 
   const handleRefresh = async () => {
     await Promise.all([
-      kpisQ.refetch(), variacoesQ.refetch(), caixaYoyQ.refetch(), vencidosQ.refetch(),
+      kpisQ.refetch(), variacoesQ.refetch(), caixaYoyQ.refetch(), competenciaYoyQ.refetch(), vencidosQ.refetch(),
       serieQ.refetch(), comparativoQ.refetch(), canalQ.refetch(), ramoQ.refetch(),
       ultimaAtQ.refetch(),
     ]);
+
     toast.success("Dados atualizados");
   };
 
@@ -342,6 +359,23 @@ export default function DashboardReceitaLavoro() {
     });
     return cortePorPeriodo(full);
   }, [caixaYoyQ.data, ano, periodo, mesRef]);
+
+  const competenciaYoyChart = useMemo(() => {
+    const rows = competenciaYoyQ.data || [];
+    const full = Array.from({ length: 12 }, (_, i) => {
+      const mes = i + 1;
+      const prev = rows.find((r) => Number(r.ano) === ano - 1 && Number(r.mes) === mes);
+      const cur = rows.find((r) => Number(r.ano) === ano && Number(r.mes) === mes);
+      return {
+        mes: MESES[i],
+        mesNum: mes,
+        [String(ano - 1)]: Number(prev?.receita_competencia || 0),
+        [String(ano)]: Number(cur?.receita_competencia || 0),
+      };
+    });
+    return cortePorPeriodo(full);
+  }, [competenciaYoyQ.data, ano, periodo, mesRef]);
+
 
   // ─── Série mensal (detalhamento) ─────────────────────────────────────
   const mesAtualReal = new Date().getMonth() + 1;
@@ -559,40 +593,75 @@ export default function DashboardReceitaLavoro() {
             />
           </div>
 
-          {/* Gráfico YoY caixa */}
-          <PbiCard
-            title={`Recebido — ${ano - 1} x ${ano}`}
-            subtitle="Receita Caixa mensal (barras lado a lado)"
-            className="mb-4"
-          >
-            <div style={{ width: "100%", height: 320 }}>
-              <ResponsiveContainer>
-                <BarChart data={caixaYoyChart} margin={{ top: 24, right: 12, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} width={80} />
-                  <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey={String(ano - 1)} fill="#9B6B4A">
-                    <LabelList
-                      dataKey={String(ano - 1)}
-                      position="top"
-                      formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
-                      style={{ fontSize: 10, fill: "#6B7280" }}
-                    />
-                  </Bar>
-                  <Bar dataKey={String(ano)} fill="#0A2337">
-                    <LabelList
-                      dataKey={String(ano)}
-                      position="top"
-                      formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
-                      style={{ fontSize: 10, fill: "#0A2337", fontWeight: 600 }}
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </PbiCard>
+          {/* Gráficos YoY — Competência e Caixa lado a lado */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 mb-4">
+            <PbiCard
+              title={`Receita Competência — ${ano - 1} x ${ano}`}
+              subtitle="Receita emitida por mês (barras lado a lado)"
+            >
+              <div style={{ width: "100%", height: 320 }}>
+                <ResponsiveContainer>
+                  <BarChart data={competenciaYoyChart} margin={{ top: 24, right: 12, left: 0, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#1B2A3D" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "#1B2A3D" }} tickFormatter={BRL_COMPACT} width={80} />
+                    <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: "#1B2A3D" }} />
+                    <Bar dataKey={String(ano - 1)} fill="#73A7B7">
+                      <LabelList
+                        dataKey={String(ano - 1)}
+                        position="top"
+                        formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                        style={{ fontSize: 10, fill: "#6B7280" }}
+                      />
+                    </Bar>
+                    <Bar dataKey={String(ano)} fill="#1B2A3D">
+                      <LabelList
+                        dataKey={String(ano)}
+                        position="top"
+                        formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                        style={{ fontSize: 10, fill: "#1B2A3D", fontWeight: 600 }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </PbiCard>
+
+            <PbiCard
+              title={`Recebido — ${ano - 1} x ${ano}`}
+              subtitle="Receita Caixa mensal (barras lado a lado)"
+            >
+              <div style={{ width: "100%", height: 320 }}>
+                <ResponsiveContainer>
+                  <BarChart data={caixaYoyChart} margin={{ top: 24, right: 12, left: 0, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#1B2A3D" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "#1B2A3D" }} tickFormatter={BRL_COMPACT} width={80} />
+                    <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: "#1B2A3D" }} />
+                    <Bar dataKey={String(ano - 1)} fill="#9B6B4A">
+                      <LabelList
+                        dataKey={String(ano - 1)}
+                        position="top"
+                        formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                        style={{ fontSize: 10, fill: "#6B7280" }}
+                      />
+                    </Bar>
+                    <Bar dataKey={String(ano)} fill="#0A2337">
+                      <LabelList
+                        dataKey={String(ano)}
+                        position="top"
+                        formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                        style={{ fontSize: 10, fill: "#0A2337", fontWeight: 600 }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </PbiCard>
+          </div>
+
 
           {/* Alerta: Comissão vencida por canal — sempre visível */}
           {(() => {
