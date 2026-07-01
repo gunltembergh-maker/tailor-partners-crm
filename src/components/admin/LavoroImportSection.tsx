@@ -654,12 +654,40 @@ function LavoroCard({
             </>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          Último upload: {fmtDateTime(lastUploadAt)}
-          {lastUploadAt && <CheckCircle className="h-3 w-3 text-green-600" />}
-        </div>
+        <ImportStatusBadge lastUploadAt={lastUploadAt} />
       </CardContent>
     </Card>
+  );
+}
+
+function ImportStatusBadge({ lastUploadAt }: { lastUploadAt: string | null }) {
+  if (!lastUploadAt) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-amber-50 text-amber-700 border-amber-300">
+        <XCircle className="h-3 w-3" />
+        Ainda não importado
+      </span>
+    );
+  }
+  const d = new Date(lastUploadAt);
+  const now = new Date();
+  const isToday =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (isToday) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-green-50 text-green-700 border-green-200">
+        <CheckCircle className="h-3 w-3" />
+        Importado hoje
+      </span>
+    );
+  }
+  const dataStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-gray-50 text-gray-700 border-gray-200">
+      <Clock className="h-3 w-3" />
+      Última importação: {dataStr}
+    </span>
   );
 }
