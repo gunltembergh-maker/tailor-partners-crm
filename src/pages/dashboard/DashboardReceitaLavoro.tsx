@@ -125,18 +125,19 @@ function BigStatCard({
       className="rounded-lg shadow-sm p-5 border"
       style={{ background: "#fff", borderColor: "#e5e7eb", borderLeft: `4px solid ${accent}` }}
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
-      {subtitle && <p className="text-[11px] text-gray-400 mt-0.5">{subtitle}</p>}
+      <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
+      {subtitle && <p className="text-[10px] mt-0.5" style={{ color: "#9CA3AF" }}>{subtitle}</p>}
       {loading ? (
         <div className="h-10 mt-2 w-40 bg-gray-100 rounded animate-pulse" />
       ) : (
-        <p className="text-3xl font-bold mt-2" style={{ color: "#0A2337" }}>
+        <p className="text-3xl font-bold mt-2" style={{ color: "#1B2A3D" }}>
           {value}
         </p>
       )}
     </div>
   );
 }
+
 
 function VarCard({
   title,
