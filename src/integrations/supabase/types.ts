@@ -4063,6 +4063,17 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_lavoro_previsto_caixa: {
+        Row: {
+          ano: number | null
+          data_pagamento: string | null
+          mes: number | null
+          ramo: string | null
+          tipo_de_ramo: string | null
+          valor_previsto: number | null
+        }
+        Relationships: []
+      }
       vw_lavoro_receita_caixa: {
         Row: {
           ano: number | null
@@ -5235,21 +5246,23 @@ export type Database = {
         Args: { p_ano: number; p_mes: number; p_periodo?: string }
         Returns: {
           atingimento: number
+          atingimento_caixa: number
           defasagem: number
           meta_periodo: number
+          previsto_caixa: number
           receita_caixa: number
           receita_competencia: number
         }[]
       }
       rpc_lavoro_receita_por_canal: {
-        Args: { p_ano: number; p_mes: number }
+        Args: { p_ano: number; p_mes: number; p_periodo?: string }
         Returns: {
           receita: number
           tipo_de_ramo: string
         }[]
       }
       rpc_lavoro_receita_por_ramo: {
-        Args: { p_ano: number; p_mes: number }
+        Args: { p_ano: number; p_mes: number; p_periodo?: string }
         Returns: {
           ramo: string
           receita: number
