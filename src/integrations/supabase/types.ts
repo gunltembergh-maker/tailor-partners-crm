@@ -5234,6 +5234,14 @@ export type Database = {
         }[]
       }
       rpc_lavoro_get_meta_anual: { Args: { p_ano: number }; Returns: number }
+      rpc_lavoro_receita_caixa_comparativo_anual: {
+        Args: { p_anos: number[] }
+        Returns: {
+          ano: number
+          mes: number
+          receita_caixa: number
+        }[]
+      }
       rpc_lavoro_receita_comparativo_anual: {
         Args: { p_anos: number[] }
         Returns: {
@@ -5275,6 +5283,13 @@ export type Database = {
           meta_mensal: number
           receita_caixa: number
           receita_competencia: number
+        }[]
+      }
+      rpc_lavoro_receita_variacoes: {
+        Args: { p_ano: number; p_mes: number }
+        Returns: {
+          variacao_ano_anterior: number
+          variacao_mes_anterior: number
         }[]
       }
       rpc_lavoro_set_meta_anual: {
