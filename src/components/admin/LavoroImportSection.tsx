@@ -213,9 +213,17 @@ function convertRow(row: Record<string, unknown>, map: ColMapWithAlts[], syncId:
   return out;
 }
 
+function findSheetName(workbook: XLSX.WorkBook, target: string): string | null {
+  if (workbook.Sheets[target]) return target;
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const t = norm(target);
+  return workbook.SheetNames.find((n) => norm(n) === t) ?? null;
+}
+
 function readSheetFromRow2(workbook: XLSX.WorkBook, sheetName: string): Record<string, unknown>[] | null {
-  const ws = workbook.Sheets[sheetName];
-  if (!ws) return null;
+  const real = findSheetName(workbook, sheetName);
+  if (!real) return null;
+  const ws = workbook.Sheets[real];
   // range: 1 → treat Excel row 2 (0-indexed 1) as the header row
   const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
     defval: null,
