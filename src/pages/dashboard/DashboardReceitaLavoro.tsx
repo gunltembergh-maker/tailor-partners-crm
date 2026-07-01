@@ -15,14 +15,16 @@ import {
   RadialBarChart,
   RadialBar,
   PolarAngleAxis,
+  LabelList,
 } from "recharts";
-import { Calendar, ChevronRight, Clock, RefreshCw } from "lucide-react";
+import { Calendar, ChevronRight, ChevronDown, Clock, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/AppLayout";
 import { TailorFrame } from "@/components/layout/TailorFrame";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Select,
   SelectContent,
@@ -39,8 +41,18 @@ const BRL = (v: number | null | undefined) =>
     currency: "BRL",
     maximumFractionDigits: 0,
   });
-const BRL_MI = (v: number | null | undefined) =>
-  `R$ ${(Number(v || 0) / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} Mi`;
+// Formatação compacta em Reais (para eixos e rótulos): "R$ 443 mil" / "R$ 1,2 Mi"
+const BRL_COMPACT = (v: number | null | undefined) => {
+  const n = Number(v || 0);
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) {
+    return `R$ ${(n / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} Mi`;
+  }
+  if (abs >= 1_000) {
+    return `R$ ${(n / 1_000).toLocaleString("pt-BR", { maximumFractionDigits: 0 })} mil`;
+  }
+  return `R$ ${n.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+};
 const PCT = (v: number | null | undefined) =>
   `${Number(v || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -50,25 +62,101 @@ const fmtTs = (iso: string | null | undefined) => {
   return d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 };
 
-// ─── PbiCard reutilizável (mesmo padrão do QuantitativoTab) ─────────────
+type Periodo = "MTD" | "SEMESTRE" | "YTD";
+
+const labelPeriodo = (p: Periodo, mes: number, ano: number) => {
+  if (p === "MTD") return `${MESES[mes - 1]}/${ano}`;
+  if (p === "SEMESTRE") return `${mes <= 6 ? "S1" : "S2"}/${ano}`;
+  return `YTD ${ano}`;
+};
+
+// ─── PbiCard reutilizável ───────────────────────────────────────────────
 function PbiCard({
   title,
   subtitle,
   children,
   className,
+  headerRight,
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
   className?: string;
+  headerRight?: React.ReactNode;
 }) {
   return (
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${className ?? ""}`}>
-      <div className="px-3 py-1.5 border-b border-gray-100">
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
-        {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+      <div className="px-3 py-1.5 border-b border-gray-100 flex items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+        </div>
+        {headerRight}
       </div>
       <div className="p-2">{children}</div>
+    </div>
+  );
+}
+
+// ─── Big destaque card (números grandes em R$ pleno) ────────────────────
+function BigStatCard({
+  title,
+  subtitle,
+  value,
+  accent,
+  loading,
+}: {
+  title: string;
+  subtitle?: string;
+  value: string;
+  accent: string;
+  loading?: boolean;
+}) {
+  return (
+    <div
+      className="rounded-lg shadow-sm p-5 border"
+      style={{ background: "#fff", borderColor: "#e5e7eb", borderLeft: `4px solid ${accent}` }}
+    >
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+      {subtitle && <p className="text-[11px] text-gray-400 mt-0.5">{subtitle}</p>}
+      {loading ? (
+        <div className="h-10 mt-2 w-40 bg-gray-100 rounded animate-pulse" />
+      ) : (
+        <p className="text-3xl font-bold mt-2" style={{ color: "#0A2337" }}>
+          {value}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function VarCard({
+  title,
+  value,
+  loading,
+}: {
+  title: string;
+  value: number | null | undefined;
+  loading?: boolean;
+}) {
+  const v = Number(value || 0) * 100;
+  const up = v >= 0;
+  const color = up ? "#16a34a" : "#dc2626";
+  const Icon = up ? TrendingUp : TrendingDown;
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+      {loading ? (
+        <div className="h-6 mt-1 w-24 bg-gray-100 rounded animate-pulse" />
+      ) : (
+        <div className="flex items-center gap-2 mt-1">
+          <Icon className="h-5 w-5" style={{ color }} />
+          <p className="text-2xl font-bold" style={{ color }}>
+            {up ? "+" : ""}
+            {v.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -77,14 +165,17 @@ function PbiCard({
 export default function DashboardReceitaLavoro() {
   const hoje = new Date();
   const [ano, setAno] = useState<number>(hoje.getFullYear());
-  const [periodo, setPeriodo] = useState<"MTD" | "YTD">("YTD");
+  const [periodo, setPeriodo] = useState<Periodo>("YTD");
   const [mesRef, setMesRef] = useState<number>(hoje.getMonth() + 1);
+  const [detOpen, setDetOpen] = useState(false);
   const mesAtual = mesRef;
 
   const anosDisponiveis = useMemo(() => {
     const atual = hoje.getFullYear();
     return [atual, atual - 1, atual - 2];
   }, [hoje]);
+
+  const periodoLabel = labelPeriodo(periodo, mesRef, ano);
 
   // ─── Queries ──────────────────────────────────────────────────────────
   const kpisQ = useQuery({
@@ -108,6 +199,32 @@ export default function DashboardReceitaLavoro() {
     },
   });
 
+  const variacoesQ = useQuery({
+    queryKey: ["lavoro-receita-variacoes", ano, mesAtual],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_variacoes" as any, {
+        p_ano: ano,
+        p_mes: mesAtual,
+      });
+      if (error) throw error;
+      return (data?.[0] ?? null) as {
+        variacao_mes_anterior: number;
+        variacao_ano_anterior: number;
+      } | null;
+    },
+  });
+
+  const caixaYoyQ = useQuery({
+    queryKey: ["lavoro-caixa-yoy", ano],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_caixa_comparativo_anual" as any, {
+        p_anos: [ano - 1, ano],
+      });
+      if (error) throw error;
+      return (data || []) as Array<{ ano: number; mes: number; receita_caixa: number }>;
+    },
+  });
+
   const serieQ = useQuery({
     queryKey: ["lavoro-receita-serie", ano],
     queryFn: async () => {
@@ -115,6 +232,7 @@ export default function DashboardReceitaLavoro() {
       if (error) throw error;
       return (data || []) as Array<{ mes: number; receita_competencia: number; receita_caixa: number; meta_mensal: number }>;
     },
+    enabled: detOpen,
   });
 
   const comparativoQ = useQuery({
@@ -126,6 +244,7 @@ export default function DashboardReceitaLavoro() {
       if (error) throw error;
       return (data || []) as Array<{ ano: number; mes: number; receita_competencia: number }>;
     },
+    enabled: detOpen,
   });
 
   const canalQ = useQuery({
@@ -135,6 +254,7 @@ export default function DashboardReceitaLavoro() {
       if (error) throw error;
       return (data || []) as Array<{ tipo_de_ramo: string; receita: number }>;
     },
+    enabled: detOpen,
   });
 
   const ramoQ = useQuery({
@@ -144,8 +264,8 @@ export default function DashboardReceitaLavoro() {
       if (error) throw error;
       return (data || []) as Array<{ ramo: string; receita: number }>;
     },
+    enabled: detOpen,
   });
-
 
   const ultimaAtQ = useQuery({
     queryKey: ["lavoro-ultima-atualizacao"],
@@ -157,18 +277,41 @@ export default function DashboardReceitaLavoro() {
   });
 
   const isRefreshing =
-    kpisQ.isFetching || serieQ.isFetching || comparativoQ.isFetching || canalQ.isFetching || ramoQ.isFetching;
+    kpisQ.isFetching || variacoesQ.isFetching || caixaYoyQ.isFetching ||
+    serieQ.isFetching || comparativoQ.isFetching || canalQ.isFetching || ramoQ.isFetching;
 
   const handleRefresh = async () => {
-    await Promise.all([kpisQ.refetch(), serieQ.refetch(), comparativoQ.refetch(), canalQ.refetch(), ramoQ.refetch(), ultimaAtQ.refetch()]);
+    await Promise.all([
+      kpisQ.refetch(), variacoesQ.refetch(), caixaYoyQ.refetch(),
+      serieQ.refetch(), comparativoQ.refetch(), canalQ.refetch(), ramoQ.refetch(),
+      ultimaAtQ.refetch(),
+    ]);
     toast.success("Dados atualizados");
   };
 
   const kpis = kpisQ.data;
+  const atingCaixa = Number(kpis?.atingimento_caixa || 0) * 100;
+  const atingCaixaColor = atingCaixa >= 100 ? "#16a34a" : atingCaixa >= 80 ? "#f59e0b" : "#dc2626";
+
   const atingimento = Number(kpis?.atingimento || 0) * 100;
   const atingColor = atingimento >= 100 ? "#16a34a" : atingimento >= 80 ? "#f59e0b" : "#dc2626";
 
-  // ─── Série mensal (recorta conforme filtro) ──────────────────────────
+  // ─── Comparativo YoY Caixa (barras lado a lado) ──────────────────────
+  const caixaYoyChart = useMemo(() => {
+    const rows = caixaYoyQ.data || [];
+    return Array.from({ length: 12 }, (_, i) => {
+      const mes = i + 1;
+      const prev = rows.find((r) => Number(r.ano) === ano - 1 && Number(r.mes) === mes);
+      const cur = rows.find((r) => Number(r.ano) === ano && Number(r.mes) === mes);
+      return {
+        mes: MESES[i],
+        [String(ano - 1)]: Number(prev?.receita_caixa || 0),
+        [String(ano)]: Number(cur?.receita_caixa || 0),
+      };
+    });
+  }, [caixaYoyQ.data, ano]);
+
+  // ─── Série mensal (detalhamento) ─────────────────────────────────────
   const mesAtualReal = new Date().getMonth() + 1;
   const anoAtualReal = new Date().getFullYear();
   const serieChart = useMemo(() => {
@@ -184,16 +327,16 @@ export default function DashboardReceitaLavoro() {
         Meta: Number(row?.meta_mensal || 0),
       };
     });
-    if (periodo === "MTD") {
-      return full.filter((r) => r.mesNum === mesRef);
+    if (periodo === "MTD") return full.filter((r) => r.mesNum === mesRef);
+    if (periodo === "SEMESTRE") {
+      const ini = mesRef <= 6 ? 1 : 7;
+      return full.filter((r) => r.mesNum >= ini && r.mesNum <= mesRef);
     }
-    // YTD: Jan..mesRef, mas nunca além do mês real (se ano corrente)
     const limite = ano === anoAtualReal ? Math.min(mesRef, mesAtualReal) : mesRef;
     return full.filter((r) => r.mesNum <= limite);
   }, [serieQ.data, mesRef, periodo, ano, mesAtualReal, anoAtualReal]);
 
-
-  // ─── Comparativo anual (linha por ano) ───────────────────────────────
+  // ─── Comparativo 3 anos (detalhamento) ───────────────────────────────
   const comparativoChart = useMemo(() => {
     const rows = comparativoQ.data || [];
     const anos = Array.from(new Set(rows.map((r) => Number(r.ano)))).sort();
@@ -211,24 +354,6 @@ export default function DashboardReceitaLavoro() {
     };
   }, [comparativoQ.data]);
 
-  // ─── Totais anuais (cards pequenos) ──────────────────────────────────
-  const totaisAnuais = useMemo(() => {
-    const rows = comparativoQ.data || [];
-    const map = new Map<number, number>();
-    rows.forEach((r) => {
-      const a = Number(r.ano);
-      map.set(a, (map.get(a) || 0) + Number(r.receita_competencia || 0));
-    });
-    return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
-  }, [comparativoQ.data]);
-
-  const gaugeData = useMemo(() => {
-    const receita = Number(kpis?.receita_competencia || 0);
-    const meta = Number(kpis?.meta_periodo || 0);
-    const pct = meta > 0 ? (receita / meta) * 100 : 0;
-    return [{ name: "atingimento", value: Math.min(pct, 100), fill: atingColor }];
-  }, [kpis, atingColor]);
-
   const CORES_LINHAS = ["#0A2337", "#4B6D88", "#73A7B7", "#9B6B4A"];
 
   return (
@@ -241,7 +366,7 @@ export default function DashboardReceitaLavoro() {
         <div className="lavoro-receita">
           {/* Header */}
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="title-serif" style={{ fontSize: 32, letterSpacing: "-0.5px", margin: 0 }}>
                 Receita Lavoro Seguros
               </h1>
@@ -254,9 +379,7 @@ export default function DashboardReceitaLavoro() {
                   </SelectTrigger>
                   <SelectContent>
                     {anosDisponiveis.map((a) => (
-                      <SelectItem key={a} value={String(a)}>
-                        {a}
-                      </SelectItem>
+                      <SelectItem key={a} value={String(a)}>{a}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -268,23 +391,25 @@ export default function DashboardReceitaLavoro() {
                   </SelectTrigger>
                   <SelectContent>
                     {MESES.map((m, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        {m}
-                      </SelectItem>
+                      <SelectItem key={i + 1} value={String(i + 1)}>{m}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex rounded-md overflow-hidden border border-white/15">
-                {(["MTD", "YTD"] as const).map((p) => (
+                {([
+                  { k: "MTD", label: "Mês" },
+                  { k: "SEMESTRE", label: "Semestre" },
+                  { k: "YTD", label: "Ano" },
+                ] as const).map(({ k, label }) => (
                   <button
-                    key={p}
-                    onClick={() => setPeriodo(p)}
+                    key={k}
+                    onClick={() => setPeriodo(k as Periodo)}
                     className={`px-3 py-1 text-xs font-semibold ${
-                      periodo === p ? "bg-[#73A7B7] text-[#082537]" : "bg-white/10 text-[#DFDBBE]"
+                      periodo === k ? "bg-[#73A7B7] text-[#082537]" : "bg-white/10 text-[#DFDBBE]"
                     }`}
                   >
-                    {p}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -307,163 +432,240 @@ export default function DashboardReceitaLavoro() {
             </div>
           </div>
 
-          {/* KPI cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
-            <MetricCard
-              title={`Receita Competência (${periodo})`}
-              value={BRL(kpis?.receita_competencia)}
-              loading={kpisQ.isLoading}
-            />
-            <MetricCard
-              title={`Recebido Caixa (${periodo})`}
-              value={BRL(kpis?.receita_caixa)}
-              loading={kpisQ.isLoading}
-            />
-            <MetricCard
-              title={`Previsto Caixa (${periodo})`}
+          {/* 2 cards grandes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            <BigStatCard
+              title={`A receber em ${periodoLabel}`}
+              subtitle="Previsto Caixa (parcelas emitidas por data de pagamento)"
               value={BRL(kpis?.previsto_caixa)}
+              accent="#9B6B4A"
               loading={kpisQ.isLoading}
             />
-            <MetricCard
-              title={`Atingimento Caixa`}
-              value={PCT(Number(kpis?.atingimento_caixa || 0) * 100)}
-              loading={kpisQ.isLoading}
-            />
-            <MetricCard title={`Meta (${periodo})`} value={BRL(kpis?.meta_periodo)} loading={kpisQ.isLoading} />
-            <MetricCard
-              title="Atingimento"
-              value={PCT(atingimento)}
-              loading={kpisQ.isLoading}
-              headerRight={
-                <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                  style={{ background: atingColor, color: "#fff" }}
-                >
-                  {atingimento >= 100 ? "OK" : atingimento >= 80 ? "ATENÇÃO" : "ABAIXO"}
-                </span>
-              }
-            />
-            <MetricCard
-              title="Defasagem (Comp - Caixa)"
-              value={BRL(kpis?.defasagem)}
+            <BigStatCard
+              title={`Recebido em ${periodoLabel}`}
+              subtitle="Receita Caixa (efetivamente recebido)"
+              value={BRL(kpis?.receita_caixa)}
+              accent="#0A2337"
               loading={kpisQ.isLoading}
             />
           </div>
 
-
-          {/* Gauge + Série mensal */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
-            <PbiCard title="Atingimento — Mês Corrente" subtitle={`Competência vs Meta — ${MESES[mesAtual - 1]}/${ano}`}>
-              <div style={{ width: "100%", height: 240 }}>
-                <ResponsiveContainer>
-                  <RadialBarChart
-                    innerRadius="70%"
-                    outerRadius="100%"
-                    data={gaugeData}
-                    startAngle={180}
-                    endAngle={0}
-                    cx="50%"
-                    cy="80%"
-                  >
-                    <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                    <RadialBar dataKey="value" background={{ fill: "#e5e7eb" } as any} cornerRadius={8} />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-                <div className="text-center -mt-16">
-                  <p className="text-3xl font-bold" style={{ color: atingColor }}>
-                    {PCT(atingimento)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {BRL(kpis?.receita_competencia)} / {BRL(kpis?.meta_periodo)}
-                  </p>
-                </div>
+          {/* Barra de atingimento de caixa */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  Atingimento de Caixa ({periodoLabel})
+                </p>
+                <p className="text-[11px] text-gray-400">
+                  Recebido / Previsto — {BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
+                </p>
               </div>
-            </PbiCard>
-
-            <PbiCard title="Receita Mensal" subtitle={`Competência x Caixa x Meta — ${ano}`} className="lg:col-span-2">
-              <div style={{ width: "100%", height: 260 }}>
-                <ResponsiveContainer>
-                  <ComposedChart data={serieChart}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="Competência" fill="#0A2337" />
-                    <Bar dataKey="Caixa" fill="#73A7B7" />
-                    <Line type="monotone" dataKey="Meta" stroke="#9B6B4A" strokeWidth={2} dot={{ r: 3 }} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </PbiCard>
-          </div>
-
-          {/* Comparativo anual + totais */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
-            <PbiCard title="Comparativo Anual" subtitle="Receita Competência por ano" className="lg:col-span-2">
-              <div style={{ width: "100%", height: 260 }}>
-                <ResponsiveContainer>
-                  <LineChart data={comparativoChart.data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    {comparativoChart.anos.map((a, i) => (
-                      <Line
-                        key={a}
-                        type="monotone"
-                        dataKey={String(a)}
-                        stroke={CORES_LINHAS[i % CORES_LINHAS.length]}
-                        strokeWidth={2}
-                        dot={{ r: 3 }}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </PbiCard>
-
-            <div className="grid grid-cols-1 gap-3">
-              {totaisAnuais.map(([a, total]) => (
-                <MetricCard key={a} title={`Total ${a}`} value={BRL_MI(total)} subtitle="Receita Competência" />
-              ))}
-              {totaisAnuais.length === 0 && (
-                <div className="text-xs text-white/60 p-2">Sem dados comparativos.</div>
-              )}
+              <p className="text-2xl font-bold" style={{ color: atingCaixaColor }}>
+                {PCT(atingCaixa)}
+              </p>
+            </div>
+            <div className="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${Math.min(atingCaixa, 100)}%`, background: atingCaixaColor }}
+              />
             </div>
           </div>
 
-          {/* Por Canal / Por Ramo */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <PbiCard title="Receita por Canal (Tipo de Ramo)" subtitle={periodo === "MTD" ? `${MESES[mesRef - 1]}/${ano}` : `YTD ${ano}`}>
-              <div style={{ width: "100%", height: 320 }}>
-                <ResponsiveContainer>
-                  <BarChart data={canalQ.data || []} layout="vertical" margin={{ left: 40 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <YAxis dataKey="tipo_de_ramo" type="category" tick={{ fontSize: 11 }} width={120} />
-                    <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                    <Bar dataKey="receita" fill="#0A2337" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </PbiCard>
-
-            <PbiCard title="Receita por Ramo" subtitle={periodo === "MTD" ? `${MESES[mesRef - 1]}/${ano}` : `YTD ${ano}`}>
-              <div style={{ width: "100%", height: 320 }}>
-                <ResponsiveContainer>
-                  <BarChart data={ramoQ.data || []} layout="vertical" margin={{ left: 40 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <YAxis dataKey="ramo" type="category" tick={{ fontSize: 11 }} width={140} />
-                    <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                    <Bar dataKey="receita" fill="#73A7B7" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </PbiCard>
+          {/* 2 cards de variação */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            <VarCard
+              title="vs. mês anterior"
+              value={variacoesQ.data?.variacao_mes_anterior}
+              loading={variacoesQ.isLoading}
+            />
+            <VarCard
+              title="vs. mesmo mês do ano anterior"
+              value={variacoesQ.data?.variacao_ano_anterior}
+              loading={variacoesQ.isLoading}
+            />
           </div>
+
+          {/* Gráfico YoY caixa */}
+          <PbiCard
+            title={`Recebido — ${ano - 1} x ${ano}`}
+            subtitle="Receita Caixa mensal (barras lado a lado)"
+            className="mb-4"
+          >
+            <div style={{ width: "100%", height: 320 }}>
+              <ResponsiveContainer>
+                <BarChart data={caixaYoyChart} margin={{ top: 24, right: 12, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} width={80} />
+                  <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey={String(ano - 1)} fill="#9B6B4A">
+                    <LabelList
+                      dataKey={String(ano - 1)}
+                      position="top"
+                      formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                      style={{ fontSize: 10, fill: "#6B7280" }}
+                    />
+                  </Bar>
+                  <Bar dataKey={String(ano)} fill="#0A2337">
+                    <LabelList
+                      dataKey={String(ano)}
+                      position="top"
+                      formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                      style={{ fontSize: 10, fill: "#0A2337", fontWeight: 600 }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </PbiCard>
+
+          {/* Detalhamento operacional */}
+          <Collapsible open={detOpen} onOpenChange={setDetOpen}>
+            <CollapsibleTrigger asChild>
+              <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-md bg-white/10 border border-white/15 text-[#DFDBBE] text-sm font-semibold hover:bg-white/15 transition-colors">
+                <span>Ver detalhamento operacional completo</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${detOpen ? "rotate-180" : ""}`} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3 space-y-3">
+              {/* KPIs de competência */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <MetricCard
+                  title={`Receita Competência (${periodoLabel})`}
+                  value={BRL(kpis?.receita_competencia)}
+                  loading={kpisQ.isLoading}
+                />
+                <MetricCard title={`Meta (${periodoLabel})`} value={BRL(kpis?.meta_periodo)} loading={kpisQ.isLoading} />
+                <MetricCard
+                  title="Atingimento (Competência)"
+                  value={PCT(atingimento)}
+                  loading={kpisQ.isLoading}
+                  headerRight={
+                    <span
+                      className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                      style={{ background: atingColor, color: "#fff" }}
+                    >
+                      {atingimento >= 100 ? "OK" : atingimento >= 80 ? "ATENÇÃO" : "ABAIXO"}
+                    </span>
+                  }
+                />
+                <MetricCard
+                  title="Defasagem (Comp - Caixa)"
+                  value={BRL(kpis?.defasagem)}
+                  loading={kpisQ.isLoading}
+                />
+              </div>
+
+              {/* Combo mensal Comp x Caixa x Meta */}
+              <PbiCard title="Receita Mensal" subtitle={`Competência x Caixa x Meta — ${periodoLabel}`}>
+                <div style={{ width: "100%", height: 280 }}>
+                  <ResponsiveContainer>
+                    <ComposedChart data={serieChart}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} width={80} />
+                      <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <Bar dataKey="Competência" fill="#0A2337" />
+                      <Bar dataKey="Caixa" fill="#73A7B7" />
+                      <Line type="monotone" dataKey="Meta" stroke="#9B6B4A" strokeWidth={2} dot={{ r: 3 }} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </PbiCard>
+
+              {/* Gauge + Comparativo 3 anos */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <PbiCard
+                  title="Atingimento — Mês Corrente"
+                  subtitle={`Competência vs Meta — ${MESES[mesAtual - 1]}/${ano}`}
+                >
+                  <div style={{ width: "100%", height: 240 }}>
+                    <ResponsiveContainer>
+                      <RadialBarChart
+                        innerRadius="70%"
+                        outerRadius="100%"
+                        data={[{ name: "at", value: Math.min(atingimento, 100), fill: atingColor }]}
+                        startAngle={180}
+                        endAngle={0}
+                        cx="50%"
+                        cy="80%"
+                      >
+                        <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+                        <RadialBar dataKey="value" background={{ fill: "#e5e7eb" } as any} cornerRadius={8} />
+                      </RadialBarChart>
+                    </ResponsiveContainer>
+                    <div className="text-center -mt-16">
+                      <p className="text-3xl font-bold" style={{ color: atingColor }}>
+                        {PCT(atingimento)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {BRL(kpis?.receita_competencia)} / {BRL(kpis?.meta_periodo)}
+                      </p>
+                    </div>
+                  </div>
+                </PbiCard>
+
+                <PbiCard title="Comparativo Anual" subtitle="Receita Competência por ano" className="lg:col-span-2">
+                  <div style={{ width: "100%", height: 260 }}>
+                    <ResponsiveContainer>
+                      <LineChart data={comparativoChart.data}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} width={80} />
+                        <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        {comparativoChart.anos.map((a, i) => (
+                          <Line
+                            key={a}
+                            type="monotone"
+                            dataKey={String(a)}
+                            stroke={CORES_LINHAS[i % CORES_LINHAS.length]}
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                          />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </PbiCard>
+              </div>
+
+              {/* Canal / Ramo */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <PbiCard title="Receita por Canal (Tipo de Ramo)" subtitle={periodoLabel}>
+                  <div style={{ width: "100%", height: 320 }}>
+                    <ResponsiveContainer>
+                      <BarChart data={canalQ.data || []} layout="vertical" margin={{ left: 40 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} />
+                        <YAxis dataKey="tipo_de_ramo" type="category" tick={{ fontSize: 11 }} width={120} />
+                        <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                        <Bar dataKey="receita" fill="#0A2337" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </PbiCard>
+
+                <PbiCard title="Receita por Ramo" subtitle={periodoLabel}>
+                  <div style={{ width: "100%", height: 320 }}>
+                    <ResponsiveContainer>
+                      <BarChart data={ramoQ.data || []} layout="vertical" margin={{ left: 40 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} />
+                        <YAxis dataKey="ramo" type="category" tick={{ fontSize: 11 }} width={140} />
+                        <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                        <Bar dataKey="receita" fill="#73A7B7" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </PbiCard>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </TailorFrame>
     </AppLayout>
