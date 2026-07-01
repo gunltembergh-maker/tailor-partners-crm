@@ -55,6 +55,13 @@ const BRL_COMPACT = (v: number | null | undefined) => {
 };
 const PCT = (v: number | null | undefined) =>
   `${Number(v || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+// Formata atingimento tratando null/undefined/Infinity explicitamente
+const formatarAtingimento = (v: number | null | undefined, fallback = "Sem meta no período"): string => {
+  if (v === null || v === undefined || !isFinite(Number(v))) return fallback;
+  return `${(Number(v) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+};
+const isAtingimentoValido = (v: number | null | undefined) =>
+  v !== null && v !== undefined && isFinite(Number(v));
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const fmtTs = (iso: string | null | undefined) => {
   if (!iso) return "—";
