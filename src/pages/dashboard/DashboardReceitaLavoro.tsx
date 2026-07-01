@@ -593,40 +593,75 @@ export default function DashboardReceitaLavoro() {
             />
           </div>
 
-          {/* Gráfico YoY caixa */}
-          <PbiCard
-            title={`Recebido — ${ano - 1} x ${ano}`}
-            subtitle="Receita Caixa mensal (barras lado a lado)"
-            className="mb-4"
-          >
-            <div style={{ width: "100%", height: 320 }}>
-              <ResponsiveContainer>
-                <BarChart data={caixaYoyChart} margin={{ top: 24, right: 12, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} width={80} />
-                  <Tooltip formatter={(v: any) => BRL(Number(v))} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey={String(ano - 1)} fill="#9B6B4A">
-                    <LabelList
-                      dataKey={String(ano - 1)}
-                      position="top"
-                      formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
-                      style={{ fontSize: 10, fill: "#6B7280" }}
-                    />
-                  </Bar>
-                  <Bar dataKey={String(ano)} fill="#0A2337">
-                    <LabelList
-                      dataKey={String(ano)}
-                      position="top"
-                      formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
-                      style={{ fontSize: 10, fill: "#0A2337", fontWeight: 600 }}
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </PbiCard>
+          {/* Gráficos YoY — Competência e Caixa lado a lado */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 mb-4">
+            <PbiCard
+              title={`Receita Competência — ${ano - 1} x ${ano}`}
+              subtitle="Receita emitida por mês (barras lado a lado)"
+            >
+              <div style={{ width: "100%", height: 320 }}>
+                <ResponsiveContainer>
+                  <BarChart data={competenciaYoyChart} margin={{ top: 24, right: 12, left: 0, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#1B2A3D" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "#1B2A3D" }} tickFormatter={BRL_COMPACT} width={80} />
+                    <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: "#1B2A3D" }} />
+                    <Bar dataKey={String(ano - 1)} fill="#73A7B7">
+                      <LabelList
+                        dataKey={String(ano - 1)}
+                        position="top"
+                        formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                        style={{ fontSize: 10, fill: "#6B7280" }}
+                      />
+                    </Bar>
+                    <Bar dataKey={String(ano)} fill="#1B2A3D">
+                      <LabelList
+                        dataKey={String(ano)}
+                        position="top"
+                        formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                        style={{ fontSize: 10, fill: "#1B2A3D", fontWeight: 600 }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </PbiCard>
+
+            <PbiCard
+              title={`Recebido — ${ano - 1} x ${ano}`}
+              subtitle="Receita Caixa mensal (barras lado a lado)"
+            >
+              <div style={{ width: "100%", height: 320 }}>
+                <ResponsiveContainer>
+                  <BarChart data={caixaYoyChart} margin={{ top: 24, right: 12, left: 0, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "#1B2A3D" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "#1B2A3D" }} tickFormatter={BRL_COMPACT} width={80} />
+                    <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: "#1B2A3D" }} />
+                    <Bar dataKey={String(ano - 1)} fill="#9B6B4A">
+                      <LabelList
+                        dataKey={String(ano - 1)}
+                        position="top"
+                        formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                        style={{ fontSize: 10, fill: "#6B7280" }}
+                      />
+                    </Bar>
+                    <Bar dataKey={String(ano)} fill="#0A2337">
+                      <LabelList
+                        dataKey={String(ano)}
+                        position="top"
+                        formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                        style={{ fontSize: 10, fill: "#0A2337", fontWeight: 600 }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </PbiCard>
+          </div>
+
 
           {/* Alerta: Comissão vencida por canal — sempre visível */}
           {(() => {
