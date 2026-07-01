@@ -32,9 +32,11 @@ type ValidationGerencial = {
 };
 
 type ValidationCaixa = {
+  totalReadRows: number;
   totalRows: number;
   totalComissao: number;
   categorias: string[];
+  tiposLancamento: string[];
 };
 
 type ParsedGerencial = {
@@ -183,7 +185,26 @@ const CAIXA_MAP: ColMapWithAlts[] = [
 ];
 
 function normalizeHeader(s: string): string {
-  return String(s ?? "").trim().toLowerCase();
+  return String(s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[:：]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeComissaoToken(v: unknown): string {
+  return String(v ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function isCaixaComissaoRow(row: Record<string, unknown>): boolean {
+  return [row.categoria, row.tipo_lancamento].some((v) => normalizeComissaoToken(v) === "comissao");
 }
 
 function pickValue(row: Record<string, unknown>, map: ColMapWithAlts): unknown {
@@ -354,25 +375,27 @@ export function LavoroImportSection() {
       } else {
         const sheet = readSheetFromRow2(workbook, "Descrição Financeira (Caixa)");
         if (!sheet) throw new Error("Aba 'Descrição Financeira (Caixa)' não encontrada.");
-        const rows = sheet
+        const allRows = sheet
           .filter((r) => Object.values(r).some((v) => v !== null && v !== ""))
           .map((r) => convertRow(r, CAIXA_MAP, syncId));
+        const rows = allRows.filter(isCaixaComissaoRow);
 
-        const totalComissao = rows.reduce((s, r) => {
-          const cat = String(r.categoria ?? "").trim().toLowerCase();
-          return cat === "comissão" || cat === "comissao" ? s + (Number(r.valor) || 0) : s;
-        }, 0);
+        const totalComissao = rows.reduce((s, r) => s + (Number(r.valor) || 0), 0);
         const categoriasSet = new Set<string>();
         rows.forEach((r) => { if (r.categoria) categoriasSet.add(String(r.categoria)); });
+        const tiposLancamentoSet = new Set<string>();
+        rows.forEach((r) => { if (r.tipo_lancamento) tiposLancamentoSet.add(String(r.tipo_lancamento)); });
 
         setPendingCaixa({
           syncId,
           fileName: file.name,
           rows,
           validation: {
+            totalReadRows: allRows.length,
             totalRows: rows.length,
             totalComissao,
             categorias: Array.from(categoriasSet).sort(),
+            tiposLancamento: Array.from(tiposLancamentoSet).sort(),
           },
         });
       }
@@ -473,12 +496,21 @@ export function LavoroImportSection() {
           </DialogHeader>
           {pendingCaixa && (
             <div className="space-y-2 py-2">
-              <ValidationRow label="Linhas lidas" value={pendingCaixa.validation.totalRows.toLocaleString("pt-BR")} />
+              <ValidationRow label="Linhas lidas" value={pendingCaixa.validation.totalReadRows.toLocaleString("pt-BR")} />
+              <ValidationRow label="Linhas importadas como Comissão" value={pendingCaixa.validation.totalRows.toLocaleString("pt-BR")} />
               <ValidationRow
-                label="SUM(Valor) onde Categoria = 'Comissão'"
+                label="SUM(Valor) onde Categoria ou Tipo de Lançamento = 'Comissão'"
                 value={fmtBRL(pendingCaixa.validation.totalComissao)}
                 hint="Deve bater com 'Recebido Caixa' no PBI"
               />
+              <div className="rounded-md border border-border bg-muted/40 p-2 text-xs">
+                <p className="font-medium text-foreground mb-1">Tipos de Lançamento importados ({pendingCaixa.validation.tiposLancamento.length}):</p>
+                <div className="flex flex-wrap gap-1">
+                  {pendingCaixa.validation.tiposLancamento.map((c) => (
+                    <span key={c} className="px-2 py-0.5 rounded-full bg-white border border-border text-[10px]">{c}</span>
+                  ))}
+                </div>
+              </div>
               <div className="rounded-md border border-border bg-muted/40 p-2 text-xs">
                 <p className="font-medium text-foreground mb-1">Categorias distintas encontradas ({pendingCaixa.validation.categorias.length}):</p>
                 <div className="flex flex-wrap gap-1">
