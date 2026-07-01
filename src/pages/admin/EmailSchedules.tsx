@@ -132,12 +132,12 @@ export default function EmailSchedules() {
 
   // Config + último disparo
   const { data: config } = useQuery({
-    queryKey: ['email-schedule-config', MODULO],
+    queryKey: ['email-schedule-config', modulo],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('email_schedules_config')
         .select('*')
-        .eq('modulo', MODULO)
+        .eq('modulo', modulo)
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -156,9 +156,9 @@ export default function EmailSchedules() {
 
   // Próxima execução prevista (server-side)
   const { data: proxExec, refetch: refetchProx } = useQuery({
-    queryKey: ['email-proxima-execucao', MODULO],
+    queryKey: ['email-proxima-execucao', modulo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('rpc_proxima_execucao_schedule', { p_modulo: MODULO });
+      const { data, error } = await supabase.rpc('rpc_proxima_execucao_schedule', { p_modulo: modulo });
       if (error) throw error;
       return data as string | null;
     },
@@ -168,18 +168,18 @@ export default function EmailSchedules() {
   }, [proxExec]);
 
   const { data: destinatarios = [], refetch: refetchDest } = useQuery({
-    queryKey: ['email-destinatarios', MODULO],
+    queryKey: ['email-destinatarios', modulo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('rpc_listar_destinatarios_automaticos', { p_modulo: MODULO });
+      const { data, error } = await supabase.rpc('rpc_listar_destinatarios_automaticos', { p_modulo: modulo });
       if (error) throw error;
       return (data || []) as any[];
     },
   });
 
   const { data: historico = [], refetch: refetchHist } = useQuery({
-    queryKey: ['email-historico', MODULO],
+    queryKey: ['email-historico', modulo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('rpc_historico_disparos', { p_modulo: MODULO, p_limit: 30 });
+      const { data, error } = await supabase.rpc('rpc_historico_disparos', { p_modulo: modulo, p_limit: 30 });
       if (error) throw error;
       return (data || []) as any[];
     },
@@ -202,24 +202,24 @@ export default function EmailSchedules() {
       return;
     }
     // Reativar
-    const { error } = await supabase.rpc('rpc_toggle_schedule', { p_modulo: MODULO, p_motivo: null });
+    const { error } = await supabase.rpc('rpc_toggle_schedule', { p_modulo: modulo, p_motivo: null });
     if (error) {
       toast.error(error.message);
       return;
     }
     toast.success('Agendamento reativado');
-    qc.invalidateQueries({ queryKey: ['email-schedule-config', MODULO] });
+    qc.invalidateQueries({ queryKey: ['email-schedule-config', modulo] });
   };
 
   const confirmarPausa = async () => {
-    const { error } = await supabase.rpc('rpc_toggle_schedule', { p_modulo: MODULO, p_motivo: motivoPausa || null });
+    const { error } = await supabase.rpc('rpc_toggle_schedule', { p_modulo: modulo, p_motivo: motivoPausa || null });
     if (error) {
       toast.error(error.message);
       return;
     }
     toast.success('Agendamento pausado');
     setPauseOpen(false);
-    qc.invalidateQueries({ queryKey: ['email-schedule-config', MODULO] });
+    qc.invalidateQueries({ queryKey: ['email-schedule-config', modulo] });
   };
 
   const handleDisparar = async () => {
@@ -275,14 +275,14 @@ export default function EmailSchedules() {
     setSalvando(true);
     try {
       const { error } = await supabase.rpc('rpc_atualizar_schedule_config', {
-        p_modulo: MODULO,
+        p_modulo: modulo,
         p_hora_brt: `${horaEdit}:00`,
         p_dias_semana: diasEdit,
         p_ativo: ativoEdit,
       });
       if (error) throw error;
       toast.success('Schedule atualizado');
-      await qc.invalidateQueries({ queryKey: ['email-schedule-config', MODULO] });
+      await qc.invalidateQueries({ queryKey: ['email-schedule-config', modulo] });
       await refetchProx();
     } catch (err: any) {
       toast.error(err?.message || 'Falha ao salvar');
@@ -318,7 +318,7 @@ export default function EmailSchedules() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
-              <CardTitle className="text-lg text-[#0A2337]">{MODULO_LABEL}</CardTitle>
+              <CardTitle className="text-lg text-[#0A2337]">{moduloLabel}</CardTitle>
               <p className="text-xs text-muted-foreground mt-1">Disparo automático diário</p>
             </div>
             <Badge
@@ -586,7 +586,7 @@ export default function EmailSchedules() {
       {/* Modal adicionar destinatário */}
       <AdicionarDestinatarioModal
         open={addDestOpen}
-        modulo={MODULO}
+        modulo={modulo}
         jaCadastrados={jaCadastradosSet as Set<string>}
         onClose={() => setAddDestOpen(false)}
         onAdicionado={() => refetchDest()}
