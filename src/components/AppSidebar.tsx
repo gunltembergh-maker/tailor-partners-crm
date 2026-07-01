@@ -64,6 +64,7 @@ const DASHBOARDS_PERMISSIONS = [
 const dashboardItems = [
   { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial", keys: ["menu_dashboards_comercial", "menu_dashboards"] },
   { title: "Receita", icon: BarChart3, path: "/dashboard/receita", keys: ["menu_dashboards_receita", "menu_dashboards"] },
+  { title: "Receita Lavoro", icon: BarChart3, path: "/dashboard/receita-lavoro", keys: ["menu_dashboards_lavoro", "menu_dashboards_lavoro_receita"] },
 ];
 
 export function AppSidebar() {
