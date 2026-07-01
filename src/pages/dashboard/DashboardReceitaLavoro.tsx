@@ -436,7 +436,7 @@ export default function DashboardReceitaLavoro() {
 
           {/* Por Canal / Por Ramo */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <PbiCard title="Receita por Canal (Tipo de Ramo)" subtitle={`YTD ${ano}`}>
+            <PbiCard title="Receita por Canal (Tipo de Ramo)" subtitle={periodo === "MTD" ? `${MESES[mesRef - 1]}/${ano}` : `YTD ${ano}`}>
               <div style={{ width: "100%", height: 320 }}>
                 <ResponsiveContainer>
                   <BarChart data={canalQ.data || []} layout="vertical" margin={{ left: 40 }}>
