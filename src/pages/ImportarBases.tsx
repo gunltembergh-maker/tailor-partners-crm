@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useViewAs } from "@/contexts/ViewAsContext";
 import { PopupComunicado } from "@/components/PopupComunicado";
 import { SaldoConsolidadoSection } from "@/components/admin/SaldoConsolidadoSection";
+import { LavoroImportSection } from "@/components/admin/LavoroImportSection";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
