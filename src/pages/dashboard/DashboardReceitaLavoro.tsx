@@ -274,6 +274,19 @@ export default function DashboardReceitaLavoro() {
     enabled: detOpen,
   });
 
+  const vencidosQ = useQuery({
+    queryKey: ["lavoro-comissao-vencida", ano, mesAtual, periodo],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_lavoro_comissao_vencida_por_canal" as any, {
+        p_ano: ano,
+        p_mes: mesAtual,
+        p_periodo: periodo,
+      });
+      if (error) throw error;
+      return (data || []) as Array<{ tipo_de_ramo: string; comissao_vencida: number }>;
+    },
+  });
+
   const ultimaAtQ = useQuery({
     queryKey: ["lavoro-ultima-atualizacao"],
     queryFn: async () => {
@@ -284,12 +297,12 @@ export default function DashboardReceitaLavoro() {
   });
 
   const isRefreshing =
-    kpisQ.isFetching || variacoesQ.isFetching || caixaYoyQ.isFetching ||
+    kpisQ.isFetching || variacoesQ.isFetching || caixaYoyQ.isFetching || vencidosQ.isFetching ||
     serieQ.isFetching || comparativoQ.isFetching || canalQ.isFetching || ramoQ.isFetching;
 
   const handleRefresh = async () => {
     await Promise.all([
-      kpisQ.refetch(), variacoesQ.refetch(), caixaYoyQ.refetch(),
+      kpisQ.refetch(), variacoesQ.refetch(), caixaYoyQ.refetch(), vencidosQ.refetch(),
       serieQ.refetch(), comparativoQ.refetch(), canalQ.refetch(), ramoQ.refetch(),
       ultimaAtQ.refetch(),
     ]);
