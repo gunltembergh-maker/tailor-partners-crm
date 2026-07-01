@@ -229,7 +229,7 @@ export default function EmailSchedules() {
   const handleDisparar = async () => {
     setDisparando(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-receita-caixa-automatic', {
+      const { data, error } = await supabase.functions.invoke(moduloConfig.edgeFunction, {
         body: { force: true, user_id: user?.id },
       });
       if (error) throw error;
