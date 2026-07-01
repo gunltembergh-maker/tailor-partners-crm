@@ -95,8 +95,8 @@ function PbiCard({
     <div className={`bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ${className ?? ""}`}>
       <div className="px-3 py-1.5 border-b border-gray-100 flex items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
-          {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+          <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
+          {subtitle && <p className="text-[10px]" style={{ color: "#9CA3AF" }}>{subtitle}</p>}
         </div>
         {headerRight}
       </div>
@@ -104,6 +104,7 @@ function PbiCard({
     </div>
   );
 }
+
 
 // ─── Big destaque card (números grandes em R$ pleno) ────────────────────
 function BigStatCard({
