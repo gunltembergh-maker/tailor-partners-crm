@@ -21,6 +21,8 @@ project_id = "jtlelokzpqkgvlwomfus"
     verify_jwt = true
   [functions.send-receita-caixa-automatic]
     verify_jwt = false
+  [functions.send-receita-lavoro-automatic]
+    verify_jwt = false
   [functions.handle-email-unsubscribe]
     verify_jwt = false
   [functions.handle-email-suppression]
