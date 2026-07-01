@@ -255,6 +255,33 @@ function readSheetFromRow2(workbook: XLSX.WorkBook, sheetName: string): Record<s
   return rows;
 }
 
+// Reads a sheet auto-detecting header row (tries row 1, then row 2).
+// Uses the presence of `expectedHeaders` to pick the correct offset.
+function readSheetAutoHeader(
+  workbook: XLSX.WorkBook,
+  sheetName: string,
+  expectedHeaders: string[],
+): Record<string, unknown>[] | null {
+  const real = findSheetName(workbook, sheetName);
+  if (!real) return null;
+  const ws = workbook.Sheets[real];
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const expected = expectedHeaders.map(norm);
+  for (const range of [0, 1]) {
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
+      defval: null,
+      raw: true,
+      range,
+      cellDates: true,
+    } as any);
+    if (!rows.length) continue;
+    const keys = Object.keys(rows[0]).map(norm);
+    const hit = expected.some((e) => keys.includes(e));
+    if (hit) return rows;
+  }
+  return null;
+}
+
 function fmtBRL(v: number): string {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 }
