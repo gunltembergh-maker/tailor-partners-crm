@@ -313,15 +313,16 @@ export default function DashboardReceitaLavoro() {
   });
 
   const isRefreshing =
-    kpisQ.isFetching || variacoesQ.isFetching || caixaYoyQ.isFetching || vencidosQ.isFetching ||
+    kpisQ.isFetching || variacoesQ.isFetching || caixaYoyQ.isFetching || competenciaYoyQ.isFetching || vencidosQ.isFetching ||
     serieQ.isFetching || comparativoQ.isFetching || canalQ.isFetching || ramoQ.isFetching;
 
   const handleRefresh = async () => {
     await Promise.all([
-      kpisQ.refetch(), variacoesQ.refetch(), caixaYoyQ.refetch(), vencidosQ.refetch(),
+      kpisQ.refetch(), variacoesQ.refetch(), caixaYoyQ.refetch(), competenciaYoyQ.refetch(), vencidosQ.refetch(),
       serieQ.refetch(), comparativoQ.refetch(), canalQ.refetch(), ramoQ.refetch(),
       ultimaAtQ.refetch(),
     ]);
+
     toast.success("Dados atualizados");
   };
 
