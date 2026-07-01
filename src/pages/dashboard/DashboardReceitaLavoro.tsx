@@ -360,6 +360,23 @@ export default function DashboardReceitaLavoro() {
     return cortePorPeriodo(full);
   }, [caixaYoyQ.data, ano, periodo, mesRef]);
 
+  const competenciaYoyChart = useMemo(() => {
+    const rows = competenciaYoyQ.data || [];
+    const full = Array.from({ length: 12 }, (_, i) => {
+      const mes = i + 1;
+      const prev = rows.find((r) => Number(r.ano) === ano - 1 && Number(r.mes) === mes);
+      const cur = rows.find((r) => Number(r.ano) === ano && Number(r.mes) === mes);
+      return {
+        mes: MESES[i],
+        mesNum: mes,
+        [String(ano - 1)]: Number(prev?.receita_competencia || 0),
+        [String(ano)]: Number(cur?.receita_competencia || 0),
+      };
+    });
+    return cortePorPeriodo(full);
+  }, [competenciaYoyQ.data, ano, periodo, mesRef]);
+
+
   // ─── Série mensal (detalhamento) ─────────────────────────────────────
   const mesAtualReal = new Date().getMonth() + 1;
   const anoAtualReal = new Date().getFullYear();
