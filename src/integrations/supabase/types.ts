@@ -5268,6 +5268,7 @@ export type Database = {
         Args: { p_ano: number; p_valor: number }
         Returns: undefined
       }
+      rpc_lavoro_ultima_atualizacao: { Args: never; Returns: string }
       rpc_lista_finders: {
         Args: never
         Returns: {
