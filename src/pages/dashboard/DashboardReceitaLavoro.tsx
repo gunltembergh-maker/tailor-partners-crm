@@ -78,7 +78,8 @@ export default function DashboardReceitaLavoro() {
   const hoje = new Date();
   const [ano, setAno] = useState<number>(hoje.getFullYear());
   const [periodo, setPeriodo] = useState<"MTD" | "YTD">("YTD");
-  const mesAtual = hoje.getMonth() + 1;
+  const [mesRef, setMesRef] = useState<number>(hoje.getMonth() + 1);
+  const mesAtual = mesRef;
 
   const anosDisponiveis = useMemo(() => {
     const atual = hoje.getFullYear();
@@ -161,7 +162,7 @@ export default function DashboardReceitaLavoro() {
   };
 
   const kpis = kpisQ.data;
-  const atingimento = Number(kpis?.atingimento || 0);
+  const atingimento = Number(kpis?.atingimento || 0) * 100;
   const atingColor = atingimento >= 100 ? "#16a34a" : atingimento >= 80 ? "#f59e0b" : "#dc2626";
 
   // ─── Série mensal (12 meses) ─────────────────────────────────────────
@@ -170,14 +171,15 @@ export default function DashboardReceitaLavoro() {
     return Array.from({ length: 12 }, (_, i) => {
       const mes = i + 1;
       const row = src.find((r) => Number(r.mes) === mes);
+      const dentro = mes <= mesRef;
       return {
         mes: MESES[i],
-        Competência: Number(row?.receita_competencia || 0),
-        Caixa: Number(row?.receita_caixa || 0),
+        Competência: dentro ? Number(row?.receita_competencia || 0) : null,
+        Caixa: dentro ? Number(row?.receita_caixa || 0) : null,
         Meta: Number(row?.meta_mensal || 0),
       };
     });
-  }, [serieQ.data]);
+  }, [serieQ.data, mesRef]);
 
   // ─── Comparativo anual (linha por ano) ───────────────────────────────
   const comparativoChart = useMemo(() => {
@@ -247,6 +249,20 @@ export default function DashboardReceitaLavoro() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/15">
+                <Select value={String(mesRef)} onValueChange={(v) => setMesRef(Number(v))}>
+                  <SelectTrigger className="bg-transparent border-0 h-6 w-[80px] focus:ring-0 p-0 text-[#DFDBBE]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MESES.map((m, i) => (
+                      <SelectItem key={i + 1} value={String(i + 1)}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex rounded-md overflow-hidden border border-white/15">
                 {(["MTD", "YTD"] as const).map((p) => (
                   <button
@@ -294,7 +310,7 @@ export default function DashboardReceitaLavoro() {
             <MetricCard title={`Meta (${periodo})`} value={BRL(kpis?.meta_periodo)} loading={kpisQ.isLoading} />
             <MetricCard
               title="Atingimento"
-              value={PCT(kpis?.atingimento)}
+              value={PCT(atingimento)}
               loading={kpisQ.isLoading}
               headerRight={
                 <span
@@ -332,7 +348,7 @@ export default function DashboardReceitaLavoro() {
                 </ResponsiveContainer>
                 <div className="text-center -mt-16">
                   <p className="text-3xl font-bold" style={{ color: atingColor }}>
-                    {PCT(kpis?.atingimento)}
+                    {PCT(atingimento)}
                   </p>
                   <p className="text-xs text-gray-500">
                     {BRL(kpis?.receita_competencia)} / {BRL(kpis?.meta_periodo)}
