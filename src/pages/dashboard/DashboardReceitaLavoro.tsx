@@ -171,14 +171,15 @@ export default function DashboardReceitaLavoro() {
     return Array.from({ length: 12 }, (_, i) => {
       const mes = i + 1;
       const row = src.find((r) => Number(r.mes) === mes);
+      const dentro = mes <= mesRef;
       return {
         mes: MESES[i],
-        Competência: Number(row?.receita_competencia || 0),
-        Caixa: Number(row?.receita_caixa || 0),
+        Competência: dentro ? Number(row?.receita_competencia || 0) : null,
+        Caixa: dentro ? Number(row?.receita_caixa || 0) : null,
         Meta: Number(row?.meta_mensal || 0),
       };
     });
-  }, [serieQ.data]);
+  }, [serieQ.data, mesRef]);
 
   // ─── Comparativo anual (linha por ano) ───────────────────────────────
   const comparativoChart = useMemo(() => {
