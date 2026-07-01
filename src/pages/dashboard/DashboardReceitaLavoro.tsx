@@ -594,6 +594,61 @@ export default function DashboardReceitaLavoro() {
             </div>
           </PbiCard>
 
+          {/* Alerta: Comissão vencida por canal — sempre visível */}
+          {(() => {
+            const rows = (vencidosQ.data || []).filter((r) => Number(r.comissao_vencida || 0) > 0);
+            const totalVencido = rows.reduce((acc, r) => acc + Number(r.comissao_vencida || 0), 0);
+            return (
+              <div
+                className="rounded-lg shadow-sm border-2 mb-4 overflow-hidden"
+                style={{ background: "#FFF7ED", borderColor: "#F59E0B" }}
+              >
+                <div className="px-4 py-2.5 flex items-center justify-between border-b" style={{ borderColor: "#FCD9A8" }}>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#B45309" }}>
+                      Comissão vencida por canal — atenção
+                    </p>
+                    <p className="text-[11px]" style={{ color: "#92400E" }}>
+                      Parcelas com status "Vencida" no período {periodoLabel}
+                    </p>
+                  </div>
+                  <p className="text-2xl font-bold" style={{ color: "#B45309" }}>
+                    {BRL(totalVencido)}
+                  </p>
+                </div>
+                <div className="p-2">
+                  {vencidosQ.isLoading ? (
+                    <div className="h-40 bg-amber-50 animate-pulse rounded" />
+                  ) : rows.length === 0 ? (
+                    <p className="text-center text-sm py-8" style={{ color: "#92400E" }}>
+                      Nenhuma comissão vencida no período selecionado.
+                    </p>
+                  ) : (
+                    <div style={{ width: "100%", height: Math.max(220, rows.length * 34) }}>
+                      <ResponsiveContainer>
+                        <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 60, left: 20, bottom: 4 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#FCD9A8" />
+                          <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={BRL_COMPACT} />
+                          <YAxis dataKey="tipo_de_ramo" type="category" tick={{ fontSize: 11 }} width={140} />
+                          <Tooltip formatter={(v: any) => BRL(Number(v))} />
+                          <Bar dataKey="comissao_vencida" fill="#D97706" radius={[0, 4, 4, 0]}>
+                            <LabelList
+                              dataKey="comissao_vencida"
+                              position="right"
+                              formatter={(v: any) => (Number(v) > 0 ? BRL_COMPACT(Number(v)) : "")}
+                              style={{ fontSize: 10, fill: "#B45309", fontWeight: 600 }}
+                            />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+
           {/* Detalhamento operacional */}
           <Collapsible open={detOpen} onOpenChange={setDetOpen}>
             <CollapsibleTrigger asChild>
