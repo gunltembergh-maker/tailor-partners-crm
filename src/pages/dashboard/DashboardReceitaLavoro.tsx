@@ -308,7 +308,7 @@ export default function DashboardReceitaLavoro() {
           </div>
 
           {/* KPI cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
             <MetricCard
               title={`Receita Competência (${periodo})`}
               value={BRL(kpis?.receita_competencia)}
@@ -317,6 +317,16 @@ export default function DashboardReceitaLavoro() {
             <MetricCard
               title={`Recebido Caixa (${periodo})`}
               value={BRL(kpis?.receita_caixa)}
+              loading={kpisQ.isLoading}
+            />
+            <MetricCard
+              title={`Previsto Caixa (${periodo})`}
+              value={BRL(kpis?.previsto_caixa)}
+              loading={kpisQ.isLoading}
+            />
+            <MetricCard
+              title={`Atingimento Caixa`}
+              value={PCT(Number(kpis?.atingimento_caixa || 0) * 100)}
               loading={kpisQ.isLoading}
             />
             <MetricCard title={`Meta (${periodo})`} value={BRL(kpis?.meta_periodo)} loading={kpisQ.isLoading} />
@@ -339,6 +349,7 @@ export default function DashboardReceitaLavoro() {
               loading={kpisQ.isLoading}
             />
           </div>
+
 
           {/* Gauge + Série mensal */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
