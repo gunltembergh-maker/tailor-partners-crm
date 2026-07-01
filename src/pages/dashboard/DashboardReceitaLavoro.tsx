@@ -102,6 +102,8 @@ export default function DashboardReceitaLavoro() {
         meta_periodo: number;
         atingimento: number;
         defasagem: number;
+        previsto_caixa: number;
+        atingimento_caixa: number;
       } | null;
     },
   });
@@ -127,22 +129,23 @@ export default function DashboardReceitaLavoro() {
   });
 
   const canalQ = useQuery({
-    queryKey: ["lavoro-receita-canal", ano, mesAtual],
+    queryKey: ["lavoro-receita-canal", ano, mesAtual, periodo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_canal" as any, { p_ano: ano, p_mes: mesAtual });
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_canal" as any, { p_ano: ano, p_mes: mesAtual, p_periodo: periodo });
       if (error) throw error;
       return (data || []) as Array<{ tipo_de_ramo: string; receita: number }>;
     },
   });
 
   const ramoQ = useQuery({
-    queryKey: ["lavoro-receita-ramo", ano, mesAtual],
+    queryKey: ["lavoro-receita-ramo", ano, mesAtual, periodo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_ramo" as any, { p_ano: ano, p_mes: mesAtual });
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_ramo" as any, { p_ano: ano, p_mes: mesAtual, p_periodo: periodo });
       if (error) throw error;
       return (data || []) as Array<{ ramo: string; receita: number }>;
     },
   });
+
 
   const ultimaAtQ = useQuery({
     queryKey: ["lavoro-ultima-atualizacao"],
@@ -165,21 +168,30 @@ export default function DashboardReceitaLavoro() {
   const atingimento = Number(kpis?.atingimento || 0) * 100;
   const atingColor = atingimento >= 100 ? "#16a34a" : atingimento >= 80 ? "#f59e0b" : "#dc2626";
 
-  // ─── Série mensal (12 meses) ─────────────────────────────────────────
+  // ─── Série mensal (recorta conforme filtro) ──────────────────────────
+  const mesAtualReal = new Date().getMonth() + 1;
+  const anoAtualReal = new Date().getFullYear();
   const serieChart = useMemo(() => {
     const src = serieQ.data || [];
-    return Array.from({ length: 12 }, (_, i) => {
+    const full = Array.from({ length: 12 }, (_, i) => {
       const mes = i + 1;
       const row = src.find((r) => Number(r.mes) === mes);
-      const dentro = mes <= mesRef;
       return {
         mes: MESES[i],
-        Competência: dentro ? Number(row?.receita_competencia || 0) : null,
-        Caixa: dentro ? Number(row?.receita_caixa || 0) : null,
+        mesNum: mes,
+        Competência: Number(row?.receita_competencia || 0),
+        Caixa: Number(row?.receita_caixa || 0),
         Meta: Number(row?.meta_mensal || 0),
       };
     });
-  }, [serieQ.data, mesRef]);
+    if (periodo === "MTD") {
+      return full.filter((r) => r.mesNum === mesRef);
+    }
+    // YTD: Jan..mesRef, mas nunca além do mês real (se ano corrente)
+    const limite = ano === anoAtualReal ? Math.min(mesRef, mesAtualReal) : mesRef;
+    return full.filter((r) => r.mesNum <= limite);
+  }, [serieQ.data, mesRef, periodo, ano, mesAtualReal, anoAtualReal]);
+
 
   // ─── Comparativo anual (linha por ano) ───────────────────────────────
   const comparativoChart = useMemo(() => {
@@ -296,7 +308,7 @@ export default function DashboardReceitaLavoro() {
           </div>
 
           {/* KPI cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
             <MetricCard
               title={`Receita Competência (${periodo})`}
               value={BRL(kpis?.receita_competencia)}
@@ -305,6 +317,16 @@ export default function DashboardReceitaLavoro() {
             <MetricCard
               title={`Recebido Caixa (${periodo})`}
               value={BRL(kpis?.receita_caixa)}
+              loading={kpisQ.isLoading}
+            />
+            <MetricCard
+              title={`Previsto Caixa (${periodo})`}
+              value={BRL(kpis?.previsto_caixa)}
+              loading={kpisQ.isLoading}
+            />
+            <MetricCard
+              title={`Atingimento Caixa`}
+              value={PCT(Number(kpis?.atingimento_caixa || 0) * 100)}
               loading={kpisQ.isLoading}
             />
             <MetricCard title={`Meta (${periodo})`} value={BRL(kpis?.meta_periodo)} loading={kpisQ.isLoading} />
@@ -327,6 +349,7 @@ export default function DashboardReceitaLavoro() {
               loading={kpisQ.isLoading}
             />
           </div>
+
 
           {/* Gauge + Série mensal */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
@@ -413,7 +436,7 @@ export default function DashboardReceitaLavoro() {
 
           {/* Por Canal / Por Ramo */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <PbiCard title="Receita por Canal (Tipo de Ramo)" subtitle={`YTD ${ano}`}>
+            <PbiCard title="Receita por Canal (Tipo de Ramo)" subtitle={periodo === "MTD" ? `${MESES[mesRef - 1]}/${ano}` : `YTD ${ano}`}>
               <div style={{ width: "100%", height: 320 }}>
                 <ResponsiveContainer>
                   <BarChart data={canalQ.data || []} layout="vertical" margin={{ left: 40 }}>
@@ -427,7 +450,7 @@ export default function DashboardReceitaLavoro() {
               </div>
             </PbiCard>
 
-            <PbiCard title="Receita por Ramo" subtitle={`YTD ${ano}`}>
+            <PbiCard title="Receita por Ramo" subtitle={periodo === "MTD" ? `${MESES[mesRef - 1]}/${ano}` : `YTD ${ano}`}>
               <div style={{ width: "100%", height: 320 }}>
                 <ResponsiveContainer>
                   <BarChart data={ramoQ.data || []} layout="vertical" margin={{ left: 40 }}>
