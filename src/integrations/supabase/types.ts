@@ -4371,7 +4371,16 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      pode_importar_lavoro: { Args: { _user_id: string }; Returns: boolean }
       pode_importar_saldo: { Args: { _user_id: string }; Returns: boolean }
+      pode_ver_dashboard_lavoro: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      pode_ver_relatorio_gerencial_apolices: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
