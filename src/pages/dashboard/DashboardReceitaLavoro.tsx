@@ -17,8 +17,9 @@ import {
   PolarAngleAxis,
   LabelList,
 } from "recharts";
-import { Calendar, ChevronRight, ChevronDown, Clock, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, ChevronRight, ChevronDown, Clock, RefreshCw, TrendingUp, TrendingDown, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 import { AppLayout } from "@/components/AppLayout";
 import { TailorFrame } from "@/components/layout/TailorFrame";
@@ -179,10 +180,13 @@ function VarCard({
 // ─── Página ──────────────────────────────────────────────────────────────
 export default function DashboardReceitaLavoro() {
   const hoje = new Date();
+  const { role } = useAuth();
+  const isAdmin = role === "ADMIN";
   const [ano, setAno] = useState<number>(hoje.getFullYear());
   const [periodo, setPeriodo] = useState<Periodo>("YTD");
   const [mesRef, setMesRef] = useState<number>(hoje.getMonth() + 1);
   const [detOpen, setDetOpen] = useState(false);
+  const [disparando, setDisparando] = useState(false);
   const mesAtual = mesRef;
 
   const anosDisponiveis = useMemo(() => {
@@ -329,6 +333,25 @@ export default function DashboardReceitaLavoro() {
     ]);
 
     toast.success("Dados atualizados");
+  };
+
+  const handleDispararEmail = async () => {
+    setDisparando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-receita-lavoro-automatic", {
+        body: { force: true },
+      });
+      if (error) throw error;
+      if (data?.skipped) toast.warning(`Pulado: ${data.reason}`);
+      else if (data?.success) toast.success(`Newsletter enviada — ${data.sucessos}/${data.total_destinatarios} sucesso(s)`, {
+        description: data.falhas > 0 ? `${data.falhas} falha(s)` : undefined,
+      });
+      else toast.message("Disparo processado", { description: JSON.stringify(data) });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao disparar");
+    } finally {
+      setDisparando(false);
+    }
   };
 
   const kpis = kpisQ.data;
@@ -500,6 +523,19 @@ export default function DashboardReceitaLavoro() {
                 <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
                 Atualizar Dados
               </Button>
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs gap-1 border-[#9B6B4A]/60 text-[#DFDBBE] bg-[#9B6B4A]/20 hover:bg-[#9B6B4A]/30 hover:text-[#DFDBBE]"
+                  onClick={handleDispararEmail}
+                  disabled={disparando}
+                  title="Disparar newsletter para todos os destinatários cadastrados"
+                >
+                  <Send className={`h-3 w-3 ${disparando ? "animate-pulse" : ""}`} />
+                  {disparando ? "Disparando..." : "Disparar newsletter"}
+                </Button>
+              )}
             </div>
           </div>
 

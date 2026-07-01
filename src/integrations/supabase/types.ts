@@ -4946,6 +4946,7 @@ export type Database = {
         Returns: undefined
       }
       rpc_dispensar_popup: { Args: { p_popup_id: string }; Returns: Json }
+      rpc_email_receita_lavoro_payload: { Args: never; Returns: Json }
       rpc_email_receita_payload: {
         Args: { p_anomes_override?: string; p_em_validacao_override?: boolean }
         Returns: Json
