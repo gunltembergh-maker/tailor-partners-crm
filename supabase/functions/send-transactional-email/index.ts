@@ -226,14 +226,18 @@ Deno.serve(async (req) => {
       status: 'pending',
     })
 
-    // 7. Enqueue
+    // 7. Enqueue — nome de exibição do remetente por template
+    const fromDisplayName =
+      templateName === 'receita-lavoro-newsletter'
+        ? 'Receita - Lavoro Seguros'
+        : 'Hub Tailor Partners'
     const queuedAt = new Date().toISOString()
     const { error: enqErr } = await supabase.rpc('enqueue_email', {
       queue_name: 'transactional_emails',
       payload: {
         message_id: messageId,
         to: recipientEmail,
-        from: `Hub Tailor Partners <hub@${FROM_DOMAIN}>`,
+        from: `${fromDisplayName} <hub@${FROM_DOMAIN}>`,
         sender_domain: SENDER_DOMAIN,
         subject,
         html,
