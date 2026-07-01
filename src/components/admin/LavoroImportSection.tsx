@@ -502,6 +502,14 @@ export function LavoroImportSection() {
               <ValidationRow label="SUM(Comissão Bruta) total" value={fmtBRL(pendingGerencial.validation.totalComissaoBruta)} />
               <ValidationRow label="SUM(Comissão Bruta) c/ Data Emissão" value={fmtBRL(pendingGerencial.validation.comissaoBrutaComEmissao)} hint="Deve bater com 'Receita Competência' no PBI" />
               <ValidationRow label="Ramos distintos (aux Ramo)" value={pendingGerencial.validation.totalRamos.toLocaleString("pt-BR")} />
+              {pendingGerencial.ramoRows.length > 0 && (
+                <div className="text-xs text-muted-foreground pt-1 pl-1 space-y-0.5">
+                  <div className="font-medium text-foreground/70">Prévia de mapeamentos:</div>
+                  {pendingGerencial.ramoRows.slice(0, 5).map((r, i) => (
+                    <div key={i} className="font-mono">• {r.ramo} → {r.tipo_de_ramo}</div>
+                  ))}
+                </div>
+              )}
               <p className="text-[11px] text-muted-foreground font-mono pt-2">sync_id: {pendingGerencial.syncId}</p>
             </div>
           )}
