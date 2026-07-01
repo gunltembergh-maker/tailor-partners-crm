@@ -180,10 +180,13 @@ function VarCard({
 // ─── Página ──────────────────────────────────────────────────────────────
 export default function DashboardReceitaLavoro() {
   const hoje = new Date();
+  const { role } = useAuth();
+  const isAdmin = role === "ADMIN";
   const [ano, setAno] = useState<number>(hoje.getFullYear());
   const [periodo, setPeriodo] = useState<Periodo>("YTD");
   const [mesRef, setMesRef] = useState<number>(hoje.getMonth() + 1);
   const [detOpen, setDetOpen] = useState(false);
+  const [disparando, setDisparando] = useState(false);
   const mesAtual = mesRef;
 
   const anosDisponiveis = useMemo(() => {
