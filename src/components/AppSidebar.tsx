@@ -50,6 +50,7 @@ const menuItems = [
   { title: "Painéis", icon: BarChart3, path: "/paineis", key: "menu_paineis" },
   { title: "Relatórios", icon: FileText, path: "/relatorios", key: "menu_relatorios" },
   { title: "Saldo Consolidado", icon: Wallet, path: "/relatorios/saldo-consolidado", key: "menu_relatorios", indent: true },
+  { title: "Gerencial de Apólices", icon: FileText, path: "/relatorios/gerencial-apolices", key: "menu_relatorios_gerencial_apolices", indent: true },
 ];
 
 // Padrão de granularização pai/filho (igual ao Importar Bases).
@@ -64,6 +65,7 @@ const DASHBOARDS_PERMISSIONS = [
 const dashboardItems = [
   { title: "Comercial", icon: BarChart3, path: "/dashboards/comercial", keys: ["menu_dashboards_comercial", "menu_dashboards"] },
   { title: "Receita", icon: BarChart3, path: "/dashboard/receita", keys: ["menu_dashboards_receita", "menu_dashboards"] },
+  { title: "Receita Lavoro", icon: BarChart3, path: "/dashboard/receita-lavoro", keys: ["menu_dashboards_lavoro", "menu_dashboards_lavoro_receita"] },
 ];
 
 export function AppSidebar() {
