@@ -17,8 +17,9 @@ import {
   PolarAngleAxis,
   LabelList,
 } from "recharts";
-import { Calendar, ChevronRight, ChevronDown, Clock, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, ChevronRight, ChevronDown, Clock, RefreshCw, TrendingUp, TrendingDown, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 import { AppLayout } from "@/components/AppLayout";
 import { TailorFrame } from "@/components/layout/TailorFrame";
