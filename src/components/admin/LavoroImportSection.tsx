@@ -364,8 +364,8 @@ export function LavoroImportSection() {
       if (key === "gerencial") {
         const gerRaw = readSheetFromRow2(workbook, "Gerencial");
         if (!gerRaw) throw new Error("Aba 'Gerencial' não encontrada.");
-        const auxRaw = readSheetFromRow2(workbook, "aux Ramo");
-        if (!auxRaw) throw new Error("Aba 'aux Ramo' não encontrada.");
+        const auxRaw = readSheetAutoHeader(workbook, "aux Ramo", ["Ramo", "Tipo de Ramo"]);
+        if (!auxRaw) throw new Error("Aba 'aux Ramo' não encontrada ou sem colunas 'Ramo' / 'Tipo de Ramo'.");
 
         const gerencialRows = gerRaw
           .filter((r) => Object.values(r).some((v) => v !== null && v !== ""))
