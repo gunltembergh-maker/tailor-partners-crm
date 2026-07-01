@@ -168,21 +168,30 @@ export default function DashboardReceitaLavoro() {
   const atingimento = Number(kpis?.atingimento || 0) * 100;
   const atingColor = atingimento >= 100 ? "#16a34a" : atingimento >= 80 ? "#f59e0b" : "#dc2626";
 
-  // ─── Série mensal (12 meses) ─────────────────────────────────────────
+  // ─── Série mensal (recorta conforme filtro) ──────────────────────────
+  const mesAtualReal = new Date().getMonth() + 1;
+  const anoAtualReal = new Date().getFullYear();
   const serieChart = useMemo(() => {
     const src = serieQ.data || [];
-    return Array.from({ length: 12 }, (_, i) => {
+    const full = Array.from({ length: 12 }, (_, i) => {
       const mes = i + 1;
       const row = src.find((r) => Number(r.mes) === mes);
-      const dentro = mes <= mesRef;
       return {
         mes: MESES[i],
-        Competência: dentro ? Number(row?.receita_competencia || 0) : null,
-        Caixa: dentro ? Number(row?.receita_caixa || 0) : null,
+        mesNum: mes,
+        Competência: Number(row?.receita_competencia || 0),
+        Caixa: Number(row?.receita_caixa || 0),
         Meta: Number(row?.meta_mensal || 0),
       };
     });
-  }, [serieQ.data, mesRef]);
+    if (periodo === "MTD") {
+      return full.filter((r) => r.mesNum === mesRef);
+    }
+    // YTD: Jan..mesRef, mas nunca além do mês real (se ano corrente)
+    const limite = ano === anoAtualReal ? Math.min(mesRef, mesAtualReal) : mesRef;
+    return full.filter((r) => r.mesNum <= limite);
+  }, [serieQ.data, mesRef, periodo, ano, mesAtualReal, anoAtualReal]);
+
 
   // ─── Comparativo anual (linha por ano) ───────────────────────────────
   const comparativoChart = useMemo(() => {
