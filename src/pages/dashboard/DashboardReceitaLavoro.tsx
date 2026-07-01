@@ -513,7 +513,7 @@ export default function DashboardReceitaLavoro() {
               loading={kpisQ.isLoading}
             />
             <BigStatCard
-              title={`Recebido em ${periodoLabel}`}
+              title={`Receita Caixa em ${periodoLabel}`}
               subtitle="Receita Caixa (efetivamente recebido)"
               value={BRL(kpis?.receita_caixa)}
               accent="#0A2337"
