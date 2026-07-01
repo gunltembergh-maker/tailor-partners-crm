@@ -482,26 +482,66 @@ export default function DashboardReceitaLavoro() {
             />
           </div>
 
-          {/* Barra de atingimento de caixa */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-                  Atingimento de Caixa ({periodoLabel})
-                </p>
-                <p className="text-[11px] text-gray-400">
-                  Recebido / Previsto — {BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
-                </p>
+          {/* Barras de atingimento — Competência + Caixa lado a lado no mesmo card */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-3 space-y-4">
+            {/* Competência */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Atingimento de Competência ({periodoLabel})
+                  </p>
+                  <p className="text-[11px] text-gray-400">
+                    Receita / Meta — {BRL(kpis?.receita_competencia)} / {BRL(kpis?.meta_periodo)}
+                  </p>
+                </div>
+                {isAtingimentoValido(kpis?.atingimento) && Number(kpis?.meta_periodo || 0) > 0 ? (
+                  <p className="text-2xl font-bold" style={{ color: atingColor }}>
+                    {formatarAtingimento(kpis?.atingimento)}
+                  </p>
+                ) : (
+                  <p className="text-sm font-semibold text-gray-400">Sem meta no período</p>
+                )}
               </div>
-              <p className="text-2xl font-bold" style={{ color: atingCaixaColor }}>
-                {PCT(atingCaixa)}
-              </p>
+              <div className="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Number(kpis?.meta_periodo || 0) > 0 ? Math.min(atingimento, 100) : 0}%`,
+                    background: atingColor,
+                  }}
+                />
+              </div>
             </div>
-            <div className="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${Math.min(atingCaixa, 100)}%`, background: atingCaixaColor }}
-              />
+
+            {/* Caixa */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Atingimento de Caixa ({periodoLabel})
+                  </p>
+                  <p className="text-[11px] text-gray-400">
+                    Recebido / Previsto — {BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
+                  </p>
+                </div>
+                {isAtingimentoValido(kpis?.atingimento_caixa) && Number(kpis?.previsto_caixa || 0) > 0 ? (
+                  <p className="text-2xl font-bold" style={{ color: atingCaixaColor }}>
+                    {formatarAtingimento(kpis?.atingimento_caixa)}
+                  </p>
+                ) : (
+                  <p className="text-sm font-semibold text-gray-400">Sem previsão no período</p>
+                )}
+              </div>
+              <div className="w-full h-3 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Number(kpis?.previsto_caixa || 0) > 0 ? Math.min(atingCaixa, 100) : 0}%`,
+                    background: atingCaixaColor,
+                  }}
+                />
+              </div>
             </div>
           </div>
 
