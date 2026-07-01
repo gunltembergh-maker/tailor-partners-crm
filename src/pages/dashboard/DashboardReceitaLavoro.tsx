@@ -450,7 +450,7 @@ export default function DashboardReceitaLavoro() {
               </div>
             </PbiCard>
 
-            <PbiCard title="Receita por Ramo" subtitle={`YTD ${ano}`}>
+            <PbiCard title="Receita por Ramo" subtitle={periodo === "MTD" ? `${MESES[mesRef - 1]}/${ano}` : `YTD ${ano}`}>
               <div style={{ width: "100%", height: 320 }}>
                 <ResponsiveContainer>
                   <BarChart data={ramoQ.data || []} layout="vertical" margin={{ left: 40 }}>
