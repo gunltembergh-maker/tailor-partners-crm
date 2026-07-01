@@ -296,7 +296,7 @@ export default function DashboardReceitaLavoro() {
             <MetricCard title={`Meta (${periodo})`} value={BRL(kpis?.meta_periodo)} loading={kpisQ.isLoading} />
             <MetricCard
               title="Atingimento"
-              value={PCT(kpis?.atingimento)}
+              value={PCT(atingimento)}
               loading={kpisQ.isLoading}
               headerRight={
                 <span
@@ -334,7 +334,7 @@ export default function DashboardReceitaLavoro() {
                 </ResponsiveContainer>
                 <div className="text-center -mt-16">
                   <p className="text-3xl font-bold" style={{ color: atingColor }}>
-                    {PCT(kpis?.atingimento)}
+                    {PCT(atingimento)}
                   </p>
                   <p className="text-xs text-gray-500">
                     {BRL(kpis?.receita_competencia)} / {BRL(kpis?.meta_periodo)}
