@@ -634,7 +634,7 @@ export default function DashboardReceitaLavoro() {
             </PbiCard>
 
             <PbiCard
-              title={`Recebido — ${ano - 1} x ${ano}`}
+              title={`Receita Caixa — ${ano - 1} x ${ano}`}
               subtitle="Receita Caixa mensal (barras lado a lado)"
             >
               <div style={{ width: "100%", height: 320 }}>
