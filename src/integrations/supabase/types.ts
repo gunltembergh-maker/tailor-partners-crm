@@ -2067,6 +2067,219 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_lavoro_caixa_comissao: {
+        Row: {
+          categoria: string | null
+          criado_em: string
+          data_emissao_nota_fiscal: string | null
+          data_pagamento: string | null
+          descricao: string | null
+          id: number
+          mes_referencia: string | null
+          observacoes: string | null
+          referencia: string | null
+          sub_categoria: string | null
+          sync_id: string
+          tipo_lancamento: string | null
+          valor: number | null
+        }
+        Insert: {
+          categoria?: string | null
+          criado_em?: string
+          data_emissao_nota_fiscal?: string | null
+          data_pagamento?: string | null
+          descricao?: string | null
+          id?: never
+          mes_referencia?: string | null
+          observacoes?: string | null
+          referencia?: string | null
+          sub_categoria?: string | null
+          sync_id: string
+          tipo_lancamento?: string | null
+          valor?: number | null
+        }
+        Update: {
+          categoria?: string | null
+          criado_em?: string
+          data_emissao_nota_fiscal?: string | null
+          data_pagamento?: string | null
+          descricao?: string | null
+          id?: never
+          mes_referencia?: string | null
+          observacoes?: string | null
+          referencia?: string | null
+          sub_categoria?: string | null
+          sync_id?: string
+          tipo_lancamento?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      raw_lavoro_depara_ramo: {
+        Row: {
+          criado_em: string
+          id: number
+          ramo: string
+          sync_id: string
+          tipo_de_ramo: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: never
+          ramo: string
+          sync_id: string
+          tipo_de_ramo: string
+        }
+        Update: {
+          criado_em?: string
+          id?: never
+          ramo?: string
+          sync_id?: string
+          tipo_de_ramo?: string
+        }
+        Relationships: []
+      }
+      raw_lavoro_gerencial: {
+        Row: {
+          analise: string | null
+          ano: number | null
+          card_id: string | null
+          comissao_bruta: number | null
+          comissao_emitida: number | null
+          criado_em: string
+          data_card_finalizado: string | null
+          data_emissao: string | null
+          data_pagamento: string | null
+          data_repasse: string | null
+          documento: string | null
+          empresa_faturada: string | null
+          fat_competencia: string | null
+          fim_vigencia: string | null
+          grupo: string | null
+          id: number
+          imposto_ret: number | null
+          inicio_vigencia: string | null
+          mes: number | null
+          numero_apolice: string | null
+          numero_da_parcela: number | null
+          observacao: string | null
+          parcelas: string | null
+          percentual_comissao: number | null
+          percentual_imposto: number | null
+          percentual_repasse: number | null
+          periodo_atualizacao: string | null
+          possui_repasse: string | null
+          premio_parcela: number | null
+          premio_total: number | null
+          qtd_parcelas: number | null
+          ramo: string | null
+          responsavel: string | null
+          segurado: string | null
+          seguradora: string | null
+          status_parcela_comissao: string | null
+          status_repasse: string | null
+          sync_id: string
+          tipo_pagamento: string | null
+          tomador: string | null
+          valor_is: number | null
+          valor_iss: number | null
+          valor_recebido_a_receber: number | null
+          valor_repasse_total: number | null
+        }
+        Insert: {
+          analise?: string | null
+          ano?: number | null
+          card_id?: string | null
+          comissao_bruta?: number | null
+          comissao_emitida?: number | null
+          criado_em?: string
+          data_card_finalizado?: string | null
+          data_emissao?: string | null
+          data_pagamento?: string | null
+          data_repasse?: string | null
+          documento?: string | null
+          empresa_faturada?: string | null
+          fat_competencia?: string | null
+          fim_vigencia?: string | null
+          grupo?: string | null
+          id?: never
+          imposto_ret?: number | null
+          inicio_vigencia?: string | null
+          mes?: number | null
+          numero_apolice?: string | null
+          numero_da_parcela?: number | null
+          observacao?: string | null
+          parcelas?: string | null
+          percentual_comissao?: number | null
+          percentual_imposto?: number | null
+          percentual_repasse?: number | null
+          periodo_atualizacao?: string | null
+          possui_repasse?: string | null
+          premio_parcela?: number | null
+          premio_total?: number | null
+          qtd_parcelas?: number | null
+          ramo?: string | null
+          responsavel?: string | null
+          segurado?: string | null
+          seguradora?: string | null
+          status_parcela_comissao?: string | null
+          status_repasse?: string | null
+          sync_id: string
+          tipo_pagamento?: string | null
+          tomador?: string | null
+          valor_is?: number | null
+          valor_iss?: number | null
+          valor_recebido_a_receber?: number | null
+          valor_repasse_total?: number | null
+        }
+        Update: {
+          analise?: string | null
+          ano?: number | null
+          card_id?: string | null
+          comissao_bruta?: number | null
+          comissao_emitida?: number | null
+          criado_em?: string
+          data_card_finalizado?: string | null
+          data_emissao?: string | null
+          data_pagamento?: string | null
+          data_repasse?: string | null
+          documento?: string | null
+          empresa_faturada?: string | null
+          fat_competencia?: string | null
+          fim_vigencia?: string | null
+          grupo?: string | null
+          id?: never
+          imposto_ret?: number | null
+          inicio_vigencia?: string | null
+          mes?: number | null
+          numero_apolice?: string | null
+          numero_da_parcela?: number | null
+          observacao?: string | null
+          parcelas?: string | null
+          percentual_comissao?: number | null
+          percentual_imposto?: number | null
+          percentual_repasse?: number | null
+          periodo_atualizacao?: string | null
+          possui_repasse?: string | null
+          premio_parcela?: number | null
+          premio_total?: number | null
+          qtd_parcelas?: number | null
+          ramo?: string | null
+          responsavel?: string | null
+          segurado?: string | null
+          seguradora?: string | null
+          status_parcela_comissao?: string | null
+          status_repasse?: string | null
+          sync_id?: string
+          tipo_pagamento?: string | null
+          tomador?: string | null
+          valor_is?: number | null
+          valor_iss?: number | null
+          valor_recebido_a_receber?: number | null
+          valor_repasse_total?: number | null
+        }
+        Relationships: []
+      }
       raw_nps_advisor: {
         Row: {
           data: Json
@@ -3799,6 +4012,110 @@ export type Database = {
         }
         Relationships: []
       }
+      vw_lavoro_depara_ramo: {
+        Row: {
+          ramo: string | null
+          tipo_de_ramo: string | null
+        }
+        Relationships: []
+      }
+      vw_lavoro_gerencial: {
+        Row: {
+          ano: number | null
+          comissao_bruta: number | null
+          comissao_emitida: number | null
+          data_ajustada: string | null
+          data_emissao: string | null
+          data_pagamento: string | null
+          data_repasse: string | null
+          dezena: string | null
+          documento: string | null
+          empresa_faturada: string | null
+          fim_vigencia: string | null
+          grupo: string | null
+          id: number | null
+          imposto_ret: number | null
+          inicio_vigencia: string | null
+          mes: number | null
+          numero_apolice: string | null
+          numero_da_parcela: number | null
+          observacao: string | null
+          percentual_comissao: number | null
+          percentual_repasse: number | null
+          possui_repasse: string | null
+          premio_parcela: number | null
+          premio_total: number | null
+          qtd_parcelas: number | null
+          ramo: string | null
+          responsavel: string | null
+          segurado: string | null
+          seguradora: string | null
+          status_parcela_comissao: string | null
+          status_repasse: string | null
+          sync_id: string | null
+          tipo_de_ramo: string | null
+          tipo_pagamento: string | null
+          tomador: string | null
+          valor_is: number | null
+          valor_iss: number | null
+          valor_recebido_a_receber: number | null
+          valor_repasse_total: number | null
+        }
+        Relationships: []
+      }
+      vw_lavoro_receita_caixa: {
+        Row: {
+          ano: number | null
+          data_pagamento: string | null
+          descricao: string | null
+          id: number | null
+          mes: number | null
+          mes_referencia: string | null
+          referencia: string | null
+          sync_id: string | null
+          valor: number | null
+        }
+        Insert: {
+          ano?: never
+          data_pagamento?: string | null
+          descricao?: string | null
+          id?: number | null
+          mes?: never
+          mes_referencia?: string | null
+          referencia?: string | null
+          sync_id?: string | null
+          valor?: number | null
+        }
+        Update: {
+          ano?: never
+          data_pagamento?: string | null
+          descricao?: string | null
+          id?: number | null
+          mes?: never
+          mes_referencia?: string | null
+          referencia?: string | null
+          sync_id?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      vw_lavoro_receita_competencia: {
+        Row: {
+          ano: number | null
+          comissao_bruta: number | null
+          data_emissao: string | null
+          data_pagamento: string | null
+          documento: string | null
+          mes: number | null
+          ramo: string | null
+          segurado: string | null
+          seguradora: string | null
+          status_parcela_comissao: string | null
+          tipo_de_ramo: string | null
+          tomador: string | null
+        }
+        Relationships: []
+      }
       vw_positivador_total_agrupado: {
         Row: {
           advisor: string | null
@@ -3967,6 +4284,10 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      divide_safe: {
+        Args: { denominador: number; numerador: number }
+        Returns: number
+      }
       email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
@@ -4016,6 +4337,10 @@ export type Database = {
       normalize_advisor: { Args: { advisor: string }; Returns: string }
       normalize_banker: { Args: { v: string }; Returns: string }
       normalize_canal: { Args: { canal: string }; Returns: string }
+      normalize_categoria_financeira: {
+        Args: { categoria: string }
+        Returns: string
+      }
       normalize_finder: { Args: { finder: string }; Returns: string }
       normalize_nome_pessoa: { Args: { p_nome: string }; Returns: string }
       normalize_tipo_cliente: { Args: { p_tipo: string }; Returns: string }
@@ -4041,6 +4366,10 @@ export type Database = {
           valor: string
           valor_normalizado: string
         }[]
+      }
+      pode_gerenciar_configuracoes_hub: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       pode_importar_saldo: { Args: { _user_id: string }; Returns: boolean }
       read_email_batch: {
@@ -4815,6 +5144,120 @@ export type Database = {
           finder: string
           valor: number
         }[]
+      }
+      rpc_lavoro_apolices_filtros: {
+        Args: never
+        Returns: {
+          anos: number[]
+          apolices: string[]
+          grupos: string[]
+          ramos: string[]
+          seguradoras: string[]
+          status_parcela_comissao: string[]
+          status_repasse: string[]
+          tipos_ramo: string[]
+          tomadores: string[]
+        }[]
+      }
+      rpc_lavoro_apolices_kpis: {
+        Args: {
+          p_ano?: number
+          p_apolice?: string
+          p_grupo?: string
+          p_possui_repasse?: string
+          p_ramo?: string
+          p_seguradora?: string
+          p_status?: string
+          p_tipo_ramo?: string
+          p_tomador?: string
+        }
+        Returns: {
+          comissao_emitida: number
+          comissao_gerada: number
+          comissao_menos_repasse: number
+          premio_total: number
+          repasse_parceiro: number
+        }[]
+      }
+      rpc_lavoro_apolices_lista: {
+        Args: { p_filtros?: Json; p_pagina?: number; p_tamanho_pagina?: number }
+        Returns: {
+          comissao_bruta: number
+          data_emissao: string
+          documento: string
+          numero_apolice: string
+          ramo: string
+          segurado: string
+          seguradora: string
+          status_parcela_comissao: string
+          tipo_de_ramo: string
+          tomador: string
+          total_linhas: number
+        }[]
+      }
+      rpc_lavoro_apolices_por_seguradora: {
+        Args: { p_filtros?: Json }
+        Returns: {
+          comissao_bruta: number
+          premio_total: number
+          seguradora: string
+        }[]
+      }
+      rpc_lavoro_apolices_previsao_dezena: {
+        Args: { p_ano: number; p_mes?: number }
+        Returns: {
+          ano: number
+          dezena: string
+          empresa_faturada: string
+          mes: number
+          valor_a_receber: number
+        }[]
+      }
+      rpc_lavoro_get_meta_anual: { Args: { p_ano: number }; Returns: number }
+      rpc_lavoro_receita_comparativo_anual: {
+        Args: { p_anos: number[] }
+        Returns: {
+          ano: number
+          mes: number
+          receita_competencia: number
+        }[]
+      }
+      rpc_lavoro_receita_kpis: {
+        Args: { p_ano: number; p_mes: number; p_periodo?: string }
+        Returns: {
+          atingimento: number
+          defasagem: number
+          meta_periodo: number
+          receita_caixa: number
+          receita_competencia: number
+        }[]
+      }
+      rpc_lavoro_receita_por_canal: {
+        Args: { p_ano: number; p_mes: number }
+        Returns: {
+          receita: number
+          tipo_de_ramo: string
+        }[]
+      }
+      rpc_lavoro_receita_por_ramo: {
+        Args: { p_ano: number; p_mes: number }
+        Returns: {
+          ramo: string
+          receita: number
+        }[]
+      }
+      rpc_lavoro_receita_serie_mensal: {
+        Args: { p_ano: number }
+        Returns: {
+          mes: number
+          meta_mensal: number
+          receita_caixa: number
+          receita_competencia: number
+        }[]
+      }
+      rpc_lavoro_set_meta_anual: {
+        Args: { p_ano: number; p_valor: number }
+        Returns: undefined
       }
       rpc_lista_finders: {
         Args: never
