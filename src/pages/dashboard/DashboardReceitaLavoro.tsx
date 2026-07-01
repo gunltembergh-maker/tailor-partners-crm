@@ -235,6 +235,19 @@ export default function DashboardReceitaLavoro() {
     },
   });
 
+  const competenciaYoyQ = useQuery({
+    queryKey: ["lavoro-competencia-yoy", ano],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_comparativo_anual" as any, {
+        p_anos: [ano - 1, ano],
+      });
+      if (error) throw error;
+      return (data || []) as Array<{ ano: number; mes: number; receita_competencia: number }>;
+    },
+  });
+
+
+
   const serieQ = useQuery({
     queryKey: ["lavoro-receita-serie", ano],
     queryFn: async () => {
