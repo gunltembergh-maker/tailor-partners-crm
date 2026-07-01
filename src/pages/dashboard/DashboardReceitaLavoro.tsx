@@ -162,7 +162,7 @@ export default function DashboardReceitaLavoro() {
   };
 
   const kpis = kpisQ.data;
-  const atingimento = Number(kpis?.atingimento || 0);
+  const atingimento = Number(kpis?.atingimento || 0) * 100;
   const atingColor = atingimento >= 100 ? "#16a34a" : atingimento >= 80 ? "#f59e0b" : "#dc2626";
 
   // ─── Série mensal (12 meses) ─────────────────────────────────────────
