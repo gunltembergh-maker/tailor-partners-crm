@@ -523,6 +523,19 @@ export default function DashboardReceitaLavoro() {
                 <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
                 Atualizar Dados
               </Button>
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs gap-1 border-[#9B6B4A]/60 text-[#DFDBBE] bg-[#9B6B4A]/20 hover:bg-[#9B6B4A]/30 hover:text-[#DFDBBE]"
+                  onClick={handleDispararEmail}
+                  disabled={disparando}
+                  title="Disparar newsletter para todos os destinatários cadastrados"
+                >
+                  <Send className={`h-3 w-3 ${disparando ? "animate-pulse" : ""}`} />
+                  {disparando ? "Disparando..." : "Disparar newsletter"}
+                </Button>
+              )}
             </div>
           </div>
 
