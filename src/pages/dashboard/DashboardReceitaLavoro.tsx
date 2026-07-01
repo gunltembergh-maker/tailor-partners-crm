@@ -148,9 +148,10 @@ function VarCard({
   value: number | null | undefined;
   loading?: boolean;
 }) {
-  const v = Number(value || 0) * 100;
+  const hasValue = value !== null && value !== undefined && isFinite(Number(value));
+  const v = hasValue ? Number(value) * 100 : 0;
   const up = v >= 0;
-  const color = up ? "#16a34a" : "#dc2626";
+  const color = !hasValue ? "#9CA3AF" : up ? "#16a34a" : "#dc2626";
   const Icon = up ? TrendingUp : TrendingDown;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3">
@@ -158,6 +159,10 @@ function VarCard({
 
       {loading ? (
         <div className="h-6 mt-1 w-24 bg-gray-100 rounded animate-pulse" />
+      ) : !hasValue ? (
+        <p className="text-sm font-medium mt-1" style={{ color: "#9CA3AF" }}>
+          Sem dado para comparar
+        </p>
       ) : (
         <div className="flex items-center gap-2 mt-1">
           <Icon className="h-5 w-5" style={{ color }} />
