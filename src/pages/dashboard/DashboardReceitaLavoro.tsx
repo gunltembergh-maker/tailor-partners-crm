@@ -304,19 +304,31 @@ export default function DashboardReceitaLavoro() {
   const atingColor = atingimento >= 100 ? "#16a34a" : atingimento >= 80 ? "#f59e0b" : "#dc2626";
 
   // ─── Comparativo YoY Caixa (barras lado a lado) ──────────────────────
+  // Respeita o filtro Mês / Semestre / Ano usando mesRef selecionado
+  const cortePorPeriodo = <T extends { mesNum: number }>(rows: T[]): T[] => {
+    if (periodo === "MTD") return rows.filter((r) => r.mesNum === mesRef);
+    if (periodo === "SEMESTRE") {
+      const ini = mesRef <= 6 ? 1 : 7;
+      return rows.filter((r) => r.mesNum >= ini && r.mesNum <= mesRef);
+    }
+    return rows.filter((r) => r.mesNum <= mesRef);
+  };
+
   const caixaYoyChart = useMemo(() => {
     const rows = caixaYoyQ.data || [];
-    return Array.from({ length: 12 }, (_, i) => {
+    const full = Array.from({ length: 12 }, (_, i) => {
       const mes = i + 1;
       const prev = rows.find((r) => Number(r.ano) === ano - 1 && Number(r.mes) === mes);
       const cur = rows.find((r) => Number(r.ano) === ano && Number(r.mes) === mes);
       return {
         mes: MESES[i],
+        mesNum: mes,
         [String(ano - 1)]: Number(prev?.receita_caixa || 0),
         [String(ano)]: Number(cur?.receita_caixa || 0),
       };
     });
-  }, [caixaYoyQ.data, ano]);
+    return cortePorPeriodo(full);
+  }, [caixaYoyQ.data, ano, periodo, mesRef]);
 
   // ─── Série mensal (detalhamento) ─────────────────────────────────────
   const mesAtualReal = new Date().getMonth() + 1;
