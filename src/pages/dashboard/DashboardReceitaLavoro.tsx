@@ -335,6 +335,25 @@ export default function DashboardReceitaLavoro() {
     toast.success("Dados atualizados");
   };
 
+  const handleDispararEmail = async () => {
+    setDisparando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-receita-lavoro-automatic", {
+        body: { force: true },
+      });
+      if (error) throw error;
+      if (data?.skipped) toast.warning(`Pulado: ${data.reason}`);
+      else if (data?.success) toast.success(`Newsletter enviada — ${data.sucessos}/${data.total_destinatarios} sucesso(s)`, {
+        description: data.falhas > 0 ? `${data.falhas} falha(s)` : undefined,
+      });
+      else toast.message("Disparo processado", { description: JSON.stringify(data) });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao disparar");
+    } finally {
+      setDisparando(false);
+    }
+  };
+
   const kpis = kpisQ.data;
   const atingCaixa = Number(kpis?.atingimento_caixa || 0) * 100;
   const atingCaixaColor = atingCaixa >= 100 ? "#16a34a" : atingCaixa >= 80 ? "#f59e0b" : "#dc2626";
