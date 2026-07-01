@@ -5233,6 +5233,13 @@ export type Database = {
           valor_a_receber: number
         }[]
       }
+      rpc_lavoro_comissao_vencida_por_canal: {
+        Args: { p_ano: number; p_mes: number; p_periodo?: string }
+        Returns: {
+          comissao_vencida: number
+          tipo_de_ramo: string
+        }[]
+      }
       rpc_lavoro_get_meta_anual: { Args: { p_ano: number }; Returns: number }
       rpc_lavoro_receita_caixa_comparativo_anual: {
         Args: { p_anos: number[] }
