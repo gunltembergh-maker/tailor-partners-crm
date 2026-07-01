@@ -102,6 +102,8 @@ export default function DashboardReceitaLavoro() {
         meta_periodo: number;
         atingimento: number;
         defasagem: number;
+        previsto_caixa: number;
+        atingimento_caixa: number;
       } | null;
     },
   });
@@ -127,22 +129,23 @@ export default function DashboardReceitaLavoro() {
   });
 
   const canalQ = useQuery({
-    queryKey: ["lavoro-receita-canal", ano, mesAtual],
+    queryKey: ["lavoro-receita-canal", ano, mesAtual, periodo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_canal" as any, { p_ano: ano, p_mes: mesAtual });
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_canal" as any, { p_ano: ano, p_mes: mesAtual, p_periodo: periodo });
       if (error) throw error;
       return (data || []) as Array<{ tipo_de_ramo: string; receita: number }>;
     },
   });
 
   const ramoQ = useQuery({
-    queryKey: ["lavoro-receita-ramo", ano, mesAtual],
+    queryKey: ["lavoro-receita-ramo", ano, mesAtual, periodo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_ramo" as any, { p_ano: ano, p_mes: mesAtual });
+      const { data, error } = await supabase.rpc("rpc_lavoro_receita_por_ramo" as any, { p_ano: ano, p_mes: mesAtual, p_periodo: periodo });
       if (error) throw error;
       return (data || []) as Array<{ ramo: string; receita: number }>;
     },
   });
+
 
   const ultimaAtQ = useQuery({
     queryKey: ["lavoro-ultima-atualizacao"],
