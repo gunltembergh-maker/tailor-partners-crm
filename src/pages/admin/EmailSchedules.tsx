@@ -116,6 +116,10 @@ export default function EmailSchedules() {
   const qc = useQueryClient();
   const { user } = useAuth();
 
+  const [modulo, setModulo] = useState<string>(MODULOS[0].key);
+  const moduloConfig = MODULOS.find((m) => m.key === modulo) ?? MODULOS[0];
+  const moduloLabel = moduloConfig.label;
+
   const [pauseOpen, setPauseOpen] = useState(false);
   const [motivoPausa, setMotivoPausa] = useState('');
   const [addDestOpen, setAddDestOpen] = useState(false);
