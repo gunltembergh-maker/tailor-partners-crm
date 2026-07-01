@@ -78,7 +78,8 @@ export default function DashboardReceitaLavoro() {
   const hoje = new Date();
   const [ano, setAno] = useState<number>(hoje.getFullYear());
   const [periodo, setPeriodo] = useState<"MTD" | "YTD">("YTD");
-  const mesAtual = hoje.getMonth() + 1;
+  const [mesRef, setMesRef] = useState<number>(hoje.getMonth() + 1);
+  const mesAtual = mesRef;
 
   const anosDisponiveis = useMemo(() => {
     const atual = hoje.getFullYear();
