@@ -318,6 +318,23 @@ export default function EmailSchedules() {
           </p>
         </div>
 
+        {/* Seletor de módulo */}
+        <div className="flex gap-2 flex-wrap">
+          {MODULOS.map((m) => (
+            <button
+              key={m.key}
+              onClick={() => setModulo(m.key)}
+              className={`px-4 py-2 rounded-md text-sm font-semibold border transition-colors ${
+                modulo === m.key
+                  ? 'bg-[#73A7B7] text-[#082537] border-[#73A7B7]'
+                  : 'bg-white/10 text-[#DFDBBE] border-white/15 hover:bg-white/15'
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+
         {/* Card de configuração do schedule */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
