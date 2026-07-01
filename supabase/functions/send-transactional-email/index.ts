@@ -119,6 +119,20 @@ Deno.serve(async (req) => {
     }
     resolvedTemplateData = { payload: rpcPayload, recipientName: resolvedTemplateData?.recipientName }
   }
+  if (templateName === 'receita-lavoro-newsletter') {
+    let rpcPayload: any = payload_override ?? null
+    if (!rpcPayload) {
+      const { data, error: rpcErr } = await supabase.rpc('rpc_email_receita_lavoro_payload')
+      if (rpcErr || !data) {
+        return new Response(JSON.stringify({ error: `Failed to load receita lavoro payload: ${rpcErr?.message || 'empty'}` }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      rpcPayload = data
+    }
+    resolvedTemplateData = { payload: rpcPayload, recipientName: resolvedTemplateData?.recipientName }
+  }
 
 
   try {
