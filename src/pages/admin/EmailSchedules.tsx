@@ -56,8 +56,10 @@ import { toast } from 'sonner';
 import { AdicionarDestinatarioModal } from '@/components/email/AdicionarDestinatarioModal';
 import { useAuth } from '@/hooks/useAuth';
 
-const MODULO = 'receita_caixa';
-const MODULO_LABEL = 'Newsletter Receita Caixa';
+const MODULOS: Array<{ key: string; label: string; edgeFunction: string }> = [
+  { key: 'receita_caixa', label: 'Newsletter Receita Caixa', edgeFunction: 'send-receita-caixa-automatic' },
+  { key: 'receita_lavoro', label: 'Newsletter Receita Lavoro', edgeFunction: 'send-receita-lavoro-automatic' },
+];
 
 const DIAS_LABEL: Record<number, string> = {
   0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sáb',
