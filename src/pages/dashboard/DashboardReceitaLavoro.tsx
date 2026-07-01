@@ -154,7 +154,8 @@ function VarCard({
   const Icon = up ? TrendingUp : TrendingDown;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{title}</p>
+      <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B7280" }}>{title}</p>
+
       {loading ? (
         <div className="h-6 mt-1 w-24 bg-gray-100 rounded animate-pulse" />
       ) : (
