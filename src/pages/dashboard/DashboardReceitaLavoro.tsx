@@ -249,6 +249,20 @@ export default function DashboardReceitaLavoro() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/15">
+                <Select value={String(mesRef)} onValueChange={(v) => setMesRef(Number(v))}>
+                  <SelectTrigger className="bg-transparent border-0 h-6 w-[80px] focus:ring-0 p-0 text-[#DFDBBE]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MESES.map((m, i) => (
+                      <SelectItem key={i + 1} value={String(i + 1)}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex rounded-md overflow-hidden border border-white/15">
                 {(["MTD", "YTD"] as const).map((p) => (
                   <button
