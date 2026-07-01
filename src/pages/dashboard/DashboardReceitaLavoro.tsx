@@ -561,7 +561,7 @@ export default function DashboardReceitaLavoro() {
                     Atingimento de Caixa ({periodoLabel})
                   </p>
                   <p className="text-[11px] text-gray-400">
-                    Recebido / Previsto — {BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
+                    Receita Caixa / Previsto — {BRL(kpis?.receita_caixa)} / {BRL(kpis?.previsto_caixa)}
                   </p>
                 </div>
                 {isAtingimentoValido(kpis?.atingimento_caixa) && Number(kpis?.previsto_caixa || 0) > 0 ? (
