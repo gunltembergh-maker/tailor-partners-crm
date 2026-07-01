@@ -255,6 +255,33 @@ function readSheetFromRow2(workbook: XLSX.WorkBook, sheetName: string): Record<s
   return rows;
 }
 
+// Reads a sheet auto-detecting header row (tries row 1, then row 2).
+// Uses the presence of `expectedHeaders` to pick the correct offset.
+function readSheetAutoHeader(
+  workbook: XLSX.WorkBook,
+  sheetName: string,
+  expectedHeaders: string[],
+): Record<string, unknown>[] | null {
+  const real = findSheetName(workbook, sheetName);
+  if (!real) return null;
+  const ws = workbook.Sheets[real];
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const expected = expectedHeaders.map(norm);
+  for (const range of [0, 1]) {
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, {
+      defval: null,
+      raw: true,
+      range,
+      cellDates: true,
+    } as any);
+    if (!rows.length) continue;
+    const keys = Object.keys(rows[0]).map(norm);
+    const hit = expected.some((e) => keys.includes(e));
+    if (hit) return rows;
+  }
+  return null;
+}
+
 function fmtBRL(v: number): string {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 }
@@ -337,8 +364,8 @@ export function LavoroImportSection() {
       if (key === "gerencial") {
         const gerRaw = readSheetFromRow2(workbook, "Gerencial");
         if (!gerRaw) throw new Error("Aba 'Gerencial' não encontrada.");
-        const auxRaw = readSheetFromRow2(workbook, "aux Ramo");
-        if (!auxRaw) throw new Error("Aba 'aux Ramo' não encontrada.");
+        const auxRaw = readSheetAutoHeader(workbook, "aux Ramo", ["Ramo", "Tipo de Ramo"]);
+        if (!auxRaw) throw new Error("Aba 'aux Ramo' não encontrada ou sem colunas 'Ramo' / 'Tipo de Ramo'.");
 
         const gerencialRows = gerRaw
           .filter((r) => Object.values(r).some((v) => v !== null && v !== ""))
@@ -475,6 +502,14 @@ export function LavoroImportSection() {
               <ValidationRow label="SUM(Comissão Bruta) total" value={fmtBRL(pendingGerencial.validation.totalComissaoBruta)} />
               <ValidationRow label="SUM(Comissão Bruta) c/ Data Emissão" value={fmtBRL(pendingGerencial.validation.comissaoBrutaComEmissao)} hint="Deve bater com 'Receita Competência' no PBI" />
               <ValidationRow label="Ramos distintos (aux Ramo)" value={pendingGerencial.validation.totalRamos.toLocaleString("pt-BR")} />
+              {pendingGerencial.ramoRows.length > 0 && (
+                <div className="text-xs text-muted-foreground pt-1 pl-1 space-y-0.5">
+                  <div className="font-medium text-foreground/70">Prévia de mapeamentos:</div>
+                  {pendingGerencial.ramoRows.slice(0, 5).map((r, i) => (
+                    <div key={i} className="font-mono">• {r.ramo} → {r.tipo_de_ramo}</div>
+                  ))}
+                </div>
+              )}
               <p className="text-[11px] text-muted-foreground font-mono pt-2">sync_id: {pendingGerencial.syncId}</p>
             </div>
           )}
